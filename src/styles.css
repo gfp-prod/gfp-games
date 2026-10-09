@@ -1,0 +1,222 @@
+:root {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #ded8c4;
+  background: #0d0d0a;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+html { background: #0d0d0a; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(134, 112, 67, .08), transparent 35%),
+    #0d0d0a;
+}
+
+button { font: inherit; }
+
+.shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 34px);
+}
+
+.masthead {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #4b4738;
+}
+
+h1, h2, h3, p { margin-top: 0; }
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(2rem, 5vw, 4.8rem);
+  font-weight: 400;
+  letter-spacing: -.03em;
+}
+
+h2 { font-weight: 400; font-size: 1.8rem; }
+h3 { font-weight: 400; font-size: clamp(1.5rem, 4vw, 2.4rem); }
+
+.eyebrow,
+.employee,
+.reader-meta,
+.authorized > span,
+.evidence-list small,
+.evidence-list span,
+.notice {
+  font-family: "Courier New", monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.eyebrow { font-size: .72rem; color: #9f987d; }
+
+.employee {
+  display: grid;
+  gap: 4px;
+  font-size: .72rem;
+  color: #9f987d;
+  text-align: right;
+}
+
+.notice {
+  margin: 12px 0 24px;
+  padding: 9px 12px;
+  border: 1px solid #3b392f;
+  background: #15140f;
+  color: #b8af8c;
+  font-size: .72rem;
+}
+
+.case-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) 1fr;
+  gap: 24px;
+}
+
+.case-panel,
+.reader {
+  border: 1px solid #39362b;
+  background: rgba(18, 17, 13, .86);
+}
+
+.case-panel { padding: 22px; }
+.reader { padding: clamp(22px, 4vw, 48px); min-height: 620px; }
+
+.case-panel > p { color: #aaa38d; line-height: 1.55; }
+
+.authorized {
+  margin: 24px 0;
+  padding: 16px;
+  border-left: 3px solid #7c7358;
+  background: #14130f;
+}
+
+.authorized > span { font-size: .68rem; color: #8d856c; }
+.authorized p { margin: 9px 0 0; line-height: 1.5; }
+
+.evidence-list {
+  display: grid;
+  gap: 8px;
+}
+
+.evidence-list button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 14px;
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #343228;
+  background: #11110d;
+  color: #c9c2aa;
+  text-align: left;
+  cursor: pointer;
+}
+
+.evidence-list button:hover,
+.evidence-list button.active {
+  border-color: #81785e;
+  background: #191812;
+}
+
+.evidence-list strong { grid-column: 1 / -1; font-weight: 400; }
+.evidence-list small,
+.evidence-list span { font-size: .58rem; color: #827b65; }
+
+.reader-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #807963;
+  font-size: .66rem;
+  margin-bottom: 48px;
+}
+
+.reader > p {
+  max-width: 700px;
+  font-size: clamp(1.05rem, 2vw, 1.28rem);
+  line-height: 1.8;
+  color: #d5cfbb;
+}
+
+.actions {
+  margin-top: 56px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.actions button,
+.result button {
+  padding: 15px;
+  border: 1px solid #5d5745;
+  background: transparent;
+  color: #cfc8b2;
+  cursor: pointer;
+  text-align: left;
+}
+
+.actions button:hover:not(:disabled),
+.result button:hover {
+  background: #201e17;
+  border-color: #a49a78;
+}
+
+.actions button:disabled {
+  cursor: not-allowed;
+  opacity: .38;
+}
+
+.actions small {
+  display: block;
+  margin-top: 8px;
+  color: #817a64;
+  line-height: 1.35;
+}
+
+.result {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid #39362b;
+  color: #a9a28c;
+}
+
+.result button { margin-top: 8px; }
+
+@media (max-width: 760px) {
+  .masthead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .employee { text-align: left; }
+
+  .case-grid { grid-template-columns: 1fr; }
+
+  .reader {
+    min-height: 0;
+    padding: 22px;
+  }
+
+  .reader-meta { margin-bottom: 30px; }
+
+  .actions { grid-template-columns: 1fr; margin-top: 38px; }
+
+  .evidence-list button { min-height: 70px; }
+
+  .shell {
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
