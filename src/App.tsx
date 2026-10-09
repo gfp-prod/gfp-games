@@ -106,6 +106,6 @@ function App(){
   return say(raw,["NON-RED COMPANY COMPLIANT RESPONSE.","Rephrase your request."],{strikes:next});
  }
  function restart(){resetState();setG(start);setLines(intro);setCmd("")}
- return <main className="shell"><article className="reader terminal"><Scene g={g}/><div className="story">{lines.map((l,i)=><p key={i}>{l||"\u00a0"}</p>)}</div><form onSubmit={act} className="command-line"><span>&gt;</span><input autoFocus value={cmd} onChange={e=>setCmd(e.target.value)} aria-label="Command" autoComplete="off"/></form><button className="reset" onClick={restart}>RESET</button><div ref={bottom}/></article></main>
+ return <main className="shell"><article className="reader terminal"><div className="story">{lines.map((l,i)=><p key={i}>{l||"\u00a0"}</p>)}</div><Scene g={g}/><form onSubmit={act} className="command-line"><span>&gt;</span><input autoFocus value={cmd} onChange={e=>setCmd(e.target.value)} aria-label="Command" autoComplete="off"/></form><button className="reset" onClick={restart}>RESET</button><div ref={bottom}/></article></main>
 }
 export default App;
