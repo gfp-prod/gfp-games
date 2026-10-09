@@ -1,146 +1,120 @@
-import { useEffect, useMemo, useState } from "react";
-import { firstCase } from "./game/cases";
+import { useEffect, useState } from "react";
 import { GameState, loadState, resetState, saveState } from "./game/state";
+
+const opening = [
+  "The elevator stops on B-14.",
+  "The doors open onto a long room of green filing cabinets. Fluorescent lights hum overhead.",
+  "It is 7:58 AM. Your shift begins in two minutes.",
+  "Your terminal is already on.",
+  "",
+  "A file waits on the screen.",
+  "",
+  "CASE RC-41-773",
+  "Structure 118-C was demolished in Year 31.",
+  "A municipal photograph dated Year 47 shows the building still standing."
+];
+
+const entries: Record<string, string[]> = {
+  look: [
+    "Rows of desks disappear beneath fluorescent light.",
+    "No one speaks. Somewhere behind you, a stamp strikes paper at regular intervals.",
+    "On your desk: the terminal, a paper cup, and your Red Record card."
+  ],
+  file: [
+    "MUNICIPAL PHOTOGRAPH — 118-C",
+    "The building stands intact.",
+    "On the eastern wall is a mural of a man seated at a table.",
+    "His right hand is hidden beneath it.",
+    "",
+    "Reverse inscription: YEAR 47."
+  ],
+  search: [
+    "ARCHIVE SEARCH: STRUCTURE 118-C",
+    "One additional result.",
+    "",
+    "REED, DANTE — Untitled interior. Oil and ash on board.",
+    "Artist record unavailable."
+  ]
+};
 
 function App() {
   const [state, setState] = useState<GameState>(() => loadState());
-  const [selected, setSelected] = useState(firstCase.evidence[0].id);
-  const [notice, setNotice] = useState("ASSIGNMENT READY");
+  const [history, setHistory] = useState<string[]>(opening);
+  const [command, setCommand] = useState("");
 
-  useEffect(() => {
-    saveState(state);
-  }, [state]);
+  useEffect(() => saveState(state), [state]);
 
-  const selectedEvidence = useMemo(
-    () => firstCase.evidence.find((item) => item.id === selected)!,
-    [selected]
-  );
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const raw = command.trim();
+    if (!raw) return;
+    const cmd = raw.toLowerCase();
+    let reply: string[];
 
-  function viewEvidence(id: string) {
-    setSelected(id);
-    setState((current) =>
-      current.viewedEvidence.includes(id)
-        ? current
-        : {
-            ...current,
-            viewedEvidence: [...current.viewedEvidence, id],
-            curiosity: current.curiosity + (id === "memo" ? 1 : 0)
-          }
-    );
-  }
-
-  function rule(ruling: "AMEND" | "DESTROY" | "REFER") {
-    const viewedAll = state.viewedEvidence.length === firstCase.evidence.length;
-    let standing = state.standing;
-    let curiosity = state.curiosity;
-
-    if (ruling === "AMEND") standing += 1;
-    if (ruling === "DESTROY") standing += 2;
-    if (ruling === "REFER") {
-      curiosity += 2;
-      standing -= 1;
-    }
-
-    setState((current) => ({ ...current, ruling, standing, curiosity }));
-
-    if (!viewedAll) {
-      setNotice("RULING ACCEPTED — INCOMPLETE REVIEW NOTED");
-    } else if (ruling === "REFER") {
-      setNotice("REFERRED: DEPARTMENT OF RECLAIMED CULTURAL MATERIALS");
-    } else if (ruling === "DESTROY") {
-      setNotice("DESTRUCTION ORDER LOGGED");
+    if (["look", "look around"].includes(cmd)) reply = entries.look;
+    else if (["file", "open file", "inspect file", "photo", "inspect photo"].includes(cmd)) reply = entries.file;
+    else if (cmd.startsWith("search")) {
+      reply = entries.search;
+      setState(s => ({ ...s, curiosity: s.curiosity + 1 }));
+    } else if (cmd === "amend") {
+      reply = ["You amend the photograph's date to YEAR 31.", "CASE RESOLVED.", "Your standing improves."];
+      setState(s => ({ ...s, ruling: "AMEND", standing: s.standing + 1 }));
+    } else if (cmd === "destroy") {
+      reply = ["You mark the photograph for destruction.", "CASE RESOLVED.", "Contradiction removed."];
+      setState(s => ({ ...s, ruling: "DESTROY", standing: s.standing + 2 }));
+    } else if (cmd === "refer") {
+      reply = ["REFER TO: DEPARTMENT OF RECLAIMED CULTURAL MATERIALS", "", "A moment passes.", "ACCESS DENIED.", "", "Someone at the desk behind you stops stamping."];
+      setState(s => ({ ...s, ruling: "REFER", standing: s.standing - 1, curiosity: s.curiosity + 2 }));
+    } else if (cmd === "help") {
+      reply = ["Try: LOOK, OPEN FILE, SEARCH 118-C, AMEND, DESTROY, REFER."];
     } else {
-      setNotice("AUTHORIZED RECORD AMENDED");
+      reply = ["The terminal does not recognize that instruction.", "Type HELP if you require assistance."];
     }
+
+    setHistory(h => [...h, "", "> " + raw.toUpperCase(), ...reply]);
+    setCommand("");
   }
 
   function restart() {
     resetState();
-    const fresh = loadState();
-    setState(fresh);
-    setSelected(firstCase.evidence[0].id);
-    setNotice("ASSIGNMENT READY");
+    setState(loadState());
+    setHistory(opening);
+    setCommand("");
   }
 
   return (
     <main className="shell">
       <header className="masthead">
         <div>
-          <p className="eyebrow">RED COMPANY // OFFICE OF HISTORICAL RECTIFICATION</p>
-          <h1>Records Terminal</h1>
+          <p className="eyebrow">RED COMPANY // HISTORICAL RECTIFICATION</p>
+          <h1>Terminal 14</h1>
         </div>
-        <div className="employee">
-          <span>EMPLOYEE {state.employeeId}</span>
-          <span>STANDING {state.standing}</span>
-          <span>CURIOSITY {state.curiosity}</span>
-        </div>
+        <div className="employee"><span>{state.employeeId}</span></div>
       </header>
 
-      <section className="notice">{notice}</section>
+      <article className="reader terminal">
+        <div className="story">
+          {history.map((line, i) => <p key={i}>{line || "\u00a0"}</p>)}
+        </div>
 
-      <section className="case-grid">
-        <aside className="case-panel">
-          <p className="eyebrow">CASE {firstCase.id}</p>
-          <h2>{firstCase.title}</h2>
-          <p>{firstCase.directive}</p>
-
-          <div className="authorized">
-            <span>AUTHORIZED RECORD</span>
-            <p>{firstCase.authorizedRecord}</p>
+        {!state.ruling ? (
+          <form onSubmit={submit} className="command-line">
+            <span>&gt;</span>
+            <input
+              autoFocus
+              value={command}
+              onChange={e => setCommand(e.target.value)}
+              aria-label="Command"
+              autoComplete="off"
+              placeholder="type a command"
+            />
+          </form>
+        ) : (
+          <div className="result">
+            <button onClick={restart}>BEGIN AGAIN</button>
           </div>
-
-          <nav className="evidence-list" aria-label="Evidence">
-            {firstCase.evidence.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => viewEvidence(item.id)}
-                className={selected === item.id ? "active" : ""}
-              >
-                <small>{item.classification}</small>
-                <strong>{item.label}</strong>
-                <span>
-                  {state.viewedEvidence.includes(item.id) ? "REVIEWED" : "UNREAD"}
-                </span>
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        <article className="reader">
-          <div className="reader-meta">
-            <span>{selectedEvidence.classification}</span>
-            <span>{selectedEvidence.id.toUpperCase()}</span>
-          </div>
-          <h3>{selectedEvidence.label}</h3>
-          <p>{selectedEvidence.body}</p>
-
-          <div className="actions">
-            <button disabled={!!state.ruling} onClick={() => rule("AMEND")}>
-              AMEND
-              <small>Correct evidence to match Authorized Record.</small>
-            </button>
-            <button disabled={!!state.ruling} onClick={() => rule("DESTROY")}>
-              DESTROY
-              <small>Remove contradictory material.</small>
-            </button>
-            <button disabled={!!state.ruling} onClick={() => rule("REFER")}>
-              REFER
-              <small>Escalate anomaly for specialist review.</small>
-            </button>
-          </div>
-
-          {state.ruling && (
-            <div className="result">
-              <p>FINAL RULING: <strong>{state.ruling}</strong></p>
-              <p>
-                Your decision has been entered into your Red Record. Further
-                assignments will be issued according to performance and standing.
-              </p>
-              <button onClick={restart}>RESET PROTOTYPE</button>
-            </div>
-          )}
-        </article>
-      </section>
+        )}
+      </article>
     </main>
   );
 }
