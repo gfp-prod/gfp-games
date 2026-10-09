@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { loadState, resetState, saveState } from "./game/state";
+import { loadState, resetState, saveState } from "./game/state";\nimport { parse } from "./engine/parser";\nimport { interact } from "./game/dreed/interactions";
 
 type Room="briefing"|"road"|"yard"|"porch"|"hall"|"parlor"|"kitchen"|"bedroom"|"outside";
 type G={room:Room;turn:number;woman:boolean;children:boolean;painting:boolean;reed:boolean;photos:boolean;taken:boolean;done:boolean;strikes:number;monitored:boolean;terminated:boolean;lastThing:string;failed:boolean;ending:string};
@@ -167,6 +167,15 @@ function App(){
   c=c.replace(/\\b(picture|portrait|canvas|artifact)\\b/g,"painting").replace(/\\b(lady|mother)\\b/g,"woman").replace(/\\b(photo|photos|pictures)\\b/g,"photograph");
   if(/\\b(it|that|this)\\b/.test(c)&&g.lastThing)c=c.replace(/\\b(it|that|this)\\b/g,g.lastThing);
 
+  const intent=parse(raw);
+  if(g.room!=="briefing"&&g.room!=="outside"&&intent.target){
+    const systemic=interact(g.room as any,intent);
+    if(systemic){
+      const patch:any={lastThing:systemic.target||g.lastThing};
+      if(systemic.room)patch.room=systemic.room;
+      return say(raw,systemic.text,patch);
+    }
+  }
   if(c==="help")return say(raw,["LOOK, GO [PLACE], ENTER, TALK [PERSON], EXAMINE [THING], SEARCH [THING], TAKE [THING], INVENTORY, LEAVE."]);
   if(g.room==="briefing"){if(["begin","start","continue"].includes(c))return say(raw,["Three hours later.","","The government sedan ticks as it cools behind you.","Yellow grass runs to the horizon. At the end of a dirt track, a white house leans beneath the afternoon heat.","Its siding is chipped nearly gray.","","Something pale stands far out in the field.",""],{room:"road"});return say(raw,["AWAITING CONFIRMATION. Type BEGIN."])}
   if(c==="inventory")return say(raw,[g.taken?"Recovered painting.":"Artifact sleeve.","Company field terminal.","Vehicle key.","Recovery authorization 04-771."]);
