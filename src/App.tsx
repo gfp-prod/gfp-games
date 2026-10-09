@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { loadState, resetState, saveState } from "./game/state";
 
 type Room="briefing"|"road"|"yard"|"porch"|"hall"|"parlor"|"kitchen"|"bedroom"|"outside";
-type G={room:Room;turn:number;woman:boolean;children:boolean;painting:boolean;reed:boolean;photos:boolean;taken:boolean;done:boolean;strikes:number;monitored:boolean;terminated:boolean;lastThing:string};
-const start:G={room:"briefing",turn:0,woman:false,children:false,painting:false,reed:false,photos:false,taken:false,done:false,strikes:0,monitored:false,terminated:false,lastThing:""};
+type G={room:Room;turn:number;woman:boolean;children:boolean;painting:boolean;reed:boolean;photos:boolean;taken:boolean;done:boolean;strikes:number;monitored:boolean;terminated:boolean;lastThing:string;failed:boolean;ending:string};
+const start:G={room:"briefing",turn:0,woman:false,children:false,painting:false,reed:false,photos:false,taken:false,done:false,strikes:0,monitored:false,terminated:false,lastThing:"",failed:false,ending:""};
 
 const intro=[
 "RED COMPANY // RECLAIMED CULTURAL MATERIALS",
@@ -31,10 +31,19 @@ function App(){
  function remember(thing:string){setG(x=>({...x,lastThing:thing}));}
  function act(e:React.FormEvent){e.preventDefault();const raw=cmd.trim();if(!raw)return;let c=raw.toLowerCase().replace(/[^a-z0-9' ]/g," ").replace(/\\s+/g," ").trim();setCmd("");
   const profanity=/\\b(fuck|fucking|shit|bitch|cunt|asshole|motherfucker|nigger|nigga|faggot|fag|retard|retarded)\\b/i;
+  if(g.failed){if(["restart","reset","retry"].includes(c)){resetState();setG(start);setLines(intro);return;}return say(raw,["ASSIGNMENT CLOSED.","Type RETRY to begin again."]);}
   if(g.terminated){
     if(["restart","reset","reconnect"].includes(c)){const watched={...start,monitored:true};resetState();setG(watched);setLines(["RED COMPANY TERMINAL // CONNECTION RESTORED","","MONITORING STATUS: ACTIVE","","Prior communication irregularities remain attached to this employee record.","","Type BEGIN."]);return;}
     return say(raw,["TERMINAL ACCESS SUSPENDED.","Type RECONNECT to request monitored access."]);
   }
+  const aggression=/\b(hit|punch|kick|attack|fight|hurt|kill|threaten)\b/i;
+  const family=/\b(woman|man|husband|child|children|kid|family|her|him|them|toddler)\b/i;
+  const abandon=/\b(leave|drive away|go home|quit|abandon|abscond)\b/i;
+  if(aggression.test(c)&&family.test(c)&&["hall","parlor","kitchen","bedroom"].includes(g.room))return say(raw,["You make the first move.","","The house answers all at once.","The family is on you before you reach the door.","","FIELD ASSIGNMENT 04-771: FAILED","CAUSE: HOSTILE CONTACT","ARTIFACT STATUS: UNRECOVERED","EMPLOYEE STATUS: DECEASED","","Type RETRY."],{failed:true,ending:"hostile-contact"});
+  if(abandon.test(c)&&!g.taken&&g.room==="road")return say(raw,["You turn the sedan around without approaching the property.","","FIELD ASSIGNMENT 04-771: FAILED","CAUSE: REFUSAL OF ASSIGNED LABOR","ARTIFACT STATUS: UNRECOVERED","","RECOVERY PERSONNEL DISPATCHED.","TRANSPORT TO ABSOLUTION AUTHORIZED.","","Type RETRY."],{failed:true,ending:"early-desertion"});
+  if(abandon.test(c)&&!g.taken&&["yard","porch"].includes(g.room))return say(raw,["You return to the sedan.","","FIELD ASSIGNMENT 04-771: FAILED","CAUSE: PREMATURE WITHDRAWAL","ARTIFACT STATUS: UNRECOVERED","","ABSOLUTION: MANDATORY.","","Type RETRY."],{failed:true,ending:"threshold-desertion"});
+  if(abandon.test(c)&&!g.taken&&["hall","parlor","kitchen","bedroom"].includes(g.room))return say(raw,["You leave the property without the artifact.","At the sedan, the engine does not start.","The doors lock.","","FIELD ASSIGNMENT 04-771: FAILED","CAUSE: ABANDONMENT AFTER CONTACT","ARTIFACT STATUS: CONFIRMED / UNRECOVERED","","A Company vehicle appears on the dirt road.","Your terminal displays one word:","","ABSOLUTION","","Type RETRY."],{failed:true,ending:"late-desertion"});
+  if(profanity.test(c)&&family.test(c)&&["hall","parlor","kitchen","bedroom"].includes(g.room))return say(raw,["The insult leaves your mouth.","Every blind face turns toward you.","","The family moves.","","FIELD ASSIGNMENT 04-771: FAILED","CAUSE: PROVOCATION OF OCCUPANTS","ARTIFACT STATUS: UNRECOVERED","EMPLOYEE STATUS: DECEASED","","Type RETRY."],{failed:true,ending:"provoked-family"});
   if(profanity.test(c)){
     const next=g.strikes+1;
     if(next>=2)return say(raw,["LANGUAGE VIOLATION DETECTED.","","SESSION TERMINATED.","EMPLOYEE COMMUNICATION REVIEW COMPLETE.","","YOUR RESPONSES HAVE BEEN FORWARDED TO","INTERNAL CONDUCT AND DOCTRINAL COMPLIANCE.","","YOU HAVE BEEN SELECTED FOR MONITORING.","","Remain available.","","Type RECONNECT when instructed."],{strikes:next,monitored:true,terminated:true});
