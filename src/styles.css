@@ -4,3 +4,5 @@
 .scene .wire{fill:none;stroke:#39ff14;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.82}
 .scene .person{opacity:.92}.scene .blind{fill:#39ff14;stroke:#39ff14;filter:drop-shadow(0 0 5px #39ff14)}
 @media(max-width:600px){.scene{max-height:235px;margin-bottom:20px}.scene .wire{stroke-width:2.4}}
+
+.ascii-scene{display:block;white-space:pre;overflow-x:auto;width:100%;max-height:none;margin:16px 0 8px;padding:10px 0 8px;border:0;border-top:1px solid rgba(57,255,20,.18);border-bottom:1px solid rgba(57,255,20,.18);background:transparent;color:#39ff14;font-family:"Courier New",monospace;font-size:clamp(7px,1.35vw,13px);line-height:1.02;letter-spacing:0;text-shadow:0 0 4px rgba(57,255,20,.8);filter:none;scrollbar-width:none}.ascii-scene::-webkit-scrollbar{display:none}@media(max-width:600px){.ascii-scene{font-size:clamp(5.8px,1.72vw,9px);margin:12px 0 6px;padding:8px 0 6px}}
