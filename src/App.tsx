@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { loadState, resetState, saveState } from "./game/state";\nimport { parse } from "./engine/parser";\nimport { interact } from "./game/dreed/interactions";\nimport { terminalArt } from "./art/scenes";
+import { loadState, resetState, saveState } from "./game/state";
+import { parse } from "./engine/parser";
+import { interact } from "./game/dreed/interactions";
+import { terminalArt } from "./art/scenes";
 
 type Room="briefing"|"road"|"yard"|"porch"|"hall"|"parlor"|"kitchen"|"bedroom"|"outside";
 type G={room:Room;turn:number;woman:boolean;children:boolean;painting:boolean;reed:boolean;photos:boolean;taken:boolean;done:boolean;strikes:number;monitored:boolean;terminated:boolean;lastThing:string;failed:boolean;ending:string};
