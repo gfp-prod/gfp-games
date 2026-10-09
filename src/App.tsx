@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { loadState, resetState, saveState } from "./game/state";
 
 type Room="briefing"|"road"|"yard"|"porch"|"hall"|"parlor"|"kitchen"|"bedroom"|"outside";
-type G={room:Room;turn:number;woman:boolean;children:boolean;painting:boolean;reed:boolean;photos:boolean;taken:boolean;done:boolean};
-const start:G={room:"briefing",turn:0,woman:false,children:false,painting:false,reed:false,photos:false,taken:false,done:false};
+type G={room:Room;turn:number;woman:boolean;children:boolean;painting:boolean;reed:boolean;photos:boolean;taken:boolean;done:boolean;strikes:number;monitored:boolean;terminated:boolean;lastThing:string};
+const start:G={room:"briefing",turn:0,woman:false,children:false,painting:false,reed:false,photos:false,taken:false,done:false,strikes:0,monitored:false,terminated:false,lastThing:""};
 
 const intro=[
 "RED COMPANY // RECLAIMED CULTURAL MATERIALS",
@@ -28,7 +28,30 @@ function App(){
  const bottom=useRef<HTMLDivElement>(null);
  useEffect(()=>{saveState({...saved,game:g,lines} as any);bottom.current?.scrollIntoView({behavior:"smooth"})},[g,lines]);
  function say(raw:string,out:string[],patch:Partial<G>={}){setLines(x=>[...x,"","> "+raw.toUpperCase(),...out]);setG(x=>({...x,turn:x.turn+1,...patch}));}
- function act(e:React.FormEvent){e.preventDefault();const raw=cmd.trim();if(!raw)return;const c=raw.toLowerCase();setCmd("");
+ function remember(thing:string){setG(x=>({...x,lastThing:thing}));}
+ function act(e:React.FormEvent){e.preventDefault();const raw=cmd.trim();if(!raw)return;let c=raw.toLowerCase().replace(/[^a-z0-9' ]/g," ").replace(/\\s+/g," ").trim();setCmd("");
+  const profanity=/\\b(fuck|fucking|shit|bitch|cunt|asshole|motherfucker|nigger|nigga|faggot|fag|retard|retarded)\\b/i;
+  if(g.terminated){
+    if(["restart","reset","reconnect"].includes(c)){const watched={...start,monitored:true};resetState();setG(watched);setLines(["RED COMPANY TERMINAL // CONNECTION RESTORED","","MONITORING STATUS: ACTIVE","","Prior communication irregularities remain attached to this employee record.","","Type BEGIN."]);return;}
+    return say(raw,["TERMINAL ACCESS SUSPENDED.","Type RECONNECT to request monitored access."]);
+  }
+  if(profanity.test(c)){
+    const next=g.strikes+1;
+    if(next>=2)return say(raw,["LANGUAGE VIOLATION DETECTED.","","SESSION TERMINATED.","EMPLOYEE COMMUNICATION REVIEW COMPLETE.","","YOUR RESPONSES HAVE BEEN FORWARDED TO","INTERNAL CONDUCT AND DOCTRINAL COMPLIANCE.","","YOU HAVE BEEN SELECTED FOR MONITORING.","","Remain available.","","Type RECONNECT when instructed."],{strikes:next,monitored:true,terminated:true});
+    return say(raw,["LANGUAGE VIOLATION DETECTED.","COMMUNICATION IRREGULARITY RECORDED.","Further noncompliance may result in monitoring."],{strikes:next});
+  }
+  const aliases:[RegExp,string][]=[
+    [/^(x|inspect|check out|study)\\b/,"examine"],
+    [/^(grab|get|pick up|collect|retrieve)\\b/,"take"],
+    [/^(speak to|speak with|ask|question)\\b/,"talk"],
+    [/^(walk to|head to|move to|walk toward|approach)\\b/,"go"],
+    [/^(exit|depart|go back to car)\\b/,"leave"],
+    [/^(i want to |i would like to |please )/,""]
+  ];
+  aliases.forEach(([r,v])=>{c=c.replace(r,v).trim()});
+  c=c.replace(/\\b(picture|portrait|canvas|artifact)\\b/g,"painting").replace(/\\b(lady|mother)\\b/g,"woman").replace(/\\b(photo|photos|pictures)\\b/g,"photograph");
+  if(/\\b(it|that|this)\\b/.test(c)&&g.lastThing)c=c.replace(/\\b(it|that|this)\\b/g,g.lastThing);
+
   if(c==="help")return say(raw,["LOOK, GO [PLACE], ENTER, TALK [PERSON], EXAMINE [THING], SEARCH [THING], TAKE [THING], INVENTORY, LEAVE."]);
   if(g.room==="briefing"){if(["begin","start","continue"].includes(c))return say(raw,["Three hours later.","","The government sedan ticks as it cools behind you.","Yellow grass runs to the horizon. At the end of a dirt track, a white house leans beneath the afternoon heat.","Its siding is chipped nearly gray.","","Something pale stands far out in the field.",""],{room:"road"});return say(raw,["AWAITING CONFIRMATION. Type BEGIN."])}
   if(c==="inventory")return say(raw,[g.taken?"Recovered painting.":"Artifact sleeve.","Company field terminal.","Vehicle key.","Recovery authorization 04-771."]);
@@ -48,15 +71,19 @@ function App(){
   if((c.startsWith("talk")||c.includes("woman"))&&g.room==="hall")return say(raw,["\"Red Company. I'm here for the painting.\"","The woman smiles without looking at you.","","\"Dreed,\" she says.","","A small voice farther inside answers her.","","\"Dreed.\""],{children:true});
   if((c.includes("follow")||c.includes("painting")||c==="parlor"||c==="go room")&&g.room==="hall")return say(raw,["The woman turns and walks without touching the walls.","You follow.","Two children sit on the floor. One cannot be older than three. Both are blind.","A man stands behind them, pale and thin.","","\"Dreed,\" the little one says happily."],{room:"parlor",children:true});
   if((c.includes("photo")||c.includes("chest"))&&g.room==="bedroom")return say(raw,["The photographs span generations.","Children become parents. Parents become old.","The painting is present in every room, every decade.","No one in the photographs is looking at the camera.","They are all facing the painting."],{photos:true});
-  if((c.includes("painting")||c==="inspect"||c==="examine")&&g.room==="parlor")return say(raw,["Up close, the artifact is worse than you thought.","The varnish is cracked. The image has faded almost completely away.","You cannot tell what it depicts.","","The little girl points precisely to the lower right corner.","","\"His hand,\" she says.","","There is nothing there you can see."],{painting:true});
-  if((c.startsWith("take")||c.includes("remove"))&&g.room==="parlor"&&g.painting)return say(raw,["You lift the frame from its nail.","Every member of the family inhales at once.","The husband takes one step toward you. The woman catches his wrist.","On the back, beneath decades of dust, are two faded characters:","","D. REED","","The toddlers begin saying it together.","","\"Dreed. Dreed. Dreed.\""],{reed:true,taken:true});
+  if((c.includes("painting")||c==="inspect"||c==="examine")&&g.room==="parlor"){remember("painting");return say(raw,["Up close, the artifact is worse than you thought.","The varnish is cracked. The image has faded almost completely away.","You cannot tell what it depicts.","","The little girl points precisely to the lower right corner.","","\"His hand,\" she says.","","There is nothing there you can see."],{painting:true});}
+  if((c.startsWith("take")||c.includes("remove")||c.includes("pull painting")||c.includes("painting down"))&&g.room==="parlor"&&g.painting)return say(raw,["You lift the frame from its nail.","Every member of the family inhales at once.","The husband takes one step toward you. The woman catches his wrist.","On the back, beneath decades of dust, are two faded characters:","","D. REED","","The toddlers begin saying it together.","","\"Dreed. Dreed. Dreed.\""],{reed:true,taken:true});
   if((c.includes("search")||c.includes("terminal")||c.includes("reed"))&&g.reed)return say(raw,["FIELD TERMINAL SEARCHING...","","D. REED","CROSS-REFERENCE FOUND.","","REED, DANTE","DANTE REED","","[ RECORD RESTRICTED ]","","DO NOT QUERY THIS NAME AGAIN."]);
   if((c==="kitchen"||c.includes("go kitchen"))&&["hall","parlor"].includes(g.room))return say(raw,["You leave the family behind and enter the kitchen."],{room:"kitchen"});
   if((c.includes("upstairs")||c.includes("bedroom")||c==="stairs")&&g.room==="kitchen")return say(raw,["The stairs bend under your weight.","At the top is a single bedroom."],{room:"bedroom"});
   if((c==="downstairs"||c.includes("go hall")||c==="hall")&&["bedroom","kitchen"].includes(g.room))return say(raw,["You return to the hall."],{room:"hall"});
   if((c.includes("parlor")||c.includes("painting"))&&g.room==="kitchen")return say(raw,["You return to the parlor. Every head turns with you."],{room:"parlor"});
   if((c==="leave"||c.includes("go outside")||c.includes("return car"))&&g.taken)return say(raw,["You step out into the yellow field with the painting.","No one follows.","","Halfway to the sedan, you notice pale figures standing along the horizon.","Five. Then seven. Then more.","","All of them face you.","","The artifact sleeve shifts under your arm.","From the house, faint across the field:","","\"Dreed.\"","","RECOVERY OBJECTIVE COMPLETE.","RETURN ARTIFACT TO RED COMPANY CUSTODY."],{room:"outside",done:true});
-  return say(raw,["You cannot do that here."]);
+  const understood=/\\b(look|go|walk|enter|open|talk|examine|take|search|leave|inventory|help|painting|woman|man|child|door|house|road|car|kitchen|bedroom|hall|parlor|photograph)\\b/.test(c);
+  if(understood)return say(raw,["REQUEST UNDERSTOOD.","That action is not available from your present position."]);
+  const next=g.strikes+1;
+  if(next>=3)return say(raw,["NON-RED COMPANY COMPLIANT RESPONSE.","COMMUNICATION IRREGULARITY RECORDED.","Continued irregular input may be referred for review."],{strikes:next});
+  return say(raw,["NON-RED COMPANY COMPLIANT RESPONSE.","Rephrase your request."],{strikes:next});
  }
  function restart(){resetState();setG(start);setLines(intro);setCmd("")}
  return <main className="shell"><article className="reader terminal"><div className="story">{lines.map((l,i)=><p key={i}>{l||"\u00a0"}</p>)}</div><form onSubmit={act} className="command-line"><span>&gt;</span><input autoFocus value={cmd} onChange={e=>setCmd(e.target.value)} aria-label="Command" autoComplete="off"/></form><button className="reset" onClick={restart}>RESET</button><div ref={bottom}/></article></main>
