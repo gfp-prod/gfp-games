@@ -1,0 +1,24 @@
+name: VERBA Godot source check
+
+on:
+  push:
+    branches: [verba-godot]
+  pull_request:
+    branches: [verba-godot]
+  workflow_dispatch:
+
+jobs:
+  require-complete-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify complete Godot game has been published
+        shell: bash
+        run: |
+          set -eu
+          test -f VERBA/project.godot || { echo "::error::VERBA/project.godot missing. Godot source has not been uploaded to GitHub. This is NOT a passing game build."; exit 1; }
+          test -f VERBA/main.tscn || { echo "::error::VERBA/main.tscn missing."; exit 1; }
+          test -f VERBA/scripts/player.gd || { echo "::error::VERBA/scripts/player.gd missing."; exit 1; }
+          test -d VERBA/assets/models/authored || { echo "::error::Authored models not published."; exit 1; }
+          test -d VERBA/assets/textures/real || { echo "::error::Bundled textures not published."; exit 1; }
+          echo "Source presence check passed. Next step: headless Godot import and runtime validation."
