@@ -186,6 +186,10 @@ func build_terrain() -> void:
 		"res://assets/textures/river_silt.png"
 	]
 	var biome_names: Array[String] = ["OpenMeadow", "WoodlandSoil", "AutumnForest", "StreamBank"]
+	# Keep biome render meshes separate, but create ONE continuous terrain physics surface.
+	# Per-biome concave shapes exposed internal triangle edges and trapped the player.
+	var collision_tool := SurfaceTool.new()
+	collision_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var tools: Array[SurfaceTool] = []
 	for biome in range(4):
 		var st := SurfaceTool.new()
@@ -212,6 +216,7 @@ func build_terrain() -> void:
 				tool.set_uv(Vector2(v.x*.16,v.z*.16))
 				tool.set_color(terrain_color(v.x,v.z,v.y).lerp(Color.WHITE,.60))
 				tool.add_vertex(v)
+				collision_tool.add_vertex(v)
 	var ground_root := Node3D.new()
 	ground_root.name = "VisibleTexturedGround"
 	add_child(ground_root)
@@ -234,14 +239,15 @@ func build_terrain() -> void:
 			m.normal_texture = load(normal_path)
 		visual.material_override = m
 		ground_root.add_child(visual)
-		var body := StaticBody3D.new()
-		body.name = biome_names[biome]+"GroundCollision"
-		body.collision_layer = 16
-		body.collision_mask = 0
-		var shape := CollisionShape3D.new()
-		shape.shape = generated_mesh.create_trimesh_shape()
-		body.add_child(shape)
-		ground_root.add_child(body)
+	var terrain_body := StaticBody3D.new()
+	terrain_body.name = "ContinuousTerrainCollision"
+	terrain_body.collision_layer = 16
+	terrain_body.collision_mask = 0
+	var terrain_shape := CollisionShape3D.new()
+	terrain_shape.shape = collision_tool.commit().create_trimesh_shape()
+	terrain_body.add_child(terrain_shape)
+	ground_root.add_child(terrain_body)
+	# No physics bodies on individual biome render meshes: their borders are visual only.
 
 func build_old_road() -> void:
 	# A readable worn earth trail visually connects the clearing to the priory.
