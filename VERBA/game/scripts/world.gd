@@ -116,26 +116,26 @@ func setup_atmosphere() -> void:
 	var sky:=Sky.new()
 	var s:=ProceduralSkyMaterial.new()
 	s.sky_top_color=Color("53636a")
-	s.sky_horizon_color=Color("89877e")
+	s.sky_horizon_color=Color("77868b")
 	s.ground_bottom_color=Color("435047")
-	s.ground_horizon_color=Color("797e75")
+	s.ground_horizon_color=Color("6c7974")
 	s.use_debanding=true
 	sky.sky_material=s
 	e.sky=sky
 	e.ambient_light_source=Environment.AMBIENT_SOURCE_SKY
 	e.reflected_light_source=Environment.REFLECTION_SOURCE_BG
-	e.ambient_light_energy=.30
+	e.ambient_light_energy=.26
 	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
 	e.fog_enabled=true
-	e.fog_light_color=Color("747975")
-	e.fog_density=.0090
+	e.fog_light_color=Color("697778")
+	e.fog_density=.0058
 	e.fog_sky_affect=.36
 	ambient.environment=e
 	add_child(ambient)
 	light_node=DirectionalLight3D.new()
 	light_node.name="LowAutumnSun"
-	light_node.light_color=Color("ffe3b9")
-	light_node.light_energy=.48
+	light_node.light_color=Color("e8ece7")
+	light_node.light_energy=.70
 	light_node.shadow_enabled=true
 	light_node.rotation_degrees=Vector3(-48,29,-12)
 	add_child(light_node)
@@ -157,7 +157,7 @@ func terrain_color(x: float,z: float,y: float) -> Color:
 	var fleck:float = small_noise.get_noise_2d(x,z)
 	var c := Color("74834f")
 	if x > 23.0 and z < 24.0:
-		c = Color("b08c55").lerp(Color("896b46"),.37+fleck*.22)
+		c = Color("8d8357").lerp(Color("726b51"),.37+fleck*.22)
 	elif x < -11.0 and z > -21.0:
 		c = Color("526f57")
 	elif z < -23.0:
@@ -297,7 +297,7 @@ func build_old_road() -> void:
 func build_stone_ridges() -> void:
 	# Distant vertical silhouettes provide a sense of region beyond the meadow.
 	var ridge_stone := textured("res://assets/textures/stone.png",Color("817d70"))
-	for p in [Vector3(-49,0,-39),Vector3(-41,0,-45),Vector3(-56,0,-48),Vector3(51,0,-35),Vector3(48,0,-46)]:
+	for p in [Vector3(-52,0,-49),Vector3(-57,0,-52),Vector3(54,0,-48)]:
 		var spire=SIM_OBJECT.new()
 		spire.configure(self,"stone",next_sim_id)
 		next_sim_id+=1
@@ -308,7 +308,7 @@ func build_stone_ridges() -> void:
 		for j in range(3):
 			var offset_x:float=sin(float(j)*2.3+p.x)*1.5
 			var offset_z:float=cos(float(j)*1.8+p.z)*1.1
-			var tall:float=5.0+float(j)*2.8
+			var tall:float=3.4+float(j)*1.9
 			ART.cone(spire,Vector3(offset_x,tall*.43,offset_z),1.8+float(j)*.38,tall,ridge_stone,.35,7)
 			add_solid_box(spire, Vector3(offset_x,tall*.44,offset_z), Vector3(2.5+float(j)*.5, tall*.85, 2.5+float(j)*.5), "RockOutcropSolid")
 	# One very large dead tree, deliberately isolated on a hill.
@@ -414,12 +414,14 @@ func build_landmarks() -> void:
 	cabin.position = Vector3(29, height_at(29, 8), 8)
 	cabin.rotation.y = -.28
 	add_child(cabin)
-	var cottage_asset: PackedScene = load("res://assets/models/authored/Cottage_The_Hermit.glb")
-	if cottage_asset != null:
-		var cottage_model := cottage_asset.instantiate()
+	# Normalize visual architecture to cottage height. Authored meshes may use
+	# arbitrary author units; physics wall geometry is in metres.
+	if EXTERNAL_ART.attach_scaled(cabin, "res://assets/models/authored/Cottage_The_Hermit.glb", 5.7):
+		var cottage_model: Node3D = cabin.get_node("CC0ImportedArt") as Node3D
 		cottage_model.name = "TimberStoneCottage"
-		cabin.add_child(cottage_model)
 		apply_cottage_photographic_materials(cottage_model)
+	else:
+		push_error("VERBA cottage asset failed to import")
 	# An independently solid cottage shell with doorway, floor, chimney and walls.
 	# The source GLB is visual artwork only and supplies NO physics by default.
 	add_solid_box(cabin, Vector3(-3.02, 1.8, 0), Vector3(.42, 3.5, 5.5), "WestCottageWall")
@@ -493,93 +495,74 @@ func apply_cottage_photographic_materials(root: Node) -> void:
 		mesh_child.material_override = m
 
 func build_forest() -> void:
-	# Curated zones: sparse meadow, cool stream, amber eastern grove, dark ridge.
-	for i in range(38):
-		var x=rng.randf_range(-59,59)
-		var z=rng.randf_range(-59,59)
-		var near_meadow:bool= (x*x+(z-11.0)*(z-11.0))<175.0
-		var near_path:bool=absf(x-sin((19.0-z)*.18)*2.7)<6.0 and z>-32 and z<27
-		var near_ruin:bool=Vector2(x,z).distance_to(Vector2(4,-35))<12.0
-		var near_cabin:bool=Vector2(x,z).distance_to(Vector2(29,8))<8.0
-		if near_meadow or near_path or near_ruin or near_cabin: continue
-		if absf(x-stream_x(z))<6.8: continue
-		var kind: String = "autumn" if x>20 else "pine" if z<-28 else "broadleaf"
-		spawn_tree(Vector3(x,height_at(x,z),z),kind,rng.randf_range(.72,1.65))
-	# A single skeletal tree as an intentional landmark to the west.
-	spawn_tree(Vector3(-11,height_at(-11,12),12),"dead",1.65)
-	# Golden grove anchor near cottage with visible separation.
-	for a in [Vector2(18,2),Vector2(42,12),Vector2(36,-3),Vector2(21,20),Vector2(40,24)]:
-		spawn_tree(Vector3(a.x,height_at(a.x,a.y),a.y),"autumn",rng.randf_range(1.1,1.65))
+	# Three deliberately separate groves. Give the starting field actual
+	# breathing room and keep the old road visually navigable.
+	for i in range(32):
+		var x: float = rng.randf_range(-59.0, 59.0)
+		var z: float = rng.randf_range(-59.0, 59.0)
+		var d_spawn: float = Vector2(x,z).distance_to(Vector2(0,26))
+		var d_cairn: float = Vector2(x,z).distance_to(Vector2(3.1,16))
+		var near_road: bool = absf(x - sin((19.0 - z) * .18) * 2.7) < 8.0 and z > -34 and z < 29
+		var near_ruin: bool = Vector2(x,z).distance_to(Vector2(4,-35)) < 14.0
+		var near_cabin: bool = Vector2(x,z).distance_to(Vector2(29,8)) < 12.0
+		if d_spawn < 21.0 or d_cairn < 11.0 or near_road or near_ruin or near_cabin:
+			continue
+		if absf(x-stream_x(z))<7.7: continue
+		var kind: String = "autumn" if x > 22 else "dead" if z < -37 and rng.randf() < 0.15 else "broadleaf"
+		spawn_tree(Vector3(x,height_at(x,z),z),kind,rng.randf_range(.84,1.17))
+	# The tree-line isn't a uniform ring; include a few distant silhouettes.
+	for p in [Vector2(-43,29),Vector2(-51,17),Vector2(39,-8),Vector2(49,18)]:
+		spawn_tree(Vector3(p.x,height_at(p.x,p.y),p.y),"autumn" if p.x>0 else "broadleaf",1.12)
+	# One skeletal marker, well away from where the camera starts.
+	spawn_tree(Vector3(-37,height_at(-37,31),31),"dead",1.26)
 
 func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
-	# Irregular tapered bole, three-dimensional crown, twigs and articulated leaves.
-	# Authored canopy gaps keep the animal silhouettes visible through the grove.
+	# Every tree is a separate living ecological object, collision obstacle and
+	# spell target, but renders as a REAL authored Quaternius glTF with bark,
+	# alpha foliage and physically scaled geometry.
 	var node=SIM_OBJECT.new()
 	node.configure(self,"dead_tree" if kind=="dead" else "tree",next_sim_id,scale_factor)
-	next_sim_id += 1
+	next_sim_id+=1
 	sim_objects.append(node)
 	node.name="%sTree" % kind.capitalize()
 	node.position=p
-	node.scale=Vector3.ONE*scale_factor
+	node.scale=Vector3.ONE*clampf(scale_factor,0.82,1.25)
 	add_child(node)
-	navigation_blockers.append(Vector3(p.x, 0.0, p.z))
+	navigation_blockers.append(Vector3(p.x,0.0,p.z))
 	flora.append(node)
 	var r:=RandomNumberGenerator.new()
 	r.seed=int(absf(p.x*261.7+p.z*991.2))+rng.randi_range(0,8000)
-	var trunk_h:float=7.5 if kind=="pine" else 5.0 if kind!="dead" else 8.7
-	var dark:Material=bark_dark if kind=="pine" or kind=="dead" else bark_mat
-	var trunk_width:float = .31 if kind=="pine" else .45
-	# Optional CC0 trees replace the procedural mesh while keeping the same
-	# ecology state and collision body. Installed via INSTALL_VERBA_ASSETS.bat.
-	var external_name: String = "tree3.glb" if kind == "pine" else "tree2.glb" if kind == "autumn" else "tree1.glb"
-	var external: bool = kind != "dead" and EXTERNAL_ART.attach_scaled(node, "res://assets/models/cc0/" + external_name, 7.5 if kind == "pine" else 9.0)
-	if not external:
-		ART.bone(node,Vector3(0,-.1,0),Vector3(.09,trunk_h,0),trunk_width,trunk_width*.38,dark,11)
-		for root_i in range(5):
-			var a:float=TAU*float(root_i)/5.0+r.randf_range(-.25,.25)
-			ART.bone(node,Vector3(.06,.54,0),Vector3(cos(a)*r.randf_range(.65,1.2),.02,sin(a)*r.randf_range(.65,1.2)),.13,.018,dark,6)
-		var ends:Array=[]
-		if kind == "pine":
-			for level in range(7):
-				var f:float=float(level)/7.0
-				var height:float=1.8+f*6.3
-				for branch_i in range(8):
-					var angle:float=TAU*float(branch_i)/8.0+f*2.5
-					var reach:float=3.0*(1.0-f*.82)*r.randf_range(.78,1.14)
-					var tip:=Vector3(cos(angle)*reach,height-.35+f*.25,sin(angle)*reach)
-					ART.bone(node,Vector3(.05,height,0),tip,.13*(1.0-f*.5),.026,dark,7)
-					ends.append(tip)
-			var crown:=Node3D.new()
-			crown.name="LivingCanopy"
-			node.add_child(crown)
-			FOLIAGE.make_conifer_needles(crown,ends,r.randi())
-		else:
-			for b in range(7):
-				var theta:float=TAU*float(b)/7.0+r.randf_range(-.25,.25)
-				var start:=Vector3(.07,trunk_h*r.randf_range(.52,.78),0)
-				var end:=Vector3(cos(theta)*r.randf_range(2.1,3.6),trunk_h+r.randf_range(-.3,1.9),sin(theta)*r.randf_range(1.9,3.45))
-				ART.bone(node,start,end,.20,.045,dark,8)
-				for twig in range(3):
-					var twig_theta:float=theta+r.randf_range(-.75,.75)
-					var twig_tip:=end+Vector3(cos(twig_theta)*r.randf_range(.45,1.4),r.randf_range(-.25,1.1),sin(twig_theta)*r.randf_range(.45,1.5))
-					ART.bone(node,end,twig_tip,.07,.015,dark,6)
-					ends.append(twig_tip)
-			if kind!="dead":
-				var crown:=Node3D.new()
-				crown.name="LivingCanopy"
-				node.add_child(crown)
-				FOLIAGE.make_broadleaf_crown(crown,ends,kind,r.randi())
+	var source_name: String
+	var target_height: float
+	match kind:
+		"autumn":
+			var variants: Array[String] = ["MapleTree_1.gltf","MapleTree_2.gltf","MapleTree_3.gltf"]
+			source_name=variants[r.randi_range(0,variants.size()-1)]
+			target_height=7.3
+		"dead":
+			source_name="DeadTree_1.gltf" if r.randf()<0.5 else "DeadTree_3.gltf"
+			target_height=8.1
+		_:
+			source_name="BirchTree_1.gltf" if r.randf()<0.5 else "BirchTree_3.gltf"
+			target_height=7.1
+	var path: String="res://assets/models/cc0/nature/"+source_name
+	var attached: bool=EXTERNAL_ART.attach_scaled(node,path,target_height)
+	if not attached:
+		# Keep a solid landmark rather than fake orange canopy blobs or
+		# thousands of loose rectangular procedural leaves.
+		push_warning("VERBA textured tree asset missing: "+path)
+		ART.bone(node,Vector3.ZERO,Vector3(.08,4.7,0),.32,.12,bark_mat,9)
 	var collider:=StaticBody3D.new()
-	collider.name="TrunkCollider"
+	collider.name="SolidTreeTrunk"
 	collider.collision_layer=4|16
 	collider.collision_mask=0
 	collider.set_meta("flora_ref",node)
 	var shape:=CollisionShape3D.new()
 	var cylinder:=CylinderShape3D.new()
-	cylinder.height=trunk_h*.85
-	cylinder.radius=trunk_width
+	cylinder.height=4.7
+	cylinder.radius=.43 if kind=="autumn" else .29
 	shape.shape=cylinder
-	shape.position.y=trunk_h*.42
+	shape.position.y=2.35
 	collider.add_child(shape)
 	node.add_child(collider)
 	return node
