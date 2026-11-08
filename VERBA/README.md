@@ -1,23 +1,29 @@
 # VERBA — The Hollow Vale
 
-Native Godot 4 first-person Latin-magic RPG development.
+This branch contains the **complete Godot 4 project** at [VERBA/game](./game), with the eight authored GLB assets and eighteen photo-derived maps already bundled. No Windows asset installer is required.
 
-## Branch purpose
-This `verba-godot` branch is the dedicated VERBA development workspace inside `gfp-games`. Existing website files on `main` are untouched.
+## Open the game
 
-## Current deliverable
-**v1.2.1 local Godot package**: 8 authored 3D models, 18 bundled photo-derived maps, player movement, animal ecology and physics/navigation source. The local project ZIP is provided in the ChatGPT conversation. It contains the full project; **it has NOT been uploaded to this branch yet**. This repository currently tracks the integration plan and QA workflow rather than a runnable project.
+1. Download this branch as a ZIP from GitHub, or clone using:
+   `git clone --branch verba-godot https://github.com/gfp-prod/gfp-games.git`
+2. Open Godot 4.5 or newer. Import **`VERBA/game/project.godot`** and click **Edit** to let Godot import its assets.
+3. Run the scene with F5.
 
-The previous optional `INSTALL_VERBA_ASSETS.bat` is no longer required. The packaged project can be imported and run without downloading additional assets.
+The only first-run processing required is Godot's normal internal asset import. **Do not run any asset download scripts.**
 
-## Important requirements
-- No assets may depend on running a Windows `.bat` or PowerShell installer.
-- Imported meshes must have believable scale, physics collision, and Godot-compatible materials.
-- Creatures must not walk through trees, cottage walls, or large rocks.
-- WASD and raw mouse-look only. No drag-to-look.
-- Use native first-person held-book animation, and world-space Latin effects.
-- Release only after Godot engine importer and runtime acceptance tests pass.
-- Differentiate original photo-derived placeholders from actual CC0 scanned PBR maps.
+## Controls
 
-## GitHub migration
-The complete Godot project is currently in the supplied archive, pending GitHub source/binary upload. Do not consider CI results valid until `VERBA/project.godot` and all bundled game assets are committed.
+WASD move; mouse look (click in game to capture); Shift sprint; Space jump; G raise the grimoire; Enter type/cast a Latin incantation; E collect an object; Esc release mouse.
+
+## What's present, and what's not
+
+- Project source is checked into GitHub under `VERBA/game`; original full ZIP is reconstructed by `verba-expand.yml` from the stored packed archive segments.
+- Eight original modeled assets include cottage, deer, wolf, fox, crow, hare, and open/closed books.
+- Eighteen **photo-derived** material JPEGs were included in v1.2 and remain bundled. They are not claimed to be externally downloaded Poly Haven PBR scans.
+- Native Godot automated validation is configured in `.github/workflows/verba-check.yml` and must pass before calling the engine build verified.
+
+## Notes
+
+This is still an early development build, not an art-complete RPG. Animal navigation, collision, first-person movement and game feel require native in-engine QA. Please report Godot error logs and screenshots for any failing gates.
+
+The existing web project on `main` has not been changed. This `gfp-games` repository is public; the `verba-godot` branch is public as well.
