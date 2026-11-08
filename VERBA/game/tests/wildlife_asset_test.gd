@@ -2,6 +2,7 @@ extends SceneTree
 ## VERBA's wildlife must use genuinely different imported skinned models, not legacy primitives.
 const ROOT := "res://assets/models/cc0/wildlife/"
 const NAMES := ["Deer.gltf", "Stag.gltf", "Fox.gltf", "Wolf.gltf"]
+const CREATURE = preload("res://scripts/creature.gd")
 func _initialize() -> void:
 	for item in NAMES:
 		var path: String = ROOT + item
@@ -20,6 +21,29 @@ func _initialize() -> void:
 			return
 		print("VERBA wildlife OK: ", item, " clips: ", player.get_animation_list())
 		actor.free()
+
+	# A model file existing on disk is insufficient: test the actual creature
+	# spawning code so an old procedural placeholder cannot silently remain.
+	for species in ["deer", "fox", "wolf"]:
+		var creature = CREATURE.new()
+		creature.species = species
+		creature.rng.seed = 567
+		root.add_child(creature)
+		if not creature.using_library_mesh:
+			fail("Creature still rendering legacy model: " + species)
+			creature.queue_free()
+			return
+		if creature.animation_player == null:
+			fail("Creature rig has no playing AnimationPlayer: " + species)
+			creature.queue_free()
+			return
+		if creature.model.find_child("RiggedWildlife", true, false) == null:
+			fail("Creature isn't showing imported mesh: " + species)
+			creature.queue_free()
+			return
+		print("VERBA SPAWN USES REAL RIG: ", species, " animation=", creature.animation_player.current_animation)
+		root.remove_child(creature)
+		creature.free()
 	print("VERBA WILDLIFE IMPORT AND ANIMATION PASS")
 	quit(0)
 func fail(message: String) -> void:
