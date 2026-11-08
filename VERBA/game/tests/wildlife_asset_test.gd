@@ -60,7 +60,25 @@ func _run_checks() -> void:
 		if not creature.animation_player.is_playing():
 			fail("Movement animation not playing for " + species)
 			return
-		print("VERBA RIG MOVEMENT: ", species, " clip=", creature.animation_player.current_animation, " height=", actual_height)
+		var skeleton: Skeleton3D = art.find_child("Skeleton3D", true, false) as Skeleton3D
+		if skeleton == null or skeleton.get_bone_count() < 2:
+			fail("No actual bone rig for " + species)
+			return
+		creature.animation_player.seek(0.0, true)
+		var initial_poses: Array[Transform3D] = []
+		for bone_index in range(skeleton.get_bone_count()):
+			initial_poses.append(skeleton.get_bone_pose(bone_index))
+		creature.animation_player.advance(0.24)
+		var movement: float = 0.0
+		for bone_index in range(skeleton.get_bone_count()):
+			var before: Transform3D = initial_poses[bone_index]
+			var after: Transform3D = skeleton.get_bone_pose(bone_index)
+			movement = maxf(movement, before.origin.distance_to(after.origin))
+			movement = maxf(movement, before.basis.get_rotation_quaternion().angle_to(after.basis.get_rotation_quaternion()))
+		if movement < 0.001:
+			fail("Skeletal bones did not animate in walk clip for " + species)
+			return
+		print("VERBA RIG MOVEMENT: ", species, " clip=", creature.animation_player.current_animation, " height=", actual_height, " bone_delta=", movement)
 
 		creature.free()
 	print("VERBA WILDLIFE IMPORT AND ANIMATION PASS")
