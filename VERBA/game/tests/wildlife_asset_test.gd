@@ -52,6 +52,8 @@ func _run_checks() -> void:
 			return
 		var bounds: AABB = creature._model_bounds(art)
 		var actual_height: float = bounds.size.y * art.scale.y
+		var current_dimensions: Vector3 = bounds.size * art.scale
+		print("VERBA DIMENSIONS species=", species, " asset=", art.name, " raw_bounds=", bounds, " scaled_dimensions=", current_dimensions, " scale=", art.scale, " position=", art.position)
 		var target_height: float = creature._desired_height()
 		if absf(actual_height - target_height) > 0.03:
 			fail("Size mismatch for %s: %.2f vs %.2f m" % [species,actual_height,target_height])
