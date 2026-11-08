@@ -28,7 +28,11 @@ func _initialize() -> void:
 		var creature = CREATURE.new()
 		creature.species = species
 		creature.rng.seed = 567
-		root.add_child(creature)
+		# Build the visual node directly: SceneTree._initialize runs before
+		# normal scene-tree _ready callbacks are dispatched.
+		creature.model = Node3D.new()
+		creature.add_child(creature.model)
+		creature.build_model()
 		if not creature.using_library_mesh:
 			fail("Creature still rendering legacy model: " + species)
 			creature.queue_free()
@@ -42,7 +46,6 @@ func _initialize() -> void:
 			creature.queue_free()
 			return
 		print("VERBA SPAWN USES REAL RIG: ", species, " animation=", creature.animation_player.current_animation)
-		root.remove_child(creature)
 		creature.free()
 	print("VERBA WILDLIFE IMPORT AND ANIMATION PASS")
 	quit(0)
