@@ -36,8 +36,8 @@ func run_checks() -> void:
 	sphere.radius = 0.60
 	block_shape.shape = sphere
 	animal_blocker.add_child(block_shape)
-	animal_blocker.global_position = player.global_position + Vector3(0.0, 10.9, -1.5)
 	root.add_child(animal_blocker)
+	animal_blocker.global_position = player.global_position + Vector3(0.0, 10.9, -1.5)
 	await physics_frame
 	var elevated: Transform3D = player.global_transform
 	elevated.origin += Vector3.UP * 10.0
