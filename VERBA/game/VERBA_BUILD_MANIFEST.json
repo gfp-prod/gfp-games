@@ -1,0 +1,650 @@
+{
+  "build": "1.2.1",
+  "files": [
+    {
+      "path": ".github/workflows/godot-tests.yml",
+      "size": 945,
+      "sha256": "ade66b54262f478fd8c207e3be88eb026c51c909e0db93247411358e329a04c1"
+    },
+    {
+      "path": ".gitignore",
+      "size": 138,
+      "sha256": "8f879e71ad309f7f13928b216ba2ffc64d5b644cda154cba4b4c6761fc9e1aed"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "size": 293,
+      "sha256": "9d1ee2af2c55da7be5a219b197b6ceadf2d838c499f4ec753aa7d0128a26e8db"
+    },
+    {
+      "path": "KNOWN_ISSUES.md",
+      "size": 853,
+      "sha256": "6f14914d7908c25652d3e702bbcd02183feeaad146fe0059f244643256a47039"
+    },
+    {
+      "path": "README.md",
+      "size": 1826,
+      "sha256": "d6990a873bae6d64615b71f156f5af37e183efd27a45e5a23a17da39fa2277d7"
+    },
+    {
+      "path": "RUN_VERBA.bat",
+      "size": 387,
+      "sha256": "a82a84ce3a0c52d397e1b34fb3534c2991ea4fd7a757d48fb4978af4ed778ba9"
+    },
+    {
+      "path": "START_HERE.txt",
+      "size": 100,
+      "sha256": "caa101ac2a8b88747b916daf2da48f35004a08a54f438bb6bc1a18a53fb9b352"
+    },
+    {
+      "path": "TEST_VERBA.bat",
+      "size": 629,
+      "sha256": "86a42c453863c99eebf37864930588233e26c572a5ece872fa00956ddfcf774b"
+    },
+    {
+      "path": "assets/materials/stream.gdshader",
+      "size": 518,
+      "sha256": "acfaf91e7972fde23c0cac2c36558d686a2ac61fd6c82a3346eee483de03979d"
+    },
+    {
+      "path": "assets/materials/terrain.gdshader",
+      "size": 1391,
+      "sha256": "049cb09bd2f67b7e0094d54d93d5d3b6d6f297d50def2c23301fc16b6a8feebc"
+    },
+    {
+      "path": "assets/models/authored/Cottage_The_Hermit.glb",
+      "size": 1684052,
+      "sha256": "da2e5db027e2cb31fc46f8a763690e61741002af568c29f0a3f5074a0e91fb18"
+    },
+    {
+      "path": "assets/models/authored/Crow_Black.glb",
+      "size": 72772,
+      "sha256": "2cbbee613d4d6afbf8587c50090a3521391d60f210c7a6057b597376a5101e81"
+    },
+    {
+      "path": "assets/models/authored/Deer_Stag.glb",
+      "size": 667804,
+      "sha256": "9b7f3f7a2d338cd7f38e2e76334cb65c19c4c6650d36bd50b2c79a37625eff26"
+    },
+    {
+      "path": "assets/models/authored/Fox_Red.glb",
+      "size": 955584,
+      "sha256": "e4fe3d4a4827e8c3181d8ba59f5c3e3935d260eb190cbfa29a1a3342065271e8"
+    },
+    {
+      "path": "assets/models/authored/Grimoire_Closed.glb",
+      "size": 252124,
+      "sha256": "d576c893d76f0535c37b75bb0e9a6dd1290cb40ed8688ddfae1effdfc8241d2e"
+    },
+    {
+      "path": "assets/models/authored/Grimoire_Open.glb",
+      "size": 481808,
+      "sha256": "6642a2a2dc04547b413536dada46847af8fca52741772f951cc485cc6d97b072"
+    },
+    {
+      "path": "assets/models/authored/Hare_Brown.glb",
+      "size": 395296,
+      "sha256": "1812b0a6b78a60d3fb36981fb885a3d668c8b02e2b0bd4e2b4deda53016d0920"
+    },
+    {
+      "path": "assets/models/authored/Wolf_Gray.glb",
+      "size": 699160,
+      "sha256": "1b6a6dd9f67e9f7a0803519011c5aec987850d8530b19938a84cb6d04050ca97"
+    },
+    {
+      "path": "assets/models/cc0/README.md",
+      "size": 162,
+      "sha256": "b0e52f1f2a71901e13ca23c6ee3b2a2dd5b100ec1cc7a7335c8de65dff8874f2"
+    },
+    {
+      "path": "assets/textures/amber_ground.png",
+      "size": 214677,
+      "sha256": "7701c145e6defe85ad12400154814dd8ffdb5929f7bf956c77dd24cfd050717a"
+    },
+    {
+      "path": "assets/textures/amber_ground_normal.png",
+      "size": 261798,
+      "sha256": "065e47df85b576f409cbb42565b17a26d6429e93b6d8e514810933543028c5da"
+    },
+    {
+      "path": "assets/textures/amber_ground_roughness.png",
+      "size": 45611,
+      "sha256": "ae812d09beb1f08f5f02bd70612c1c03a6dc96871113ed901a73754dfdae3d04"
+    },
+    {
+      "path": "assets/textures/authored/aged_vellum.png",
+      "size": 185362,
+      "sha256": "e3fe20df4487fd47261a6c4923ca99a20d469c8962637c2b71da1b90775ba1d6"
+    },
+    {
+      "path": "assets/textures/authored/deer_fur.png",
+      "size": 252179,
+      "sha256": "909a3af0a9c607605fe960d0866c3497c31956b3d081452a9b6cc581194b3532"
+    },
+    {
+      "path": "assets/textures/authored/fox_fur.png",
+      "size": 256703,
+      "sha256": "adb9aa171a10a162f621203140a29697aa589276f8f04ee0bf3da13dc9dafb7d"
+    },
+    {
+      "path": "assets/textures/authored/grey_wolf_fur.png",
+      "size": 222127,
+      "sha256": "88dbfc8d9cb1ae306f4cdf8005766e75508283ca027896a0c76efd9c13337946"
+    },
+    {
+      "path": "assets/textures/authored/lichen_slate.png",
+      "size": 202935,
+      "sha256": "69c4c2bc74434070365dbc45c6207c455710ee9003bc0dba2d5140b653bdd09b"
+    },
+    {
+      "path": "assets/textures/authored/limewashed_plaster.png",
+      "size": 186903,
+      "sha256": "6d180593e442f6fdd12dca46a8852d75f9e0888dcf1a4bdfb29af58efc693021"
+    },
+    {
+      "path": "assets/textures/authored/oxblood_leather.png",
+      "size": 192206,
+      "sha256": "82592cda88c01665ea5bc451add175f14f23060c172da4190dfecc82771cea0a"
+    },
+    {
+      "path": "assets/textures/authored/weathered_oak.png",
+      "size": 275025,
+      "sha256": "fc6ccd1bd6f322f3e1f761691da674fee8f52a07b44dbf4c963dbe453184dae4"
+    },
+    {
+      "path": "assets/textures/authored/wet_fieldstone.png",
+      "size": 188724,
+      "sha256": "743fa4b616c0f5937431d10afa2f42f4a05e4a044a7a392e6b23a957d4b85963"
+    },
+    {
+      "path": "assets/textures/bark.png",
+      "size": 197440,
+      "sha256": "1b58072e9294a0b7d71f560b11295b7222d707a6e2b108f86fda123c0daed8de"
+    },
+    {
+      "path": "assets/textures/bark_normal.png",
+      "size": 97673,
+      "sha256": "aa23b99dacda0360cf75fc9295568b106589cc65ac67d392590628924f7d3644"
+    },
+    {
+      "path": "assets/textures/bark_roughness.png",
+      "size": 920,
+      "sha256": "ad0a65720cde4b8608f182564d76c5396484e813ffb4e2245e2c4014f01b360c"
+    },
+    {
+      "path": "assets/textures/dry_grass.png",
+      "size": 173199,
+      "sha256": "61410a5cd326081251fedf793dd611bba797196b4c6a2eff40b09687a1c637cc"
+    },
+    {
+      "path": "assets/textures/earth_path.png",
+      "size": 191265,
+      "sha256": "03d8734fcaa11cb68c7cfd75d86f7bae5b4d5e804ef14e7470e2f4c21da9b5b7"
+    },
+    {
+      "path": "assets/textures/earth_path_normal.png",
+      "size": 219102,
+      "sha256": "0e5f9964c15cc282998b372f0fd5d6f0982a3c8caa4af51120b2150a1a3fbf98"
+    },
+    {
+      "path": "assets/textures/earth_path_roughness.png",
+      "size": 42230,
+      "sha256": "1c22f8451f5abfd49b8399aa750aeee3d0acdf5845c4d8d4c3b1281782588bca"
+    },
+    {
+      "path": "assets/textures/fallen_leaves_atlas.png",
+      "size": 7451,
+      "sha256": "7f866bdc05ac7ca604d7bb050282a6dc32700ed9db353a95b5b42007904d3e74"
+    },
+    {
+      "path": "assets/textures/fern_atlas.png",
+      "size": 17558,
+      "sha256": "f42ba83674c65f99ff9d83f917949c183cd01738b816a0bff270d8bfdcfee2a7"
+    },
+    {
+      "path": "assets/textures/grass.png",
+      "size": 185672,
+      "sha256": "ebe136875327d31579ba631711648631e937d0878be689a12ac3d1b1f74444e1"
+    },
+    {
+      "path": "assets/textures/leaf_amber.png",
+      "size": 178986,
+      "sha256": "5b62348787bd0eb2e03e79ca39d710fa6968f636b33844708aebe86101f0a8be"
+    },
+    {
+      "path": "assets/textures/leaf_blue.png",
+      "size": 167637,
+      "sha256": "babcf99e0c39efc70633391d7461688b2292eb021258b343c8b3eabb070af145"
+    },
+    {
+      "path": "assets/textures/leaf_green.png",
+      "size": 167133,
+      "sha256": "f9f9c4cc30e5fcb7a3601e4cbcf7843427cc88461075511e152cae6ae449619c"
+    },
+    {
+      "path": "assets/textures/leather.png",
+      "size": 294346,
+      "sha256": "f8032961d6410273ac790580a63ba1a5af2217a599c30355e3762f55bb73feaf"
+    },
+    {
+      "path": "assets/textures/meadow_ground.png",
+      "size": 292239,
+      "sha256": "765caddd9c55736f43bb880b6305890319e6e2faa092b078141cc0ef6d599884"
+    },
+    {
+      "path": "assets/textures/meadow_ground_normal.png",
+      "size": 361862,
+      "sha256": "58c361bde6e713e94addad453dfe98fc750e9c8edab8cbd1914ebf6d3b418573"
+    },
+    {
+      "path": "assets/textures/meadow_ground_roughness.png",
+      "size": 63328,
+      "sha256": "8c003488a2c5611db06c31d463c201a0529be7a18240a00bd5f4759647e96529"
+    },
+    {
+      "path": "assets/textures/moss.png",
+      "size": 255222,
+      "sha256": "282a97925f36e758528d5fba8b741b5968369f68ee39200c52bfa35e0df23509"
+    },
+    {
+      "path": "assets/textures/moss_normal.png",
+      "size": 371709,
+      "sha256": "e613b1c058a5152617df17e6af6ac9e0e4f87624313d336789e8a75fefd4156c"
+    },
+    {
+      "path": "assets/textures/moss_roughness.png",
+      "size": 64971,
+      "sha256": "cd4342e8bc128ec33fb4d10507e22907c30e6b43a0908adf89d4406884772716"
+    },
+    {
+      "path": "assets/textures/real/README.txt",
+      "size": 431,
+      "sha256": "67c3e98bb3c2b327e0176c6d9f0203940e92ecd91192e45af81a6276aaebee59"
+    },
+    {
+      "path": "assets/textures/real/amber_ground_diffuse.jpg",
+      "size": 502823,
+      "sha256": "64b06882c8a99dab4f4676a9ff82ceab50510f4058c37bc4a17626f06e70d3c3"
+    },
+    {
+      "path": "assets/textures/real/amber_ground_normal.jpg",
+      "size": 313141,
+      "sha256": "ad0bd166e4b7f7e32cf01a19d1197476b23c7cd65f94aa8a1549733053413e2b"
+    },
+    {
+      "path": "assets/textures/real/cottage_plaster_diffuse.jpg",
+      "size": 157886,
+      "sha256": "2e1a13c369990feda86a32b1f52ab15e1c61f67ed9c1379684b6b83af8f5d437"
+    },
+    {
+      "path": "assets/textures/real/cottage_plaster_normal.jpg",
+      "size": 157313,
+      "sha256": "36fc6e005e523047af7f1af7bfc00c77efb6140039b019d025f0466d3271af6c"
+    },
+    {
+      "path": "assets/textures/real/cottage_roof_diffuse.jpg",
+      "size": 192291,
+      "sha256": "881e43c05ac6288697d0f89ca8363c58921e7ca1eff6da55b33b337e692abb25"
+    },
+    {
+      "path": "assets/textures/real/cottage_roof_normal.jpg",
+      "size": 157313,
+      "sha256": "36fc6e005e523047af7f1af7bfc00c77efb6140039b019d025f0466d3271af6c"
+    },
+    {
+      "path": "assets/textures/real/earth_path_diffuse.jpg",
+      "size": 410646,
+      "sha256": "9c034cc0b4d0f8783456d6b7bc8ec69c63389fdcf2cf9c3f9a53033533ddc08c"
+    },
+    {
+      "path": "assets/textures/real/earth_path_normal.jpg",
+      "size": 336306,
+      "sha256": "4fb0dca61f999e6374d97d2cebb48436420dd242d7a4bb4dd2a2d916df67449f"
+    },
+    {
+      "path": "assets/textures/real/meadow_ground_diffuse.jpg",
+      "size": 484852,
+      "sha256": "28cc7052bd6497b5a61b2db72e05d98ffe88ba7cff296f7e1ca27652e15bf22d"
+    },
+    {
+      "path": "assets/textures/real/meadow_ground_normal.jpg",
+      "size": 313141,
+      "sha256": "ad0bd166e4b7f7e32cf01a19d1197476b23c7cd65f94aa8a1549733053413e2b"
+    },
+    {
+      "path": "assets/textures/real/moss_diffuse.jpg",
+      "size": 472409,
+      "sha256": "4ba63b8724629be638ce4fb391c39550d6d20b7b5e7bc8c19435517c85e95afc"
+    },
+    {
+      "path": "assets/textures/real/moss_normal.jpg",
+      "size": 313141,
+      "sha256": "ad0bd166e4b7f7e32cf01a19d1197476b23c7cd65f94aa8a1549733053413e2b"
+    },
+    {
+      "path": "assets/textures/real/river_silt_diffuse.jpg",
+      "size": 421772,
+      "sha256": "cc06bbd3a24e5ca9109d22f595ab8bc8998883bcd557b0503953b7cd1c533987"
+    },
+    {
+      "path": "assets/textures/real/river_silt_normal.jpg",
+      "size": 336306,
+      "sha256": "4fb0dca61f999e6374d97d2cebb48436420dd242d7a4bb4dd2a2d916df67449f"
+    },
+    {
+      "path": "assets/textures/real/stone_diffuse.jpg",
+      "size": 436195,
+      "sha256": "4c987471d1e3f1a0b7c772ea808bb2f0b0d8621c72c59347e973cc9018871c59"
+    },
+    {
+      "path": "assets/textures/real/stone_normal.jpg",
+      "size": 336306,
+      "sha256": "4fb0dca61f999e6374d97d2cebb48436420dd242d7a4bb4dd2a2d916df67449f"
+    },
+    {
+      "path": "assets/textures/real/woodland_ground_diffuse.jpg",
+      "size": 484267,
+      "sha256": "69a75b65e6c9da8a22df5b94f2770aaebd643187d03d92d58232fca3032308f7"
+    },
+    {
+      "path": "assets/textures/real/woodland_ground_normal.jpg",
+      "size": 313141,
+      "sha256": "ad0bd166e4b7f7e32cf01a19d1197476b23c7cd65f94aa8a1549733053413e2b"
+    },
+    {
+      "path": "assets/textures/river_silt.png",
+      "size": 270794,
+      "sha256": "98e52eabd521f07c1c0edfd80ce828d1f7dfc8459d4eedf98cd46f24156c2a4a"
+    },
+    {
+      "path": "assets/textures/river_silt_normal.png",
+      "size": 282425,
+      "sha256": "2af5830cad25b6cc8968b14b45aa8922001fb5de60c6d8c8b5270485bfe5d0dd"
+    },
+    {
+      "path": "assets/textures/river_silt_roughness.png",
+      "size": 48935,
+      "sha256": "98decba06482e776e54defac0e5fe9f1e195c12438142b9825e019e9ab29ade3"
+    },
+    {
+      "path": "assets/textures/roof_slate.png",
+      "size": 152833,
+      "sha256": "ec640f201936d5d056b03e19d8c8da2607a1cdd78931ea0250c02bfda8acf79f"
+    },
+    {
+      "path": "assets/textures/stone.png",
+      "size": 247608,
+      "sha256": "000ea0110c6caf69c5b094df53d75a5e95d5d4bb3f27ba23595d3c022b723843"
+    },
+    {
+      "path": "assets/textures/stone_normal.png",
+      "size": 197665,
+      "sha256": "351f4c86f9cc190fed3a7b40001987feafae54d904fdd863337b14841219f85e"
+    },
+    {
+      "path": "assets/textures/stone_roughness.png",
+      "size": 39865,
+      "sha256": "c7d261e8b976e3cdc6b3899e6ae4611d70d4fce0cc2fed3b690008b2bddecd4e"
+    },
+    {
+      "path": "assets/textures/vellum.png",
+      "size": 424779,
+      "sha256": "7577770741e6ab29fa8b8746648094fd9f6a9ae20b5822870f77c4391c619675"
+    },
+    {
+      "path": "assets/textures/wood.png",
+      "size": 379956,
+      "sha256": "85eb8605eab12bff27c63f98d29a9a8d9d78c81dcc4f6a2a34398f1775ff45a1"
+    },
+    {
+      "path": "assets/textures/woodland_ground.png",
+      "size": 264568,
+      "sha256": "cd7b157f86675631120e0162cb430a84b2833421eb41eaa3c73684ddc24e3986"
+    },
+    {
+      "path": "assets/textures/woodland_ground_normal.png",
+      "size": 335712,
+      "sha256": "5148f17e058ab9228c627c4ef587f300fd958c03cae75ca28796065835a4a855"
+    },
+    {
+      "path": "assets/textures/woodland_ground_roughness.png",
+      "size": 58950,
+      "sha256": "f30da266ce3b8726dd0703fe2e7e50e7940c94905b1399ea7c7d54c8dc6ea75e"
+    },
+    {
+      "path": "data/lexicon.json",
+      "size": 2562,
+      "sha256": "24eb90e666924d539b006c9d628968f75f8619ff9ecc3b3fe2609ba3cfc39875"
+    },
+    {
+      "path": "docs/ART_DIRECTION.md",
+      "size": 2354,
+      "sha256": "cb44d5bf42861e46ab3385be6b5772e5ca5ceda6385e0d4539d16570c86add85"
+    },
+    {
+      "path": "docs/ASSET_CREDITS_AND_PROVENANCE.md",
+      "size": 2053,
+      "sha256": "1de0f3259bc71b25126e5e774bffae842a287d90308633827164d18d79628ecf"
+    },
+    {
+      "path": "docs/ASSET_PREVIEW_OFFLINE.jpg",
+      "size": 92913,
+      "sha256": "4e1e4345801562cdb00b307b163b79e60c24936184b5cc6d6a068e970d01cec5"
+    },
+    {
+      "path": "docs/ASSET_SOURCES_V1.2.md",
+      "size": 1534,
+      "sha256": "500ccc34e11a0e532e1a09c06cf01ece5aa139c86c7ce7e190884034331fdfca"
+    },
+    {
+      "path": "docs/LATIN_AND_LEARNING.md",
+      "size": 1455,
+      "sha256": "21f36387908ab488a665b1c03c27c30330b868d8901b34df4c9d68ff0ee8fa99"
+    },
+    {
+      "path": "docs/LIVING_WORLD_SPEC.md",
+      "size": 5027,
+      "sha256": "a713566fd0679267e79b1a491596f4e167deef1ff5708ec754c9139e01b9d957"
+    },
+    {
+      "path": "docs/PHOTOGRAPHIC_MATERIALS.md",
+      "size": 1422,
+      "sha256": "2a952a3e2ff664a95c586d619be16932082ec33ceee686728738be34a1da9469"
+    },
+    {
+      "path": "docs/PHOTOGRAPHIC_TEXTURE_PREVIEW.jpg",
+      "size": 187276,
+      "sha256": "c854a2ffc936586e7b8e73c1538e9b67de8cb22438170297b94a9b07f4fedcfd"
+    },
+    {
+      "path": "docs/QA_GATES_V1.2.md",
+      "size": 1367,
+      "sha256": "1a56d833e169a87a7a8d3d5256f8da33758b4e0847698d8cc1aa70e1dfc55b6a"
+    },
+    {
+      "path": "docs/REAL_TEXTURE_SOURCES.md",
+      "size": 2429,
+      "sha256": "979c6955e5e9c1c98bcd1d68aa9efcd5b3413958db45d099ed5794ef9099eef8"
+    },
+    {
+      "path": "docs/VALIDATION_REPORT.md",
+      "size": 481,
+      "sha256": "0a5264d69a63ba547f0567eeea63110372a14c5f27930bd1d818d3ab71365d08"
+    },
+    {
+      "path": "docs/VERTICAL_SLICE_SPEC.md",
+      "size": 7410,
+      "sha256": "33700ff99feb46a4cb6a6eccb4582299d5572a497740e80549acb193ada0d7b0"
+    },
+    {
+      "path": "docs/VISUAL_BIBLE_V1.md",
+      "size": 2796,
+      "sha256": "2c4ccee703d3f95402082f05ec56b23a4d6447142dbabe3d84c1a6e4ecd70ca9"
+    },
+    {
+      "path": "legacy_reference/DESIGN.md",
+      "size": 5408,
+      "sha256": "7de2ee523af3e68b8dac0cd568ea2e869df9bc4993d32f7f201718bf8af4ce1b"
+    },
+    {
+      "path": "legacy_reference/MILESTONES-AND-ACCEPTANCE.md",
+      "size": 4399,
+      "sha256": "bd3443500cddacf89967bd081c175512321955856c6849f16952af650a97cac8"
+    },
+    {
+      "path": "main.tscn",
+      "size": 176,
+      "sha256": "55958cee9efcf90f35147095e480a9d686ba06aef39c65f8f41324dfa8e71983"
+    },
+    {
+      "path": "make_textures.py",
+      "size": 3133,
+      "sha256": "915353c716df27da52650f23df757b0420292a0992f72a9423dd749fd7616166"
+    },
+    {
+      "path": "project.godot",
+      "size": 838,
+      "sha256": "fd1115e553d0bef2c9fa740b8920b722a5d1795805344965dc194a632ccdeb0b"
+    },
+    {
+      "path": "scripts/art.gd",
+      "size": 4204,
+      "sha256": "960e4f26e15793f73d6fb519cd1ce46813ed64fc5c2e01fefc7f072c87465b19"
+    },
+    {
+      "path": "scripts/creature.gd",
+      "size": 12668,
+      "sha256": "d4b05af18ae1b0000fb8d4b4af5ab0dabb800cfbac558d3aab630b5bbf53be5d"
+    },
+    {
+      "path": "scripts/external_art.gd",
+      "size": 1383,
+      "sha256": "c3317c295506de96fdada161573ebe46fac5ecc83e8b3f69fcb15a206fc24aa8"
+    },
+    {
+      "path": "scripts/foliage.gd",
+      "size": 10200,
+      "sha256": "6698be6b9642fe44238f4d5f742aca2115479563dbf5599b32da44ab52f7e3a0"
+    },
+    {
+      "path": "scripts/grimoire.gd",
+      "size": 4890,
+      "sha256": "878ff390c78c09060d021f3a7c078f2db76356a4b9326e74a85dce8b282f7f39"
+    },
+    {
+      "path": "scripts/incantation.gd",
+      "size": 1201,
+      "sha256": "0941ddd6c5bab30591e2d04695ebf545c7a4e81b27f8f299a678916d7338eeb8"
+    },
+    {
+      "path": "scripts/magic.gd",
+      "size": 4920,
+      "sha256": "429e49c29fdddb41cec4c0bd791d0a65839a0129e60e38d48253c2b220f9f047"
+    },
+    {
+      "path": "scripts/navigation_builder.gd",
+      "size": 1881,
+      "sha256": "b4b296b6cc95ee3df955e7e4d3bb7ebfef146079d865caef9c926cee9a12a1e0"
+    },
+    {
+      "path": "scripts/pickup.gd",
+      "size": 2137,
+      "sha256": "481ca7a034d2e3abc2126d8a53e72f0c5ff459b82b73104554acc2a6dd392808"
+    },
+    {
+      "path": "scripts/player.gd",
+      "size": 18661,
+      "sha256": "b9666bdfa7ffa5ca9d3f0ca13404f4c72977772d7aa75d96312ec126efdb19e7"
+    },
+    {
+      "path": "scripts/sim_object.gd",
+      "size": 5734,
+      "sha256": "7e3db2183510273aba159f8dc9ef142f00edb71c2a6f630591d143a03be7779e"
+    },
+    {
+      "path": "scripts/world.gd",
+      "size": 37069,
+      "sha256": "83ee50e4aa9c6045b7b0d87c768e9cf65c83cb4a233f148f5f8b1eb250738318"
+    },
+    {
+      "path": "tests/check_project.py",
+      "size": 815,
+      "sha256": "c16e1d7612e1662dcfb005eb4c698d5bbedc2308eb6b97387587b51dac03c031"
+    },
+    {
+      "path": "tests/ecology_smoke_test.gd",
+      "size": 2230,
+      "sha256": "b5ac222fa59efebc8630928123112e8b707bc0d37716fbd3d3e8b39d9e9a6835"
+    },
+    {
+      "path": "tests/physics_navigation_test.gd",
+      "size": 1711,
+      "sha256": "598c42d063e6456382652dc1ec78b090fb1b306f7a744bd442c254aa4e6762d1"
+    },
+    {
+      "path": "tests/smoke_test.gd",
+      "size": 829,
+      "sha256": "00566eec3cb337165dea6071aabea45c903eed4aba3bf93a99f4e042b8ef901a"
+    },
+    {
+      "path": "tests/verify_art_assets.py",
+      "size": 1828,
+      "sha256": "65843d2a168913c12703077f1361c1a9997163c2aceb7909424cf3a73c3b847f"
+    },
+    {
+      "path": "tests/verify_authored_models.py",
+      "size": 1598,
+      "sha256": "85c76002e81743067eadc9e4cd91c63ea2cfc889b4becfedaf03fa59d8548606"
+    },
+    {
+      "path": "tests/verify_collision_and_photos.py",
+      "size": 1544,
+      "sha256": "a22e8a7a62f7abbd4fcf43f3349c5178b952aa10d8e9f17edccf121f8d1444bb"
+    },
+    {
+      "path": "tests/verify_ecology_source.py",
+      "size": 1002,
+      "sha256": "bfa340de5101d99b531b9ed13df20f86d6c30d318903d8557e00ff0fd80363dd"
+    },
+    {
+      "path": "tests/verify_source.py",
+      "size": 1618,
+      "sha256": "8b4b5c5a75caa6ddbc39593a1152ade3c318bfaab1e44f0d34d3fb71cf286e57"
+    },
+    {
+      "path": "tools/__pycache__/fetch_cc0_assets.cpython-313.pyc",
+      "size": 6650,
+      "sha256": "5767ea58379545753d4504a21e2991812cbb485efdc91dab2f240c2e4d7e8259"
+    },
+    {
+      "path": "tools/build_authored_models.py",
+      "size": 28852,
+      "sha256": "a6f1c6d1fc3ac4fdbab67e05552e785facaa185378c1bfbc779081520e76fb59"
+    },
+    {
+      "path": "tools/bundle_cc0_photo_samples.py",
+      "size": 2264,
+      "sha256": "7ec04d5f829e48dfb7e98905366e68408e8a15df968dfe4e21adbd22fce72588"
+    },
+    {
+      "path": "tools/fetch_cc0_assets.ps1",
+      "size": 4446,
+      "sha256": "8c0f8a0c37829a8aa9cf5d9bb62eeaf5bd122b9e6f1d06108ac27858aeb4c244"
+    },
+    {
+      "path": "tools/fetch_cc0_assets.py",
+      "size": 4404,
+      "sha256": "32b2ddcfce4af1faa84c59f2fd97dc9bc146e8e063b7e88e9a272496c1b33dd1"
+    },
+    {
+      "path": "tools/paint_textures.py",
+      "size": 6366,
+      "sha256": "fd219b91861b8431c1c98a17a8d9616e4a3ae538564f51ec7d1d7f0f9d8c52af"
+    },
+    {
+      "path": "tools/refine_world.py",
+      "size": 7130,
+      "sha256": "89c576425daa432ff317901d764ec0a58b49cda6211cb67cd0aa99860f45831a"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+name: VERBA Godot integration
+on:
+  push:
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: '4.5.2'
+          use-dotnet: false
+      - name: Validate source and bundled GLBs
+        run: python tests/check_project.py
+      - name: Import Godot assets and check script compilation
+        run: godot --headless --path . --editor --import --quit
+      - name: Runtime smoke
+        run: godot --headless --path . --script res://tests/smoke_test.gd
+      - name: Independent ecology state
+        run: godot --headless --path . --script res://tests/ecology_smoke_test.gd
+      - name: Physics and navigation sanity
+        run: godot --headless --path . --script res://tests/physics_navigation_test.gd

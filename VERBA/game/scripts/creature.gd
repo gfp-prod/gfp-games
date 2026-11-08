@@ -1,0 +1,288 @@
+extends CharacterBody3D
+## Wildlife: small purposeful state machine, not a randomly oscillating prop.
+const ART = preload("res://scripts/art.gd")
+var world
+var species := "hare"
+var velocity2 := Vector3.ZERO
+var intent := Vector3.ZERO
+var state := "wander"
+var state_timer := 0.0
+var phase := 0.0
+var speed := 1.2
+var asleep := 0.0
+var panic := 0.0
+var stop_time := 0.0
+var growth := 1.0
+var wetness := 0.0
+var health := 100.0
+var hunger: float = 0.25
+var thirst: float = 0.15
+var energy: float = 0.80
+var attack_cooldown: float = 0.0
+var feed_cooldown: float = 0.0
+var dead: bool = false
+var target_resource = null
+var life_stage: float = 0.0
+var rng := RandomNumberGenerator.new()
+var model: Node3D
+var proximity: StaticBody3D
+var animated_parts: Dictionary = {}
+var path_agent: NavigationAgent3D
+var replan_after: float = 0.0
+
+func setup(w: Node3D, kind: String, pos3: Vector3, seed_value: int) -> void:
+	world = w
+	species = kind
+	position = pos3
+	rng.seed = seed_value
+	phase = rng.randf_range(0, TAU)
+	speed = {"hare": 3.8, "deer": 2.7, "fox": 2.8, "wolf": 2.4, "crow": 3.8, "wisp": 1.4}.get(kind, 2.0)
+
+func _ready() -> void:
+	# Physical creature body. Spell-target sphere remains separate and non-blocking.
+	collision_layer = 32  # creatures collide with one another
+	collision_mask = 16 | 32  # terrain, static scenery, other creatures; targeting is separate
+	var physical_shape := CollisionShape3D.new()
+	physical_shape.name = "PhysicalAnimalCollider"
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.24 if species in ["hare", "crow"] else (0.46 if species in ["fox", "wolf"] else 0.55)
+	capsule.height = capsule.radius * 2.0 + (0.22 if species in ["hare", "crow"] else 0.65)
+	physical_shape.shape = capsule
+	physical_shape.position.y = capsule.height * 0.5 + 0.04
+	add_child(physical_shape)
+	floor_snap_length = 0.40
+	path_agent = NavigationAgent3D.new()
+	path_agent.name = "RoutePlanner"
+	path_agent.path_desired_distance = 0.9
+	path_agent.target_desired_distance = 1.25
+	path_agent.radius = capsule.radius
+	path_agent.avoidance_enabled = false
+	add_child(path_agent)
+	model = Node3D.new()
+	model.name = "Anatomy"
+	add_child(model)
+	build_model()
+	proximity = StaticBody3D.new()
+	proximity.name = "SpellTarget"
+	proximity.collision_layer = 4
+	proximity.collision_mask = 0
+	proximity.set_meta("creature_ref", self)
+	add_child(proximity)
+	var c := CollisionShape3D.new()
+	var cs := SphereShape3D.new()
+	cs.radius = 0.52 if species in ["hare","crow"] else 0.85
+	c.shape = cs
+	c.position.y = 0.7
+	proximity.add_child(c)
+	choose_direction()
+
+func build_model() -> void:
+	# Physical, individually modeled and textured animal anatomy. Kept separate
+	# from ecological state so spells can still transform/hurt/chase these actors.
+	if model == null: return
+	for old_child in model.get_children():
+		old_child.queue_free()
+	animated_parts.clear()
+	var files := {
+		"deer": "Deer_Stag.glb",
+		"wolf": "Wolf_Gray.glb",
+		"fox": "Fox_Red.glb",
+		"hare": "Hare_Brown.glb",
+		"crow": "Crow_Black.glb"
+	}
+	if files.has(species):
+		var scene: PackedScene = load("res://assets/models/authored/" + files[species])
+		if scene != null:
+			var anatomy := scene.instantiate()
+			anatomy.name = "AnatomicalMesh"
+			model.add_child(anatomy)
+			for label in ["leg_fl", "leg_fr", "leg_bl", "leg_br", "wing_l", "wing_r"]:
+				var part := anatomy.find_child(label, true, false)
+				if part is Node3D: animated_parts[label] = part
+			return
+	# Supernatural wisps remain procedural, since their form is intentionally uncertain.
+	if species == "wisp":
+		var glow := ART.mat(Color("8bd5c9"), 0.15, Color("3b9caa"))
+		ART.orb(model, Vector3(0, 1.0, 0), Vector3(.25, .30, .24), glow, 16)
+		ART.orb(model, Vector3(0, .58, .08), Vector3(.12, .42, .10), glow)
+		var light := OmniLight3D.new()
+		light.light_color = Color("65b8ab")
+		light.light_energy = .75
+		light.omni_range = 3.0
+		light.position.y = 1.0
+		model.add_child(light)
+
+func choose_direction() -> void:
+	state_timer = rng.randf_range(2.5, 8.0)
+	var angle := rng.randf_range(0,TAU)
+	intent = Vector3(sin(angle),0,cos(angle))
+
+func _physics_process(delta: float) -> void:
+	if not is_instance_valid(world): return
+	phase += delta * (2.0 + speed)
+	wetness = minf(1.0, wetness + delta * 0.23) if world.raining else maxf(0.0, wetness - delta * .06)
+	# Needs and injury are individual to this animal; they persist after spells.
+	if dead:
+		model.rotation.z = lerpf(model.rotation.z, -PI*.5, minf(1.0,delta*3.0))
+		return
+	hunger = minf(1.0,hunger + delta*.0018)
+	thirst = minf(1.0,thirst + delta*.0023)
+	energy = maxf(0.0,energy - delta*.0009)
+	attack_cooldown = maxf(0.0,attack_cooldown-delta)
+	feed_cooldown = maxf(0.0,feed_cooldown-delta)
+	if health <= 0.0:
+		dead = true
+		state = "dead"
+		return
+	if world.raining: thirst=maxf(0.0,thirst-delta*.018)
+	if absf(position.x-world.stream_x(position.z))<4.8 and thirst>.2:
+		thirst=maxf(0.0,thirst-delta*.15)
+	if asleep > 0:
+		asleep -= delta
+		state = "sleep"
+	if stop_time > 0: stop_time -= delta
+	if panic > 0: panic -= delta
+	var player_distance: float = global_position.distance_to(world.player.global_position)
+	var threatened := player_distance < (4.5 if species in ["hare","deer"] else 2.0)
+	if world.nearest_fire_distance(global_position) < 6.0: threatened = true
+	var predator: Node3D=null
+	if species == "hare":predator=world.nearest_creature(position,"fox",10.0)
+	if species in ["hare","deer"]:
+		var wolf:Node3D=world.nearest_creature(position,"wolf",11.0)
+		if wolf != null and (predator == null or global_position.distance_to(wolf.global_position)<global_position.distance_to(predator.global_position)):predator=wolf
+	if predator != null and predator != self:threatened = true
+	if species == "wisp": threatened = false
+	if threatened and asleep <= 0:
+		panic = 3.0
+		state = "flee"
+		intent = (position - predator.position).normalized() if predator != null else (position - world.player.position).normalized()
+	elif panic <= 0 and asleep <= 0 and stop_time <= 0:
+		state = "wander"
+		state_timer -= delta
+		if state_timer < 0: choose_direction()
+	if stop_time > 0 or asleep > 0: state = "still"
+	if species in ["hare","deer"] and state == "wander" and hunger > .24:
+		target_resource=world.nearest_food(position,10.0)
+		if target_resource != null:
+			state="forage"
+			intent=(target_resource.position-position).normalized()
+			if global_position.distance_to(target_resource.global_position)<1.1 and feed_cooldown <=0.0:
+				if target_resource.apply_effect("eat",.55):
+					hunger=maxf(0.0,hunger-.19)
+					energy=minf(1.0,energy+.05)
+					feed_cooldown=2.5
+	elif species in ["fox","wolf"] and state == "wander" and hunger>.20:
+		var target_kind: String="hare" if species == "fox" else "deer"
+		var prey=world.nearest_creature(position,target_kind,13.0)
+		if prey != null and prey != self and not prey.dead:
+			intent=(prey.position-position).normalized()
+			state="hunt"
+			if global_position.distance_to(prey.global_position)<1.45 and attack_cooldown <= 0.0:
+				prey.afflict("injure")
+				hunger=maxf(0.0,hunger-.22)
+				attack_cooldown=4.0
+	elif species == "crow" and state == "wander" and hunger>.35:
+		for other in world.creatures:
+			if other != self and is_instance_valid(other) and other.dead and global_position.distance_to(other.global_position)<10.0:
+				intent=(other.position-position).normalized()
+				state="scavenge"
+				if global_position.distance_to(other.global_position)<1.2 and feed_cooldown<=0.0:
+					hunger=maxf(0.0,hunger-.25)
+					feed_cooldown=5.0
+				break
+	# If an exhausted animal is safe, it occasionally rests without a spell.
+	if energy < .12 and state == "wander" and panic <=0:
+		asleep=6.0;energy=minf(1.0,energy+.30)
+	var factor := 0.0 if state == "still" else (1.8 if state == "flee" else 1.25 if state == "hunt" else 0.3)
+	if species == "crow" and state != "still":
+		factor *= 1.1
+	var motion: Vector3 = Vector3(intent.x,0,intent.z).normalized() * speed * factor
+	if position.length() > 55.0: motion = -Vector3(position.x,0,position.z).normalized() * speed * 0.7
+	# Route selection is separate from ecology. When the creature changes its
+	# intention, Godot resolves a path around tree trunks and structures.
+	replan_after -= delta
+	if path_agent != null and replan_after <= 0.0 and motion.length_squared() > 0.01:
+		var requested_goal: Vector3 = global_position + Vector3(intent.x, 0.0, intent.z).normalized() * 11.0
+		requested_goal.y = world.height_at(requested_goal.x, requested_goal.z) + 0.3
+		path_agent.target_position = requested_goal
+		replan_after = rng.randf_range(0.9, 1.7)
+	if path_agent != null and not path_agent.is_navigation_finished() and motion.length_squared() > 0.01:
+		var next_point: Vector3 = path_agent.get_next_path_position()
+		var toward: Vector3 = next_point - global_position
+		toward.y = 0.0
+		if toward.length_squared() > 0.10:
+			motion = toward.normalized() * motion.length()
+	# Ray steer before moving so animals can skirt obstacles rather than
+	# trying to cross the same tree every frame while chasing prey.
+	var desired: Vector3 = motion.normalized() if motion.length_squared() > .0001 else Vector3.ZERO
+	if desired.length_squared() > .001:
+		var ray_from: Vector3 = global_position + Vector3.UP * 0.6
+		var ray_to: Vector3 = ray_from + desired * (1.5 if species in ["hare", "crow"] else 2.6)
+		var probe: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(ray_from, ray_to, 16, [get_rid()])
+		var obstacle: Dictionary = get_world_3d().direct_space_state.intersect_ray(probe)
+		if not obstacle.is_empty():
+			var obstacle_normal: Vector3 = obstacle["normal"]
+			var tangent: Vector3 = Vector3(-obstacle_normal.z, 0.0, obstacle_normal.x)
+			if tangent.dot(desired) < 0.0: tangent = -tangent
+			if tangent.length_squared() > .01:
+				desired = (tangent * 0.85 + obstacle_normal * 0.45).normalized()
+			motion = desired * motion.length()
+	# CharacterBody3D physics: collision-safe movement against the same solid
+	# terrain/walls/trees as the player, with gravity and sliding.
+	var future: Vector3 = position + motion * delta
+	if absf(future.x - world.stream_x(future.z)) < 3.1 and species != "crow":
+		motion = Vector3.ZERO
+		choose_direction()
+	velocity.x = motion.x
+	velocity.z = motion.z
+	if species == "wisp":
+		velocity.y = 0.0
+		position.y = lerpf(position.y, world.height_at(position.x, position.z) + 1.9, minf(1.0, delta * 4.0))
+	elif is_on_floor():
+		velocity.y = -0.1
+	else:
+		velocity.y -= 14.0 * delta
+	move_and_slide()
+	if is_on_wall():
+		# Physics always wins over navigation; reconsider blocked routes.
+		replan_after = 0.0
+		state_timer = minf(state_timer, 0.5)
+
+	if motion.length_squared() > 0.15:
+		model.rotation.y = lerp_angle(model.rotation.y,atan2(-motion.x,-motion.z),minf(1.0,delta*4.0))
+	# Independently hinged limbs: subtle gait, synchronized with locomotion,
+	# not simply a bobbing static animal. Flight is wing-driven.
+	var anim_strength: float = 0.0 if state in ["still", "sleep", "dead"] else 1.0 if motion.length_squared() > .03 else .25
+	for part_name in animated_parts.keys():
+		var limb: Node3D = animated_parts[part_name]
+		if not is_instance_valid(limb): continue
+		if String(part_name).begins_with("leg_"):
+			var offset: float = PI if part_name in ["leg_fl", "leg_br"] else 0.0
+			var target: float = sin(phase * (3.5 if species == "hare" else 2.3) + offset) * .32 * anim_strength
+			limb.rotation.x = lerpf(limb.rotation.x, target, minf(1.0, delta * 10.0))
+		elif String(part_name).begins_with("wing_"):
+			var side: float = -1.0 if part_name == "wing_l" else 1.0
+			var target_wing: float = side * (.20 + sin(phase * 5.0) * .45 * anim_strength)
+			limb.rotation.z = lerpf(limb.rotation.z, target_wing, minf(1.0, delta * 9.0))
+	model.position.y = (sin(phase * 2.5) * 0.035 if state != "still" else -0.07)
+	if species == "wisp": model.position.y = sin(phase)*0.23
+
+func afflict(kind: String) -> void:
+	match kind:
+		"sleep": asleep = 12.0; panic = 0.0
+		"flee": panic = 11.0; state = "flee"; intent = (position - world.player.position).normalized()
+		"stop": stop_time = 9.0; panic = 0.0
+		"come": panic=0.0; state="wander"; intent=(world.player.position-position).normalized(); state_timer=5.0
+		"transform":
+			var options := ["hare","deer","fox","wolf","crow","wisp"]
+			options.erase(species)
+			species=options[rng.randi_range(0,options.size()-1)]
+			build_model()
+			if proximity != null:
+				var shp = proximity.get_child(0)
+				if shp is CollisionShape3D: shp.shape = SphereShape3D.new()
+		"rise": position.y += 0.6
+		"burn": health-=35.0; panic=7.0
+		"injure": health-=28.0;panic=9.0
+		"water": wetness=minf(1.0,wetness+.65);thirst=maxf(0.0,thirst-.20)
+		"grow": growth=minf(1.7,growth+0.27); model.scale=Vector3.ONE * growth

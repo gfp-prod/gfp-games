@@ -1,0 +1,10 @@
+# Local Godot imports and editor state
+.godot/
+# tools
+__pycache__/
+*.pyc
+# temporary asset downloads
+*.download
+# OS
+.DS_Store
+Thumbs.db
