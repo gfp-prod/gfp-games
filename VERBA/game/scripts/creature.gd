@@ -48,8 +48,8 @@ func _ready() -> void:
 	var physical_shape := CollisionShape3D.new()
 	physical_shape.name = "PhysicalAnimalCollider"
 	var capsule := CapsuleShape3D.new()
-	capsule.radius = 0.24 if species in ["hare", "crow"] else (0.46 if species in ["fox", "wolf"] else 0.55)
-	capsule.height = capsule.radius * 2.0 + (0.22 if species in ["hare", "crow"] else 0.65)
+	capsule.radius = {"hare":0.15,"crow":0.14,"fox":0.26,"wolf":0.35,"deer":0.40}.get(species,0.22)
+	capsule.height = {"hare":0.43,"crow":0.43,"fox":0.60,"wolf":0.91,"deer":1.42}.get(species,0.65)
 	physical_shape.shape = capsule
 	physical_shape.position.y = capsule.height * 0.5 + 0.04
 	add_child(physical_shape)
@@ -73,69 +73,92 @@ func _ready() -> void:
 	add_child(proximity)
 	var c := CollisionShape3D.new()
 	var cs := SphereShape3D.new()
-	cs.radius = 0.52 if species in ["hare","crow"] else 0.85
+	cs.radius = 0.30 if species in ["hare","crow"] else (0.55 if species == "fox" else 0.85)
 	c.shape = cs
-	c.position.y = 0.7
+	c.position.y = 0.23 if species in ["hare","crow"] else (0.40 if species=="fox" else 0.70)
 	proximity.add_child(c)
 	choose_direction()
 
+func _desired_height() -> float:
+	match species:
+		"deer": return 1.72
+		"wolf": return 0.88
+		"fox": return 0.58
+		"hare": return 0.46
+		"crow": return 0.41
+		_: return 1.0
+
+func _model_bounds(root: Node3D) -> AABB:
+	var bottom := Vector3(100000,100000,100000)
+	var top := Vector3(-100000,-100000,-100000)
+	var found := false
+	for member in root.find_children("*","MeshInstance3D",true,false):
+		var part: MeshInstance3D = member as MeshInstance3D
+		if part == null or part.mesh == null: continue
+		var box: AABB = part.get_aabb()
+		for x in [box.position.x,box.end.x]:
+			for y in [box.position.y,box.end.y]:
+				for z in [box.position.z,box.end.z]:
+					var pt: Vector3 = root.to_local(part.to_global(Vector3(x,y,z)))
+					bottom = bottom.min(pt)
+					top = top.max(pt)
+					found = true
+	if not found: return AABB()
+	return AABB(bottom, top-bottom)
+
 func build_model() -> void:
-	# Physical, individually modeled and textured animal anatomy. Kept separate
-	# from ecological state so spells can still transform/hurt/chase these actors.
 	if model == null: return
-	for old_child in model.get_children():
-		old_child.queue_free()
+	for child in model.get_children(): child.queue_free()
 	animated_parts.clear()
 	animation_player = null
 	active_clip = ""
 	using_library_mesh = false
-	# Native skinned wildlife, downloaded by GitHub Actions and stored in the
-	# repository. Animals use actual authored armatures and animation clips.
-	var native_name: String = ""
+	var filename := ""
 	match species:
-		"deer":
-			native_name = "Stag.gltf" if rng.randf() < 0.35 else "Deer.gltf"
-		"wolf": native_name = "Wolf.gltf"
-		"fox": native_name = "Fox.gltf"
-	if not native_name.is_empty():
-		var new_path: String = "res://assets/models/cc0/wildlife/" + native_name
-		if ResourceLoader.exists(new_path):
-			var imported: PackedScene = load(new_path)
-			if imported != null:
-				var skinned_animal: Node3D = imported.instantiate()
-				skinned_animal.name = "RiggedWildlife"
-				model.add_child(skinned_animal)
-				animation_player = skinned_animal.find_child("AnimationPlayer", true, false) as AnimationPlayer
-				using_library_mesh = true
-				_update_anim("idle")
-				return
-	var files := {
-		"deer": "Deer_Stag.glb",
-		"wolf": "Wolf_Gray.glb",
-		"fox": "Fox_Red.glb",
-		"hare": "Hare_Brown.glb",
-		"crow": "Crow_Black.glb"
-	}
-	if files.has(species):
-		var scene: PackedScene = load("res://assets/models/authored/" + files[species])
-		if scene != null:
-			var anatomy := scene.instantiate()
-			anatomy.name = "AnatomicalMesh"
-			model.add_child(anatomy)
-			for label in ["leg_fl", "leg_fr", "leg_bl", "leg_br", "wing_l", "wing_r"]:
-				var part := anatomy.find_child(label, true, false)
-				if part is Node3D: animated_parts[label] = part
+		"deer": filename = "Stag.gltf" if rng.randf() < 0.35 else "Deer.gltf"
+		"wolf": filename = "Wolf.gltf"
+		"fox": filename = "Fox.gltf"
+		"hare": filename = "Hare.glb"
+		"crow": filename = "Crow.glb"
+	if not filename.is_empty():
+		var resource_path: String = "res://assets/models/cc0/wildlife/" + filename
+		if not ResourceLoader.exists(resource_path):
+			push_error("Missing VERBA wildlife art: " + resource_path)
 			return
-	# Supernatural wisps remain procedural, since their form is intentionally uncertain.
+		var loaded: PackedScene = load(resource_path)
+		if loaded == null:
+			push_error("Could not import VERBA wildlife art: " + resource_path)
+			return
+		var animal: Node3D = loaded.instantiate()
+		animal.name = "RiggedWildlife"
+		model.add_child(animal)
+		var bounds: AABB = _model_bounds(animal)
+		if bounds.size.y < 0.001:
+			push_error("Invalid wildlife geometry bounds: " + filename)
+			return
+		var factor: float = clampf(_desired_height()/bounds.size.y,0.008,150.0)
+		animal.scale = Vector3.ONE * factor
+		animal.position.y = -bounds.position.y * factor + 0.025
+		using_library_mesh = true
+		animation_player = animal.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		if species == "crow":
+			for pivot in ["LeftWing","RightWing","Head","Tail","LeftHindLeg","RightHindLeg","LeftHindUpLeg","RightHindUpLeg"]:
+				var part: Node = animal.find_child(pivot,true,false)
+				if part is Node3D: animated_parts[pivot] = part
+		elif animation_player == null:
+			push_error("No skeletal animations for "+filename)
+		else:
+			_update_anim("idle")
+		return
 	if species == "wisp":
 		var glow := ART.mat(Color("8bd5c9"), 0.15, Color("3b9caa"))
-		ART.orb(model, Vector3(0, 1.0, 0), Vector3(.25, .30, .24), glow, 16)
-		ART.orb(model, Vector3(0, .58, .08), Vector3(.12, .42, .10), glow)
+		ART.orb(model, Vector3(0, 1.0, 0), Vector3(.25,.30,.24), glow, 16)
+		ART.orb(model, Vector3(0, .58, .08), Vector3(.12,.42,.10), glow)
 		var light := OmniLight3D.new()
 		light.light_color = Color("65b8ab")
-		light.light_energy = .75
-		light.omni_range = 3.0
-		light.position.y = 1.0
+		light.light_energy=.75
+		light.omni_range=3.0
+		light.position.y=1.0
 		model.add_child(light)
 
 func choose_direction() -> void:
@@ -280,15 +303,15 @@ func _physics_process(delta: float) -> void:
 	if motion.length_squared() > 0.15:
 		model.rotation.y = lerp_angle(model.rotation.y,atan2(-motion.x,-motion.z),minf(1.0,delta*4.0))
 	# Skinned Quaternius wildlife plays real armature clips (not fake leg swings).
-	if using_library_mesh:
+	if using_library_mesh and animation_player != null:
 		var action: String = "idle"
-		if state in ["still", "sleep"]: action = "idle"
-		elif state == "flee" or state == "hunt": action = "run"
-		elif state == "forage": action = "eat"
-		elif motion.length_squared() > 0.02: action = "walk"
+		if motion.length_squared() > 0.03:
+			action = "run" if state in ["flee","hunt"] else "walk"
+		elif state == "forage":
+			action = "eat"
 		_update_anim(action)
 		return
-	# The original joint motion is retained only for legacy hare/crow art.
+	# A crow has independently articulated wing/head/leg pivots.
 	var anim_strength: float = 0.0 if state in ["still", "sleep", "dead"] else 1.0 if motion.length_squared() > .03 else .25
 	for part_name in animated_parts.keys():
 		var limb: Node3D = animated_parts[part_name]
@@ -297,10 +320,16 @@ func _physics_process(delta: float) -> void:
 			var offset: float = PI if part_name in ["leg_fl", "leg_br"] else 0.0
 			var target: float = sin(phase * (3.5 if species == "hare" else 2.3) + offset) * .32 * anim_strength
 			limb.rotation.x = lerpf(limb.rotation.x, target, minf(1.0, delta * 10.0))
-		elif String(part_name).begins_with("wing_"):
-			var side: float = -1.0 if part_name == "wing_l" else 1.0
-			var target_wing: float = side * (.20 + sin(phase * 5.0) * .45 * anim_strength)
-			limb.rotation.z = lerpf(limb.rotation.z, target_wing, minf(1.0, delta * 9.0))
+		elif String(part_name).begins_with("wing_") or String(part_name) in ["LeftWing","RightWing"]:
+			var side: float = -1.0 if String(part_name) in ["wing_l","LeftWing"] else 1.0
+			limb.rotation.z = side * (.12 + sin(phase * 7.0) * .48 * anim_strength)
+		elif String(part_name) in ["LeftHindLeg","RightHindLeg","LeftHindUpLeg","RightHindUpLeg"]:
+			var phase_offset: float = PI if String(part_name).begins_with("Left") else 0.0
+			limb.rotation.x = sin(phase * 5.0 + phase_offset) * .23 * anim_strength
+		elif String(part_name) == "Head":
+			limb.rotation.y = sin(phase*.65) * .13
+		elif String(part_name) == "Tail":
+			limb.rotation.x = sin(phase*1.6) * .07
 	model.position.y = (sin(phase * 2.5) * 0.035 if state != "still" else -0.07)
 	if species == "wisp": model.position.y = sin(phase)*0.23
 
@@ -314,7 +343,7 @@ func _update_anim(action: String) -> void:
 		"walk": search_words = ["walk", "trot", "move"]
 		"run": search_words = ["run", "gallop", "sprint", "walk"]
 		"eat": search_words = ["eat", "graze", "idle"]
-		"death": search_words = ["death", "die", "fall"]
+		"death": search_words = ["death", "dead", "die", "fall"]
 	var chosen: String = ""
 	for word in search_words:
 		for clip in options:
@@ -331,7 +360,11 @@ func _update_anim(action: String) -> void:
 	if chosen.is_empty() or chosen == active_clip:
 		return
 	active_clip = chosen
+	var clip_resource: Animation = animation_player.get_animation(chosen)
+	if clip_resource != null:
+		clip_resource.loop_mode = Animation.LOOP_NONE if action == "death" else Animation.LOOP_LINEAR
 	animation_player.play(StringName(chosen), 0.18)
+	animation_player.speed_scale = 1.12 if action == "run" else 1.0
 
 func afflict(kind: String) -> void:
 	match kind:
