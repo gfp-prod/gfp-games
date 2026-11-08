@@ -99,7 +99,12 @@ func _model_bounds(root: Node3D) -> AABB:
 		for x in [box.position.x,box.end.x]:
 			for y in [box.position.y,box.end.y]:
 				for z in [box.position.z,box.end.z]:
-					var pt: Vector3 = root.to_local(part.to_global(Vector3(x,y,z)))
+					var relative: Transform3D = Transform3D.IDENTITY
+					var cursor: Node3D = part
+					while cursor != null and cursor != root:
+						relative = cursor.transform * relative
+						cursor = cursor.get_parent() as Node3D
+					var pt: Vector3 = relative * Vector3(x,y,z)
 					bottom = bottom.min(pt)
 					top = top.max(pt)
 					found = true
