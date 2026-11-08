@@ -45,7 +45,7 @@ func _ready() -> void:
 	capsule.position.y=.9
 	add_child(capsule)
 	collision_layer=2
-	collision_mask=16  # terrain, trunks, cottage, stones, ruins share static-world layer
+	collision_mask=16 | 32  # world + real wildlife bodies: never walk through a deer's mesh
 	floor_snap_length=.45
 	pitch=Node3D.new()
 	pitch.name="Neck"
