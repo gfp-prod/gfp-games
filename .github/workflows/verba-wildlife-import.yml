@@ -1,0 +1,81 @@
+name: VERBA - embed real rigged wildlife models
+on:
+  push:
+    branches: [verba-godot]
+    paths:
+      - ".github/workflows/verba-wildlife-import.yml"
+      - "VERBA/game/scripts/creature.gd"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verba-wildlife-import
+  cancel-in-progress: false
+
+jobs:
+  import-animal-rigs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out VERBA branch
+        uses: actions/checkout@v4
+        with:
+          ref: verba-godot
+          persist-credentials: true
+      - name: Retrieve complete CC0 animated animal models from Quaternius mirror
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          from urllib.parse import quote
+          from time import sleep
+          import json, hashlib
+          names = ("Deer", "Stag", "Wolf", "Fox")
+          path = Path("VERBA/game/assets/models/cc0/wildlife")
+          path.mkdir(parents=True, exist_ok=True)
+          base = "https://raw.githubusercontent.com/agentkaerf/FreeModels/main/Ultimate%20Animated%20Animals%20-%20July%202021/glTF/"
+          lines = ["# Real rigged wildlife assets", "",
+                   "Original author: Quaternius (Ultimate Animated Animal Pack, July 2021).",
+                   "License: CC0 1.0; https://quaternius.com/packs/ultimateanimatedanimals.html",
+                   "Source mirror: https://github.com/agentkaerf/FreeModels/tree/main/Ultimate%20Animated%20Animals%20-%20July%202021/glTF",
+                   "Four distinct skinned glTF models; each with source animation clips.", ""]
+          for name in names:
+              url = base + name + ".gltf"
+              data = None
+              for attempt in range(4):
+                  try:
+                      req = Request(url, headers={"User-Agent": "VERBA-AssetImporter/1.0"})
+                      with urlopen(req, timeout=75) as response:
+                          data = response.read()
+                      break
+                  except Exception:
+                      if attempt == 3: raise
+                      sleep(2 ** attempt)
+              assert data and len(data) > 500000, f"Invalid model: {name}"
+              asset = json.loads(data)
+              assert len(asset.get("animations", [])) >= 8, f"{name}: animations missing"
+              assert len(asset.get("skins", [])) >= 1, f"{name}: rig missing"
+              assert len(asset.get("meshes", [])) >= 1, f"{name}: mesh missing"
+              assert asset.get("buffers", [{}])[0].get("uri", "").startswith("data:"), f"{name}: missing embedded buffer"
+              (path / (name + ".gltf")).write_bytes(data)
+              sha = hashlib.sha256(data).hexdigest()
+              lines.append(f"- {name}.gltf — {len(asset['animations'])} clips — sha256: {sha}")
+              print(f"{name}: {len(asset['animations'])} native animations, {len(data)} bytes, {sha}")
+          (path / "SOURCES.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print("FOUR RIGGED WILDLIFE MODELS VERIFIED")
+          PY
+      - name: Commit actual animal files into VERBA
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERBA/game/assets/models/cc0/wildlife/
+          if git diff --cached --quiet; then
+            echo "Wildlife already bundled."
+          else
+            git commit -m "VERBA: bundle four animated wildlife rigs (Quaternius CC0)"
+            git push origin HEAD:verba-godot
+          fi
