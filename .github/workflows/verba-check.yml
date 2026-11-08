@@ -1,24 +1,45 @@
-name: VERBA Godot source check
-
+name: VERBA Godot source and engine tests
 on:
   push:
     branches: [verba-godot]
-  pull_request:
-    branches: [verba-godot]
+    paths:
+      - "VERBA/game/**"
+      - ".github/workflows/verba-check.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  require-complete-source:
+  validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: VERBA/game
     steps:
       - uses: actions/checkout@v4
-      - name: Verify complete Godot game has been published
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Complete bundled project check
         shell: bash
         run: |
-          set -eu
-          test -f VERBA/project.godot || { echo "::error::VERBA/project.godot missing. Godot source has not been uploaded to GitHub. This is NOT a passing game build."; exit 1; }
-          test -f VERBA/main.tscn || { echo "::error::VERBA/main.tscn missing."; exit 1; }
-          test -f VERBA/scripts/player.gd || { echo "::error::VERBA/scripts/player.gd missing."; exit 1; }
-          test -d VERBA/assets/models/authored || { echo "::error::Authored models not published."; exit 1; }
-          test -d VERBA/assets/textures/real || { echo "::error::Bundled textures not published."; exit 1; }
-          echo "Source presence check passed. Next step: headless Godot import and runtime validation."
+          test -f project.godot
+          test -f main.tscn
+          test -f scripts/player.gd
+          test "$(find assets/models/authored -name '*.glb' | wc -l)" -ge 8
+          test "$(find assets/textures/real -name '*.jpg' | wc -l)" -ge 18
+          python tests/check_project.py
+      - name: Import assets and parse scripts in Godot
+        run: godot --headless --path . --editor --import --quit
+      - name: Runtime smoke test
+        run: godot --headless --path . --script res://tests/smoke_test.gd
+      - name: Independent ecology state
+        run: godot --headless --path . --script res://tests/ecology_smoke_test.gd
+      - name: Physics and navigation regression
+        run: godot --headless --path . --script res://tests/physics_navigation_test.gd
