@@ -28,6 +28,9 @@ var model: Node3D
 var proximity: StaticBody3D
 var animated_parts: Dictionary = {}
 var path_agent: NavigationAgent3D
+var animation_player: AnimationPlayer
+var active_clip: String = ""
+var using_library_mesh: bool = false
 var replan_after: float = 0.0
 
 func setup(w: Node3D, kind: String, pos3: Vector3, seed_value: int) -> void:
@@ -83,6 +86,29 @@ func build_model() -> void:
 	for old_child in model.get_children():
 		old_child.queue_free()
 	animated_parts.clear()
+	animation_player = null
+	active_clip = ""
+	using_library_mesh = false
+	# Native skinned wildlife, downloaded by GitHub Actions and stored in the
+	# repository. Animals use actual authored armatures and animation clips.
+	var native_name: String = ""
+	match species:
+		"deer":
+			native_name = "Stag.gltf" if rng.randf() < 0.35 else "Deer.gltf"
+		"wolf": native_name = "Wolf.gltf"
+		"fox": native_name = "Fox.gltf"
+	if not native_name.is_empty():
+		var new_path: String = "res://assets/models/cc0/wildlife/" + native_name
+		if ResourceLoader.exists(new_path):
+			var imported: PackedScene = load(new_path)
+			if imported != null:
+				var skinned_animal: Node3D = imported.instantiate()
+				skinned_animal.name = "RiggedWildlife"
+				model.add_child(skinned_animal)
+				animation_player = skinned_animal.find_child("AnimationPlayer", true, false) as AnimationPlayer
+				using_library_mesh = true
+				_update_anim("idle")
+				return
 	var files := {
 		"deer": "Deer_Stag.glb",
 		"wolf": "Wolf_Gray.glb",
@@ -123,7 +149,10 @@ func _physics_process(delta: float) -> void:
 	wetness = minf(1.0, wetness + delta * 0.23) if world.raining else maxf(0.0, wetness - delta * .06)
 	# Needs and injury are individual to this animal; they persist after spells.
 	if dead:
-		model.rotation.z = lerpf(model.rotation.z, -PI*.5, minf(1.0,delta*3.0))
+		if using_library_mesh:
+			_update_anim("death")
+		else:
+			model.rotation.z = lerpf(model.rotation.z, -PI*.5, minf(1.0,delta*3.0))
 		return
 	hunger = minf(1.0,hunger + delta*.0018)
 	thirst = minf(1.0,thirst + delta*.0023)
@@ -250,8 +279,16 @@ func _physics_process(delta: float) -> void:
 
 	if motion.length_squared() > 0.15:
 		model.rotation.y = lerp_angle(model.rotation.y,atan2(-motion.x,-motion.z),minf(1.0,delta*4.0))
-	# Independently hinged limbs: subtle gait, synchronized with locomotion,
-	# not simply a bobbing static animal. Flight is wing-driven.
+	# Skinned Quaternius wildlife plays real armature clips (not fake leg swings).
+	if using_library_mesh:
+		var action: String = "idle"
+		if state in ["still", "sleep"]: action = "idle"
+		elif state == "flee" or state == "hunt": action = "run"
+		elif state == "forage": action = "eat"
+		elif motion.length_squared() > 0.02: action = "walk"
+		_update_anim(action)
+		return
+	# The original joint motion is retained only for legacy hare/crow art.
 	var anim_strength: float = 0.0 if state in ["still", "sleep", "dead"] else 1.0 if motion.length_squared() > .03 else .25
 	for part_name in animated_parts.keys():
 		var limb: Node3D = animated_parts[part_name]
@@ -266,6 +303,35 @@ func _physics_process(delta: float) -> void:
 			limb.rotation.z = lerpf(limb.rotation.z, target_wing, minf(1.0, delta * 9.0))
 	model.position.y = (sin(phase * 2.5) * 0.035 if state != "still" else -0.07)
 	if species == "wisp": model.position.y = sin(phase)*0.23
+
+func _update_anim(action: String) -> void:
+	if animation_player == null:
+		return
+	var options: PackedStringArray = animation_player.get_animation_list()
+	var search_words: Array[String] = [action]
+	match action:
+		"idle": search_words = ["idle", "stand", "rest", "breath"]
+		"walk": search_words = ["walk", "trot", "move"]
+		"run": search_words = ["run", "gallop", "sprint", "walk"]
+		"eat": search_words = ["eat", "graze", "idle"]
+		"death": search_words = ["death", "die", "fall"]
+	var chosen: String = ""
+	for word in search_words:
+		for clip in options:
+			if String(clip).to_lower().contains(word):
+				chosen = String(clip)
+				break
+		if not chosen.is_empty():
+			break
+	if chosen.is_empty():
+		for clip in options:
+			if String(clip).to_lower() != "reset":
+				chosen = String(clip)
+				break
+	if chosen.is_empty() or chosen == active_clip:
+		return
+	active_clip = chosen
+	animation_player.play(StringName(chosen), 0.18)
 
 func afflict(kind: String) -> void:
 	match kind:
