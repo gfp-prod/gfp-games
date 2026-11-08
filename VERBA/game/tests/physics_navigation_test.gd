@@ -25,8 +25,12 @@ func run_checks() -> void:
 	if player.collision_mask & 16 == 0:
 		fail("Player cannot collide with terrain"); return
 	var origin: Vector3 = player.global_position
+	print("DEBUG START: origin=", origin, " floor=",player.is_on_floor(), " basis=",player.global_transform.basis, " mode=",Input.mouse_mode)
 	Input.action_press("verba_forward")
-	for i in range(30): await physics_frame
+	print("DEBUG ACTION: pressed=",Input.is_action_pressed("verba_forward")," process=",player.is_physics_processing())
+	for i in range(30):
+		await physics_frame
+		if i == 2 or i == 15 or i == 29: print("DEBUG FRAME ",i," pos=",player.global_position, " axes=",player.last_motion," velocity=",player.velocity," floor=",player.is_on_floor()," colliding=",player.get_slide_collision_count())
 	Input.action_release("verba_forward")
 	var horizontal_distance: float = Vector2(origin.x,origin.z).distance_to(Vector2(player.global_position.x,player.global_position.z))
 	if horizontal_distance < .5:
