@@ -146,11 +146,7 @@ func build_model() -> void:
 		animal.position.y = -bounds.position.y * factor + 0.025
 		using_library_mesh = true
 		animation_player = animal.find_child("AnimationPlayer", true, false) as AnimationPlayer
-		if species == "crow":
-			for pivot in ["LeftWing","RightWing","Head","Tail","LeftHindLeg","RightHindLeg","LeftHindUpLeg","RightHindUpLeg"]:
-				var part: Node = animal.find_child(pivot,true,false)
-				if part is Node3D: animated_parts[pivot] = part
-		elif animation_player == null:
+		if animation_player == null:
 			push_error("No skeletal animations for "+filename)
 		else:
 			_update_anim("idle")
@@ -316,7 +312,7 @@ func _physics_process(delta: float) -> void:
 			action = "eat"
 		_update_anim(action)
 		return
-	# A crow has independently articulated wing/head/leg pivots.
+	# Animated wildlife uses authored skeleton clips; the joint fallback is retained for wisps.
 	var anim_strength: float = 0.0 if state in ["still", "sleep", "dead"] else 1.0 if motion.length_squared() > .03 else .25
 	for part_name in animated_parts.keys():
 		var limb: Node3D = animated_parts[part_name]
@@ -348,7 +344,7 @@ func _update_anim(action: String) -> void:
 		"walk": search_words = ["walk", "trot", "move"]
 		"run": search_words = ["run", "gallop", "sprint", "walk"]
 		"eat": search_words = ["eat", "graze", "idle"]
-		"death": search_words = ["death", "dead", "die", "fall"]
+		"death": search_words = ["death", "dead", "die", "fall", "idle"]
 	var chosen: String = ""
 	for word in search_words:
 		for clip in options:
