@@ -32,7 +32,8 @@ jobs:
           test -f project.godot
           test -f main.tscn
           test -f scripts/player.gd
-          test "$(find assets/models/authored -name '*.glb' | wc -l)" -ge 8
+          test "$(find assets/models/authored -name '*.glb' | wc -l)" -ge 3
+          test "$(find assets/models/cc0/wildlife \( -name '*.glb' -o -name '*.gltf' \) | wc -l)" -ge 6
           test "$(find assets/textures/real -name '*.jpg' | wc -l)" -ge 18
           python tests/check_project.py
       - name: Import assets and parse scripts in Godot
