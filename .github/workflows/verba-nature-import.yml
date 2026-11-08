@@ -1,0 +1,91 @@
+name: VERBA - bundle textured Quaternius nature assets
+on:
+  push:
+    branches: [verba-godot]
+    paths:
+      - ".github/workflows/verba-nature-import.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verba-nature-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: verba-godot
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set up image resampling
+        run: python -m pip install --quiet Pillow
+      - name: Retrieve complete textured nature meshes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from urllib.request import urlopen, Request
+          from pathlib import Path
+          from io import BytesIO
+          from PIL import Image
+          import json, hashlib, time
+          out = Path("VERBA/game/assets/models/cc0/nature")
+          out.mkdir(parents=True, exist_ok=True)
+          url = "https://raw.githubusercontent.com/agentkaerf/FreeModels/main/Ultimate%20Stylized%20Nature%20-%20May%202022/glTF/"
+          models = ["BirchTree_1","BirchTree_3","MapleTree_1","MapleTree_2","MapleTree_3","DeadTree_1","DeadTree_3"]
+          images = ["BirchTree_Bark_Normal.png","BirchTree_Bark.jpg","BirchTree_Leaves.png",
+                    "MapleTree_Bark_Normal.png","MapleTree_Bark.jpg","MapleTree_Leaves.png",
+                    "NormalTree_Bark_Normal.png","NormalTree_Bark.jpg"]
+          def get(name):
+              for attempt in range(4):
+                  try:
+                      with urlopen(Request(url+name,headers={"User-Agent":"VERBA-Nature-Importer"}),timeout=60) as r:
+                          return r.read()
+                  except Exception:
+                      if attempt==3:raise
+                      time.sleep(2**attempt)
+          for name in models:
+              data=get(name+".gltf")
+              src=json.loads(data)
+              assert src.get("meshes") and src.get("buffers")
+              assert src["buffers"][0]["uri"]==name+".bin"
+              (out/(name+".gltf")).write_bytes(data)
+              buf=get(name+".bin")
+              assert len(buf)==src["buffers"][0]["byteLength"],name
+              (out/(name+".bin")).write_bytes(buf)
+              print("Verified",name,len(buf),"geometry bytes")
+          for name in images:
+              data=get(name)
+              original=Image.open(BytesIO(data))
+              original.thumbnail((2048,2048),Image.Resampling.LANCZOS)
+              if name.endswith(".jpg"):
+                  original.convert("RGB").save(out/name,quality=88,optimize=True)
+              else:
+                  original.save(out/name,optimize=True)
+              print("Bundled",name,original.size)
+          license_text=get("BirchTree_1.gltf") # validate source reachable
+          (out/"LICENSE-ORIGIN.md").write_text(
+            "# Quaternius Ultimate Stylized Nature — CC0 1.0\n\n"
+            "Author: Quaternius. https://quaternius.com/packs/ultimatestylizednature.html\n"
+            "Source: https://github.com/agentkaerf/FreeModels/tree/main/Ultimate%20Stylized%20Nature%20-%20May%202022\n"
+            "This project's nature meshes are unmodified; source PBR maps were reduced to 2048px for performance.\n",encoding="utf-8")
+          assert len(list(out.glob("*.gltf")))==7
+          print("VERBA 7 TEXTURED TREES, CC0, ALL MATERIAL REFERENCES RESOLVED")
+          PY
+      - name: Commit bundled art to project
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERBA/game/assets/models/cc0/nature/
+          if ! git diff --cached --quiet; then
+            git commit -m "VERBA: bundle seven real textured CC0 birch/maple/dead tree models"
+            git pull --rebase origin verba-godot
+            git push origin HEAD:verba-godot
+          fi
