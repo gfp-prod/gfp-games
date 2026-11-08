@@ -30,7 +30,11 @@ func run_checks() -> void:
 	print("DEBUG ACTION: pressed=",Input.is_action_pressed("verba_forward")," process=",player.is_physics_processing())
 	for i in range(30):
 		await physics_frame
-		if i == 2 or i == 15 or i == 29: print("DEBUG FRAME ",i," pos=",player.global_position, " axes=",player.last_motion," velocity=",player.velocity," floor=",player.is_on_floor()," colliding=",player.get_slide_collision_count())
+		if i == 2 or i == 15 or i == 29:
+			print("DEBUG FRAME ",i," pos=",player.global_position, " axes=",player.last_motion," velocity=",player.velocity," floor=",player.is_on_floor()," colliding=",player.get_slide_collision_count())
+			for j in range(mini(3, player.get_slide_collision_count())):
+				var hit = player.get_slide_collision(j)
+				print("DEBUG HIT ",j,": collider=",hit.get_collider()," normal=",hit.get_normal()," depth=",hit.get_depth()," position=",hit.get_position())
 	Input.action_release("verba_forward")
 	var horizontal_distance: float = Vector2(origin.x,origin.z).distance_to(Vector2(player.global_position.x,player.global_position.z))
 	if horizontal_distance < .5:
