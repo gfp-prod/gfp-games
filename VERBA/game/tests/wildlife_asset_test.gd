@@ -38,6 +38,10 @@ func _initialize() -> void:
 			creature.queue_free()
 			return
 		if species == "crow":
+			var crow_names: PackedStringArray = PackedStringArray()
+			for descendant in creature.model.find_children("*", "Node3D", true, false):
+				crow_names.append(String(descendant.name))
+			print("VERBA CROW CHILD NODES: ", crow_names)
 			if creature.animated_parts.size() < 2:
 				fail("Crow missing articulated wing / leg pivots")
 				creature.free()
