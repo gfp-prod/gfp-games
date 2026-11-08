@@ -71,6 +71,11 @@ func _run_checks() -> void:
 		for bone_index in range(skeleton.get_bone_count()):
 			initial_poses.append(skeleton.get_bone_pose(bone_index))
 		creature.animation_player.advance(0.24)
+		print("VERBA POST-ANIM species=",species," root_scale=",art.scale," body_transform=",art.transform," post_bounds=",creature._model_bounds(art))
+		var running_clip: Animation = creature.animation_player.get_animation(creature.animation_player.current_animation)
+		if running_clip != null:
+			for ti in range(running_clip.get_track_count()):
+				print("VERBA ANIM TRACK species=", species, " type=", running_clip.track_get_type(ti), " path=", running_clip.track_get_path(ti))
 		var movement: float = 0.0
 		for bone_index in range(skeleton.get_bone_count()):
 			var before: Transform3D = initial_poses[bone_index]
