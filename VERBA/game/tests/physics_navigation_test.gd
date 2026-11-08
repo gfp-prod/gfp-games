@@ -24,6 +24,26 @@ func run_checks() -> void:
 		fail("Animal missing NavigationAgent3D"); return
 	if player.collision_mask & 16 == 0:
 		fail("Player cannot collide with terrain"); return
+	if player.collision_mask & 32 == 0:
+		fail("Player can pass inside wildlife bodies"); return
+	# Sweep the actual player capsule toward an animal-sized collider, far
+	# above terrain. This tests physical contact, not just matching bit flags.
+	var animal_blocker := StaticBody3D.new()
+	animal_blocker.collision_layer = 32
+	animal_blocker.collision_mask = 0
+	var block_shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 0.60
+	block_shape.shape = sphere
+	animal_blocker.add_child(block_shape)
+	animal_blocker.global_position = player.global_position + Vector3(0.0, 10.9, -1.5)
+	root.add_child(animal_blocker)
+	await physics_frame
+	var elevated: Transform3D = player.global_transform
+	elevated.origin += Vector3.UP * 10.0
+	if not player.test_move(elevated, Vector3(0.0, 0.0, -3.0)):
+		fail("Player sweeps through collision-layer-32 animal body"); return
+	animal_blocker.queue_free()
 	var origin: Vector3 = player.global_position
 	Input.action_press("verba_forward")
 	for i in range(30): await physics_frame
