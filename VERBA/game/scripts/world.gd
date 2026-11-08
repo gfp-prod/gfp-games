@@ -239,12 +239,26 @@ func build_terrain() -> void:
 			m.normal_texture = load(normal_path)
 		visual.material_override = m
 		ground_root.add_child(visual)
+	# Godot heightfield physics prevents front/back triangle and internal-edge collisions.
+	# A full heightfield is continuous across every visual material boundary.
 	var terrain_body := StaticBody3D.new()
 	terrain_body.name = "ContinuousTerrainCollision"
 	terrain_body.collision_layer = 16
 	terrain_body.collision_mask = 0
 	var terrain_shape := CollisionShape3D.new()
-	terrain_shape.shape = collision_tool.commit().create_trimesh_shape()
+	var terrain_map := HeightMapShape3D.new()
+	terrain_map.map_width = grid_size
+	terrain_map.map_depth = grid_size
+	var cell_size: float = extent / float(grid_size - 1)
+	var elevation := PackedFloat32Array()
+	for z_index in range(grid_size):
+		for x_index in range(grid_size):
+			var sample_x: float = (float(x_index) / float(grid_size - 1) - 0.5) * extent
+			var sample_z: float = (float(z_index) / float(grid_size - 1) - 0.5) * extent
+			elevation.append(height_at(sample_x, sample_z) / cell_size)
+	terrain_map.map_data = elevation
+	terrain_shape.shape = terrain_map
+	terrain_shape.scale = Vector3.ONE * cell_size
 	terrain_body.add_child(terrain_shape)
 	ground_root.add_child(terrain_body)
 	# No physics bodies on individual biome render meshes: their borders are visual only.
