@@ -4,6 +4,9 @@ const ROOT := "res://assets/models/cc0/wildlife/"
 const NAMES := ["Deer.gltf", "Stag.gltf", "Fox.gltf", "Wolf.gltf", "Hare.glb", "Crow.glb"]
 const CREATURE = preload("res://scripts/creature.gd")
 func _initialize() -> void:
+	call_deferred("_run_checks")
+
+func _run_checks() -> void:
 	for item in NAMES:
 		var path: String = ROOT + item
 		if not ResourceLoader.exists(path):
@@ -30,6 +33,7 @@ func _initialize() -> void:
 		creature.rng.seed = 567
 		# Instantiate the ACTUAL wildlife actor and call _ready as gameplay does.
 		root.add_child(creature)
+		await process_frame
 		if not creature.using_library_mesh:
 			fail("Creature still rendering legacy model: " + species)
 			creature.queue_free()
