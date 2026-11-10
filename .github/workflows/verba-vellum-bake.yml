@@ -1,0 +1,30 @@
+name: VERBA - corrected physical grimoire parchment
+on:
+  push:
+    branches: [verba-godot]
+    paths: [".github/workflows/verba-vellum-bake.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  vellum:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: verba-godot
+      - name: Install manuscript material authoring libraries
+        run: python3 -m pip install --quiet numpy Pillow
+      - name: Grade the actual existing vellum image
+        run: python3 VERBA/game/tools/grade_vellum.py
+      - name: Commit generated parchment to game
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERBA/game/assets/textures/authored/vellum_cream.png
+          if ! git diff --cached --quiet; then
+            git commit -m "VERBA art: aged cream parchment for physical grimoire"
+            git pull --rebase origin verba-godot
+            git push origin HEAD:verba-godot
+          fi
