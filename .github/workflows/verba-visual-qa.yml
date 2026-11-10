@@ -5,6 +5,11 @@ on:
     paths:
       - "VERBA/game/tests/visual_gallery.gd"
       - "VERBA/game/tests/world_gallery.gd"
+      - "VERBA/game/tests/book_visual_gallery.gd"
+      - "VERBA/game/scripts/grimoire.gd"
+      - "VERBA/game/scripts/scholar.gd"
+      - "VERBA/game/scripts/player.gd"
+      - "VERBA/game/data/books.json"
       - "VERBA/game/tests/visual_pixel_gate.py"
       - "VERBA/game/tests/make_motion_gifs.py"
       - "VERBA/game/scripts/creature.gd"
@@ -52,6 +57,12 @@ jobs:
             godot --path . --rendering-method gl_compatibility \
             --script res://tests/world_gallery.gd
           test "$(find visual-reports -name 'world_spawn_*.png' | wc -l)" -eq 4
+      - name: Render actual physical Latin book pages
+        run: |
+          xvfb-run -a -s "-screen 0 1280x800x24" \
+            godot --path . --rendering-method gl_compatibility \
+            --script res://tests/book_visual_gallery.gd
+          test "$(find visual-reports -name 'latin_book_*.png' | wc -l)" -eq 3
       - name: Automatic screenshot coverage gate
         run: |
           python3 -m pip install --quiet --break-system-packages Pillow
