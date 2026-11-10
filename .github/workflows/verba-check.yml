@@ -46,6 +46,8 @@ jobs:
         run: godot --headless --path . --script res://tests/physics_navigation_test.gd
       - name: Latin grammar and natural-law spell regression
         run: godot --headless --path . --script res://tests/latin_laws_test.gd
+      - name: Emergent heat transfer between natural objects
+        run: godot --headless --path . --script res://tests/material_exchange_test.gd
       - name: Persistent ecosystem JSON save and restore
         run: godot --headless --path . --script res://tests/persistence_test.gd
       - name: Imported wildlife rig and animation validation
