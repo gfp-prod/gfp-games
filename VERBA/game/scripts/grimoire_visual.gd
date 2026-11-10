@@ -21,8 +21,8 @@ static func make_open_binding() -> Node3D:
 	root.name = "LayeredLeatherGrimoire"
 	var cover: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("6d5045"),.82)
 	var leather_edge: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("3a2523"),.93)
-	var vellum: StandardMaterial3D = material("res://assets/textures/authored/aged_vellum.png",Color("c5ae8e"),.95)
-	var page_edge: StandardMaterial3D = ART.mat(Color("98846e"),1.0)
+	var vellum: StandardMaterial3D = material("res://assets/textures/authored/vellum_cream.png",Color("f7f2e9"),.96)
+	var page_edge: StandardMaterial3D = ART.mat(Color("948475"),1.0)
 	var bronze: StandardMaterial3D = ART.mat(Color("a68b59"),.34)
 	bronze.metallic = .63
 	var bronze_dark: StandardMaterial3D = ART.mat(Color("654c35"),.52)
@@ -67,6 +67,10 @@ static func make_open_binding() -> Node3D:
 		var y: float = -.46 + float(stitch)*.051
 		ART.box(root,Vector3(0,y,.011),Vector3(.018,.018,.014),bronze_dark)
 	ART.box(root,Vector3(0,.010,.018),Vector3(.032,.94,.030),leather_edge)
+	# A hand-stitched fabric hinge occupies the actual page gutter; without
+	# it the first-person camera showed an implausible black screen-sized slit.
+	var linen: StandardMaterial3D = ART.mat(Color("75675b"),.98)
+	ART.box(root,Vector3(0,.002,.056),Vector3(.038,.992,.020),linen)
 	return root
 
 static func _add_curved_leaf(root: Node3D, side: float, paper: StandardMaterial3D) -> void:
