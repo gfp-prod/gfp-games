@@ -414,12 +414,27 @@ func interact() -> void:
 		for candidate in world.items:
 			if not is_instance_valid(candidate): continue
 			var distance_to_item:float = global_position.distance_to(candidate.global_position)
-			if distance_to_item < nearest_dist:
+			if distance_to_item < nearest_dist and _pickup_visible(candidate):
 				nearest_dist = distance_to_item
 				n = candidate
 	if n==null or not is_instance_valid(n): return
 	if n.has_method("setup") and n.has_method("_process") and n.has_method("_ready") and n.get("item_type")!=null:
 		world.collect(n)
+
+func _pickup_visible(candidate: Node3D) -> bool:
+	# Mouse aim gets a small 2.6m generosity radius, but nearby loot must
+	# have line-of-sight. Otherwise items could be stolen through cottage walls.
+	var origin: Vector3 = camera.global_position
+	var target: Vector3 = candidate.global_position + Vector3.UP*.28
+	var query := PhysicsRayQueryParameters3D.create(origin,target)
+	query.collision_mask = 4 | 16
+	query.exclude = [get_rid()]
+	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return true
+	var obstacle = hit.get("collider",null)
+	if obstacle == null: return false
+	return obstacle.has_meta("pickup_ref") and obstacle.get_meta("pickup_ref") == candidate
 
 func add_item(item_type: String) -> void:
 	if inventory.size()>=6:
