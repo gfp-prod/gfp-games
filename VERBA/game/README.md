@@ -1,21 +1,20 @@
-# VERBA — Godot development build v1.2.1 (bundled, no installer)
+# VERBA — The Hollow Vale (Godot source)
 
-**No asset installation required.** All models and textures required by this project are included in its `assets/` directory. Open `project.godot` in Godot 4.5 or later, click Edit, allow resource import, then F5 to run.
+Open `project.godot` in Godot 4.5+ from an **extracted permanent folder**. The project's imported 3D models, tree textures and photographic ground materials are bundled. Do not use a separate asset installer.
 
-## Controls
-Click the game window for captured mouse look; W/A/S/D walk; Shift sprint; Space jump; Enter to enter a spell; G grimoire; E pick up; Esc release mouse.
-
-## What's actually included
-- 8 modeled GLB assets (cottage, 5 animals, open/closed grimoire)
-- 18 photo-derived JPG materials in `assets/textures/real/`, with their diffuse and normal channels.
-- Locally generated PNG materials, procedural trees and foliage as fallback visuals.
-- Physics-based player and animal collision, ecology and preliminary navigation scripts.
-
-## Important art limitation
-This package does **not** include externally downloaded Poly Haven material scans or the Quaternius/third-party tree models. The 18 existing photo-derived materials were already inside v1.2; they are NOT falsely presented as Poly Haven scans. Public-asset acquisition must be handled through a verified automated asset-publishing pipeline, rather than a Windows `.bat` installer that may fail on the user's machine.
+## Working gameplay
+- WASD/mouse FPS controls, collision, jumping, physical held grimoire and usable inventory.
+- Enter → type → Enter casts Latin spells. The grimoire records recognized forms for later recall.
+- Singular/plural imperative grammar: `cresce/crescite`, `veni/venite`, `dormi/dormite`, `fuge/fugite`, `siste/sistite`, `muta/mutate`, `arde/ardete`, `surge/surgite`.
+- Optional vocative addressees: `cresce arbor`, `crescite arbores`, `veni lupe`, `venite lupi`. Incorrect number agreement is rejected.
+- Several nearby objects/creatures can respond to plural speech. Fire and water operate on the same object moisture/heat as weather.
+- Independent objects and animals persist via `user://verba_living_world_v1.json`. Automatic saving happens in the graphical game about every 45 seconds. Open the grimoire (G), then S save or L reload.
+- Physical inscribed Latin tablet beside the starting cairn encourages discovery.
+- Forests are grouped into curated stands around roads, structures and a visible clearing.
 
 ## Validation
-Python static checks pass; Godot parser and runtime performance have not been verified in this environment. Native Godot import/runtime may surface additional errors.
+GitHub Actions runs the real Godot engine headlessly for startup, ecology, movement/navigation, Latin grammar, world state persistence and deterministic material exchange. A second workflow starts Godot in an OpenGL virtual display and produces *actual* world/animal screenshots and animation previews, with a pixel-based distortion gate.
 
-## GitHub
-The GitHub integration work is isolated on the `verba-godot` branch of `gfp-prod/gfp-games`. That branch currently contains tracked project documentation and build infrastructure; this local archive remains the complete playable-source bundle until the verified full project is published there. Do not confuse documentation on GitHub with uploaded engine assets.
+**Known limitations:** This is an early vertical slice. Visual fidelity, creature animation quality, house geometry and structural destruction still require substantial work. A first-person screenshot review is evidence, not approval of the final art direction.
+
+See `../README.md` for complete usage and links to workflows.
