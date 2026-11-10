@@ -755,7 +755,9 @@ func spawn_growth_patch(point: Vector3) -> Node3D:
 	material.roughness=1.0
 	material.albedo_texture=load("res://assets/textures/grass.png")
 	var p:=Vector3(point.x,height_at(point.x,point.z),point.z)
-	return make_living_plant(p,"grass",mesh,material,1.7)
+	var patch = make_living_plant(p,"grass",mesh,material,1.7)
+	patch.is_generated = true
+	return patch
 
 func nearest_food(pos3: Vector3, radius: float=9.0) -> Node3D:
 	var chosen:Node3D=null
