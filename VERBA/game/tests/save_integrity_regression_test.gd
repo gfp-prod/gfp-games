@@ -44,6 +44,12 @@ func _run() -> void:
 	var animal = world.creatures[0]
 	var wildlife_key: String = String(animal.persistent_id)
 	animal.hunger = 0.93
+	var spell_created = world.spawn_growth_patch(Vector3(9.0,0.0,9.0))
+	if spell_created == null or not spell_created.is_generated:
+		_fail("New spell-grown patch cannot be created")
+		return
+	var grown_key: int = int(spell_created.uid)
+	spell_created.growth = 1.42
 	var snapshot: Dictionary = PERSIST.snapshot(world)
 	if snapshot["dropped_pickups"].size() != 1:
 		_fail("Player drop missing from snapshot")
@@ -91,6 +97,25 @@ func _run() -> void:
 			matched = absf(float(creature.hunger)-.93) < .01
 	if not matched:
 		_fail("Wildlife identity was corrupted by list reordering")
+		return
+	var grown_count: int = 0
+	for obj in fresh.sim_objects:
+		if obj.is_generated and int(obj.uid) == grown_key:
+			grown_count += 1
+			if absf(float(obj.growth)-1.42)>.01:
+				_fail("Generated plant was restored with the wrong growth state")
+				return
+	if grown_count != 1:
+		_fail("A spell-created living plant was lost or duplicated after loading")
+		return
+	if not PERSIST.apply_snapshot(fresh,snapshot):
+		_fail("Repeated ecosystem load failed")
+		return
+	var grown_twice: int = 0
+	for obj in fresh.sim_objects:
+		if obj.is_generated and int(obj.uid) == grown_key: grown_twice += 1
+	if grown_twice != 1:
+		_fail("Spell-created vegetation duplicated on repeated load")
 		return
 
 	var save_file: String = "user://verba_save_integrity_ci.json"
