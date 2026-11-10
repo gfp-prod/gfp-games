@@ -146,27 +146,27 @@ func setup_atmosphere() -> void:
 	e.background_mode=Environment.BG_SKY
 	var sky:=Sky.new()
 	var s:=ProceduralSkyMaterial.new()
-	s.sky_top_color=Color("586f7b")
-	s.sky_horizon_color=Color("a0aa9e")
-	s.ground_bottom_color=Color("374940")
-	s.ground_horizon_color=Color("747f75")
+	s.sky_top_color=Color("7394a6")
+	s.sky_horizon_color=Color("becbb8")
+	s.ground_bottom_color=Color("43574a")
+	s.ground_horizon_color=Color("8b9a87")
 	s.use_debanding=true
 	sky.sky_material=s
 	e.sky=sky
 	e.ambient_light_source=Environment.AMBIENT_SOURCE_SKY
 	e.reflected_light_source=Environment.REFLECTION_SOURCE_BG
-	e.ambient_light_energy=.39
+	e.ambient_light_energy=.47
 	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
 	e.fog_enabled=true
-	e.fog_light_color=Color("89958f")
-	e.fog_density=.0039
+	e.fog_light_color=Color("a9b9aa")
+	e.fog_density=.0050
 	e.fog_sky_affect=.27
 	ambient.environment=e
 	add_child(ambient)
 	light_node=DirectionalLight3D.new()
 	light_node.name="LowAutumnSun"
-	light_node.light_color=Color("f4dfbe")
-	light_node.light_energy=1.03
+	light_node.light_color=Color("f7e5c5")
+	light_node.light_energy=1.10
 	light_node.shadow_enabled=true
 	light_node.rotation_degrees=Vector3(-38,32,-10)
 	add_child(light_node)
@@ -176,15 +176,15 @@ func _update_day_night_art(night_value: float) -> void:
 	var env: Environment = ambient.environment
 	var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
 	if sky != null:
-		sky.sky_top_color = Color("586f7b").lerp(Color("1c2d3d"),night_value)
-		sky.sky_horizon_color = Color("a0aa9e").lerp(Color("3c4957"),night_value)
-		sky.ground_bottom_color = Color("374940").lerp(Color("172c30"),night_value)
-		sky.ground_horizon_color = Color("747f75").lerp(Color("2c4548"),night_value)
-	env.ambient_light_energy = lerpf(.39,.15,night_value)
-	env.fog_light_color = Color("89958f").lerp(Color("3a4c56"),night_value)
-	env.fog_density = lerpf(.0039,.0071,night_value)
-	light_node.light_color=Color("f4dfbe").lerp(Color("a4bcd2"),night_value)
-	light_node.light_energy=lerpf(1.03,.20,night_value)
+		sky.sky_top_color = Color("7394a6").lerp(Color("1c2d3d"),night_value)
+		sky.sky_horizon_color = Color("becbb8").lerp(Color("3c4957"),night_value)
+		sky.ground_bottom_color = Color("43574a").lerp(Color("172c30"),night_value)
+		sky.ground_horizon_color = Color("8b9a87").lerp(Color("2c4548"),night_value)
+	env.ambient_light_energy = lerpf(.47,.15,night_value)
+	env.fog_light_color = Color("a9b9aa").lerp(Color("3a4c56"),night_value)
+	env.fog_density = lerpf(.0050,.0071,night_value)
+	light_node.light_color=Color("f7e5c5").lerp(Color("a4bcd2"),night_value)
+	light_node.light_energy=lerpf(1.10,.20,night_value)
 
 func stream_x(z: float) -> float:
 	return -20.0+4.4*sin(z*.075)+1.7*sin(z*.21)
