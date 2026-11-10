@@ -393,6 +393,11 @@ func build_landmarks() -> void:
 	RUIN_ART.add_broken_wall(ruins,Vector3( 5,0,-.2),Vector3(5,0,-7.4),east_ruin,.85,stone_mat)
 	RUIN_ART.add_broken_wall(ruins,Vector3(-5,0,-7.3),Vector3(5,0,-7.3),rear_ruin,.85,stone_mat)
 	ART.arch(ruins,Vector3(0,0,-7.0),1.8,1.8,ART.mat(Color("928d7b")))
+	# One legible vertical monument makes the ruined priory visible from
+	# approach. Its broken circumference is walkable with actual segment
+	# collisions rather than an invisible circular cylinder.
+	RUIN_ART.add_collapsed_bell_tower(self,
+		Vector3(-3.0,height_at(-3.0,-40.0),-40.0),stone_mat)
 	for i in range(7):
 		var px=rng.randf_range(-5.5,5.5)
 		var pz=rng.randf_range(-9,1)
