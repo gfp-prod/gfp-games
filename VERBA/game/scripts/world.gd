@@ -538,6 +538,11 @@ func build_forest() -> void:
 	for p in [Vector2(-47,32),Vector2(-56,8),Vector2(52,-9),Vector2(48,37)]:
 		spawn_tree(Vector3(p.x,height_at(p.x,p.y),p.y),
 			"autumn" if p.x > 0 else "broadleaf",1.12)
+	# Frame the first reading stone without planting a wall of trees in its
+	# path: two calm foreground silhouettes at different heights/depths.
+	for p in [Vector2(-12.5,20.5), Vector2(14.2,14.5),Vector2(-15.5,38.0)]:
+		spawn_tree(Vector3(p.x,height_at(p.x,p.y),p.y),
+			"broadleaf",1.14 if p.x < 0.0 else 1.03)
 	spawn_tree(Vector3(-37,height_at(-37,31),31),"dead",1.25)
 
 
@@ -578,8 +583,21 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 		# Preserve UVs, bark and opacity while tinting leaf surfaces only.
 		var imported: Node3D = node.get_node_or_null("CC0ImportedArt") as Node3D
 		if imported != null:
-			var leaf_tint: Color = Color("64785c") if kind != "autumn" else Color("9b7968")
-			leaf_tint = leaf_tint.lerp(Color("818e68") if kind != "autumn" else Color("ab8867"),r.randf_range(0.0,0.45))
+			var leaf_tint: Color = Color("738765") if kind != "autumn" else Color("806b5a")
+			# Autumn is a varied amber/olive canopy, not the same salmon pink
+			# copied thirty times along the ridge. Preserve a few rust accents.
+			if kind == "autumn":
+				var variation: float = r.randf()
+				if variation < .30:
+					leaf_tint = Color("6c7d60")
+				elif variation < .61:
+					leaf_tint = Color("937455")
+				elif variation < .86:
+					leaf_tint = Color("866965")
+				else:
+					leaf_tint = Color("a88767")
+			else:
+				leaf_tint = leaf_tint.lerp(Color("9da88a"),r.randf_range(.0,.48))
 			for member in imported.find_children("*","MeshInstance3D",true,false):
 				var part: MeshInstance3D = member as MeshInstance3D
 				if part == null or part.mesh == null: continue
