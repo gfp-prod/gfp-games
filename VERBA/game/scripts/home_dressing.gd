@@ -8,8 +8,8 @@ static func populate(world: Node3D) -> void:
 	var root := Node3D.new()
 	root.name = "HermitageApproachArt"
 	world.add_child(root)
-	var oak := world.textured("res://assets/textures/cottage_wood.png",Color("a08b76"))
-	var stone := world.stone_mat
+	var oak: StandardMaterial3D = world.textured("res://assets/textures/cottage_wood.png",Color("a08b76"))
+	var stone: Material = world.stone_mat
 	var dark := ART.mat(Color("3e4037"),.92)
 	var bronze := ART.mat(Color("9e8659"),.48)
 	bronze.metallic = .46
