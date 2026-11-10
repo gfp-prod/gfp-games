@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "note": "Candidates vetted at GitHub level on 2026-11-10. These sources are not yet vendored or loaded into the Godot game; accept only after a clean import, compatibility scene and regression tests. Pin commits and retain required license notices.",
+  "target_engine": "Godot 4.5.2",
+  "dependencies": [
+    {
+      "name": "Dialogic 2",
+      "repository": "dialogic-godot/dialogic",
+      "url": "https://github.com/dialogic-godot/dialogic",
+      "candidate_commit": "3afc449d40ac5dda6ba397eed6a34f5a9b75c881",
+      "license": "MIT",
+      "use": "branching NPC conversations and simple relationships",
+      "compatibility": "README says Godot 4.5+",
+      "decision": "spike in isolated scene before adoption"
+    },
+    {
+      "name": "Beehave",
+      "repository": "bitbrain/beehave",
+      "url": "https://github.com/bitbrain/beehave",
+      "candidate_commit": "fe589153fa780a3f88989578ceb5f539afffb7c2",
+      "license": "MIT",
+      "use": "animal/inhabitant behavior tree authoring",
+      "compatibility": "Godot 4.x branch; exact 4.5.2 needs CI proof",
+      "decision": "only if one villager/deer prototype improves current AI"
+    },
+    {
+      "name": "GdUnit4",
+      "repository": "godot-gdunit-labs/gdUnit4",
+      "url": "https://github.com/godot-gdunit-labs/gdUnit4",
+      "candidate_commit": "53199b821f6238921997b47b2c8e14cc526152ef",
+      "license": "MIT",
+      "use": "Godot scene-level integration tests",
+      "compatibility": "Godot 4; exact pinned add-on test needed",
+      "decision": "optional, preserve existing passing test harness"
+    },
+    {
+      "name": "Godot official demo projects",
+      "repository": "godotengine/godot-demo-projects",
+      "url": "https://github.com/godotengine/godot-demo-projects",
+      "candidate_commit": "b761b4cd5718a7118f2c95eb55f181d0a5f004f1",
+      "license": "MIT",
+      "use": "copy vetted small interaction, navigation and character-control patterns",
+      "compatibility": "choose demos matching tested engine",
+      "decision": "selective small-file reuse, avoid arbitrary wholesale import"
+    },
+    {
+      "name": "Voxel Tools",
+      "repository": "Zylann/godot_voxel",
+      "url": "https://github.com/Zylann/godot_voxel",
+      "license": "MIT",
+      "use": "potential future streamed terrain",
+      "compatibility": "compiled C++ module/GDExtension requires binaries/build chain",
+      "decision": "research only, not a game dependency"
+    }
+  ],
+  "blocked_options": [
+    {
+      "name": "Dialogue Manager latest",
+      "repository": "nathanhoad/godot_dialogue_manager",
+      "reason": "README says Godot 4.6+; current project tests Godot 4.5.2"
+    }
+  ]
+}
