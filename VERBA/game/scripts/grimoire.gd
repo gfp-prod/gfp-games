@@ -144,7 +144,7 @@ func update_pages() -> void:
 			var mastered: String = "STUDIED" if scholar.completed.has(id) else "UNREAD"
 			page_labels[1].text = String(volume.get("subject","")).to_upper() + "  |  " + mastered + "\n" + \
 				"\n".join(glosses) + "\n\nN: comprehension\n" + \
-				"Scholar " + str(scholar.level) + "  Mana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana)) + \
+				"Scholar " + str(scholar.level) + " XP " + str(scholar.xp) + "/" + str(scholar.next_level_xp()) + "\nMana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana)) + \
 				"\n" + study_feedback
 		return
 	for side in range(2):
@@ -163,7 +163,7 @@ func update_pages() -> void:
 			line += "─────\n"+str(page_index+1)+" / "+str(maxi(1,ceili(float(learned.size())/4.0)))
 			line += "\nB: Books   S: Save   L: Load"
 			if scholar != null:
-				line += "\nScholar " + str(scholar.level) + "  Mana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana))
+				line += "\nScholar " + str(scholar.level) + " XP " + str(scholar.xp) + "/" + str(scholar.next_level_xp()) + "\nMana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana))
 		page_labels[side].text=line
 
 func mark_cast(word: String) -> bool:
