@@ -61,6 +61,7 @@ func _ready() -> void:
 	build_landmarks()
 	build_stone_ridges()
 	build_first_words_cairn()
+	build_plural_tablet()
 	build_forest()
 	build_scatter()
 	build_water()
@@ -359,6 +360,37 @@ func build_first_words_cairn() -> void:
 	lamp.omni_range=4.0
 	cairn.add_child(lamp)
 	ART.orb(cairn,Vector3(0,2.62,.25),Vector3(.07,.09,.07),ART.mat(Color("f3d3a2"),.3,Color("a37342")),12)
+
+
+func build_plural_tablet() -> void:
+	# A diegetic grammar lesson, not a quest marker or floating tutorial.
+	# Attested 2nd-person singular/plural Latin imperatives physically
+	# inscribed next to the first word-cairn. The player can infer grammar
+	# instead of unlocking a skill tree.
+	var tablet = SIM_OBJECT.new()
+	tablet.configure(self,"stone",next_sim_id)
+	next_sim_id += 1
+	sim_objects.append(tablet)
+	tablet.name = "TwoVoicesStone"
+	tablet.position = Vector3(-3.8,height_at(-3.8,20.0),20.0)
+	tablet.rotation.y = -0.12
+	add_child(tablet)
+	var carved: Material = textured("res://assets/textures/stone.png",Color("8f9489"))
+	ART.stone(tablet,Vector3(0,.16,0),Vector3(.9,.34,.72),carved)
+	ART.box(tablet,Vector3(0,1.18,0),Vector3(1.75,2.12,.33),carved)
+	var body: StaticBody3D = add_solid_box(tablet,Vector3(0,1.14,0),
+		Vector3(1.75,2.3,.38),"GrammaticalStone")
+	body.set_meta("flora_ref",tablet)
+	var words := Label3D.new()
+	words.name="TheTwoVoicesInscription"
+	words.text="UNUS     MULTI\n\nCRESCE    CRESCITE\nVENI      VENITE\nDORMI     DORMITE\n\nVERBA MOVENT MUNDUM"
+	words.font_size=34
+	words.pixel_size=.0026
+	words.modulate=Color("292c26")
+	words.outline_size=0
+	words.no_depth_test=false
+	words.position=Vector3(0,1.22,.186)
+	tablet.add_child(words)
 
 func build_water() -> void:
 	var water:=Node3D.new()
