@@ -4,6 +4,8 @@ on:
     branches: [verba-godot]
     paths:
       - "VERBA/game/tests/visual_gallery.gd"
+      - "VERBA/game/tests/world_gallery.gd"
+      - "VERBA/game/tests/visual_pixel_gate.py"
       - "VERBA/game/scripts/creature.gd"
       - "VERBA/game/assets/models/cc0/wildlife/**"
       - ".github/workflows/verba-visual-qa.yml"
