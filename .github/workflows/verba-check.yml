@@ -36,6 +36,7 @@ jobs:
           test "$(find assets/models/cc0/wildlife \( -name '*.glb' -o -name '*.gltf' \) | wc -l)" -ge 6
           test "$(find assets/textures/real -name '*.jpg' | wc -l)" -ge 18
           python tests/check_project.py
+          python tests/validate_books.py
       - name: Import assets and parse scripts in Godot
         run: godot --headless --path . --editor --import --quit
       - name: Runtime smoke test
@@ -44,6 +45,8 @@ jobs:
         run: godot --headless --path . --script res://tests/ecology_smoke_test.gd
       - name: Physics and navigation regression
         run: godot --headless --path . --script res://tests/physics_navigation_test.gd
+      - name: Latin books and scholar progression
+        run: godot --headless --path . --script res://tests/scholar_progression_test.gd
       - name: Latin grammar and natural-law spell regression
         run: godot --headless --path . --script res://tests/latin_laws_test.gd
       - name: Emergent heat transfer between natural objects
