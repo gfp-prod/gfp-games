@@ -45,10 +45,15 @@ func _ready() -> void:
 	book.add_child(open_visual)
 	# Native layered binding replaces the former flat imported book geometry.
 	# Ink labels occupy the surface of each physical page; no HTML overlay.
+	# Prefer ordinary OS-installed serif faces, avoiding font download hassles
+	# while keeping every letter as ink geometry attached to the 3D page.
+	var in_world_serif := SystemFont.new()
+	in_world_serif.font_names = PackedStringArray(["Georgia","Liberation Serif","DejaVu Serif"])
 	for side in [-1,1]:
 		var l:=Label3D.new()
 		l.name="InkWrittenOnParchment"
-		l.font_size=24
+		l.font=in_world_serif
+		l.font_size=25
 		l.pixel_size=.00145
 		l.modulate=Color("332922")
 		l.outline_size=0
@@ -194,9 +199,11 @@ func restore() -> void:
 
 func apply_pose(alpha: float) -> void:
 	# The player starts empty-handed. Book comes up from below eye-line.
-	book.position=Vector3(.39,-1.11,-.91).lerp(Vector3(.005,-.21,-1.02),alpha)
-	book.rotation=Vector3(.66,-.35,-.20).lerp(Vector3(-.20,0,0),alpha)
-	book.scale=Vector3.ONE * lerpf(.67,1.0,alpha)
+	# A smaller, tilted book reads as a volume held in the player's hands.
+	# The former full-screen pages resembled two yellow UI panels.
+	book.position=Vector3(.39,-1.11,-.91).lerp(Vector3(.005,-.30,-1.10),alpha)
+	book.rotation=Vector3(.66,-.35,-.20).lerp(Vector3(-.28,-.035,.018),alpha)
+	book.scale=Vector3.ONE * lerpf(.67,.85,alpha)
 	book.visible = alpha > .005
 	# At halfway the covers fold outward. The two GLB versions give a genuinely
 	# physical model throughout the animation instead of a static UI card.
