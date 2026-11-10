@@ -12,7 +12,7 @@
     "creek": "ada436dac2dd72d4f0dbf671cd2af42bba72b0f251cf3d159d4025608af4eeea",
     "road": "8030f8dfec86db22717202b279a6615495b0e8b55e8529ee65d917da573c7a46"
   },
-  "atlas_sha256": "5a8422f8d263f18e0435f7aa11019174eeb1e2e87f88058a7b0b58d8b3e8f762",
+  "atlas_sha256": "b3f2c95c29fceb3e44bc1879dbf7380a8f1844846e2955e4b2081a63b2f2a1e8",
   "source": "tools/bake_vale_terrain.py",
   "tiles_meters": {
     "meadow": 4.4,
