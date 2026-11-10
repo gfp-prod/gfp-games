@@ -53,8 +53,8 @@ func _ready() -> void:
 		var l:=Label3D.new()
 		l.name="InkWrittenOnParchment"
 		l.font=in_world_serif
-		l.font_size=25
-		l.pixel_size=.00145
+		l.font_size=30
+		l.pixel_size=.00168
 		l.modulate=Color("332922")
 		l.outline_size=0
 		l.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
@@ -201,8 +201,8 @@ func apply_pose(alpha: float) -> void:
 	# The player starts empty-handed. Book comes up from below eye-line.
 	# A smaller, tilted book reads as a volume held in the player's hands.
 	# The former full-screen pages resembled two yellow UI panels.
-	book.position=Vector3(.39,-1.11,-.91).lerp(Vector3(.005,-.30,-1.10),alpha)
-	book.rotation=Vector3(.66,-.35,-.20).lerp(Vector3(-.28,-.035,.018),alpha)
+	book.position=Vector3(.39,-1.11,-.91).lerp(Vector3(.005,-.19,-1.14),alpha)
+	book.rotation=Vector3(.66,-.35,-.20).lerp(Vector3(-.26,-.026,.014),alpha)
 	book.scale=Vector3.ONE * lerpf(.67,.85,alpha)
 	book.visible = alpha > .005
 	# At halfway the covers fold outward. The two GLB versions give a genuinely
