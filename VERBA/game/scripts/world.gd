@@ -60,7 +60,7 @@ func _ready() -> void:
 	setup_materials()
 	setup_atmosphere()
 	build_terrain()
-	build_old_road()
+	# Old road is now physically texture-baked into the seamless terrain atlas.
 	build_landmarks()
 	build_stone_ridges()
 	build_first_words_cairn()
@@ -197,35 +197,21 @@ func terrain_biome(x: float, z: float) -> int:
 	return 0
 
 func build_terrain() -> void:
-	# NO custom shader: it was showing up as a featureless near-white surface
-	# on the user's GL Compatibility renderer. Use conventional Godot spatial
-	# materials and photo-based diffuse/normal maps instead.
-	var mat_paths: Array[String] = [
-		"res://assets/textures/meadow_ground.png",
-		"res://assets/textures/woodland_ground.png",
-		"res://assets/textures/amber_ground.png",
-		"res://assets/textures/river_silt.png"
-	]
-	var biome_names: Array[String] = ["OpenMeadow", "WoodlandSoil", "AutumnForest", "StreamBank"]
-	# Keep biome render meshes separate, but create ONE continuous terrain physics surface.
-	# Per-biome concave shapes exposed internal triangle edges and trapped the player.
-	var collision_tool := SurfaceTool.new()
-	collision_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var tools: Array[SurfaceTool] = []
-	for biome in range(4):
-		var st := SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		tools.append(st)
+	# One continuous, physically grounded terrain mesh. A WorldUV photographic
+	# atlas already combines genuine CC0 meadow, soil, leaves, creek and worn
+	# path with smooth ecotones. No sharp per-triangle biome boundaries.
+	# All blending is baked offline via tools/bake_vale_terrain.py, so it runs
+	# identically on Godot's GL Compatibility renderer and works without web.
+	var visual_tool := SurfaceTool.new()
+	visual_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var grid_size: int = 126
 	var extent: float = 144.0
-	for zi in range(grid_size - 1):
-		for xi in range(grid_size - 1):
+	for zi in range(grid_size-1):
+		for xi in range(grid_size-1):
 			var x0: float = (float(xi)/float(grid_size-1)-.5)*extent
 			var x1: float = (float(xi+1)/float(grid_size-1)-.5)*extent
 			var z0: float = (float(zi)/float(grid_size-1)-.5)*extent
 			var z1: float = (float(zi+1)/float(grid_size-1)-.5)*extent
-			var biome: int = terrain_biome((x0+x1)*.5,(z0+z1)*.5)
-			var tool: SurfaceTool = tools[biome]
 			var p0 := Vector3(x0,height_at(x0,z0),z0)
 			var p1 := Vector3(x1,height_at(x1,z0),z0)
 			var p2 := Vector3(x0,height_at(x0,z1),z1)
@@ -233,35 +219,30 @@ func build_terrain() -> void:
 			for v in [p0,p2,p1,p1,p2,p3]:
 				var dx: float = height_at(v.x+.4,v.z)-height_at(v.x-.4,v.z)
 				var dz: float = height_at(v.x,v.z+.4)-height_at(v.x,v.z-.4)
-				tool.set_normal(Vector3(-dx, .8, -dz).normalized())
-				tool.set_uv(Vector2(v.x*.16,v.z*.16))
-				tool.set_color(terrain_color(v.x,v.z,v.y).lerp(Color.WHITE,.60))
-				tool.add_vertex(v)
-				collision_tool.add_vertex(v)
+				visual_tool.set_normal(Vector3(-dx,.8,-dz).normalized())
+				visual_tool.set_uv(Vector2((v.x+extent*.5)/extent,(v.z+extent*.5)/extent))
+				visual_tool.add_vertex(v)
 	var ground_root := Node3D.new()
 	ground_root.name = "VisibleTexturedGround"
 	add_child(ground_root)
-	for biome in range(4):
-		var generated_mesh: ArrayMesh = tools[biome].commit()
-		if generated_mesh.get_surface_count() == 0: continue
-		var visual := MeshInstance3D.new()
-		visual.name = biome_names[biome]
-		visual.mesh = generated_mesh
-		var m := StandardMaterial3D.new()
-		m.albedo_color = Color.WHITE  # keep photographic color, avoid double-tinting into flat gray
-		m.albedo_texture = load(photo_or_fallback(mat_paths[biome]))
-		m.vertex_color_use_as_albedo = true
-		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		m.roughness = 1.0
-		m.cull_mode = BaseMaterial3D.CULL_DISABLED
-		var normal_path: String = CC0_DIR + mat_paths[biome].get_file().get_basename() + "_normal.jpg"
-		if ResourceLoader.exists(normal_path):
-			m.normal_enabled = true
-			m.normal_texture = load(normal_path)
-		visual.material_override = m
-		ground_root.add_child(visual)
-	# Godot heightfield physics prevents front/back triangle and internal-edge collisions.
-	# A full heightfield is continuous across every visual material boundary.
+	var ground := MeshInstance3D.new()
+	ground.name = "OpenMeadow"
+	ground.mesh = visual_tool.commit()
+	var material := StandardMaterial3D.new()
+	var atlas: String = "res://assets/textures/real/vale_terrain_blend.jpg"
+	if not ResourceLoader.exists(atlas):
+		push_error("Missing baked CC0 terrain atlas; run the source/bake workflow")
+		material.albedo_texture = load(photo_or_fallback("res://assets/textures/meadow_ground.png"))
+	else:
+		material.albedo_texture = load(atlas)
+	material.roughness = .98
+	material.metallic = 0.0
+	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	ground.material_override = material
+	ground_root.add_child(ground)
+	# Physics remains a single, untouched HeightMapShape3D: no visual-material
+	# boundary can trap a player, rabbit or walking NPC.
 	var terrain_body := StaticBody3D.new()
 	terrain_body.name = "ContinuousTerrainCollision"
 	terrain_body.collision_layer = 16
@@ -270,19 +251,18 @@ func build_terrain() -> void:
 	var terrain_map := HeightMapShape3D.new()
 	terrain_map.map_width = grid_size
 	terrain_map.map_depth = grid_size
-	var cell_size: float = extent / float(grid_size - 1)
+	var cell_size: float = extent / float(grid_size-1)
 	var elevation := PackedFloat32Array()
 	for z_index in range(grid_size):
 		for x_index in range(grid_size):
-			var sample_x: float = (float(x_index) / float(grid_size - 1) - 0.5) * extent
-			var sample_z: float = (float(z_index) / float(grid_size - 1) - 0.5) * extent
-			elevation.append(height_at(sample_x, sample_z) / cell_size)
+			var sample_x: float = (float(x_index)/float(grid_size-1)-.5)*extent
+			var sample_z: float = (float(z_index)/float(grid_size-1)-.5)*extent
+			elevation.append(height_at(sample_x,sample_z)/cell_size)
 	terrain_map.map_data = elevation
 	terrain_shape.shape = terrain_map
 	terrain_shape.scale = Vector3.ONE * cell_size
 	terrain_body.add_child(terrain_shape)
 	ground_root.add_child(terrain_body)
-	# No physics bodies on individual biome render meshes: their borders are visual only.
 
 func build_old_road() -> void:
 	# A worn track must blend back into the meadow, not read as a floating
