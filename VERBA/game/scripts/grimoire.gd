@@ -69,7 +69,7 @@ func refine_physical_book() -> void:
 		var piece: MeshInstance3D = member as MeshInstance3D
 		if piece == null: continue
 		var name_lower: String = String(piece.name).to_lower()
-		if name_lower.contains("aged paper"):
+		if name_lower.contains("paper"):
 			var page: StandardMaterial3D = StandardMaterial3D.new()
 			page.albedo_texture = vellum
 			page.albedo_color = Color("b4a089")
@@ -77,11 +77,11 @@ func refine_physical_book() -> void:
 			page.metallic = 0.0
 			page.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 			piece.set_surface_override_material(0,page)
-		elif name_lower.contains("oxblood leather"):
+		elif name_lower.contains("leather"):
 			# Expose a real leather rim around parchment so the object reads
 			# as a bound volume at first-person distance.
 			piece.scale = Vector3(1.11,1.11,1.0)
-		elif name_lower.contains("worn gold"):
+		elif name_lower.contains("gold"):
 			piece.scale = Vector3(1.095,1.09,1.0)
 
 func learn(word: String) -> void:
