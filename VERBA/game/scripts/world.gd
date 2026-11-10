@@ -402,7 +402,7 @@ func build_water() -> void:
 	for i in range(68):
 		var z:float=-61.0+float(i)*1.8
 		var x:float=stream_x(z)
-		var y:float=height_at(x,z)+1.55
+		var y:float=height_at(x,z)+.68  # water sits inside the carved creek, below its actual banks
 		for side in [-1,1]:
 			st.set_uv(Vector2(float(i)*.12,0.0 if side==-1 else 1.0))
 			st.add_vertex(Vector3(x+side*2.25,y,z))
@@ -1010,7 +1010,7 @@ func _process(delta: float) -> void:
 		night_remaining-=delta
 		light_node.light_energy=lerpf(light_node.light_energy,.18,minf(1.0,delta*1.6))
 	else:
-		light_node.light_energy=lerpf(light_node.light_energy,.85,minf(1.0,delta*.3))
+		light_node.light_energy=lerpf(light_node.light_energy,1.03,minf(1.0,delta*.3))
 	ecology_timer += delta
 	if ecology_timer >= .5:
 		var elapsed:float=ecology_timer
