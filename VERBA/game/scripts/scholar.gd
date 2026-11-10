@@ -2,6 +2,7 @@ extends RefCounted
 ## Knowledge is progression. No repeated XP by rereading a completed page.
 ## Stored state contains data only, so it survives Godot scene rebuilds.
 const BOOK_PATH: String = "res://data/books.json"
+const GRAMMAR = preload("res://scripts/latin_grammar.gd")
 
 var books: Dictionary = {}
 var owned: Array[String] = []
@@ -72,10 +73,13 @@ func answer(book_id: String, option_index: int) -> Dictionary:
 		"message":message}
 
 func cost_for(spoken_form: String) -> float:
-	var words: PackedStringArray = spoken_form.strip_edges().to_lower().split(" ",false)
-	if words.is_empty(): return INF
-	# Studying a book makes magical language easier to use, not merely available.
-	return 7.0 if studied_forms.has(words[0]) else 16.0
+	# Use the SAME actual Latin parser as casting, not naïve splitting:
+	# "crescite, arbores!" and "crescite arbores" have identical mana costs.
+	var parsed: Dictionary = GRAMMAR.parse(spoken_form)
+	if not bool(parsed.get("ok",false)):
+		return INF
+	var command: String = String(parsed["command"])
+	return 7.0 if studied_forms.has(command) else 16.0
 
 func can_cast(spoken_form: String) -> bool:
 	return mana >= cost_for(spoken_form)
