@@ -78,5 +78,7 @@ jobs:
             VERBA/game/visual-reports/*.gif
             VERBA/game/assets/models/cc0/wildlife/Hare.glb
             VERBA/game/assets/models/cc0/wildlife/ForestRabbit.glb
+            VERBA/game/assets/models/authored/Grimoire_Open.glb
+            VERBA/game/assets/models/authored/Grimoire_Closed.glb
           if-no-files-found: warn
           retention-days: 14
