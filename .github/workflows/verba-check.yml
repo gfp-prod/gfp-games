@@ -52,6 +52,8 @@ jobs:
         run: godot --headless --path . --script res://tests/book_world_loop_test.gd
       - name: Latin grammar and natural-law spell regression
         run: godot --headless --path . --script res://tests/latin_laws_test.gd
+      - name: Magic failure is physically and economically inert
+        run: godot --headless --path . --script res://tests/magic_fizzle_test.gd
       - name: Emergent heat transfer between natural objects
         run: godot --headless --path . --script res://tests/material_exchange_test.gd
       - name: Continuous offscreen ecology at lower simulation frequency
