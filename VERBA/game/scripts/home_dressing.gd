@@ -59,8 +59,8 @@ static func populate(world: Node3D) -> void:
 
 	# One warm navigational accent, visible at dusk from the path but not
 	# enough artificial emissive lights to turn daytime into a theme park.
-	var post_x: float = 25.3
-	var post_z: float = 13.5
+	var post_x: float = 23.9
+	var post_z: float = 13.4
 	var post_ground: float = world.height_at(post_x,post_z)
 	var post := Node3D.new()
 	post.name="HandmadeBronzePathLantern"
@@ -71,7 +71,7 @@ static func populate(world: Node3D) -> void:
 	ART.bone(post,Vector3(.72,2.30,0),Vector3(.72,2.03,0),.016,.015,dark,8)
 	ART.cone(post,Vector3(.72,1.99,0),.18,.23,bronze,.06,10)
 	ART.cone(post,Vector3(.72,1.55,0),.19,.11,bronze,.14,10)
-	var candle := ART.mat(Color("f1ca8a"),.5,Color("6d5434"))
+	var candle := ART.mat(Color("cbb18e"),.6,Color("423427"))
 	ART.orb(post,Vector3(.72,1.78,0),Vector3(.135,.175,.135),candle,12)
 	for side in [-1.0,1.0]:
 		ART.bone(post,Vector3(.72+side*.13,1.56,0),
@@ -79,7 +79,7 @@ static func populate(world: Node3D) -> void:
 	var glow := OmniLight3D.new()
 	glow.name="QuietLanternGlow"
 	glow.light_color=Color("f2c48c")
-	glow.light_energy=.52
+	glow.light_energy=.35
 	glow.omni_range=4.5
 	glow.position=Vector3(.72,1.77,0)
 	post.add_child(glow)
