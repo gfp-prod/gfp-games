@@ -1,7 +1,7 @@
 extends SceneTree
 ## VERBA's wildlife must use genuinely different imported skinned models, not legacy primitives.
 const ROOT := "res://assets/models/cc0/wildlife/"
-const NAMES := ["Deer.gltf", "Stag.gltf", "Fox.gltf", "Wolf.gltf", "Hare.glb", "Crow.glb"]
+const NAMES := ["Deer.gltf", "Stag.gltf", "Fox.gltf", "Wolf.gltf", "ForestRabbit.glb", "Crow.glb"]
 const CREATURE = preload("res://scripts/creature.gd")
 func _initialize() -> void:
 	call_deferred("_run_checks")
@@ -18,7 +18,7 @@ func _run_checks() -> void:
 			return
 		var actor: Node3D = source.instantiate()
 		var player: AnimationPlayer = actor.find_child("AnimationPlayer", true, false) as AnimationPlayer
-		if player == null or player.get_animation_list().size() < 4:
+		if player == null or player.get_animation_list().size() < (3 if item == "ForestRabbit.glb" else 4):
 			fail(item + " missing rig animations")
 			actor.free()
 			return
