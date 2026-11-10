@@ -26,6 +26,10 @@ Colors are reference sRGB values, not a global multiply on every asset.
 
 **Dramatic moods:** meadow/curiosity (warm but restrained), woodland (cool, sheltered), cottage (amber practicality), ruin (chalky stone and blue shadow), gas station (unnatural warm-cold fluorescent contrast). Lighting changes mood without remapping everything to a single tinted fog.
 
+## Mandatory reuse-first sourcing
+
+Before making common models, textures, vegetation tools, terrain shaders or animations, consult the [free-source research register](FREE_ASSET_REUSE_REGISTER.md). Compare at least two existing free/CC0/open-source alternatives, verify their actual source license and Godot version, then render the strongest candidate in-game. Only build from scratch if no candidate meets our art and interaction requirements. Keep authoring and provenance metadata with the asset. **The point of reuse is to reach higher visual quality faster—not to add generic low-poly placeholders.**
+
 ## Geometry and asset hierarchy
 **Hero (must withstand arm's-length viewing):** the held grimoire, pickup books, cottage door/interior, tower's first buildable wall, familiar. These require multiple materials, recognizable thickness, real 3D joints, UV discipline, collision, animation/interaction checks.
 
