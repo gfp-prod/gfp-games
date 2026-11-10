@@ -28,6 +28,12 @@ func _initialize() -> void:
 	if int(repeat.get("xp",-1)) != 0 or scholar.xp != older_xp:
 		_fail("Rereading a book farmed more XP")
 		return
+	if scholar.cost_for("crescite, arbores!") != scholar.cost_for("crescite arbores"):
+		_fail("Latin punctuation incorrectly changed learned magic mana cost")
+		return
+	if scholar.cost_for("invalid-latin") != INF:
+		_fail("Unknown Latin should not produce a valid magic price")
+		return
 	if not scholar.pay_cast("crescite") or scholar.mana >= scholar.max_mana:
 		_fail("Memorized spell did not consume mana")
 		return
