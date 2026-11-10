@@ -119,7 +119,7 @@ def main() -> None:
         # The first real-player-eye render showed dangerously dark (40/255)
         # foreground midtones. A filmic perceptual lift keeps photo texture
         # detail while giving open meadow the storybook daylight it needs.
-        out = 255.0*np.power(np.clip(out/255.0,0.0,1.0), .63)
+        out = 255.0*np.power(np.clip(out/255.0,0.0,1.0), .52)
         output[start:start+len(z)] = np.clip(out,0,255).astype(np.uint8)
         if start%768 == 0:
             print(f"VERBA_TERRAIN_BAKE {start}/{RES}", flush=True)
