@@ -435,12 +435,12 @@ func build_landmarks() -> void:
 	ART.arch(ruins,Vector3(0,0,0),3.4,3.2,stone_mat)
 	# Continuous low wall bases with chipped, wildly uneven upper stone.
 	# Old 3 rectangular slabs looked like untextured gray test geometry.
-	RUIN_ART.add_broken_wall(ruins,Vector3(-5,0,-.2),Vector3(-5,0,-7.4),
-		PackedFloat32Array([2.9,3.1,2.2,1.9,2.6,1.4,2.0,3.2,2.8]),.85,stone_mat)
-	RUIN_ART.add_broken_wall(ruins,Vector3(5,0,-.2),Vector3(5,0,-7.4),
-		PackedFloat32Array([2.8,1.7,2.4,3.1,2.5,1.35,1.85,2.0,2.6]),.85,stone_mat)
-	RUIN_ART.add_broken_wall(ruins,Vector3(-5,0,-7.3),Vector3(5,0,-7.3),
-		PackedFloat32Array([2.45,2.4,1.6,2.1,2.25,1.3,2.0,1.85,2.3,2.45]),.85,stone_mat)
+	var west_ruin: PackedFloat32Array = PackedFloat32Array([2.9,3.1,2.2,1.9,2.6,1.4,2.0,3.2,2.8])
+	var east_ruin: PackedFloat32Array = PackedFloat32Array([2.8,1.7,2.4,3.1,2.5,1.35,1.85,2.0,2.6])
+	var rear_ruin: PackedFloat32Array = PackedFloat32Array([2.45,2.4,1.6,2.1,2.25,1.3,2.0,1.85,2.3,2.45])
+	RUIN_ART.add_broken_wall(ruins,Vector3(-5,0,-.2),Vector3(-5,0,-7.4),west_ruin,.85,stone_mat)
+	RUIN_ART.add_broken_wall(ruins,Vector3( 5,0,-.2),Vector3(5,0,-7.4),east_ruin,.85,stone_mat)
+	RUIN_ART.add_broken_wall(ruins,Vector3(-5,0,-7.3),Vector3(5,0,-7.3),rear_ruin,.85,stone_mat)
 	ART.arch(ruins,Vector3(0,0,-7.0),1.8,1.8,ART.mat(Color("928d7b")))
 	for i in range(7):
 		var px=rng.randf_range(-5.5,5.5)
@@ -463,9 +463,9 @@ func build_landmarks() -> void:
 	# Priory perimeter walls are physical obstacles, not merely visual geometry.
 	# Low continuous collision portions sit INSIDE the visible masonry,
 	# rather than placing invisible 3m walls above collapsed edges.
-	add_solid_box(ruins, Vector3(-5.0,.65,-3.8),Vector3(.9,1.30,7.3),"PrioryWestWall")
-	add_solid_box(ruins, Vector3( 5.0,.65,-3.8),Vector3(.9,1.30,7.3),"PrioryEastWall")
-	add_solid_box(ruins, Vector3(0.0,.63,-7.3),Vector3(10.4,1.25,.9),"PrioryBackWall")
+	RUIN_ART.add_wall_collision(ruins,Vector3(-5,0,-.2),Vector3(-5,0,-7.4),west_ruin,.85,"PrioryWestWall")
+	RUIN_ART.add_wall_collision(ruins,Vector3(5,0,-.2),Vector3(5,0,-7.4),east_ruin,.85,"PrioryEastWall")
+	RUIN_ART.add_wall_collision(ruins,Vector3(-5,0,-7.3),Vector3(5,0,-7.3),rear_ruin,.85,"PrioryBackWall")
 	add_solid_box(arch, Vector3(-1.2, 1.35, 0), Vector3(.7, 2.7, .8), "RidgeArchPillarWest")
 	add_solid_box(arch, Vector3( 1.2, 1.35, 0), Vector3(.7, 2.7, .8), "RidgeArchPillarEast")
 	var cabin := Node3D.new()
