@@ -921,7 +921,6 @@ func collect(item) -> void:
 		player.book.open_book(item.word)
 		player.say_world("A volume found: " + String(scholar.get_book(item.word).get("title","Latin manuscript")),
 			item.global_position + Vector3.UP*1.0,Color("dfc287"))
-		if DisplayServer.get_name() != "headless": save_world()
 	else:
 		player.add_item(item.item_type)
 	# Only authored pickups need a tombstone record. Player-created drops
@@ -930,6 +929,11 @@ func collect(item) -> void:
 		collected_pickup_ids.append(item.persistent_id)
 	items.erase(item)
 	item.queue_free()
+	# Atomic journal the COMPLETE transaction, including removal of the
+	# pickup. Previously book/leaf auto-saves ran before the tombstone,
+	# allowing the same item to reappear after a crash.
+	if DisplayServer.get_name() != "headless":
+		save_world()
 
 func nearest_creature(pos3: Vector3,kind: String,distance: float) -> Node3D:
 	var found: Node3D=null
