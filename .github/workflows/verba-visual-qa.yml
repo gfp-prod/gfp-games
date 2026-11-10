@@ -19,6 +19,7 @@ on:
       - "VERBA/game/scripts/material_exchange.gd"
       - "VERBA/game/assets/models/cc0/nature/**"
       - "VERBA/game/assets/textures/real/**"
+      - "VERBA/game/assets/materials/**"
       - "VERBA/game/tools/bake_vale_terrain.py"
       - "VERBA/game/assets/models/cc0/wildlife/**"
       - ".github/workflows/verba-visual-qa.yml"
