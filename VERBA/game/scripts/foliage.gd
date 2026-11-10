@@ -152,9 +152,9 @@ static func populate_grass(world) -> void:
 	material.texture_filter=BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	material.albedo_texture=load("res://assets/textures/grass.png")
 	var groups: Array[Dictionary]=[
-		{"name":"Meadow Tufts","n":3100,"tint":Color("b7bc94")},
-		{"name":"Cool Bank Grasses","n":950,"tint":Color("809d83")},
-		{"name":"Amber Ridge Grasses","n":1000,"tint":Color("b2a27d")}
+		{"name":"Meadow Tufts","n":7000,"tint":Color("b7bc94")},
+		{"name":"Cool Bank Grasses","n":1800,"tint":Color("809d83")},
+		{"name":"Amber Ridge Grasses","n":1700,"tint":Color("b2a27d")}
 	]
 	for group in groups:
 		var count:int=group["n"]
@@ -208,16 +208,20 @@ static func populate_litter(world) -> void:
 	material.vertex_color_use_as_albedo=true
 	material.cull_mode=BaseMaterial3D.CULL_DISABLED
 	material.roughness=1.0
+	material.albedo_color=Color("8c8276")
 	var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D
-	mm.use_colors=true;mm.mesh=mesh;mm.instance_count=750
+	mm.use_colors=true;mm.mesh=mesh;mm.instance_count=900
 	var rng:=RandomNumberGenerator.new();rng.seed=1140
-	for i in range(750):
-		var x:=rng.randf_range(17,58)
-		var z:=rng.randf_range(-21,48)
-		var size:=rng.randf_range(.48,1.4)
+	for i in range(900):
+		var stand: Vector2 = Vector2(22,-19) if rng.randf() < .47 else Vector2(40,20)
+		var angle: float = rng.randf_range(0,TAU)
+		var radius: float = sqrt(rng.randf())*13.0
+		var x: float = stand.x + cos(angle)*radius
+		var z: float = stand.y + sin(angle)*radius
+		var size: float = rng.randf_range(.24,.59)
 		var basis:=Basis(Vector3.UP,rng.randf_range(0,TAU)).scaled(Vector3.ONE*size)
 		mm.set_instance_transform(i,Transform3D(basis,Vector3(x,world.height_at(x,z)+.015,z)))
-		mm.set_instance_color(i,Color("daa469").lerp(Color("8a633f"),rng.randf_range(.1,.75)))
+		mm.set_instance_color(i,Color("827360").lerp(Color("665447"),rng.randf_range(.1,.75)))
 	var n:=MultiMeshInstance3D.new()
 	n.name="FallenIndividualLeaves"
 	n.multimesh=mm
