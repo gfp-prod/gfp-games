@@ -103,6 +103,24 @@ func _render_gallery() -> void:
 				quit(3)
 				return
 			print("VERBA_VISUAL_QA_SAVED ", filename, " ", rendered.get_width(), "x", rendered.get_height())
+		# A complete sampled walk cycle allows animation quality review,
+		# not just a static pose or a "some bone moved" assertion.
+		actor._update_anim("walk")
+		var walk_length: float = actor.animation_player.current_animation_length
+		if walk_length <= 0.0:
+			push_error("No walking animation to capture for " + species)
+			quit(6)
+			return
+		for frame_i in range(10):
+			actor.animation_player.seek((float(frame_i) / 10.0) * walk_length, true)
+			await process_frame
+			await RenderingServer.frame_post_draw
+			var frame_image: Image = viewport.get_texture().get_image()
+			var frame_file: String = "%s/motion_%s_%02d.png" % [OUTFOLDER, species, frame_i]
+			if frame_image.save_png(frame_file) != OK:
+				push_error("Could not capture walking sequence: " + frame_file)
+				quit(7)
+				return
 		actor.queue_free()
 		await process_frame
 	# Candidate rabbit is rendered without changing the game's live creature loader.
