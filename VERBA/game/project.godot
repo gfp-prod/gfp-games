@@ -27,3 +27,6 @@ window/size/window_height_override=720
 
 [application/config]
 project/version="1.3.0-visual-environment-art-pass"
+
+[editor_plugins]
+enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg")
