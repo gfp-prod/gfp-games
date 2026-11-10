@@ -66,6 +66,7 @@ jobs:
             godot --path . --rendering-method gl_compatibility \
             --script res://tests/world_gallery.gd
           test "$(find visual-reports -name 'world_spawn_*.png' | wc -l)" -eq 4
+          test "$(find visual-reports -name 'world_moonlight_*.png' | wc -l)" -eq 2
       - name: Render actual physical Latin book pages
         run: |
           xvfb-run -a -s "-screen 0 1280x800x24" \
