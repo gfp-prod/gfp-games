@@ -69,19 +69,32 @@ static func populate(world: Node3D) -> void:
 	ART.bone(post,Vector3.ZERO,Vector3(0,2.45,0),.09,.06,oak,10)
 	ART.bone(post,Vector3(0,2.37,0),Vector3(.72,2.30,0),.07,.04,oak,10)
 	ART.bone(post,Vector3(.72,2.30,0),Vector3(.72,2.03,0),.016,.015,dark,8)
-	ART.cone(post,Vector3(.72,1.99,0),.18,.23,bronze,.06,10)
-	ART.cone(post,Vector3(.72,1.55,0),.19,.11,bronze,.14,10)
-	var candle := ART.mat(Color("cbb18e"),.6,Color("423427"))
-	ART.orb(post,Vector3(.72,1.78,0),Vector3(.135,.175,.135),candle,12)
-	for side in [-1.0,1.0]:
-		ART.bone(post,Vector3(.72+side*.13,1.56,0),
-			Vector3(.72+side*.13,1.96,0),.012,.011,bronze,7)
+	# A proper framed oil lantern: four metal rails, glazed amber window,
+	# footplate and small roof. It replaces a giant pale umbrella-like cone.
+	var glass: StandardMaterial3D = StandardMaterial3D.new()
+	glass.albedo_color = Color("9a8969")
+	glass.emission_enabled = true
+	glass.emission = Color("483519")
+	glass.emission_energy_multiplier = .28
+	glass.roughness = .32
+	var soot: Material = ART.mat(Color("413d36"),.74)
+	ART.box(post,Vector3(.72,1.82,0),Vector3(.275,.31,.275),glass)
+	ART.box(post,Vector3(.72,1.99,0),Vector3(.38,.075,.38),bronze)
+	ART.box(post,Vector3(.72,1.65,0),Vector3(.355,.073,.355),bronze)
+	for side_x in [-1.0,1.0]:
+		for side_z in [-1.0,1.0]:
+			ART.bone(post,
+				Vector3(.72+side_x*.14,1.68,side_z*.14),
+				Vector3(.72+side_x*.14,1.99,side_z*.14),
+				.016,.016,soot,8)
+	ART.bone(post,Vector3(.72,2.035,0),Vector3(.72,2.10,0),
+		.036,.025,bronze,8)
 	var glow := OmniLight3D.new()
 	glow.name="QuietLanternGlow"
 	glow.light_color=Color("f2c48c")
-	glow.light_energy=.35
+	glow.light_energy=.26
 	glow.omni_range=4.5
-	glow.position=Vector3(.72,1.77,0)
+	glow.position=Vector3(.72,1.82,0)
 	post.add_child(glow)
 	world.add_solid_box(post,Vector3(0,1.15,0),Vector3(.19,2.30,.19),"SolidLanternPost")
 
