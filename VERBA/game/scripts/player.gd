@@ -278,6 +278,16 @@ func _input(event: InputEvent) -> void:
 			book.turn_page(-1)
 		elif event.keycode==KEY_D or event.keycode==KEY_RIGHT:
 			book.turn_page(1)
+		elif event.keycode==KEY_S:
+			var preserved: bool = world.save_world()
+			say_world("The vale remembers." if preserved else "The record could not be kept.",
+				camera.global_position-camera.global_transform.basis.z*2.5,
+				Color("e1ce9f"))
+		elif event.keycode==KEY_L:
+			var recalled: bool = world.load_world()
+			say_world("The vale remembers." if recalled else "No earlier world is recorded.",
+				camera.global_position-camera.global_transform.basis.z*2.5,
+				Color("e1ce9f"))
 		get_viewport().set_input_as_handled()
 		return
 	if event.keycode==KEY_ENTER or event.keycode==KEY_KP_ENTER:
