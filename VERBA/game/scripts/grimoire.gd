@@ -140,7 +140,7 @@ func update_pages() -> void:
 				"1. " + String(choices[0]) + "\n2. " + String(choices[1]) + "\n3. " + String(choices[2]) + \
 				"\n\n" + study_feedback
 		else:
-			var glosses: Array = volume.get("glossary",[])
+			var glosses: PackedStringArray = PackedStringArray(volume.get("glossary",[]))
 			var mastered: String = "STUDIED" if scholar.completed.has(id) else "UNREAD"
 			page_labels[1].text = String(volume.get("subject","")).to_upper() + "  |  " + mastered + "\n" + \
 				"\n".join(glosses) + "\n\nN: comprehension\n" + \
