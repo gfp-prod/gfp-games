@@ -44,5 +44,7 @@ jobs:
         run: godot --headless --path . --script res://tests/ecology_smoke_test.gd
       - name: Physics and navigation regression
         run: godot --headless --path . --script res://tests/physics_navigation_test.gd
+      - name: Latin grammar and natural-law spell regression
+        run: godot --headless --path . --script res://tests/latin_laws_test.gd
       - name: Imported wildlife rig and animation validation
         run: godot --headless --path . --script res://tests/wildlife_asset_test.gd
