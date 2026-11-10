@@ -62,3 +62,5 @@ jobs:
         run: godot --headless --path . --script res://tests/save_integrity_regression_test.gd
       - name: Imported wildlife rig and animation validation
         run: godot --headless --path . --script res://tests/wildlife_asset_test.gd
+      - name: Scene/node and ecology CPU profiling baseline
+        run: godot --headless --path . --script res://tests/performance_baseline.gd
