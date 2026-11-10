@@ -19,6 +19,7 @@ var navigation_region: NavigationRegion3D
 var sim_objects: Array = []
 var next_sim_id: int = 1
 var ecology_timer: float = 0.0
+var distant_object_elapsed: Dictionary = {}
 var autosave_elapsed: float = 0.0
 var natural_weather_timer: float = 0.0
 var natural_weather_at: float = 80.0
@@ -770,11 +771,20 @@ func ecology_step(dt: float) -> void:
 	# when the player stands still. Each object's state can diverge over time.
 	for obj in sim_objects:
 		if not is_instance_valid(obj):continue
-		var nearby_fire:float=nearest_fire_distance(obj.global_position)
-		# Stream-bank plants get a little moisture without waiting for the player.
-		if absf(obj.global_position.x-stream_x(obj.global_position.z))<5.0:
-			obj.apply_effect("wet",dt*.025)
-		obj.simulate(dt,raining,nearby_fire,wind)
+		# Near objects simulate frequently. Far objects retain all elapsed time,
+		# but use fewer real-time updates. No distant object's clock stops.
+		var uid: int = int(obj.uid)
+		var elapsed: float = float(distant_object_elapsed.get(uid,0.0)) + dt
+		var distant: bool = player != null and player.global_position.distance_to(obj.global_position) > 42.0
+		if distant and elapsed < 3.0:
+			distant_object_elapsed[uid] = elapsed
+			continue
+		distant_object_elapsed[uid] = 0.0
+		var nearby_fire: float = nearest_fire_distance(obj.global_position)
+		# Stream-bank moisture is simulated with the same accumulated delta.
+		if absf(obj.global_position.x-stream_x(obj.global_position.z)) < 5.0:
+			obj.apply_effect("wet",elapsed*.025)
+		obj.simulate(elapsed,raining,nearby_fire,wind)
 		if obj.burning and not obj.dead and nearby_fire>1.5:
 			add_fire(obj.global_position,obj)
 	# Local heat transfer, rather than arbitrary secondary magic effects.
