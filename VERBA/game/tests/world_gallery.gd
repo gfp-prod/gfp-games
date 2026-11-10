@@ -63,5 +63,31 @@ func _capture_world() -> void:
 			quit(5)
 			return
 		print("VERBA_ART_CHECKPOINT ",frame_name)
+	# Verify that the SAME location has real tonal identity after dusk,
+	# instead of simply dimming a white daytime sky.
+	game.night_remaining = 30.0
+	game.night_visual_blend = 1.0
+	game._update_day_night_art(1.0)
+	for case in [
+		{"name":"world_moonlight_cottage","at":Vector2(25.7,17.0),"look":Vector2(29.0,8.0)},
+		{"name":"world_moonlight_creek","at":Vector2(-13.0,9.0),"look":Vector2(-19.0,10.0)}
+	]:
+		var p: Vector2 = case["at"]
+		var toward: Vector2 = case["look"]
+		player.position=Vector3(p.x,game.height_at(p.x,p.y)+1.9,p.y)
+		camera.look_at(Vector3(toward.x,game.height_at(toward.x,toward.y)+1.5,toward.y),Vector3.UP)
+		await process_frame
+		await RenderingServer.frame_post_draw
+		var photograph: Image = root.get_texture().get_image()
+		if photograph.is_empty():
+			push_error("Missing actual moonlight photograph")
+			quit(6)
+			return
+		var destination: String = output+"/"+String(case["name"])+".png"
+		if photograph.save_png(destination) != OK:
+			push_error("Could not save moonlight composition")
+			quit(7)
+			return
+		print("VERBA_NIGHT_ART_CHECKPOINT ",destination)
 	print("VERBA_WORLD_VISUAL_QA_COMPLETE")
 	quit(0)
