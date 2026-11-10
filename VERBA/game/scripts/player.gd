@@ -274,7 +274,13 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if book.open:
-		if event.keycode==KEY_A or event.keycode==KEY_LEFT:
+		if book.quiz_open and event.keycode >= KEY_1 and event.keycode <= KEY_3:
+			book.submit_answer(event.keycode - KEY_1)
+		elif event.keycode == KEY_B:
+			book.cycle_books()
+		elif event.keycode == KEY_N:
+			book.begin_study()
+		elif event.keycode==KEY_A or event.keycode==KEY_LEFT:
 			book.turn_page(-1)
 		elif event.keycode==KEY_D or event.keycode==KEY_RIGHT:
 			book.turn_page(1)
@@ -357,6 +363,7 @@ func create_diagnostics() -> void:
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(world): return
+	if world.scholar != null: world.scholar.regenerate(delta)
 	if not typing and not book.open:
 		var nearest:Dictionary=look_hit(3.8)
 		if nearest.has("entity") and nearest["entity"]!=null:
@@ -364,6 +371,7 @@ func _process(delta: float) -> void:
 			if n.has_method("afflict"): interaction_hint.text=n.species.capitalize()+"  ·  Enter to cast"
 			elif n.has_method("get_state_report"): interaction_hint.text=n.get_state_report()
 			elif n.has_method("setup") and n.item_type=="leaf": interaction_hint.text="E  ·  Study manuscript leaf"
+			elif n.has_method("setup") and n.item_type=="book": interaction_hint.text="E  ·  Read Latin volume"
 			elif n.has_method("setup"): interaction_hint.text="E  ·  Take "+n.item_type
 			else: interaction_hint.text=""
 		else: interaction_hint.text=""
@@ -466,11 +474,16 @@ func finish_cast() -> void:
 	buffer=""
 	if text_cast.is_empty(): return
 	var hit=look_hit(16.0)
+	if not world.scholar.can_cast(text_cast):
+		say_world("Not enough mana. Read, rest, or remember the words.",
+			camera.global_position-camera.global_transform.basis.z*2.8,Color("bc8b81"))
+		return
 	var result:Dictionary=world.magic.cast(text_cast,camera.global_position,hit)
 	var display_pos: Vector3=hit.get("position",camera.global_position-camera.global_transform.basis.z*4.0)
 	if not result["ok"]:
 		say_world(String(result["message"]),camera.global_position-camera.global_transform.basis.z*2.8,Color("c38b7e"))
 		return
+	world.scholar.pay_cast(text_cast)
 	var remembered:bool=book.mark_cast(String(result.get("remember_word",text_cast)))
 	say_world(text_cast,display_pos+Vector3.UP*1.3,Color("f7dda1") if remembered else Color("d5a869"))
 	if not result["message"].is_empty():
