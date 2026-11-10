@@ -1,0 +1,143 @@
+{
+  "title": "KayKit Forest Nature Pack (republished as packed art scene in bot-crossing)",
+  "source_url": "https://raw.githubusercontent.com/Station-Sciences/bot-crossing/9f7dc6536aacbce2203bb705e3f0cf1772ea3fb7/public/assets/forest.glb",
+  "license": "CC0-1.0 for bundled asset, per public/assets/CREDITS.md",
+  "original": "Kay Lousberg (KayKit Forest Nature Pack)",
+  "repackaging": "Station-Sciences/bot-crossing",
+  "sha256": "8d7dfa511015e66d454c271efda29174981957220d63fc88ec0fabec5cdd224d",
+  "meshes": [
+    "Bush_1_E_Color1",
+    "Bush_3_B_Color1",
+    "Grass_2_D_Color1",
+    "Rock_1_D_Color1",
+    "Rock_1_J_Color1",
+    "Rock_2_C_Color1",
+    "Rock_2_G_Color1",
+    "Rock_3_E_Color1",
+    "Rock_3_L_Color1",
+    "Rock_3_Q_Color1",
+    "Tree_1_A_Color1",
+    "Tree_1_C_Color1",
+    "Tree_3_A_Color1",
+    "Tree_3_C_Color1",
+    "Tree_4_A_Color1",
+    "Tree_4_C_Color1"
+  ],
+  "nodes": [
+    {
+      "id": 0,
+      "name": "Bush_1_E_Color1",
+      "mesh": 0,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 1,
+      "name": "Bush_3_B_Color1",
+      "mesh": 1,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 2,
+      "name": "Grass_2_D_Color1",
+      "mesh": 2,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 3,
+      "name": "Rock_1_D_Color1",
+      "mesh": 3,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 4,
+      "name": "Rock_1_J_Color1",
+      "mesh": 4,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 5,
+      "name": "Rock_2_C_Color1",
+      "mesh": 5,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 6,
+      "name": "Rock_2_G_Color1",
+      "mesh": 6,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 7,
+      "name": "Rock_3_E_Color1",
+      "mesh": 7,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 8,
+      "name": "Rock_3_L_Color1",
+      "mesh": 8,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 9,
+      "name": "Rock_3_Q_Color1",
+      "mesh": 9,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 10,
+      "name": "Tree_1_A_Color1",
+      "mesh": 10,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 11,
+      "name": "Tree_1_C_Color1",
+      "mesh": 11,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 12,
+      "name": "Tree_3_A_Color1",
+      "mesh": 12,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 13,
+      "name": "Tree_3_C_Color1",
+      "mesh": 13,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 14,
+      "name": "Tree_4_A_Color1",
+      "mesh": 14,
+      "scale": null,
+      "translation": null
+    },
+    {
+      "id": 15,
+      "name": "Tree_4_C_Color1",
+      "mesh": 15,
+      "scale": null,
+      "translation": null
+    }
+  ],
+  "materials": [
+    "forest"
+  ]
+}
