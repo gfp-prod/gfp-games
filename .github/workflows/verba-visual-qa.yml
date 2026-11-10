@@ -38,6 +38,12 @@ jobs:
             godot --path . --rendering-method gl_compatibility \
             --script res://tests/visual_gallery.gd
           test "$(find visual-reports -name '*.png' | wc -l)" -ge 15
+      - name: Render actual first-person game view
+        run: |
+          xvfb-run -a -s "-screen 0 1280x800x24" \
+            godot --path . --rendering-method gl_compatibility \
+            --script res://tests/world_gallery.gd
+          test "$(find visual-reports -name 'world_spawn_*.png' | wc -l)" -eq 4
       - name: Automatic screenshot coverage gate
         run: |
           python3 -m pip install --quiet --break-system-packages Pillow
