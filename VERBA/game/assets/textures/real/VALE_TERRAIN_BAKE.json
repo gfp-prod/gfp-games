@@ -1,0 +1,24 @@
+{
+  "resolution": [
+    3072,
+    3072
+  ],
+  "extent_meters": 144.0,
+  "license": "Derived exclusively from bundled Poly Haven CC0 source textures",
+  "inputs_sha256": {
+    "meadow": "42ed7b0106a8ce37fa6cd7f96aa8bf2706c8a198f25f6b12ec2e2f4f86d450d0",
+    "woodland": "ff8b3373eae87e81fe2268b73d5a5fce69e62970c2441097934627712b0a0c6b",
+    "autumn": "217d9a63ffcce0995d895304f0e6d7931cdea84a953ff3ab2c060f953b6aa9b4",
+    "creek": "ada436dac2dd72d4f0dbf671cd2af42bba72b0f251cf3d159d4025608af4eeea",
+    "road": "8030f8dfec86db22717202b279a6615495b0e8b55e8529ee65d917da573c7a46"
+  },
+  "atlas_sha256": "5a8422f8d263f18e0435f7aa11019174eeb1e2e87f88058a7b0b58d8b3e8f762",
+  "source": "tools/bake_vale_terrain.py",
+  "tiles_meters": {
+    "meadow": 4.4,
+    "woodland": 3.7,
+    "autumn": 4.6,
+    "creek": 3.7,
+    "road": 3.6
+  }
+}
