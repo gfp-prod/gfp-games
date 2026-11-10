@@ -117,29 +117,40 @@ static func populate_ferns(world) -> void:
 		plant.rotation.y=rng.randf_range(0,TAU)
 
 static func grass_mesh() -> ArrayMesh:
-	var rng:=RandomNumberGenerator.new();rng.seed=772
-	var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in range(9):
-		var a := float(i)*2.39996323
-		var root:=Vector3(cos(a),0,sin(a))*rng.randf_range(.03,.15)
-		var height:=rng.randf_range(.29,.63)
-		var bend := Vector3(cos(a)*.15,0,sin(a)*.15)
-		var side := Vector3(-sin(a),0,cos(a))
-		var w:=rng.randf_range(.025,.055)
-		var lower := root+Vector3.UP*height*.55+bend*.3
-		var upper := root+Vector3.UP*height+bend
-		var vertices: Array[Vector3]=[
-			root-side*w,root+side*w,lower+side*w*.62,
-			root-side*w,lower+side*w*.62,lower-side*w*.62,
-			lower-side*w*.62,lower+side*w*.62,upper
-		]
-		var colors: Array[Color]=[
-			Color("62704f"),Color("7f8d61"),Color("a5ae78"),
-			Color("62704f"),Color("a5ae78"),Color("88976b"),
-			Color("829465"),Color("a3b07c"),Color("c9bc85")
-		]
-		for j in range(vertices.size()):
-			st.set_color(colors[j]);st.set_uv(Vector2(float(j%3)*.5,float(j)/9.0));st.add_vertex(vertices[j])
+	# A tuft of fine tapered blades, not nine giant triangular spikes.
+	# Subtle curved blades read as foliage at first-person scale and keep
+	# each MultiMesh instance under 65 triangles.
+	var rng := RandomNumberGenerator.new()
+	rng.seed=772
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in range(12):
+		var angle: float = float(i)*2.39996323+rng.randf_range(-.13,.13)
+		var base: Vector3 = Vector3(cos(angle),0.0,sin(angle))*rng.randf_range(.018,.11)
+		var direction: Vector3 = Vector3(cos(angle),0.0,sin(angle))
+		var lateral: Vector3 = Vector3(-direction.z,0.0,direction.x)
+		var height: float = rng.randf_range(.19,.40)
+		var width: float = rng.randf_range(.011,.027)
+		var lower: Vector3 = base + Vector3.UP*(height*.54) + direction*.027
+		var tip: Vector3 = base + Vector3.UP*height + direction*rng.randf_range(.055,.12)
+		var base_left: Vector3 = base-lateral*width
+		var base_right: Vector3 = base+lateral*width
+		var middle_left: Vector3 = lower-lateral*width*.53
+		var middle_right: Vector3 = lower+lateral*width*.53
+		var darker: Color = Color("536345")
+		var mid: Color = Color("78835d")
+		var tip_color: Color = Color("9ea87a")
+		for triangle in [
+			[base_left,darker,base_right,mid,middle_right,mid],
+			[base_left,darker,middle_right,mid,middle_left,mid],
+			[middle_left,mid,middle_right,mid,tip,tip_color]
+		]:
+			for j in range(0,6,2):
+				var vertex: Vector3 = triangle[j]
+				var tint: Color = triangle[j+1]
+				st.set_color(tint)
+				st.set_uv(Vector2(vertex.x*2.0,vertex.y*2.0))
+				st.add_vertex(vertex)
 	st.generate_normals()
 	return st.commit()
 
@@ -152,9 +163,9 @@ static func populate_grass(world) -> void:
 	material.texture_filter=BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	material.albedo_texture=load("res://assets/textures/grass.png")
 	var groups: Array[Dictionary]=[
-		{"name":"Meadow Tufts","n":7000,"tint":Color("b7bc94")},
-		{"name":"Cool Bank Grasses","n":1800,"tint":Color("809d83")},
-		{"name":"Amber Ridge Grasses","n":1700,"tint":Color("b2a27d")}
+		{"name":"Meadow Tufts","n":13500,"tint":Color("929e79")},
+		{"name":"Cool Bank Grasses","n":3500,"tint":Color("809781")},
+		{"name":"Amber Ridge Grasses","n":2600,"tint":Color("a59e7d")}
 	]
 	for group in groups:
 		var count:int=group["n"]
@@ -175,8 +186,8 @@ static func populate_grass(world) -> void:
 					x=rng.randf_range(18,65);z=rng.randf_range(-42,52)
 				if not (absf(x)<3.8 and z>-32 and z<32):break
 			var base:=Basis(Vector3.UP,rng.randf_range(0,TAU))
-			var s:=rng.randf_range(.39,1.10)
-			base=base.scaled(Vector3(s,rng.randf_range(.68,1.13),s))
+			var s:=rng.randf_range(.58,1.20)
+			base=base.scaled(Vector3(s,rng.randf_range(.66,1.15),s))
 			mm.set_instance_transform(i,Transform3D(base,Vector3(x,world.height_at(x,z)+.017,z)))
 			var c:Color=group["tint"]
 			mm.set_instance_color(i,c.lerp(Color("5b7554"),rng.randf_range(.14,.54)))
