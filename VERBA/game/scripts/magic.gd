@@ -1,11 +1,13 @@
 extends RefCounted
 ## Nouns are invocation formulae; verbs are morphologically valid singular imperatives.
 const ART = preload("res://scripts/art.gd")
+const GRAMMAR = preload("res://scripts/latin_grammar.gd")
+const WORLD_LAWS = preload("res://scripts/world_laws.gd")
 var world
 var lexicon: Dictionary = {}
 var rng:=RandomNumberGenerator.new()
 var cast_count:=0
-var wildcard_rate:=.14
+var wildcard_rate:=0.0 # Surprises come from interacting world states, not arbitrary 14% dice rolls.
 
 func _init(w: Node3D) -> void:
 	world=w
@@ -18,6 +20,16 @@ func _init(w: Node3D) -> void:
 
 func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 	word=word.strip_edges().to_lower()
+	var parsed: Dictionary = GRAMMAR.parse(word)
+	if not bool(parsed.get("ok",false)):
+		return {"ok":false,"message":String(parsed.get("message","Unknown Latin."))}
+	if word.contains(" ") or String(parsed.get("number","singular")) == "plural":
+		var place: Vector3 = target.get("position",eye + Vector3.FORWARD * 5.0)
+		var actor: Node3D = target.get("entity",null)
+		var resolution: Dictionary = WORLD_LAWS.new(world).invoke(parsed,place,actor)
+		return {"ok":bool(resolution["ok"]), "message":String(resolution["message"]),
+			"point":place,"word":word,"wild":"","remember_word":String(parsed["command"]),
+			"count":int(resolution["count"])}
 	if not lexicon.has(word):
 		return {"ok":false,"message":"Unknown utterance: " + word}
 	var e:Dictionary=lexicon[word]
@@ -107,7 +119,7 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 	var surprise:=""
 	if rng.randf()<wildcard_rate:
 		surprise=wild_result(point)
-	return {"ok":true,"message":message,"wild":surprise,"point":point,"word":word}
+	return {"ok":true,"message":message,"wild":surprise,"point":point,"word":word,"remember_word":word}
 
 func wild_result(point: Vector3) -> String:
 	match rng.randi_range(0,4):
