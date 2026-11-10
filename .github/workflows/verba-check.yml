@@ -58,5 +58,7 @@ jobs:
         run: godot --headless --path . --script res://tests/ecology_lod_test.gd
       - name: Persistent ecosystem JSON save and restore
         run: godot --headless --path . --script res://tests/persistence_test.gd
+      - name: Complete save, loot, wildlife identity and recovery regression
+        run: godot --headless --path . --script res://tests/save_integrity_regression_test.gd
       - name: Imported wildlife rig and animation validation
         run: godot --headless --path . --script res://tests/wildlife_asset_test.gd
