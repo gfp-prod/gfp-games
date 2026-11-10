@@ -11,8 +11,12 @@ The full project is committed directly to this GitHub branch. Download the `verb
 - Shift sprint, Space jump, E interact/collect, F use held item
 - Enter: type an incantation and press Enter again to cast it
 - G: raise/lower the *physical* grimoire; A/D or mouse wheel to turn pages
-- While the grimoire is open: **S saves the persistent world, L restores it**
+- While the grimoire is open: **B cycles found Latin books, N begins a reading-comprehension question, 1/2/3 answer it, S saves the persistent world, L restores it**
 - Esc: close the book or release mouse, H: contextual guidance, F3: optional movement diagnostics
+
+## Begin your education
+
+Find the physical book **De Herbis** on an inscribed stone near the starting clearing. Press **E** to take it. Read the Latin on the raised grimoire, press **N** to answer a Latin comprehension question using **1/2/3**. A first correct answer earns one-time scholar XP, increases mana on leveling, and teaches efficient botany magic. Two further books cover animals and fire/water. They are discoverable at separate locations. Review the [implemented book progression](game/docs/BOOKS_AND_SCHOLAR_PROGRESSION.md).
 
 ## Verified development changes
 - Real 3D animal assets: deer/stag, wolf, fox, rabbit and crow; animated asset renders, motion previews and visual-size checks are produced by GitHub Actions
