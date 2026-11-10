@@ -35,3 +35,12 @@ Do not mislabel this alpha art milestone as a finished world or a production-shi
 4. Compare identical scene camera angles, not differently framed concept art.
 
 **Completed in this pass:** starting-valley composition, foliage shape, tree grade, visual details, bridge, cottage garden, priory tower, book presentation and several visually intrusive items. **Not added:** new quests, spells, survival mechanics or world regions.
+
+## Final sign-off — verified on the same source revision
+
+- **Final day lighting:** brighter blue sky, warmer pale horizon, lifted ambient midtones, and gentle atmospheric depth, without weakening night contrast. Actual identical-camera screenshots were examined before accepting the change.
+- **Godot engine regression:** [PASS — run 42922351651](https://github.com/gfp-prod/gfp-games/actions/runs/42922351651) for commit `e58d56466e7f2e00339baa1c3d7da98293ba76af`.
+- **OpenGL real-camera/animation gallery:** [PASS — run 42922351649](https://github.com/gfp-prod/gfp-games/actions/runs/42922351649), same commit. Includes real grimoire, creek, cottage, priory, daylight/night and wildlife frames.
+- **Stable source snapshot:** [`verba-art-pass-02`](https://github.com/gfp-prod/gfp-games/tree/verba-art-pass-02/VERBA). This branch preserves the reviewed art pass separately from ongoing experiments.
+- The pass is **technically signed off** as an alpha starter-area art iteration; it is **not** a claim that all visual-quality debt listed above is eliminated.
+
