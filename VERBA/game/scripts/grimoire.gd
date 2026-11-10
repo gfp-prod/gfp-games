@@ -1,6 +1,7 @@
 extends Node3D
 ## The book is geometry under the camera, not a CanvasLayer or menu.
 const ART = preload("res://scripts/art.gd")
+const BOOK_VISUAL = preload("res://scripts/grimoire_visual.gd")
 var player
 var book
 var left_cover: Node3D
@@ -35,14 +36,14 @@ func _ready() -> void:
 	book.name="LeatherGrimoire"
 	add_child(book)
 	var closed_asset: PackedScene = load("res://assets/models/authored/Grimoire_Closed.glb")
-	var open_asset: PackedScene = load("res://assets/models/authored/Grimoire_Open.glb")
+
 	closed_visual=closed_asset.instantiate()
 	closed_visual.name="ClosedBindingAndClasp"
 	book.add_child(closed_visual)
-	open_visual=open_asset.instantiate()
+	open_visual=BOOK_VISUAL.make_open_binding()
 	open_visual.name="OpenedCoversAndPhysicalPages"
 	book.add_child(open_visual)
-	refine_physical_book()
+	# Native layered binding replaces the former flat imported book geometry.
 	# Ink labels occupy the surface of each physical page; no HTML overlay.
 	for side in [-1,1]:
 		var l:=Label3D.new()
@@ -53,36 +54,13 @@ func _ready() -> void:
 		l.outline_size=0
 		l.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 		l.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
-		l.position=Vector3(side*.36,-.02,.117)
+		l.position=Vector3(side*.36,-.02,.046)
 		l.no_depth_test=false
 		l.double_sided=false
 		book.add_child(l)
 		page_labels.append(l)
 	update_pages()
 	apply_pose(0.0)
-
-func refine_physical_book() -> void:
-	# Tune the real imported four-mesh binding, not a fullscreen book UI.
-	# The old embedded page texture rendered as luminous yellow stripes.
-	var vellum: Texture2D = load("res://assets/textures/authored/aged_vellum.png")
-	for member in open_visual.find_children("*","MeshInstance3D",true,false):
-		var piece: MeshInstance3D = member as MeshInstance3D
-		if piece == null: continue
-		var name_lower: String = String(piece.name).to_lower()
-		if name_lower.contains("paper"):
-			var page: StandardMaterial3D = StandardMaterial3D.new()
-			page.albedo_texture = vellum
-			page.albedo_color = Color("b4a089")
-			page.roughness = .96
-			page.metallic = 0.0
-			page.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-			piece.set_surface_override_material(0,page)
-		elif name_lower.contains("leather"):
-			# Expose a real leather rim around parchment so the object reads
-			# as a bound volume at first-person distance.
-			piece.scale = Vector3(1.11,1.11,1.0)
-		elif name_lower.contains("gold"):
-			piece.scale = Vector3(1.095,1.09,1.0)
 
 func learn(word: String) -> void:
 	if not learned.has(word):
