@@ -152,9 +152,9 @@ static func populate_grass(world) -> void:
 	material.texture_filter=BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	material.albedo_texture=load("res://assets/textures/grass.png")
 	var groups: Array[Dictionary]=[
-		{"name":"Meadow Tufts","n":2600,"tint":Color("d0c38a")},
-		{"name":"Cool Bank Grasses","n":700,"tint":Color("86a28c")},
-		{"name":"Amber Ridge Grasses","n":850,"tint":Color("d9b47b")}
+		{"name":"Meadow Tufts","n":3100,"tint":Color("b7bc94")},
+		{"name":"Cool Bank Grasses","n":950,"tint":Color("809d83")},
+		{"name":"Amber Ridge Grasses","n":1000,"tint":Color("b2a27d")}
 	]
 	for group in groups:
 		var count:int=group["n"]
@@ -175,11 +175,11 @@ static func populate_grass(world) -> void:
 					x=rng.randf_range(18,65);z=rng.randf_range(-42,52)
 				if not (absf(x)<3.8 and z>-32 and z<32):break
 			var base:=Basis(Vector3.UP,rng.randf_range(0,TAU))
-			var s:=rng.randf_range(.55,1.43)
-			base=base.scaled(Vector3(s,rng.randf_range(.75,1.45),s))
+			var s:=rng.randf_range(.39,1.10)
+			base=base.scaled(Vector3(s,rng.randf_range(.68,1.13),s))
 			mm.set_instance_transform(i,Transform3D(base,Vector3(x,world.height_at(x,z)+.017,z)))
 			var c:Color=group["tint"]
-			mm.set_instance_color(i,c.lerp(Color("6f885d"),rng.randf_range(.04,.43)))
+			mm.set_instance_color(i,c.lerp(Color("5b7554"),rng.randf_range(.14,.54)))
 		var mi:=MultiMeshInstance3D.new();mi.name=group["name"]
 		mi.multimesh=mm
 		mi.material_override=material
