@@ -111,3 +111,52 @@ static func arch(parent: Node3D, center: Vector3, width: float, height: float, m
 		var t: float = PI - float(i) * PI / 8.0
 		var p := center + Vector3(cos(t) * width * 0.5, height + sin(t) * width * 0.5, 0)
 		box(parent, p, Vector3(0.68, 0.46, 0.92), m, Vector3(0, 0, t + PI * 0.5))
+
+
+# Silhouette-led carved stone: no featureless rectangular tombstone slab.
+# The insets leave a deliberately flat central face for readable, genuinely
+# world-space Latin. Chamfer and chipped outline model a cut and weathered rock.
+static func chiseled_tablet(parent: Node3D, position: Vector3,
+		size: Vector3, stone_material: Material) -> MeshInstance3D:
+	var outline: Array[Vector2] = [
+		Vector2(-.82,.015),Vector2(-.23,-.015),Vector2(.57,.02),
+		Vector2(.87,.14),Vector2(.84,.57),Vector2(.91,.81),
+		Vector2(.59,.985),Vector2(.22,1.025),Vector2(-.48,1.01),
+		Vector2(-.86,.86),Vector2(-.82,.42)
+	]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var center_front := Vector3(0.0,size.y*.52,size.z*.5)
+	var center_back := Vector3(0.0,size.y*.52,-size.z*.5)
+	var count: int = outline.size()
+	for i in range(count):
+		var j: int = (i+1)%count
+		var front_a := Vector3(outline[i].x*size.x*.43,
+			(.5+(outline[i].y-.5)*.89)*size.y,size.z*.5)
+		var front_b := Vector3(outline[j].x*size.x*.43,
+			(.5+(outline[j].y-.5)*.89)*size.y,size.z*.5)
+		var edge_a := Vector3(outline[i].x*size.x*.5,
+			outline[i].y*size.y,size.z*.26)
+		var edge_b := Vector3(outline[j].x*size.x*.5,
+			outline[j].y*size.y,size.z*.26)
+		var rear_a := Vector3(edge_a.x,edge_a.y,-size.z*.5)
+		var rear_b := Vector3(edge_b.x,edge_b.y,-size.z*.5)
+		_art_triangle(st,center_front,front_a,front_b)
+		_art_triangle(st,front_a,edge_a,edge_b)
+		_art_triangle(st,front_a,edge_b,front_b)
+		_art_triangle(st,edge_a,rear_a,rear_b)
+		_art_triangle(st,edge_a,rear_b,edge_b)
+		_art_triangle(st,center_back,rear_b,rear_a)
+	st.generate_normals()
+	var mesh := MeshInstance3D.new()
+	mesh.name = "ChippedWeatheredTablet"
+	mesh.mesh = st.commit()
+	mesh.material_override = stone_material
+	mesh.position = position - Vector3(0,size.y*.5,0)
+	parent.add_child(mesh)
+	return mesh
+
+static func _art_triangle(st: SurfaceTool, a: Vector3,b: Vector3,c: Vector3) -> void:
+	for vertex in [a,b,c]:
+		st.set_uv(Vector2(vertex.x*.72,vertex.y*.55))
+		st.add_vertex(vertex)
