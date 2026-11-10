@@ -3,7 +3,9 @@ name: VERBA - bake photo-based blended valley terrain
 on:
   push:
     branches: [verba-godot]
-    paths: [".github/workflows/verba-terrain-bake.yml"]
+    paths:
+      - ".github/workflows/verba-terrain-bake.yml"
+      - "VERBA/game/tools/bake_vale_terrain.py"
   workflow_dispatch:
 permissions:
   contents: write
