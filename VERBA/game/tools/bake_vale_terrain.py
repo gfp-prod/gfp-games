@@ -115,7 +115,11 @@ def main() -> None:
         # Subdued overall contrast/saturation preserves a storybook midtone
         # without bleaching the photographic detail or making it monochrome.
         luma = out[:,:,0]*.25 + out[:,:,1]*.64 + out[:,:,2]*.11
-        out = out*.93 + luma[:,:,None]*.07
+        out = out*.94 + luma[:,:,None]*.06
+        # The first real-player-eye render showed dangerously dark (40/255)
+        # foreground midtones. A filmic perceptual lift keeps photo texture
+        # detail while giving open meadow the storybook daylight it needs.
+        out = 255.0*np.power(np.clip(out/255.0,0.0,1.0), .63)
         output[start:start+len(z)] = np.clip(out,0,255).astype(np.uint8)
         if start%768 == 0:
             print(f"VERBA_TERRAIN_BAKE {start}/{RES}", flush=True)
