@@ -72,7 +72,7 @@ func learn(word: String) -> void:
 		learned.append(word)
 		learned.sort()
 		update_pages()
-		persist()
+		# The authoritative world save, not a second file, owns learned words.
 
 func has_word(word: String) -> bool:
 	return learned.has(word)
@@ -179,15 +179,15 @@ func mark_cast(word: String) -> bool:
 	if remembered: recall_streak += 1
 	learn(word)
 	update_pages()
-	persist()
+	# A valid cast changes both world state and knowledge; save them together.
+	if DisplayServer.get_name() != "headless" and player != null and player.world != null:
+		player.world.save_world()
 	return remembered
 
-func persist() -> void:
-	var file := FileAccess.open("user://verba_grimoire.json",FileAccess.WRITE)
-	if file == null: return
-	file.store_string(JSON.stringify({"learned":learned,"total_casts":total_casts},"\t"))
-
 func restore() -> void:
+	# Read the pre-world-save legacy cache only when migrating an old profile.
+	# Existing world saves must never merge unrelated global spell knowledge.
+	if FileAccess.file_exists("user://verba_living_world_v1.json"): return
 	if not FileAccess.file_exists("user://verba_grimoire.json"): return
 	var d=JSON.parse_string(FileAccess.get_file_as_string("user://verba_grimoire.json"))
 	if not (d is Dictionary): return
