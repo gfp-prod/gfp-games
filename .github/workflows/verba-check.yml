@@ -37,6 +37,7 @@ jobs:
           test "$(find assets/textures/real -name '*.jpg' | wc -l)" -ge 18
           python tests/check_project.py
           python tests/validate_books.py
+          python tests/validate_visual_assets.py
       - name: Import assets and parse scripts in Godot
         run: godot --headless --path . --editor --import --quit
       - name: Runtime smoke test
