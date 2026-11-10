@@ -18,6 +18,7 @@ static func snapshot(world: Node3D) -> Dictionary:
 		objects.append({
 			"id":int(obj.uid), "kind":String(obj.kind),
 			"position":_as_array(obj.position),
+			"generated":bool(obj.is_generated), "base_size":float(obj.base_size),
 			"water":float(obj.water), "heat":float(obj.heat),
 			"fuel":float(obj.fuel), "health":float(obj.health),
 			"growth":float(obj.growth), "food":float(obj.food),
@@ -69,6 +70,30 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 	for record in data.get("objects",[]):
 		if record is Dictionary and record.has("id"):
 			state_by_id[int(record["id"])] = record
+	# A growth spell creates a REAL new object. It must survive a fresh scene,
+	# not just update objects that happened to exist when the map was built.
+	var current: Dictionary = {}
+	for obj in world.sim_objects.duplicate():
+		if not is_instance_valid(obj): continue
+		var id: int = int(obj.uid)
+		if obj.is_generated and (not state_by_id.has(id) or not bool(state_by_id[id].get("generated",false))):
+			world.sim_objects.erase(obj)
+			world.distant_object_elapsed.erase(id)
+			obj.queue_free()
+		else:
+			current[id] = obj
+	for record in data.get("objects",[]):
+		if not (record is Dictionary) or not bool(record.get("generated",false)): continue
+		var record_id: int = int(record.get("id",-1))
+		if record_id < 1 or current.has(record_id): continue
+		if String(record.get("kind","")) != "grass": continue
+		var where: Vector3 = _as_vector(record.get("position",[]),Vector3.ZERO)
+		var generated = world.spawn_growth_patch(where)
+		if generated == null: continue
+		generated.uid = record_id
+		generated.set_meta("sim_id",record_id)
+		generated.base_size = clampf(float(record.get("base_size",1.7)),0.2,4.0)
+		world.next_sim_id = maxi(world.next_sim_id,record_id+1)
 	for obj in world.sim_objects:
 		if not is_instance_valid(obj): continue
 		if not state_by_id.has(int(obj.uid)): continue
