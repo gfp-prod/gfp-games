@@ -3,6 +3,7 @@ extends CharacterBody3D
 const ART = preload("res://scripts/art.gd")
 const GRIMOIRE = preload("res://scripts/grimoire.gd")
 const INCANTATION = preload("res://scripts/incantation.gd")
+const GRAMMAR = preload("res://scripts/latin_grammar.gd")
 var world
 var camera: Camera3D
 var pitch: Node3D
@@ -472,6 +473,11 @@ func cast_latin(spoken: String, target: Dictionary) -> Dictionary:
 	# Failures consume no mana; a successful action pays exactly once.
 	if world == null or world.scholar == null:
 		return {"ok":false,"message":"No magic source is available."}
+	# Grammar mistakes should be reported as grammar mistakes, not disguised
+	# as insufficient mana when the player happens to be exhausted.
+	var parsed: Dictionary = GRAMMAR.parse(spoken)
+	if not bool(parsed.get("ok",false)):
+		return {"ok":false,"message":String(parsed.get("message","Unknown Latin."))}
 	if not world.scholar.can_cast(spoken):
 		return {"ok":false,"message":"Not enough mana. Read, rest, or remember the words."}
 	var result: Dictionary = world.magic.cast(spoken,camera.global_position,target)
