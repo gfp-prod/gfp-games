@@ -133,6 +133,36 @@ static func populate(world: Node3D) -> void:
 	# Old houses have working margins: plants, rainwater, tools, soil.
 	_add_kitchen_garden(world,root,rng,oak,stone)
 
+static func _herb_mesh() -> ArrayMesh:
+	# One shared geometric herb, batched as thirty instances. Replaces
+	# 100+ tiny individual sphere/cylinder nodes and material allocations.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in range(7):
+		var phi: float = TAU*float(i)/7.0
+		var axis: Vector3 = Vector3(cos(phi),0,sin(phi))
+		var width: Vector3 = Vector3(-axis.z,0,axis.x)
+		var root: Vector3 = Vector3(0,.13,0)
+		var tip: Vector3 = root+axis*.15+Vector3.UP*.13
+		for p in [root-width*.026,root+width*.026,tip]:
+			st.set_color(Color("637a58"))
+			st.add_vertex(p)
+	for i in range(4):
+		var phi: float = TAU*float(i)/4.0
+		var axis: Vector3 = Vector3(cos(phi),0,sin(phi))
+		var width: Vector3 = Vector3(-axis.z,0,axis.x)
+		var center: Vector3 = Vector3(0,.34,0)
+		for p in [center-width*.022,center+width*.022,
+				center+axis*.085+Vector3.UP*.045]:
+			st.set_color(Color("b4aa8b"))
+			st.add_vertex(p)
+	for p in [Vector3(-.012,.12,0),Vector3(.012,.12,0),
+			Vector3(0,.36,0)]:
+		st.set_color(Color("536b4d"))
+		st.add_vertex(p)
+	st.generate_normals()
+	return st.commit()
+
 static func _add_kitchen_garden(world: Node3D,root: Node3D,rng: RandomNumberGenerator,
 		oak: Material,stone: Material) -> void:
 	var garden := Node3D.new()
@@ -143,9 +173,11 @@ static func _add_kitchen_garden(world: Node3D,root: Node3D,rng: RandomNumberGene
 	var earth: Material = world.textured(
 		"res://assets/textures/earth_path.png",Color("8d846d"))
 	var washed: Material = ART.mat(Color("998d73"),.95)
-	var herb_stalk: Material = ART.mat(Color("617952"),.96)
-	var herb_leaf: Material = ART.mat(Color("637c5c"),.95)
-	var herb_blossom: Material = ART.mat(Color("b09c81"),.88)
+	var leaves := MultiMesh.new()
+	leaves.transform_format=MultiMesh.TRANSFORM_3D
+	leaves.mesh=_herb_mesh()
+	leaves.instance_count=30
+	var plant_count: int=0
 	for bed in range(2):
 		var depth: float = -1.75+float(bed)*3.0
 		# Soil is dark and planted, framed by rough short logs. The growing
@@ -156,25 +188,25 @@ static func _add_kitchen_garden(world: Node3D,root: Node3D,rng: RandomNumberGene
 				Vector3(side*1.40,.24,depth+1.10),.12,.11,oak,10)
 			ART.bone(garden,Vector3(-1.42,.24,depth+side*1.1),
 				Vector3(1.42,.24,depth+side*1.1),.12,.11,oak,10)
-		# Close grouped stems; four leaves around the base, flower heads at
-		# different heights. Small but intentional against broad house lines.
+		# Thirty plants across two real beds share a single mesh and material.
 		for stem in range(15):
 			var bx: float = rng.randf_range(-1.08,1.08)
 			var bz: float = depth+rng.randf_range(-.78,.78)
-			var h: float = rng.randf_range(.33,.65)
-			var base: Vector3 = Vector3(bx,.20,bz)
-			var tip: Vector3 = base+Vector3(
-				rng.randf_range(-.04,.04),h,rng.randf_range(-.04,.04))
-			ART.bone(garden,base,tip,.018,.010,
-				herb_stalk,6)
-			for leaf in range(3):
-				var phi: float = float(leaf)*TAU/3.0
-				ART.orb(garden,base+Vector3(cos(phi)*.12,h*.35,
-					sin(phi)*.12),Vector3(.13,.033,.055),
-					herb_leaf,8)
-			if stem%5 == 0:
-				ART.orb(garden,tip,Vector3(.060,.044,.060),
-					herb_blossom,9)
+			var scale: float = rng.randf_range(.80,1.52)
+			var axis := Basis(Vector3.UP,rng.randf_range(0,TAU)).scaled(
+				Vector3(scale,scale,scale))
+			leaves.set_instance_transform(plant_count,
+				Transform3D(axis,Vector3(bx,.12,bz)))
+			plant_count += 1
+	var herb_visual := MultiMeshInstance3D.new()
+	herb_visual.name="BatchedKitchenHerbRows"
+	herb_visual.multimesh=leaves
+	var herb_material := StandardMaterial3D.new()
+	herb_material.vertex_color_use_as_albedo=true
+	herb_material.roughness=1.0
+	herb_material.cull_mode=BaseMaterial3D.CULL_DISABLED
+	herb_visual.material_override=herb_material
+	garden.add_child(herb_visual)
 	# One faded label on a carved board teaches Latin materially.
 	var label := Label3D.new()
 	label.name = "HORTUS_KitchenGarden"
