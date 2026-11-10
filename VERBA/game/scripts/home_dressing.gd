@@ -130,6 +130,9 @@ static func _add_kitchen_garden(world: Node3D,root: Node3D,rng: RandomNumberGene
 	var earth: Material = world.textured(
 		"res://assets/textures/earth_path.png",Color("8d846d"))
 	var washed: Material = ART.mat(Color("998d73"),.95)
+	var herb_stalk: Material = ART.mat(Color("617952"),.96)
+	var herb_leaf: Material = ART.mat(Color("637c5c"),.95)
+	var herb_blossom: Material = ART.mat(Color("b09c81"),.88)
 	for bed in range(2):
 		var depth: float = -1.75+float(bed)*3.0
 		# Soil is dark and planted, framed by rough short logs. The growing
@@ -150,15 +153,15 @@ static func _add_kitchen_garden(world: Node3D,root: Node3D,rng: RandomNumberGene
 			var tip: Vector3 = base+Vector3(
 				rng.randf_range(-.04,.04),h,rng.randf_range(-.04,.04))
 			ART.bone(garden,base,tip,.018,.010,
-				ART.mat(Color("617952"),.96),6)
+				herb_stalk,6)
 			for leaf in range(3):
 				var phi: float = float(leaf)*TAU/3.0
 				ART.orb(garden,base+Vector3(cos(phi)*.12,h*.35,
 					sin(phi)*.12),Vector3(.13,.033,.055),
-					ART.mat(Color("637c5c"),.95),8)
+					herb_leaf,8)
 			if stem%5 == 0:
 				ART.orb(garden,tip,Vector3(.060,.044,.060),
-					ART.mat(Color("b09c81"),.88),9)
+					herb_blossom,9)
 	# One faded label on a carved board teaches Latin materially.
 	var label := Label3D.new()
 	label.name = "HORTUS_KitchenGarden"
@@ -166,7 +169,7 @@ static func _add_kitchen_garden(world: Node3D,root: Node3D,rng: RandomNumberGene
 	label.font_size = 42
 	label.pixel_size = .0022
 	label.modulate = Color("49382b")
-	label.position = Vector3(-1.43,.95,2.44)
+	label.position = Vector3(-1.43,.95,2.525)
 	label.rotation.y = -.25
 	garden.add_child(label)
 	ART.box(garden,Vector3(-1.43,.94,2.48),
