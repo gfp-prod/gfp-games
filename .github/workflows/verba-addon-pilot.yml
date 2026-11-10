@@ -1,0 +1,94 @@
+name: VERBA open-source dialogue pilot
+on:
+  push:
+    branches: [verba-dependency-pilot]
+    paths:
+      - ".github/workflows/verba-addon-pilot.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify-and-vendor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: verba-dependency-pilot
+          persist-credentials: true
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Retrieve pinned MIT addon into project; never on player's PC
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import io,tarfile,hashlib,json
+          from pathlib import Path
+          from urllib.request import urlopen,Request
+          SHA="e8ec7482210bd6195705280311d66701f40d06ed"
+          URL=f"https://codeload.github.com/nathanhoad/godot_dialogue_manager/tar.gz/{SHA}"
+          with urlopen(Request(URL,headers={"User-Agent":"VERBA-vetted-source-import"}),timeout=60) as response:
+              raw=response.read()
+          assert len(raw)<12000000, "Dependency archive unexpectedly large"
+          root=Path("VERBA/game")
+          dest=root/"addons/dialogue_manager"
+          count=0
+          with tarfile.open(fileobj=io.BytesIO(raw),mode="r:gz") as archive:
+              items=archive.getmembers()
+              for member in items:
+                  parts=Path(member.name).parts
+                  if member.issym() or member.islnk():
+                      raise ValueError("Symlink in dependency archive")
+                  if "addons" not in parts or len(parts)<4:
+                      continue
+                  idx=parts.index("addons")
+                  if len(parts)<=idx+2 or parts[idx+1]!="dialogue_manager" or not member.isfile(): continue
+                  rel=Path(*parts[idx+2:])
+                  assert ".." not in rel.parts
+                  out=dest/rel
+                  out.parent.mkdir(parents=True,exist_ok=True)
+                  data=archive.extractfile(member).read()
+                  out.write_bytes(data)
+                  count+=1
+          assert count>=30, "Addon incomplete"
+          lic=(dest/"LICENSE").read_text()
+          assert "MIT License" in lic and "Nathan Hoad" in lic
+          assert (dest/"plugin.cfg").is_file()
+          source=root/"docs/OPEN_SOURCE_DEPENDENCIES.md"
+          source.parent.mkdir(parents=True,exist_ok=True)
+          source.write_text(
+             "# Vendored open-source dependencies\n\n"
+             "- Dialogue Manager v3.10.0 by Nathan Hoad; MIT License.\n"
+             "  Source: https://github.com/nathanhoad/godot_dialogue_manager\n"
+             f"  Pinned commit: {SHA}\n"
+             "  Full license included at res://addons/dialogue_manager/LICENSE\n"
+             "  Downloaded by repository CI and committed; no runtime/user installer.\n"
+             "  Do not upgrade to v4 while VERBA is on Godot 4.5.x.\n"
+          )
+          cfg=root/"project.godot"
+          content=cfg.read_text()
+          assert "[editor_plugins]" not in content
+          cfg.write_text(content+"\n[editor_plugins]\nenabled=PackedStringArray(\"res://addons/dialogue_manager/plugin.cfg\")\n")
+          print(f"VENDORED {count} files, archive_sha256={hashlib.sha256(raw).hexdigest()}")
+          PY
+      - name: Cold Godot import with editor plugin enabled
+        run: |
+          cd VERBA/game
+          godot --headless --path . --editor --import --quit
+      - name: Regression smoke test and real Latin parser test
+        run: |
+          cd VERBA/game
+          godot --headless --path . --script res://tests/smoke_test.gd
+          godot --headless --path . --script res://tests/latin_laws_test.gd
+      - name: Commit tested addon source to pilot branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERBA/game/addons/dialogue_manager VERBA/game/project.godot VERBA/game/docs/OPEN_SOURCE_DEPENDENCIES.md
+          if ! git diff --cached --quiet; then
+            git commit -m "VERBA: vendor and verify MIT Dialogue Manager 3.10.0 on Godot 4.5"
+            git push origin HEAD:verba-dependency-pilot
+          fi
