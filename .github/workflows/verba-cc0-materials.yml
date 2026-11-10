@@ -1,4 +1,5 @@
 name: VERBA - source and bundle licensed CC0 materials
+# Retry with verified Pillow truncated-stream handling.
 on:
   push:
     branches: [verba-godot]
