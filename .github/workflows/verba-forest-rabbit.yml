@@ -1,0 +1,55 @@
+name: VERBA - import vetted forest rabbit
+on:
+  push:
+    branches: [verba-godot]
+    paths: [".github/workflows/verba-forest-rabbit.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bundle-rabbit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: verba-godot
+      - name: Fetch a different actual rabbit asset (not the broken mislabeled boar)
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          import struct, json, hashlib
+          url="https://polyfork.dev/cdn/forest-rabbit-ea2da0.glb"
+          with urlopen(Request(url,headers={"User-Agent":"VERBA-godot-asset-validation/1.0"}),timeout=90) as r:
+              data=r.read()
+          assert data[:4] == b"glTF"
+          assert struct.unpack_from("<I",data,8)[0] == len(data)
+          chunk_size=struct.unpack_from("<I",data,12)[0]
+          assert data[16:20]==b"JSON"
+          obj=json.loads(data[20:20+chunk_size].decode().strip("\x00 \t\n"))
+          assert len(obj.get("meshes",[]))>=1 and len(obj.get("nodes",[]))>=4
+          # Disallow the enormous 100x mesh transforms that made the old Hare.glb catastrophic.
+          giant=[(n.get("name"),n["scale"]) for n in obj["nodes"] if max(abs(v) for v in n.get("scale",[1,1,1]))>10]
+          assert not giant, giant
+          out=Path("VERBA/game/assets/models/cc0/wildlife/ForestRabbit.glb")
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_bytes(data)
+          (out.parent/"RABBIT_SOURCE.md").write_text(
+              "Forest Rabbit by Polyfork, https://polyfork.dev/asset/forest-rabbit-ea2da0\n"
+              "Free model, commercial use, no attribution required.\n"
+              "Source CDN: "+url+"\n"
+              "SHA256: "+hashlib.sha256(data).hexdigest()+"\n", encoding="utf-8")
+          print("New rabbit model validated",len(data),"bytes",len(obj["nodes"]),"nodes")
+          PY
+      - name: Commit replacement asset to game branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERBA/game/assets/models/cc0/wildlife/ForestRabbit.glb VERBA/game/assets/models/cc0/wildlife/RABBIT_SOURCE.md
+          if ! git diff --cached --quiet; then
+            git commit -m "VERBA: bundle actual forest rabbit to replace corrupt hare skin"
+            git pull --rebase origin verba-godot
+            git push origin HEAD:verba-godot
+          fi
