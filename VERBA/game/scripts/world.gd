@@ -1,6 +1,7 @@
 extends Node3D
 ## VERBA v0.5: one authored valley, rather than a random pile of primitives.
 const ART = preload("res://scripts/art.gd")
+const RUIN_ART = preload("res://scripts/ruin_art.gd")
 const FOLIAGE = preload("res://scripts/foliage.gd")
 const PLAYER_SCRIPT = preload("res://scripts/player.gd")
 const CREATURE_SCRIPT = preload("res://scripts/creature.gd")
@@ -430,9 +431,14 @@ func build_landmarks() -> void:
 	add_child(ruins)
 	# The priory has empty space between structures and a legible broken silhouette.
 	ART.arch(ruins,Vector3(0,0,0),3.4,3.2,stone_mat)
-	ART.box(ruins,Vector3(-5.0,1.6,-3.8),Vector3(.85,3.2,7.2),stone_mat)
-	ART.box(ruins,Vector3(5.0,1.6,-3.8),Vector3(.85,3.2,7.2),stone_mat)
-	ART.box(ruins,Vector3(0,1.15,-7.3),Vector3(10.4,2.3,.85),stone_mat)
+	# Continuous low wall bases with chipped, wildly uneven upper stone.
+	# Old 3 rectangular slabs looked like untextured gray test geometry.
+	RUIN_ART.add_broken_wall(ruins,Vector3(-5,0,-.2),Vector3(-5,0,-7.4),
+		PackedFloat32Array([2.9,3.1,2.2,1.9,2.6,1.4,2.0,3.2,2.8]),.85,stone_mat)
+	RUIN_ART.add_broken_wall(ruins,Vector3(5,0,-.2),Vector3(5,0,-7.4),
+		PackedFloat32Array([2.8,1.7,2.4,3.1,2.5,1.35,1.85,2.0,2.6]),.85,stone_mat)
+	RUIN_ART.add_broken_wall(ruins,Vector3(-5,0,-7.3),Vector3(5,0,-7.3),
+		PackedFloat32Array([2.45,2.4,1.6,2.1,2.25,1.3,2.0,1.85,2.3,2.45]),.85,stone_mat)
 	ART.arch(ruins,Vector3(0,0,-7.0),1.8,1.8,ART.mat(Color("928d7b")))
 	for i in range(7):
 		var px=rng.randf_range(-5.5,5.5)
@@ -453,9 +459,11 @@ func build_landmarks() -> void:
 	# Separate walls, open entrance, roof tiles, joinery, window casements, hearth,
 	# furnishings and weathered surfaces; no placeholder solid cube.
 	# Priory perimeter walls are physical obstacles, not merely visual geometry.
-	add_solid_box(ruins, Vector3(-5.0, 1.6, -3.8), Vector3(.9, 3.25, 7.3), "PrioryWestWall")
-	add_solid_box(ruins, Vector3( 5.0, 1.6, -3.8), Vector3(.9, 3.25, 7.3), "PrioryEastWall")
-	add_solid_box(ruins, Vector3(0.0, 1.15, -7.3), Vector3(10.4, 2.3, .9), "PrioryBackWall")
+	# Low continuous collision portions sit INSIDE the visible masonry,
+	# rather than placing invisible 3m walls above collapsed edges.
+	add_solid_box(ruins, Vector3(-5.0,.65,-3.8),Vector3(.9,1.30,7.3),"PrioryWestWall")
+	add_solid_box(ruins, Vector3( 5.0,.65,-3.8),Vector3(.9,1.30,7.3),"PrioryEastWall")
+	add_solid_box(ruins, Vector3(0.0,.63,-7.3),Vector3(10.4,1.25,.9),"PrioryBackWall")
 	add_solid_box(arch, Vector3(-1.2, 1.35, 0), Vector3(.7, 2.7, .8), "RidgeArchPillarWest")
 	add_solid_box(arch, Vector3( 1.2, 1.35, 0), Vector3(.7, 2.7, .8), "RidgeArchPillarEast")
 	var cabin := Node3D.new()
