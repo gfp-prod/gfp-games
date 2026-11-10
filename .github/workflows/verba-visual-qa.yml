@@ -1,0 +1,47 @@
+name: VERBA visual rendering QA
+on:
+  push:
+    branches: [verba-godot]
+    paths:
+      - "VERBA/game/tests/visual_gallery.gd"
+      - "VERBA/game/scripts/creature.gd"
+      - "VERBA/game/assets/models/cc0/wildlife/**"
+      - ".github/workflows/verba-visual-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Set up actual OpenGL screenshot rendering
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0 mesa-utils
+      - name: Import all 3D models
+        run: godot --headless --path . --editor --import --quit
+      - name: Render every animal in actual Godot 3D
+        run: |
+          mkdir -p visual-reports
+          xvfb-run -a -s "-screen 0 1280x800x24" \
+            godot --path . --rendering-method gl_compatibility \
+            --script res://tests/visual_gallery.gd
+          test "$(find visual-reports -name '*.png' | wc -l)" -eq 15
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verba-wildlife-visual-gallery
+          path: VERBA/game/visual-reports/*.png
+          if-no-files-found: warn
+          retention-days: 14
