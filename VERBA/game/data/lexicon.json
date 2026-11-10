@@ -1,18 +1,194 @@
 [
-  {"word":"ignis","meaning":"fire","form":"nominative singular noun","lemma":"ignis, ignis (m.)","effect":"kindle","note":"A naming invocation; not an imperative."},
-  {"word":"pluvia","meaning":"rain","form":"nominative singular noun","lemma":"pluvia, pluviae (f.)","effect":"rain","note":"Noun invocation."},
-  {"word":"lux","meaning":"light","form":"nominative singular noun","lemma":"lux, lucis (f.)","effect":"light","note":"Noun invocation."},
-  {"word":"ventus","meaning":"wind","form":"nominative singular noun","lemma":"ventus, venti (m.)","effect":"wind","note":"Noun invocation."},
-  {"word":"aqua","meaning":"water","form":"nominative singular noun","lemma":"aqua, aquae (f.)","effect":"water","note":"Noun invocation."},
-  {"word":"nox","meaning":"night","form":"nominative singular noun","lemma":"nox, noctis (f.)","effect":"night","note":"Noun invocation."},
-  {"word":"cresce","meaning":"grow!","form":"present active imperative, 2nd-person singular","lemma":"cresco, crescere","effect":"grow","note":"Command one thing to grow."},
-  {"word":"veni","meaning":"come!","form":"present active imperative, 2nd-person singular","lemma":"venio, venire","effect":"come","note":"Command one being to approach."},
-  {"word":"dormi","meaning":"sleep!","form":"present active imperative, 2nd-person singular","lemma":"dormio, dormire","effect":"sleep","note":"Command one being to sleep."},
-  {"word":"fuge","meaning":"flee!","form":"present active imperative, 2nd-person singular","lemma":"fugio, fugere","effect":"flee","note":"Command one being to flee."},
-  {"word":"siste","meaning":"stop!","form":"present active imperative, 2nd-person singular","lemma":"sisto, sistere","effect":"stop","note":"Command motion to cease."},
-  {"word":"muta","meaning":"change!","form":"present active imperative, 2nd-person singular","lemma":"muto, mutare","effect":"transform","note":"Command change or transformation."},
-  {"word":"arde","meaning":"burn!","form":"present active imperative, 2nd-person singular","lemma":"ardeo, ardere","effect":"kindle","note":"Command to burn."},
-  {"word":"surge","meaning":"rise!","form":"present active imperative, 2nd-person singular","lemma":"surgo, surgere","effect":"rise","note":"Command rising."},
-  {"word":"flamma","meaning":"flame","form":"nominative singular noun","lemma":"flamma, flammae (f.)","effect":"kindle","note":"Noun invocation."},
-  {"word":"gelu","meaning":"frost, cold","form":"nominative/accusative singular noun","lemma":"gelu, gelus (n.)","effect":"frost","note":"A fourth-declension neuter noun."}
+  {
+    "word": "ignis",
+    "meaning": "fire",
+    "form": "nominative singular noun",
+    "lemma": "ignis, ignis (m.)",
+    "effect": "kindle",
+    "note": "A naming invocation; not an imperative."
+  },
+  {
+    "word": "pluvia",
+    "meaning": "rain",
+    "form": "nominative singular noun",
+    "lemma": "pluvia, pluviae (f.)",
+    "effect": "rain",
+    "note": "Noun invocation."
+  },
+  {
+    "word": "lux",
+    "meaning": "light",
+    "form": "nominative singular noun",
+    "lemma": "lux, lucis (f.)",
+    "effect": "light",
+    "note": "Noun invocation."
+  },
+  {
+    "word": "ventus",
+    "meaning": "wind",
+    "form": "nominative singular noun",
+    "lemma": "ventus, venti (m.)",
+    "effect": "wind",
+    "note": "Noun invocation."
+  },
+  {
+    "word": "aqua",
+    "meaning": "water",
+    "form": "nominative singular noun",
+    "lemma": "aqua, aquae (f.)",
+    "effect": "water",
+    "note": "Noun invocation."
+  },
+  {
+    "word": "nox",
+    "meaning": "night",
+    "form": "nominative singular noun",
+    "lemma": "nox, noctis (f.)",
+    "effect": "night",
+    "note": "Noun invocation."
+  },
+  {
+    "word": "cresce",
+    "meaning": "grow!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "cresco, crescere",
+    "effect": "grow",
+    "note": "Command one thing to grow."
+  },
+  {
+    "word": "veni",
+    "meaning": "come!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "venio, venire",
+    "effect": "come",
+    "note": "Command one being to approach."
+  },
+  {
+    "word": "dormi",
+    "meaning": "sleep!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "dormio, dormire",
+    "effect": "sleep",
+    "note": "Command one being to sleep."
+  },
+  {
+    "word": "fuge",
+    "meaning": "flee!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "fugio, fugere",
+    "effect": "flee",
+    "note": "Command one being to flee."
+  },
+  {
+    "word": "siste",
+    "meaning": "stop!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "sisto, sistere",
+    "effect": "stop",
+    "note": "Command motion to cease."
+  },
+  {
+    "word": "muta",
+    "meaning": "change!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "muto, mutare",
+    "effect": "transform",
+    "note": "Command change or transformation."
+  },
+  {
+    "word": "arde",
+    "meaning": "burn!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "ardeo, ardere",
+    "effect": "kindle",
+    "note": "Command to burn."
+  },
+  {
+    "word": "surge",
+    "meaning": "rise!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "surgo, surgere",
+    "effect": "rise",
+    "note": "Command rising."
+  },
+  {
+    "word": "flamma",
+    "meaning": "flame",
+    "form": "nominative singular noun",
+    "lemma": "flamma, flammae (f.)",
+    "effect": "kindle",
+    "note": "Noun invocation."
+  },
+  {
+    "word": "gelu",
+    "meaning": "frost, cold",
+    "form": "nominative/accusative singular noun",
+    "lemma": "gelu, gelus (n.)",
+    "effect": "frost",
+    "note": "A fourth-declension neuter noun."
+  },
+  {
+    "word": "crescite",
+    "meaning": "grow! (addressed to more than one)",
+    "form": "present active imperative, 2nd-person plural",
+    "lemma": "cresco, crescere",
+    "effect": "grow",
+    "note": "Plural imperative of cresce. Can address several matching beings or objects."
+  },
+  {
+    "word": "venite",
+    "meaning": "come! (addressed to more than one)",
+    "form": "present active imperative, 2nd-person plural",
+    "lemma": "venio, venire",
+    "effect": "come",
+    "note": "Plural imperative of veni. Can address several matching beings or objects."
+  },
+  {
+    "word": "dormite",
+    "meaning": "sleep! (addressed to more than one)",
+    "form": "present active imperative, 2nd-person plural",
+    "lemma": "dormio, dormire",
+    "effect": "sleep",
+    "note": "Plural imperative of dormi. Can address several matching beings or objects."
+  },
+  {
+    "word": "fugite",
+    "meaning": "flee! (addressed to more than one)",
+    "form": "present active imperative, 2nd-person plural",
+    "lemma": "fugio, fugere",
+    "effect": "flee",
+    "note": "Plural imperative of fuge. Can address several matching beings or objects."
+  },
+  {
+    "word": "sistite",
+    "meaning": "stop! (addressed to more than one)",
+    "form": "present active imperative, 2nd-person plural",
+    "lemma": "sisto, sistere",
+    "effect": "stop",
+    "note": "Plural imperative of siste. Can address several matching beings or objects."
+  },
+  {
+    "word": "mutate",
+    "meaning": "change! (addressed to more than one)",
+    "form": "present active imperative, 2nd-person plural",
+    "lemma": "muto, mutare",
+    "effect": "transform",
+    "note": "Plural imperative of muta. Can address several matching beings or objects."
+  },
+  {
+    "word": "ardete",
+    "meaning": "burn! (addressed to more than one)",
+    "form": "present active imperative, 2nd-person plural",
+    "lemma": "ardeo, ardere",
+    "effect": "kindle",
+    "note": "Plural imperative of arde. Can address several matching beings or objects."
+  },
+  {
+    "word": "surgite",
+    "meaning": "rise! (addressed to more than one)",
+    "form": "present active imperative, 2nd-person plural",
+    "lemma": "surgo, surgere",
+    "effect": "rise",
+    "note": "Plural imperative of surge. Can address several matching beings or objects."
+  }
 ]
