@@ -837,20 +837,31 @@ func populate_collectibles() -> void:
 			book_plinth.position = Vector3(x,height_at(x,z),z)
 			sim_objects.append(book_plinth)
 			add_child(book_plinth)
-			ART.box(book_plinth,Vector3(0,.38,0),Vector3(.91,.76,.73),stone_mat)
-			var solid: StaticBody3D = add_solid_box(book_plinth,Vector3(0,.38,0),
-				Vector3(.91,.76,.73),"SolidBookPlinth")
+			# A low garden lectern, not a cube in the middle of the tutorial.
+			ART.stone(book_plinth,Vector3(0,.17,0),
+				Vector3(.75,.34,.61),stone_mat)
+			ART.stone(book_plinth,Vector3(0,.54,0),
+				Vector3(.49,.41,.38),stone_mat)
+			ART.stone(book_plinth,Vector3(0,.82,0),
+				Vector3(.68,.12,.54),stone_mat)
+			var solid: StaticBody3D = add_solid_box(book_plinth,Vector3(0,.44,0),
+				Vector3(.84,.83,.66),"SolidBookLectern")
 			solid.set_meta("flora_ref",book_plinth)
+			var plaque: Material = textured(
+				"res://assets/textures/cottage_wood.png",Color("a18e6d"))
+			ART.box(book_plinth,Vector3(0,.55,.398),
+				Vector3(.70,.22,.045),plaque)
 			var inscription := Label3D.new()
 			inscription.name = "DeHerbisCarvedTitle"
 			inscription.text = "DE HERBIS"
-			inscription.font_size = 32
-			inscription.pixel_size = .0021
-			inscription.modulate = Color("342c24")
+			inscription.font_size = 43
+			inscription.pixel_size = .00235
+			inscription.modulate = Color("332a22")
+			inscription.outline_size = 0
 			inscription.no_depth_test = false
-			inscription.position = Vector3(0,.48,.372)
+			inscription.position = Vector3(0,.55,.428)
 			book_plinth.add_child(inscription)
-			spawn_item("book",String(id),Vector3(x,height_at(x,z)+.78,z))
+			spawn_item("book",String(id),Vector3(x,height_at(x,z)+.94,z))
 		else:
 			spawn_item("book",String(id),Vector3(x,height_at(x,z),z))
 	for w in [
