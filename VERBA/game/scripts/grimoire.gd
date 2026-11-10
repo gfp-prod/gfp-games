@@ -95,6 +95,7 @@ func update_pages() -> void:
 			line += w.to_upper()+"\n"+String(def.get("meaning","?"))+"\n\n"
 		if side == 1:
 			line += "─────\n"+str(page_index+1)+" / "+str(maxi(1,ceili(float(learned.size())/4.0)))
+			line += "\nS: Preserve   L: Recall"
 		page_labels[side].text=line
 
 func mark_cast(word: String) -> bool:
