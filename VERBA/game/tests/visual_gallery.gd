@@ -93,5 +93,24 @@ func _render_gallery() -> void:
 			print("VERBA_VISUAL_QA_SAVED ", filename, " ", rendered.get_width(), "x", rendered.get_height())
 		actor.queue_free()
 		await process_frame
+	# Candidate rabbit is rendered without changing the game's live creature loader.
+	var candidate_path := "res://assets/models/cc0/wildlife/ForestRabbit.glb"
+	if ResourceLoader.exists(candidate_path):
+		var new_rabbit: Node3D = load(candidate_path).instantiate()
+		new_rabbit.name = "CandidateRabbit"
+		stage.add_child(new_rabbit)
+		new_rabbit.scale = Vector3.ONE * 1.24
+		camera.position = Vector3(2.5, 1.7, 4.2)
+		camera.look_at(Vector3(0.0,0.25,0),Vector3.UP)
+		await process_frame
+		await RenderingServer.frame_post_draw
+		var candidate_image: Image = viewport.get_texture().get_image()
+		var candidate_result := candidate_image.save_png(OUTFOLDER + "/candidate_rabbit.png")
+		if candidate_result != OK:
+			push_error("Rabbit candidate not rendered")
+			quit(5)
+			return
+		print("VERBA_VISUAL_QA_SAVED candidate rabbit ",candidate_image.get_width(),"x",candidate_image.get_height())
+		new_rabbit.queue_free()
 	print("VERBA_VISUAL_QA_COMPLETE")
 	quit(0)
