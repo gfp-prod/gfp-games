@@ -216,7 +216,7 @@ func create_first_steps() -> void:
 	head.add_theme_color_override("font_color", Color("f0d9ad"))
 	v.add_child(head)
 	var sub := Label.new()
-	sub.text = "WASD move · Mouse look · G open book\nEnter cast · E take · H help"
+	sub.text = "WASD move · Mouse look · E take\nG grimoire · B books · N study\n1-3 answer · Enter cast · H help"
 	sub.add_theme_font_size_override("font_size", 14)
 	sub.add_theme_color_override("font_color", Color("ded6bf"))
 	v.add_child(sub)
