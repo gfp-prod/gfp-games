@@ -12,7 +12,8 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.parse import quote
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 BASE = "https://api.polyhaven.com"
 ROOT = Path(__file__).resolve().parents[1] / "assets/textures/real"
@@ -94,10 +95,18 @@ def main() -> None:
                 raise RuntimeError(f"Invalid downloaded image {asset_id}/{api_channel}: {url}")
             # Keep the existing Godot file paths stable whether a pack ships
             # source PNG or JPEG, and avoid giant 8K material dependencies.
-            img = Image.open(BytesIO(raw)).convert("RGB")
-            img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
-            output = ROOT / f"{local}_{local_type}.jpg"
-            img.save(output, "JPEG", quality=92, subsampling=0, optimize=True)
+            try:
+                img = Image.open(BytesIO(raw))
+                img.load()
+                img = img.convert("RGB")
+                img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+                output = ROOT / f"{local}_{local_type}.jpg"
+                img.save(output, "JPEG", quality=92, subsampling=0, optimize=True)
+            except OSError as image_error:
+                if local_type == "normal":
+                    print(f"Skipping problematic normal map for {asset_id}: {image_error}", flush=True)
+                    continue
+                raise
             saved = output.read_bytes()
             info = {"material": local, "asset_id": asset_id, "map": api_channel,
                     "path": str(output.relative_to(ROOT.parent.parent)),
