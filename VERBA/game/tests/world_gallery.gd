@@ -10,16 +10,18 @@ func _capture_world() -> void:
 	await process_frame
 	await process_frame
 	await process_frame
-	if game.player == null or game.player.camera == null:
+	var player: Node3D = game.get("player") as Node3D
+	var camera: Camera3D = player.get("camera") as Camera3D if player != null else null
+	if player == null or camera == null:
 		push_error("Main game failed to create player or camera")
 		quit(1)
 		return
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	game.player.camera.current = true
+	camera.current = true
 	var output := "res://visual-reports"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(output))
 	for angle in [0.0, PI*0.50, PI, PI*1.50]:
-		game.player.rotation.y = angle
+		player.rotation.y = angle
 		await process_frame
 		await RenderingServer.frame_post_draw
 		var shot: Image = root.get_texture().get_image()
