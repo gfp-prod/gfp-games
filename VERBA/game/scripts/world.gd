@@ -28,6 +28,8 @@ var natural_weather_at: float = 80.0
 var spontaneous_events: int = 0
 var flora: Array = []
 var items: Array = []
+var collected_pickup_ids: Array[String] = []
+var next_drop_serial: int = 1
 var fires: Array = []
 var rain_fx: GPUParticles3D
 var raining := false
@@ -879,9 +881,14 @@ func populate_collectibles() -> void:
 		var xy:Vector2=w[1]
 		spawn_item(w[0],"",Vector3(xy.x,height_at(xy.x,xy.y),xy.y))
 
-func spawn_item(kind: String, word_key: String, p: Vector3) -> void:
-	var i=PICKUP_SCRIPT.new()
-	i.setup(self,kind,word_key,p)
+func spawn_item(kind: String, word_key: String, p: Vector3,
+		dropped: bool = false, stable_id: String = "") -> void:
+	var id: String = stable_id
+	if dropped and id.is_empty():
+		id = "drop:%d" % next_drop_serial
+		next_drop_serial += 1
+	var i = PICKUP_SCRIPT.new()
+	i.setup(self,kind,word_key,p,id,dropped)
 	add_child(i)
 	items.append(i)
 
@@ -901,6 +908,10 @@ func collect(item) -> void:
 		if DisplayServer.get_name() != "headless": save_world()
 	else:
 		player.add_item(item.item_type)
+	# Only authored pickups need a tombstone record. Player-created drops
+	# are saved as live items and disappear naturally if collected.
+	if not item.is_dropped and not collected_pickup_ids.has(item.persistent_id):
+		collected_pickup_ids.append(item.persistent_id)
 	items.erase(item)
 	item.queue_free()
 
