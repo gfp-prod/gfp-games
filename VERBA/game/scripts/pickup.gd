@@ -56,9 +56,22 @@ func _ready() -> void:
 			ART.bone(self,Vector3(0,.13,0),Vector3(0,.68,0),.065,.048,ART.mat(Color("574332")))
 			ART.orb(self,Vector3(0,.72,0),Vector3(.12,.15,.1),ART.mat(Color("e7a44f"),.4,Color("ae4b17")))
 		"lantern":
-			ART.box(self,Vector3(0,.34,0),Vector3(.23,.34,.23),ART.mat(Color("5e574a")))
-			ART.orb(self,Vector3(0,.34,0),Vector3(.11,.15,.11),ART.mat(Color("dbc98b"),.45,Color("86754a")))
-			ART.bone(self,Vector3(-.1,.5,0),Vector3(.1,.5,0),.018,.018,ART.mat(Color("252421")))
+			# Old model was literally a gray cube floating near the first
+			# Latin lesson. Give even loose loot a readable crafted silhouette.
+			var old_iron: Material = ART.mat(Color("4d4c42"),.65)
+			var tinted_glass: Material = ART.mat(Color("b4a17c"),.37,
+				Color("3e2d1a"))
+			for y in [.165,.525]:
+				ART.box(self,Vector3(0,y,0),Vector3(.33,.05,.30),old_iron)
+			for x in [-.145,.145]:
+				for z in [-.13,.13]:
+					ART.bone(self,Vector3(x,.185,z),Vector3(x,.51,z),
+						.014,.014,old_iron,8)
+			ART.box(self,Vector3(0,.35,0),Vector3(.24,.28,.21),tinted_glass)
+			ART.bone(self,Vector3(0,.56,0),Vector3(0,.67,0),
+				.025,.022,old_iron,8)
+			ART.bone(self,Vector3(-.13,.67,0),Vector3(.13,.67,0),
+				.02,.02,old_iron,8)
 	var body:=StaticBody3D.new()
 	body.collision_layer=4
 	body.collision_mask=0
