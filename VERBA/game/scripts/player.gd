@@ -465,7 +465,7 @@ func drop_item() -> void:
 	selected_slot=0
 	refresh_held_model()
 	var p=camera.global_position-camera.global_transform.basis.z*1.9
-	world.spawn_item(item,"",Vector3(p.x,world.height_at(p.x,p.z),p.z))
+	world.spawn_item(item,"",Vector3(p.x,world.height_at(p.x,p.z),p.z),true)
 
 func cast_latin(spoken: String, target: Dictionary) -> Dictionary:
 	# Check resources BEFORE applying a physical spell to the world.
