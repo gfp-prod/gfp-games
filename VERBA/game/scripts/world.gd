@@ -510,26 +510,43 @@ func apply_cottage_photographic_materials(root: Node) -> void:
 		mesh_child.material_override = m
 
 func build_forest() -> void:
-	# Three deliberately separate groves. Give the starting field actual
-	# breathing room and keep the old road visually navigable.
-	for i in range(32):
-		var x: float = rng.randf_range(-59.0, 59.0)
-		var z: float = rng.randf_range(-59.0, 59.0)
-		var d_spawn: float = Vector2(x,z).distance_to(Vector2(0,26))
-		var d_cairn: float = Vector2(x,z).distance_to(Vector2(3.1,16))
-		var near_road: bool = absf(x - sin((19.0 - z) * .18) * 2.7) < 8.0 and z > -34 and z < 29
-		var near_ruin: bool = Vector2(x,z).distance_to(Vector2(4,-35)) < 14.0
-		var near_cabin: bool = Vector2(x,z).distance_to(Vector2(29,8)) < 12.0
-		if d_spawn < 21.0 or d_cairn < 11.0 or near_road or near_ruin or near_cabin:
-			continue
-		if absf(x-stream_x(z))<7.7: continue
-		var kind: String = "autumn" if x > 22 else "dead" if z < -37 and rng.randf() < 0.15 else "broadleaf"
-		spawn_tree(Vector3(x,height_at(x,z),z),kind,rng.randf_range(.84,1.17))
-	# The tree-line isn't a uniform ring; include a few distant silhouettes.
-	for p in [Vector2(-43,29),Vector2(-51,17),Vector2(39,-8),Vector2(49,18)]:
-		spawn_tree(Vector3(p.x,height_at(p.x,p.y),p.y),"autumn" if p.x>0 else "broadleaf",1.12)
-	# One skeletal marker, well away from where the camera starts.
-	spawn_tree(Vector3(-37,height_at(-37,31),31),"dead",1.26)
+	# The valley is now designed around real tree-stands rather than one or
+	# two dozen isolated toys on an empty plane. Clearings and animal routes
+	# remain legible, while each authored tree stays an independent sim object.
+	var stands: Array[Dictionary] = [
+		{"center":Vector2(-23,10), "radius":13.0, "count":25, "kind":"broadleaf"},
+		{"center":Vector2(-21,-16), "radius":12.0, "count":23, "kind":"broadleaf"},
+		{"center":Vector2(22,-19), "radius":13.0, "count":24, "kind":"autumn"},
+		{"center":Vector2(40,20), "radius":14.0, "count":25, "kind":"autumn"},
+		{"center":Vector2(-42,-35), "radius":16.0, "count":20, "kind":"broadleaf"},
+		{"center":Vector2(12,43), "radius":17.0, "count":18, "kind":"broadleaf"}
+	]
+	for stand in stands:
+		var center: Vector2 = stand["center"]
+		var radius: float = float(stand["radius"])
+		for index in range(int(stand["count"])):
+			var theta: float = rng.randf_range(0,TAU)
+			# Square-root radius creates varied canopy density while retaining
+			# a few internal pockets, not a circular wall of evenly spaced trees.
+			var radial: float = sqrt(rng.randf()) * radius
+			var x: float = center.x + cos(theta) * radial
+			var z: float = center.y + sin(theta) * radial
+			if absf(x) > 64.0 or absf(z) > 64.0: continue
+			if Vector2(x,z).distance_to(Vector2(0,26)) < 12.0: continue
+			if Vector2(x,z).distance_to(Vector2(3.1,16)) < 6.8: continue
+			if absf(x-sin((19.0-z)*.18)*2.7) < 4.7 and z > -35 and z < 29: continue
+			if Vector2(x,z).distance_to(Vector2(4,-35)) < 12.0: continue
+			if Vector2(x,z).distance_to(Vector2(29,8)) < 8.5: continue
+			if absf(x-stream_x(z)) < 5.2: continue
+			spawn_tree(Vector3(x,height_at(x,z),z),String(stand["kind"]),
+				rng.randf_range(0.82,1.25))
+	# Sparse landmarks break the skyline without turning the first clearing
+	# into a hedge maze. The unusual dead tree is a recognizable landmark.
+	for p in [Vector2(-47,32),Vector2(-56,8),Vector2(52,-9),Vector2(48,37)]:
+		spawn_tree(Vector3(p.x,height_at(p.x,p.y),p.y),
+			"autumn" if p.x > 0 else "broadleaf",1.12)
+	spawn_tree(Vector3(-37,height_at(-37,31),31),"dead",1.25)
+
 
 func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 	# Every tree is a separate living ecological object, collision obstacle and
