@@ -1,0 +1,169 @@
+{
+  "source": "Poly Haven https://polyhaven.com",
+  "license": "CC0-1.0",
+  "api": "https://api.polyhaven.com",
+  "downloaded": [
+    {
+      "material": "meadow_ground",
+      "asset_id": "sparse_grass",
+      "map": "Diffuse",
+      "path": "textures/real/meadow_ground_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_diff_1k.jpg",
+      "sha256": "42ed7b0106a8ce37fa6cd7f96aa8bf2706c8a198f25f6b12ec2e2f4f86d450d0",
+      "bytes": 481482
+    },
+    {
+      "material": "meadow_ground",
+      "asset_id": "sparse_grass",
+      "map": "nor_gl",
+      "path": "textures/real/meadow_ground_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_nor_gl_1k.jpg",
+      "sha256": "43cc9943ee0d02afddef1403893c1a7a32a6116549e0c7c4e8e98bbd7b7ce55b",
+      "bytes": 839210
+    },
+    {
+      "material": "woodland_ground",
+      "asset_id": "forrest_ground_01",
+      "map": "Diffuse",
+      "path": "textures/real/woodland_ground_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_diff_1k.jpg",
+      "sha256": "ff8b3373eae87e81fe2268b73d5a5fce69e62970c2441097934627712b0a0c6b",
+      "bytes": 727881
+    },
+    {
+      "material": "amber_ground",
+      "asset_id": "forest_leaves_04",
+      "map": "Diffuse",
+      "path": "textures/real/amber_ground_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_04/forest_leaves_04_diff_1k.jpg",
+      "sha256": "217d9a63ffcce0995d895304f0e6d7931cdea84a953ff3ab2c060f953b6aa9b4",
+      "bytes": 558248
+    },
+    {
+      "material": "amber_ground",
+      "asset_id": "forest_leaves_04",
+      "map": "nor_gl",
+      "path": "textures/real/amber_ground_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_04/forest_leaves_04_nor_gl_1k.jpg",
+      "sha256": "864026ba665847514e439861728965c2d070c927da52f3a6e11ebda49be5c816",
+      "bytes": 863265
+    },
+    {
+      "material": "river_silt",
+      "asset_id": "rocks_ground_01",
+      "map": "Diffuse",
+      "path": "textures/real/river_silt_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rocks_ground_01/rocks_ground_01_diff_1k.jpg",
+      "sha256": "ada436dac2dd72d4f0dbf671cd2af42bba72b0f251cf3d159d4025608af4eeea",
+      "bytes": 646588
+    },
+    {
+      "material": "earth_path",
+      "asset_id": "dirt_floor",
+      "map": "Diffuse",
+      "path": "textures/real/earth_path_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dirt_floor/dirt_floor_diff_1k.jpg",
+      "sha256": "8030f8dfec86db22717202b279a6615495b0e8b55e8529ee65d917da573c7a46",
+      "bytes": 458019
+    },
+    {
+      "material": "earth_path",
+      "asset_id": "dirt_floor",
+      "map": "nor_gl",
+      "path": "textures/real/earth_path_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dirt_floor/dirt_floor_nor_gl_1k.jpg",
+      "sha256": "93201e2ff16eb8050f53db1fd15288d76a1267804e5b86fd8edb065037d9f41b",
+      "bytes": 639044
+    },
+    {
+      "material": "stone",
+      "asset_id": "rock_surface",
+      "map": "Diffuse",
+      "path": "textures/real/stone_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_surface/rock_surface_diff_1k.jpg",
+      "sha256": "da2186d9dc81ebad865de3ff59b8d950cc414f9e32d1b52249daf37c3478a29a",
+      "bytes": 438120
+    },
+    {
+      "material": "stone",
+      "asset_id": "rock_surface",
+      "map": "nor_gl",
+      "path": "textures/real/stone_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_surface/rock_surface_nor_gl_1k.jpg",
+      "sha256": "d8fcdd955eb0c3098d9d5edb95f203628206355eac11b4f52a58b3562d42147f",
+      "bytes": 635637
+    },
+    {
+      "material": "moss",
+      "asset_id": "concrete_moss",
+      "map": "Diffuse",
+      "path": "textures/real/moss_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_moss/concrete_moss_diff_1k.jpg",
+      "sha256": "54924a782ca37761ae0b34f5bd1786cfaaa3552ace3068bc8bb71eda3217e6fe",
+      "bytes": 304044
+    },
+    {
+      "material": "moss",
+      "asset_id": "concrete_moss",
+      "map": "nor_gl",
+      "path": "textures/real/moss_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_moss/concrete_moss_nor_gl_1k.jpg",
+      "sha256": "c5071dbfff868dfacb42e59b83216c11454bc613fd3020788ce2b746f33225b8",
+      "bytes": 427964
+    },
+    {
+      "material": "cottage_plaster",
+      "asset_id": "plastered_wall",
+      "map": "Diffuse",
+      "path": "textures/real/cottage_plaster_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/plastered_wall/plastered_wall_diff_1k.jpg",
+      "sha256": "8b561f102577e8043f73c71381d5594e2e4264e8d682b2de34bc349880308170",
+      "bytes": 260220
+    },
+    {
+      "material": "cottage_plaster",
+      "asset_id": "plastered_wall",
+      "map": "nor_gl",
+      "path": "textures/real/cottage_plaster_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/plastered_wall/plastered_wall_nor_gl_1k.jpg",
+      "sha256": "f273cb0a6c569cff6e9155dd877920b3fc40c87c044779ee619ce09ec03df72d",
+      "bytes": 557076
+    },
+    {
+      "material": "cottage_wood",
+      "asset_id": "wood_planks",
+      "map": "Diffuse",
+      "path": "textures/real/cottage_wood_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_planks/wood_planks_diff_1k.jpg",
+      "sha256": "03c05c66791b68a5ccb0b905841730e6cf5f44c7981e67f539284f59ff1650b4",
+      "bytes": 260781
+    },
+    {
+      "material": "cottage_wood",
+      "asset_id": "wood_planks",
+      "map": "nor_gl",
+      "path": "textures/real/cottage_wood_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_planks/wood_planks_nor_gl_1k.jpg",
+      "sha256": "cc11e420ec49a30e21b1f3c8b4059d58a63a95352cc12f9f4a27c236efbbe60b",
+      "bytes": 254920
+    },
+    {
+      "material": "cottage_roof",
+      "asset_id": "roof_slates_02",
+      "map": "Diffuse",
+      "path": "textures/real/cottage_roof_diffuse.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_slates_02/roof_slates_02_diff_1k.jpg",
+      "sha256": "5eab9ca967af6dd6aa0d96dfff492ffd8fc45b055c9e6727f4309624d1fc1ed0",
+      "bytes": 442670
+    },
+    {
+      "material": "cottage_roof",
+      "asset_id": "roof_slates_02",
+      "map": "nor_gl",
+      "path": "textures/real/cottage_roof_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/roof_slates_02/roof_slates_02_nor_gl_1k.jpg",
+      "sha256": "3ea4bad183a46667fbf82dfc2efc9c4939bcf58454eaf529b0f5c6ffc65c1f43",
+      "bytes": 667104
+    }
+  ]
+}
