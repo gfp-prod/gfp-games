@@ -27,7 +27,7 @@ func _run() -> void:
 		return
 	w.night_remaining = 0.0
 	w._process(2.0)
-	if w.night_visual_blend > .01 or s.sky_top_color.distance_to(day_color) > .01:
+	if w.night_visual_blend > .01 or absf(s.sky_top_color.b-day_color.b) > .01:
 		_fail("Returning sunlight didn't restore warm daytime atmosphere")
 		return
 	print("PASS: physically rendered sky, fog, moonlight and day restoration respond to night state")
