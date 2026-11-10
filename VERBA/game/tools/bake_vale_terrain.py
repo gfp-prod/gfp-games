@@ -71,6 +71,12 @@ def sample(texture: np.ndarray, name: str, xx: np.ndarray,
 
 
 def main() -> None:
+    # Two upstream compressed normal maps have occasionally arrived as empty
+    # files. Never let broken 0-byte JPEGs enter a Godot texture import.
+    for normal in PHOTO.glob("*_normal.jpg"):
+        if normal.stat().st_size < 4096:
+            print("VERBA_REMOVING_BAD_NORMAL", normal.name, flush=True)
+            normal.unlink()
     images = load_sources()
     output = np.empty((RES,RES,3),dtype=np.uint8)
     x_axis = ((np.arange(RES,dtype=np.float32)+.5)/RES-.5)*WORLD_METERS
