@@ -467,6 +467,18 @@ func drop_item() -> void:
 	var p=camera.global_position-camera.global_transform.basis.z*1.9
 	world.spawn_item(item,"",Vector3(p.x,world.height_at(p.x,p.z),p.z))
 
+func cast_latin(spoken: String, target: Dictionary) -> Dictionary:
+	# Check resources BEFORE applying a physical spell to the world.
+	# Failures consume no mana; a successful action pays exactly once.
+	if world == null or world.scholar == null:
+		return {"ok":false,"message":"No magic source is available."}
+	if not world.scholar.can_cast(spoken):
+		return {"ok":false,"message":"Not enough mana. Read, rest, or remember the words."}
+	var result: Dictionary = world.magic.cast(spoken,camera.global_position,target)
+	if bool(result.get("ok",false)):
+		world.scholar.pay_cast(spoken)
+	return result
+
 func finish_cast() -> void:
 	typing=false
 	echo.text=""
@@ -474,16 +486,11 @@ func finish_cast() -> void:
 	buffer=""
 	if text_cast.is_empty(): return
 	var hit=look_hit(16.0)
-	if not world.scholar.can_cast(text_cast):
-		say_world("Not enough mana. Read, rest, or remember the words.",
-			camera.global_position-camera.global_transform.basis.z*2.8,Color("bc8b81"))
-		return
-	var result:Dictionary=world.magic.cast(text_cast,camera.global_position,hit)
+	var result: Dictionary = cast_latin(text_cast,hit)
 	var display_pos: Vector3=hit.get("position",camera.global_position-camera.global_transform.basis.z*4.0)
 	if not result["ok"]:
 		say_world(String(result["message"]),camera.global_position-camera.global_transform.basis.z*2.8,Color("c38b7e"))
 		return
-	world.scholar.pay_cast(text_cast)
 	var remembered:bool=book.mark_cast(String(result.get("remember_word",text_cast)))
 	say_world(text_cast,display_pos+Vector3.UP*1.3,Color("f7dda1") if remembered else Color("d5a869"))
 	if not result["message"].is_empty():
