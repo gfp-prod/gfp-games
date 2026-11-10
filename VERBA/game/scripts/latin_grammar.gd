@@ -51,6 +51,9 @@ static func parse(input_text: String) -> Dictionary:
 	var normalized: String = input_text.strip_edges().to_lower()
 	normalized = normalized.replace(",", " ").replace(".", " ").replace("!", " ")
 	normalized = normalized.replace("?", " ").replace(";", " ")
+	# Punctuation may introduce leading/trailing whitespace after the first
+	# strip. The canonical form must never contain a phantom space.
+	normalized = normalized.strip_edges()
 	while normalized.contains("  "): normalized = normalized.replace("  ", " ")
 	var bits: PackedStringArray = normalized.split(" ", false)
 	if bits.is_empty() or bits.size() > 2:
