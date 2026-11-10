@@ -42,8 +42,9 @@ static func snapshot(world: Node3D) -> Dictionary:
 			"yaw":float(world.player.rotation.y),
 			"pitch":float(world.player.pitch.rotation.x)
 		}
+	var scholarship: Dictionary = world.scholar.snapshot() if world.scholar != null else {}
 	return {"schema":1,"saved_unix":Time.get_unix_time_from_system(),
-		"objects":objects,"animals":animals,"player":player,
+		"objects":objects,"animals":animals,"player":player,"scholar":scholarship,
 		"weather":{"raining":bool(world.raining),
 			"rain_remaining":float(world.rain_remaining),"wind":float(world.wind),
 			"night_remaining":float(world.night_remaining),"time":float(world.time)}}
@@ -91,6 +92,19 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 	world.raining = bool(climate.get("raining",world.raining))
 	if is_instance_valid(world.rain_fx):
 		world.rain_fx.emitting = bool(world.raining)
+	# A saved world remembers which physical books were taken, what passages
+	# were understood, and the player's mana. Legacy saves without this field
+	# continue to load normally.
+	if world.scholar != null and data.get("scholar",null) is Dictionary:
+		world.scholar.restore(data["scholar"])
+		for item in world.items.duplicate():
+			if is_instance_valid(item) and item.item_type == "book" and world.scholar.has_book(String(item.word)):
+				world.items.erase(item)
+				item.queue_free()
+		if world.player != null and world.player.book != null:
+			for form in world.scholar.studied_forms:
+				world.player.book.learn(String(form))
+			world.player.book.update_pages()
 	var player_data: Dictionary = data.get("player",{})
 	if world.player != null and player_data.has("position"):
 		world.player.position = _as_vector(player_data["position"],world.player.position)
