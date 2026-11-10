@@ -80,7 +80,37 @@ func _ready() -> void:
 	c.shape = cs
 	c.position.y = 0.23 if species in ["hare","crow"] else (0.40 if species=="fox" else 0.70)
 	proximity.add_child(c)
+	update_physical_dimensions()
 	choose_direction()
+
+func update_physical_dimensions() -> void:
+	# When a deer becomes a hare (or magic grows a wolf), change physics,
+	# spell targeting and navigation clearance together with the visible mesh.
+	var dimensions: Dictionary = {
+		"hare":[.15,.43,.30,.23],
+		"crow":[.14,.43,.30,.23],
+		"fox":[.26,.60,.55,.40],
+		"wolf":[.35,.91,.85,.70],
+		"deer":[.40,1.42,.85,.70],
+		"wisp":[.22,.65,.55,.52]
+	}
+	var dim: Array = dimensions.get(species,[.22,.65,.55,.52])
+	var factor: float = clampf(growth,.5,2.0)
+	var collision: CollisionShape3D = get_node_or_null("PhysicalAnimalCollider") as CollisionShape3D
+	if collision != null and collision.shape is CapsuleShape3D:
+		var capsule: CapsuleShape3D = collision.shape as CapsuleShape3D
+		capsule.radius = float(dim[0])*factor
+		capsule.height = maxf(float(dim[1])*factor, 2.05*capsule.radius)
+		collision.position.y = capsule.height*.5+.04
+	if path_agent != null:
+		path_agent.radius = float(dim[0])*factor
+	if proximity != null:
+		var target: CollisionShape3D = proximity.get_child(0) as CollisionShape3D
+		if target != null:
+			if not (target.shape is SphereShape3D):
+				target.shape = SphereShape3D.new()
+			(target.shape as SphereShape3D).radius = float(dim[2])*factor
+			target.position.y = float(dim[3])*factor
 
 func _desired_height() -> float:
 	match species:
@@ -380,12 +410,14 @@ func afflict(kind: String) -> void:
 			var options := ["hare","deer","fox","wolf","crow","wisp"]
 			options.erase(species)
 			species=options[rng.randi_range(0,options.size()-1)]
+			speed = {"hare":3.8,"deer":2.7,"fox":2.8,"wolf":2.4,"crow":3.8,"wisp":1.4}.get(species,2.0)
 			build_model()
-			if proximity != null:
-				var shp = proximity.get_child(0)
-				if shp is CollisionShape3D: shp.shape = SphereShape3D.new()
+			update_physical_dimensions()
 		"rise": position.y += 0.6
 		"burn": health-=35.0; panic=7.0
 		"injure": health-=28.0;panic=9.0
 		"water": wetness=minf(1.0,wetness+.65);thirst=maxf(0.0,thirst-.20)
-		"grow": growth=minf(1.7,growth+0.27); model.scale=Vector3.ONE * growth
+		"grow":
+			growth=minf(1.7,growth+0.27)
+			model.scale=Vector3.ONE * growth
+			update_physical_dimensions()
