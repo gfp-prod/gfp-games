@@ -168,6 +168,11 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 		world.player.velocity = Vector3.ZERO
 		if world.player.book != null:
 			if player_data.get("learned",null) is Array:
+				# World saves are authoritative: do not merge vocabulary from
+				# another slot's global legacy grimoire cache.
+				world.player.book.learned.clear()
+				for form in ["ignis","cresce","pluvia","lux","veni","dormi"]:
+					world.player.book.learned.append(form)
 				var lexicon: Dictionary = world.player.book.lexicon
 				for form in player_data["learned"]:
 					if form is String and lexicon.has(form) and not world.player.book.learned.has(form):
@@ -213,6 +218,8 @@ static func load_world(world: Node3D, path: String = SAVE_FILE) -> bool:
 		if not (data is Dictionary): continue
 		if int(data.get("schema",0)) != 1: continue
 		if not (data.get("objects",null) is Array) or not (data.get("animals",null) is Array):
+			continue
+		if not (data.get("player",null) is Dictionary) or not (data.get("weather",null) is Dictionary):
 			continue
 		if apply_snapshot(world,data):
 			return true
