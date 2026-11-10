@@ -3,6 +3,8 @@ extends CharacterBody3D
 const ART = preload("res://scripts/art.gd")
 var world
 var species := "hare"
+# Independent of array order and later transformation spells.
+var persistent_id: String = ""
 var velocity2 := Vector3.ZERO
 var intent := Vector3.ZERO
 var state := "wander"
@@ -36,6 +38,7 @@ var replan_after: float = 0.0
 func setup(w: Node3D, kind: String, pos3: Vector3, seed_value: int) -> void:
 	world = w
 	species = kind
+	persistent_id = "wild:%s:%d:%d" % [kind, roundi(pos3.x*100.0), roundi(pos3.z*100.0)]
 	position = pos3
 	rng.seed = seed_value
 	phase = rng.randf_range(0, TAU)
