@@ -2,6 +2,10 @@
 
 Open `project.godot` in Godot 4.5+ from an **extracted permanent folder**. The project's imported 3D models, tree textures and photographic ground materials are bundled. Do not use a separate asset installer.
 
+## Play the first reading loop
+
+Find **De Herbis** on a labeled stone near spawn and press **E** to collect. G opens/closes the grimoire; B cycles books; N asks a Latin comprehension question; 1/2/3 answer. Correct understanding earns one-time XP, raises scholarly level/max mana, and reduces the mana cost of book-taught incantations. The two other subject books lie elsewhere in the world. Full instructions: [Books and Scholar Progression](docs/BOOKS_AND_SCHOLAR_PROGRESSION.md).
+
 ## Working gameplay
 - WASD/mouse FPS controls, collision, jumping, physical held grimoire and usable inventory.
 - Enter → type → Enter casts Latin spells. The grimoire records recognized forms for later recall.
