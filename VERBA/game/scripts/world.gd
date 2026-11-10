@@ -67,7 +67,7 @@ func _ready() -> void:
 	setup_materials()
 	setup_atmosphere()
 	build_terrain()
-	# Old road is now physically texture-baked into the seamless terrain atlas.
+	# The road is blended into the terrain atlas offline; no floating road mesh.
 	build_landmarks()
 	build_stone_ridges()
 	build_first_words_cairn()
@@ -196,29 +196,6 @@ func height_at(x: float,z: float) -> float:
 	var glade: float = 1.0 - .54*exp(-((x*x+(z-18.0)*(z-18.0))/340.0))
 	return (hills + ridge)*glade-trench + small_noise.get_noise_2d(x,z)*.19
 
-func terrain_color(x: float,z: float,y: float) -> Color:
-	# Strong biome separation: cool creek, moss forest, amber hillside, pale ridges.
-	var fleck:float = small_noise.get_noise_2d(x,z)
-	var c := Color("74834f")
-	if x > 23.0 and z < 24.0:
-		c = Color("8d8357").lerp(Color("726b51"),.37+fleck*.22)
-	elif x < -11.0 and z > -21.0:
-		c = Color("526f57")
-	elif z < -23.0:
-		c = Color("6e795b")
-	elif absf(x)<11.0 and z > -5.0 and z < 34.0:
-		c = Color("8d995e")
-	if absf(x-stream_x(z))<7.0: c = c.lerp(Color("465f58"),.52)
-	if y>5.0: c = c.lerp(Color("a09272"),clampf((y-5.0)*.12,0.0,.45))
-	return c.lerp(Color("d6c28f"),clampf(fleck*.10+.09,0.0,.20))
-
-func terrain_biome(x: float, z: float) -> int:
-	var near_water: float = absf(x-stream_x(z))
-	if near_water < 6.8: return 3
-	if x > 23.0 and z < 24.0: return 2
-	if x < -12.0 and z > -25.0: return 1
-	return 0
-
 func build_terrain() -> void:
 	# One continuous, physically grounded terrain mesh. A WorldUV photographic
 	# atlas already combines genuine CC0 meadow, soil, leaves, creek and worn
@@ -286,50 +263,6 @@ func build_terrain() -> void:
 	terrain_shape.scale = Vector3.ONE * cell_size
 	terrain_body.add_child(terrain_shape)
 	ground_root.add_child(terrain_body)
-
-func build_old_road() -> void:
-	# A worn track must blend back into the meadow, not read as a floating
-	# rectangular strip. Alpha-faded earth shoulders follow real terrain.
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var steps: int = 148
-	var columns: Array[float] = [-1.82,-1.20,-.65,.65,1.20,1.82]
-	var opacity: Array[float] = [0.0,.69,1.0,1.0,.69,0.0]
-	for i in range(steps):
-		var z: float = 29.0 - float(i)*.49
-		var winding: float = sin(float(i)*.059)*2.15 + sin(float(i)*.16)*.47
-		var width: float = .86 + .15*sin(float(i)*.18)
-		for j in range(columns.size()):
-			var xx: float = winding + width*columns[j]
-			var point := Vector3(xx,height_at(xx,z)+.043,z)
-			var pigment: Color = Color("94765b").lerp(Color("79694f"),
-				clampf((sin(float(i)*1.7)+1.0)*.18,0.0,.38))
-			pigment.a = opacity[j]
-			st.set_color(pigment)
-			st.set_normal(Vector3.UP)
-			st.set_uv(Vector2(float(i)*.13,float(j)/5.0*1.8))
-			st.add_vertex(point)
-	for i in range(steps-1):
-		for j in range(columns.size()-1):
-			var k: int = i*columns.size()+j
-			st.add_index(k)
-			st.add_index(k+1)
-			st.add_index(k+columns.size())
-			st.add_index(k+1)
-			st.add_index(k+columns.size()+1)
-			st.add_index(k+columns.size())
-	var trail := MeshInstance3D.new()
-	trail.name="OldPilgrimRoadSoftShoulders"
-	trail.mesh=st.commit()
-	var material := StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo=true
-	material.albedo_texture=load(photo_or_fallback("res://assets/textures/earth_path.png"))
-	material.roughness=.98
-	material.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.cull_mode=BaseMaterial3D.CULL_DISABLED
-	material.texture_filter=BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	trail.material_override=material
-	add_child(trail)
 
 func build_stone_ridges() -> void:
 	# Distant vertical silhouettes provide a sense of region beyond the meadow.
