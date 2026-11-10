@@ -42,6 +42,7 @@ func _ready() -> void:
 	open_visual=open_asset.instantiate()
 	open_visual.name="OpenedCoversAndPhysicalPages"
 	book.add_child(open_visual)
+	refine_physical_book()
 	# Ink labels occupy the surface of each physical page; no HTML overlay.
 	for side in [-1,1]:
 		var l:=Label3D.new()
@@ -59,6 +60,29 @@ func _ready() -> void:
 		page_labels.append(l)
 	update_pages()
 	apply_pose(0.0)
+
+func refine_physical_book() -> void:
+	# Tune the real imported four-mesh binding, not a fullscreen book UI.
+	# The old embedded page texture rendered as luminous yellow stripes.
+	var vellum: Texture2D = load("res://assets/textures/authored/aged_vellum.png")
+	for member in open_visual.find_children("*","MeshInstance3D",true,false):
+		var piece: MeshInstance3D = member as MeshInstance3D
+		if piece == null: continue
+		var name_lower: String = String(piece.name).to_lower()
+		if name_lower.contains("aged paper"):
+			var page: StandardMaterial3D = StandardMaterial3D.new()
+			page.albedo_texture = vellum
+			page.albedo_color = Color("b4a089")
+			page.roughness = .96
+			page.metallic = 0.0
+			page.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+			piece.set_surface_override_material(0,page)
+		elif name_lower.contains("oxblood leather"):
+			# Expose a real leather rim around parchment so the object reads
+			# as a bound volume at first-person distance.
+			piece.scale = Vector3(1.11,1.11,1.0)
+		elif name_lower.contains("worn gold"):
+			piece.scale = Vector3(1.095,1.09,1.0)
 
 func learn(word: String) -> void:
 	if not learned.has(word):
