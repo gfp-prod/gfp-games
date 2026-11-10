@@ -54,7 +54,7 @@ func _ready() -> void:
 		l.outline_size=0
 		l.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 		l.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
-		l.position=Vector3(side*.36,-.02,.046)
+		l.position=Vector3(side*.36,-.02,.073)
 		l.no_depth_test=false
 		l.double_sided=false
 		book.add_child(l)
