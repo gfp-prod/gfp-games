@@ -2,6 +2,7 @@ extends Node3D
 ## VERBA v0.5: one authored valley, rather than a random pile of primitives.
 const ART = preload("res://scripts/art.gd")
 const RUIN_ART = preload("res://scripts/ruin_art.gd")
+const HOME_DRESSING = preload("res://scripts/home_dressing.gd")
 const FOLIAGE = preload("res://scripts/foliage.gd")
 const PLAYER_SCRIPT = preload("res://scripts/player.gd")
 const CREATURE_SCRIPT = preload("res://scripts/creature.gd")
@@ -72,6 +73,7 @@ func _ready() -> void:
 	build_plural_tablet()
 	build_forest()
 	build_scatter()
+	HOME_DRESSING.populate(self)
 	build_water()
 	FOLIAGE.populate_grass(self)
 	FOLIAGE.populate_ferns(self)
