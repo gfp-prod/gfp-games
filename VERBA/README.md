@@ -1,29 +1,41 @@
 # VERBA — The Hollow Vale
+A first-person Latin magic and living-world RPG built in Godot 4.
 
-This branch contains the **complete Godot 4 project** at [VERBA/game](./game), with the eight authored GLB assets and eighteen photo-derived maps already bundled. No Windows asset installer is required.
+**This is an early, playable development project, not a finished RPG.** The single valley and interaction systems are under active construction.
 
-## Open the game
-
-1. Download this branch as a ZIP from GitHub, or clone using:
-   `git clone --branch verba-godot https://github.com/gfp-prod/gfp-games.git`
-2. Open Godot 4.5 or newer. Import **`VERBA/game/project.godot`** and click **Edit** to let Godot import its assets.
-3. Run the scene with F5.
-
-The only first-run processing required is Godot's normal internal asset import. **Do not run any asset download scripts.**
+## Open the current game
+The full project is committed directly to this GitHub branch. Download the `verba-godot` branch ZIP, **extract it to a permanent folder**, then open `VERBA/game/project.godot` in Godot 4.5+. Allow the initial Godot import and press **F5**. Do not open directly out of a ZIP or a temporary folder. No external texture/model installer is required.
 
 ## Controls
+- WASD + mouse: first-person movement and look (click the game window once to capture the mouse)
+- Shift sprint, Space jump, E interact/collect, F use held item
+- Enter: type an incantation and press Enter again to cast it
+- G: raise/lower the *physical* grimoire; A/D or mouse wheel to turn pages
+- While the grimoire is open: **S saves the persistent world, L restores it**
+- Esc: close the book or release mouse, H: contextual guidance, F3: optional movement diagnostics
 
-WASD move; mouse look (click in game to capture); Shift sprint; Space jump; G raise the grimoire; Enter type/cast a Latin incantation; E collect an object; Esc release mouse.
+## Verified development changes
+- Real 3D animal assets: deer/stag, wolf, fox, rabbit and crow; animated asset renders, motion previews and visual-size checks are produced by GitHub Actions
+- A continuous heightmap collider and physical first-person / animal bodies
+- Interactive flora, stones and wildlife with independently mutable states; animal hunger, hunting, grazing, wetness, health and ecological responses
+- An **attested Latin grammar starter**, recognizing singular and plural imperatives plus optional vocative address: `cresce arbor`, `crescite arbores`, `dormi lupe`, `dormite lupi`
+- Multi-target casts routed through the same ecological objects as natural events, not a separate scripted visual effect table
+- Deterministic local heat transfer from burning objects; rain/moisture can quench fire
+- Living-world persistence for individual object histories, animals, weather and player position; autosave every 45 seconds in a live graphical game
+- Six positioned forest groves rather than a mostly empty procedural field, and a physical Latin number-agreement inscription near the starting cairn
 
-## What's present, and what's not
+## What is not complete
+- The Latin grammar is a **small explicitly checked subset**, not a full parser for classical Latin.
+- The landscape, animals, cottage, UI, and grimoire require further artistic refinement. A passing automation test is not proof that the whole game looks good.
+- Persistent world history is currently for the single valley; a streamed, offscreen regional ecosystem remains architectural work.
+- Godot CI validates code, movement, persistence, ecology and asset rendering. It cannot reproduce all Windows GPU behaviors; visual review and in-game playtesting remain necessary.
 
-- Project source is checked into GitHub under `VERBA/game`; original full ZIP is reconstructed by `verba-expand.yml` from the stored packed archive segments.
-- Eight original modeled assets include cottage, deer, wolf, fox, crow, hare, and open/closed books.
-- Eighteen **photo-derived** material JPEGs were included in v1.2 and remain bundled. They are not claimed to be externally downloaded Poly Haven PBR scans.
-- Native Godot automated validation is configured in `.github/workflows/verba-check.yml` and must pass before calling the engine build verified.
+## Automated verification
+- [Native Godot tests](../../actions/workflows/verba-check.yml) validate startup, movement/navigation, Latin effects, ecosystem persistence, fire propagation and animated animal models.
+- [Godot-rendered visual QA](../../actions/workflows/verba-visual-qa.yml) captures actual first-person 3D screenshots and animal animation frames/GIFs on GitHub, so broken models can be caught without the player acting as QA.
+- CI runs on commits. Downloadable image/video artifacts belong to the workflow runs.
 
-## Notes
+## Asset origin
+See `game/assets/models/cc0/wildlife/SOURCES.md`, `SOURCES_EXTRA.md`, `RABBIT_SOURCE.md`, and the nature model source notes for licenses and attribution. The pre-existing real-texture material maps are included directly. Asset licenses still apply to a personal project.
 
-This is still an early development build, not an art-complete RPG. Animal navigation, collision, first-person movement and game feel require native in-engine QA. Please report Godot error logs and screenshots for any failing gates.
-
-The existing web project on `main` has not been changed. This `gfp-games` repository is public; the `verba-godot` branch is public as well.
+GitHub's `main` branch remains separate. This development branch is public because the `gfp-games` repository is public.
