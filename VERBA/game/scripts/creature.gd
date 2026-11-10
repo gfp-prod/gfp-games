@@ -123,7 +123,7 @@ func build_model() -> void:
 		"deer": filename = "Stag.gltf" if rng.randf() < 0.35 else "Deer.gltf"
 		"wolf": filename = "Wolf.gltf"
 		"fox": filename = "Fox.gltf"
-		"hare": filename = "Hare.glb"
+		"hare": filename = "ForestRabbit.glb"
 		"crow": filename = "Crow.glb"
 	if not filename.is_empty():
 		var resource_path: String = "res://assets/models/cc0/wildlife/" + filename
