@@ -32,10 +32,20 @@ func _ready() -> void:
 			book_mesh.position = Vector3(0,0.23,0)
 			add_child(book_mesh)
 		"leaf":
-			m=ART.mat(Color("ad9b72"))
-			ART.box(self,Vector3(0,.30,0),Vector3(.28,.38,.045),m,Vector3(0,.16,.15))
-			ART.box(self,Vector3(0,.29,.03),Vector3(.01,.29,.005),ART.mat(Color("5f4a36")))
-			ART.orb(self,Vector3(.0,.48,.04),Vector3(.06,.04,.02),ART.mat(Color("743c34")))
+			# Discovered grammar is a sealed physical manuscript scroll.
+			# The old thin glowing yellow card hovered like a debug icon.
+			var paper := StandardMaterial3D.new()
+			paper.albedo_texture=load("res://assets/textures/authored/vellum_cream.png")
+			paper.albedo_color=Color("c4b8a8")
+			paper.roughness=1.0
+			ART.bone(self,Vector3(-.18,.16,0),Vector3(.18,.16,0),
+				.072,.072,paper,14)
+			var binding := ART.mat(Color("584032"),.94)
+			for x in [-.115,.115]:
+				ART.bone(self,Vector3(x-.015,.16,0),Vector3(x+.015,.16,0),
+					.078,.078,binding,12)
+			var seal := ART.mat(Color("753f32"),.75)
+			ART.orb(self,Vector3(.0,.20,.064),Vector3(.053,.032,.018),seal,12)
 		"stone": ART.stone(self,Vector3(0,.18,0),Vector3(.22,.16,.27),ART.mat(Color("62665e")))
 		"herb":
 			ART.bone(self,Vector3(0,.07,0),Vector3(0,.55,0),.024,.008,ART.mat(Color("66805a")))
@@ -60,16 +70,10 @@ func _ready() -> void:
 	c.shape=s
 	c.position.y=.30
 	body.add_child(c)
-	if item_type in ["leaf","book"]:
-		var light:=OmniLight3D.new()
-		light.light_color=Color("d9ae65")
-		light.light_energy=.3
-		light.omni_range=2.0
-		light.position.y=.3
-		add_child(light)
+	# Avoid ten costly point lights and cheap video-game glow around paper.
+	# Use one subtle unlit wax emblem, with discoverability from interaction.
 
 func _process(delta: float) -> void:
-	phase+=delta
-	if item_type=="leaf":
-		rotation.y=sin(phase*.8)*.15
-		position.y=world.height_at(position.x,position.z)+sin(phase*1.5)*.08
+	# Collected physical loot stays on the earth; it does not levitate in
+	# a looping debug-pickup animation. Kept for future authored motion.
+	phase += delta
