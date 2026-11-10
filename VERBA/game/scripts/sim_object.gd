@@ -7,6 +7,8 @@ extends Node3D
 var world: Node3D
 var kind: String = "wood"
 var uid: int = 0
+# True for ecology objects created by a spell, not authored at world startup.
+var is_generated: bool = false
 var base_size: float = 1.0
 var water: float = 0.08
 var heat: float = 0.0
