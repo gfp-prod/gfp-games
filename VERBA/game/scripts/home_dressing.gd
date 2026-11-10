@@ -116,3 +116,82 @@ static func populate(world: Node3D) -> void:
 	undergrowth.multimesh=clumps
 	undergrowth.material_override=plant_mat
 	root.add_child(undergrowth)
+	# A small practical herb garden anchors the cottage to its landscape.
+	# Old houses have working margins: plants, rainwater, tools, soil.
+	_add_kitchen_garden(world,root,rng,oak,stone)
+
+static func _add_kitchen_garden(world: Node3D,root: Node3D,rng: RandomNumberGenerator,
+		oak: Material,stone: Material) -> void:
+	var garden := Node3D.new()
+	garden.name="HerbalistsKitchenGarden"
+	garden.position=Vector3(21.6,world.height_at(21.6,9.1),9.1)
+	garden.rotation.y=.13
+	root.add_child(garden)
+	var earth: Material = world.textured(
+		"res://assets/textures/earth_path.png",Color("8d846d"))
+	var washed: Material = ART.mat(Color("998d73"),.95)
+	for bed in range(2):
+		var depth: float = -1.75+float(bed)*3.0
+		# Soil is dark and planted, framed by rough short logs. The growing
+		# beds are intentionally too low to look like rectangular planter UI.
+		ART.box(garden,Vector3(0,.10,depth),Vector3(2.75,.14,2.1),earth)
+		for side in [-1.0,1.0]:
+			ART.bone(garden,Vector3(side*1.40,.24,depth-1.10),
+				Vector3(side*1.40,.24,depth+1.10),.12,.11,oak,10)
+			ART.bone(garden,Vector3(-1.42,.24,depth+side*1.1),
+				Vector3(1.42,.24,depth+side*1.1),.12,.11,oak,10)
+		# Close grouped stems; four leaves around the base, flower heads at
+		# different heights. Small but intentional against broad house lines.
+		for stem in range(15):
+			var bx: float = rng.randf_range(-1.08,1.08)
+			var bz: float = depth+rng.randf_range(-.78,.78)
+			var h: float = rng.randf_range(.33,.65)
+			var base: Vector3 = Vector3(bx,.20,bz)
+			var tip: Vector3 = base+Vector3(
+				rng.randf_range(-.04,.04),h,rng.randf_range(-.04,.04))
+			ART.bone(garden,base,tip,.018,.010,
+				ART.mat(Color("617952"),.96),6)
+			for leaf in range(3):
+				var phi: float = float(leaf)*TAU/3.0
+				ART.orb(garden,base+Vector3(cos(phi)*.12,h*.35,
+					sin(phi)*.12),Vector3(.13,.033,.055),
+					ART.mat(Color("637c5c"),.95),8)
+			if stem%5 == 0:
+				ART.orb(garden,tip,Vector3(.060,.044,.060),
+					ART.mat(Color("b09c81"),.88),9)
+	# One faded label on a carved board teaches Latin materially.
+	var label := Label3D.new()
+	label.name = "HORTUS_KitchenGarden"
+	label.text = "HORTUS"
+	label.font_size = 42
+	label.pixel_size = .0022
+	label.modulate = Color("49382b")
+	label.position = Vector3(-1.43,.95,2.44)
+	label.rotation.y = -.25
+	garden.add_child(label)
+	ART.box(garden,Vector3(-1.43,.94,2.48),
+		Vector3(.86,.34,.07),washed)
+	ART.bone(garden,Vector3(-1.43,.18,2.50),
+		Vector3(-1.43,.92,2.50),.046,.038,oak,8)
+	# Practical rain barrel at the porch. Real curved staves, four iron
+	# hoops, a little visible water at the open top.
+	var barrel := Node3D.new()
+	barrel.name="RainBarrelByPorch"
+	barrel.position = Vector3(33.55,world.height_at(33.55,9.8),9.8)
+	root.add_child(barrel)
+	var stave: Material = world.textured(
+		"res://assets/textures/cottage_wood.png",Color("837361"))
+	var band := ART.mat(Color("525550"),.63)
+	band.metallic=.49
+	for i in range(12):
+		var theta: float = TAU*float(i)/12.0
+		var radius: float = .46
+		var around: Vector3 = Vector3(cos(theta)*radius,0,sin(theta)*radius)
+		ART.box(barrel,around+Vector3.UP*.54,
+			Vector3(.22,1.04,.08),stave,Vector3(0,-theta,0))
+	for height in [.12,.39,.81,1.02]:
+		ART.cone(barrel,Vector3(0,height,0),
+			.505,.025,band,.505,16)
+	ART.cone(barrel,Vector3(0,1.01,0),.42,.025,
+		ART.mat(Color("405d5c"),.19),.42,20)
+	world.add_solid_box(barrel,Vector3(0,.5,0),Vector3(.93,1.02,.93),"PhysicalRainBarrel")
