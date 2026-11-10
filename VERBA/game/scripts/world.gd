@@ -40,6 +40,7 @@ var raining := false
 var rain_remaining := 0.0
 var wind := 0.0
 var night_remaining := 0.0
+var night_visual_blend: float = 0.0  # actual moonlit sky/ambient, not just sun dimming
 var light_node: DirectionalLight3D
 var ambient: WorldEnvironment
 var terrain_noise := FastNoiseLite.new()
@@ -167,6 +168,21 @@ func setup_atmosphere() -> void:
 	light_node.shadow_enabled=true
 	light_node.rotation_degrees=Vector3(-38,32,-10)
 	add_child(light_node)
+
+func _update_day_night_art(night_value: float) -> void:
+	if ambient == null or ambient.environment == null or light_node == null: return
+	var env: Environment = ambient.environment
+	var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
+	if sky != null:
+		sky.sky_top_color = Color("586f7b").lerp(Color("1c2d3d"),night_value)
+		sky.sky_horizon_color = Color("a0aa9e").lerp(Color("3c4957"),night_value)
+		sky.ground_bottom_color = Color("374940").lerp(Color("172c30"),night_value)
+		sky.ground_horizon_color = Color("747f75").lerp(Color("2c4548"),night_value)
+	env.ambient_light_energy = lerpf(.39,.15,night_value)
+	env.fog_light_color = Color("89958f").lerp(Color("3a4c56"),night_value)
+	env.fog_density = lerpf(.0039,.0071,night_value)
+	light_node.light_color=Color("f4dfbe").lerp(Color("a4bcd2"),night_value)
+	light_node.light_energy=lerpf(1.03,.20,night_value)
 
 func stream_x(z: float) -> float:
 	return -20.0+4.4*sin(z*.075)+1.7*sin(z*.21)
@@ -1021,10 +1037,15 @@ func _process(delta: float) -> void:
 		raining=false
 		if rain_fx!=null: rain_fx.emitting=false
 	if night_remaining>0:
-		night_remaining-=delta
-		light_node.light_energy=lerpf(light_node.light_energy,.18,minf(1.0,delta*1.6))
-	else:
-		light_node.light_energy=lerpf(light_node.light_energy,1.03,minf(1.0,delta*.3))
+		night_remaining=maxf(0.0,night_remaining-delta)
+	# Night magic used to dim sunlight while leaving a bright noon sky.
+	# The visual state now transitions in a finite duration and stops
+	# changing renderer resources once it reaches either endpoint.
+	var desired_night: float = 1.0 if night_remaining > 0.0 else 0.0
+	var previous_night: float = night_visual_blend
+	night_visual_blend = move_toward(night_visual_blend,desired_night,delta*.57)
+	if absf(night_visual_blend-previous_night) > .0001:
+		_update_day_night_art(night_visual_blend)
 	ecology_timer += delta
 	if ecology_timer >= .5:
 		var elapsed:float=ecology_timer
