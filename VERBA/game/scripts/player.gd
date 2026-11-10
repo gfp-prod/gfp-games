@@ -461,7 +461,7 @@ func finish_cast() -> void:
 	if not result["ok"]:
 		say_world(String(result["message"]),camera.global_position-camera.global_transform.basis.z*2.8,Color("c38b7e"))
 		return
-	var remembered:bool=book.mark_cast(text_cast)
+	var remembered:bool=book.mark_cast(String(result.get("remember_word",text_cast)))
 	say_world(text_cast,display_pos+Vector3.UP*1.3,Color("f7dda1") if remembered else Color("d5a869"))
 	if not result["message"].is_empty():
 		say_world(result["message"],display_pos+Vector3.UP*.35,Color("c9b68d"))
