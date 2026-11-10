@@ -1,0 +1,97 @@
+[
+  {
+    "id": "de_herbis",
+    "title": "De Herbis",
+    "subject": "botany",
+    "difficulty": 1,
+    "level_hint": 1,
+    "author": "Hortulanus",
+    "passage": "Herba in horto crescit.\nAqua herbam iuvat.\nSol terram calefacit.",
+    "glossary": [
+      "herba = plant",
+      "horto = garden",
+      "iuvat = helps",
+      "calefacit = warms"
+    ],
+    "question": "Quid herbam iuvat?",
+    "options": [
+      "Aqua",
+      "Lapis",
+      "Lupus"
+    ],
+    "answer": 0,
+    "explanation": "Aqua herbam iuvat. Water helps the plant.",
+    "xp": 24,
+    "teaches": [
+      "crescite"
+    ],
+    "location": [
+      -3.3,
+      24.5
+    ]
+  },
+  {
+    "id": "de_animalibus",
+    "title": "De Animalibus",
+    "subject": "bestiary",
+    "difficulty": 2,
+    "level_hint": 2,
+    "author": "Viator",
+    "passage": "Lupus in silva ambulat.\nCervus lupum videt et fugit.\nCorvus in arbore sedet.",
+    "glossary": [
+      "silva = forest",
+      "lupum = wolf (object)",
+      "fugit = flees",
+      "sedet = sits"
+    ],
+    "question": "Quis lupum videt?",
+    "options": [
+      "Corvus",
+      "Cervus",
+      "Lupus"
+    ],
+    "answer": 1,
+    "explanation": "Cervus lupum videt. The deer sees the wolf.",
+    "xp": 32,
+    "teaches": [
+      "dormite",
+      "venite"
+    ],
+    "location": [
+      25,
+      11.5
+    ]
+  },
+  {
+    "id": "de_igne_et_aqua",
+    "title": "De Igne et Aqua",
+    "subject": "elements",
+    "difficulty": 2,
+    "level_hint": 2,
+    "author": "Ignifer",
+    "passage": "Ignis lignum urit.\nAqua ignem exstinguit.\nLapis in aqua manet.",
+    "glossary": [
+      "lignum = wood",
+      "urit = burns",
+      "exstinguit = extinguishes",
+      "manet = remains"
+    ],
+    "question": "Quid ignem exstinguit?",
+    "options": [
+      "Lapis",
+      "Aqua",
+      "Lignum"
+    ],
+    "answer": 1,
+    "explanation": "Aqua ignem exstinguit. Water extinguishes fire.",
+    "xp": 40,
+    "teaches": [
+      "ardete",
+      "aqua"
+    ],
+    "location": [
+      7.5,
+      -32
+    ]
+  }
+]
