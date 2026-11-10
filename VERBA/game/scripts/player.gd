@@ -26,7 +26,7 @@ var mouse_sensitivity:=.0022
 var shake_time:=0.0
 var info_elapsed:=0.0
 var guide_panel: PanelContainer
-var guide_visible := true
+var guide_visible := false  # Diegetic first view; H opens the help card on demand
 var guide_clock := 0.0
 var jump_offset: float = 0.0
 var rise_velocity: float = 0.0
@@ -221,6 +221,7 @@ func create_first_steps() -> void:
 	sub.add_theme_color_override("font_color", Color("ded6bf"))
 	v.add_child(sub)
 	guide_clock = 0.0
+	guide_panel.visible = false
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -386,8 +387,7 @@ func _process(delta: float) -> void:
 	held.visible=not book.open and not held_type.is_empty()
 	if held.visible:
 		held.position.y=-.60+sin(Time.get_ticks_msec()*.001*2)*.012
-	if Input.mouse_mode!=Input.MOUSE_MODE_CAPTURED and not typing and not book.open:
-		interaction_hint.text="Click once for mouse-look · WASD always moves · H for help"
+	# No permanent mouse-look tutorial overlay spoiling first-person composition.
 
 func look_hit(distance: float=18.0) -> Dictionary:
 	var eye=camera.global_position
