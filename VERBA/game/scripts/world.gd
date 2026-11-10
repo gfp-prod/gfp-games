@@ -338,9 +338,9 @@ func build_first_words_cairn() -> void:
 	add_child(cairn)
 	var stone:=textured("res://assets/textures/stone.png",Color("bcb09a"))
 	ART.stone(cairn,Vector3(0,.4,0),Vector3(1.05,.78,.65),stone)
-	ART.box(cairn,Vector3(0,1.45,0),Vector3(1.65,1.6,.43),stone)
+	ART.chiseled_tablet(cairn,Vector3(0,1.45,0),Vector3(1.65,1.65,.43),stone)
 	add_solid_box(cairn, Vector3(0,1.1,0), Vector3(1.65,2.2,.65), "InscribedCairnSolid")
-	ART.box(cairn,Vector3(0,2.29,0),Vector3(1.8,.13,.54),stone)
+	ART.stone(cairn,Vector3(0,2.29,0),Vector3(.95,.12,.37),stone)
 	var inscription:=Label3D.new()
 	inscription.name="InscriptionInStone"
 	inscription.text="V E R B A\n\nIGNIS   •   fire\nPLUVIA   •   rain\nCRESCE   •   grow"
@@ -374,7 +374,7 @@ func build_plural_tablet() -> void:
 	add_child(tablet)
 	var carved: Material = textured("res://assets/textures/stone.png",Color("8f9489"))
 	ART.stone(tablet,Vector3(0,.16,0),Vector3(.9,.34,.72),carved)
-	ART.box(tablet,Vector3(0,1.18,0),Vector3(1.75,2.12,.33),carved)
+	ART.chiseled_tablet(tablet,Vector3(0,1.18,0),Vector3(1.75,2.12,.33),carved)
 	var body: StaticBody3D = add_solid_box(tablet,Vector3(0,1.14,0),
 		Vector3(1.75,2.3,.38),"GrammaticalStone")
 	body.set_meta("flora_ref",tablet)
