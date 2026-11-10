@@ -1,4 +1,5 @@
 name: VERBA - bake photo-based blended valley terrain
+# Daylight grade 2: re-bake after real in-game camera luminance review
 on:
   push:
     branches: [verba-godot]
