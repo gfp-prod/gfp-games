@@ -63,7 +63,13 @@ func _test() -> void:
 	if not bool(grow_result.get("ok",false)) or float(oak.growth) <= old_growth:
 		_fail("Latin address did not change that particular living tree")
 		return
-	print("PASS: Latin singular/plural grammar, strict agreement, targeted wolf sleep and tree growth")
+	var with_punctuation: Dictionary = world.magic.cast(
+		"pluvia!",world.player.camera.global_position,
+		{"position":world.player.global_position,"entity":null})
+	if not bool(with_punctuation.get("ok",false)) or not world.raining:
+		_fail("Punctuated Latin noun naming failed despite valid grammar")
+		return
+	print("PASS: Latin singular/plural grammar, noun punctuation, targeted wolf sleep and tree growth")
 	quit(0)
 
 func _fail(message: String) -> void:
