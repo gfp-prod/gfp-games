@@ -612,6 +612,23 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 			target_height=7.1
 	var path: String="res://assets/models/cc0/nature/"+source_name
 	var attached: bool=EXTERNAL_ART.attach_scaled(node,path,target_height)
+	if attached and kind != "dead":
+		# Quaternius alpha foliage is excellent geometry but its raw neon
+		# yellow/salmon palette looked too toy-like in our actual Godot footage.
+		# Preserve UVs, bark and opacity while tinting leaf surfaces only.
+		var imported: Node3D = node.get_node_or_null("CC0ImportedArt") as Node3D
+		if imported != null:
+			var leaf_tint: Color = Color("64785c") if kind != "autumn" else Color("9b7968")
+			leaf_tint = leaf_tint.lerp(Color("818e68") if kind != "autumn" else Color("ab8867"),r.randf_range(0.0,0.45))
+			for member in imported.find_children("*","MeshInstance3D",true,false):
+				var part: MeshInstance3D = member as MeshInstance3D
+				if part == null or part.mesh == null: continue
+				for surface_id in range(part.mesh.get_surface_count()):
+					var source_material: Material = part.mesh.surface_get_material(surface_id)
+					if source_material is StandardMaterial3D and (surface_id == 1 or String(source_material.resource_name).to_lower().contains("leav")):
+						var new_mat: StandardMaterial3D = source_material.duplicate() as StandardMaterial3D
+						new_mat.albedo_color = source_material.albedo_color * leaf_tint
+						part.set_surface_override_material(surface_id,new_mat)
 	if not attached:
 		# Keep a solid landmark rather than fake orange canopy blobs or
 		# thousands of loose rectangular procedural leaves.
