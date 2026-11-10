@@ -40,6 +40,33 @@ static func add_broken_wall(parent: Node3D, start: Vector3, finish: Vector3,
 	parent.add_child(mesh)
 	return mesh
 
+static func add_wall_collision(parent: Node3D,start: Vector3,finish: Vector3,
+		profile: PackedFloat32Array,thickness: float,label: String) -> StaticBody3D:
+	# Collide with the actual remaining masonry, not an invisible rectangle
+	# above sections that have collapsed.
+	var body := StaticBody3D.new()
+	body.name = label
+	body.collision_layer = 16
+	body.collision_mask = 0
+	parent.add_child(body)
+	var axis: Vector3 = (finish-start).normalized()
+	var yaw: float = -atan2(axis.z,axis.x)
+	var pieces: int = maxi(1,profile.size()-1)
+	for i in range(pieces):
+		var u0: float = float(i)/float(pieces)
+		var u1: float = float(i+1)/float(pieces)
+		var at: Vector3 = start.lerp(finish,(u0+u1)*.5)
+		var section_height: float = maxf(.35,minf(profile[i],profile[i+1])-.02)
+		var node := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size=Vector3(start.distance_to(finish)/float(pieces)+.04,
+			section_height,thickness)
+		node.shape=box
+		node.position=at+Vector3.UP*(section_height*.5)
+		node.rotation.y=yaw
+		body.add_child(node)
+	return body
+
 static func _quad(st: SurfaceTool, a: Vector3,b: Vector3,c: Vector3,d: Vector3,
 		u0: float,u1: float,v0: float,v1: float) -> void:
 	for p in [
