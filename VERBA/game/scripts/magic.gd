@@ -23,6 +23,9 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 	var parsed: Dictionary = GRAMMAR.parse(word)
 	if not bool(parsed.get("ok",false)):
 		return {"ok":false,"message":String(parsed.get("message","Unknown Latin."))}
+	# Use the parser's attested normalized Latin, not the user's punctuation,
+	# when finding lexical magic. "pluvia!" must behave exactly as "pluvia".
+	word = String(parsed.get("surface",word))
 	if word.contains(" ") or String(parsed.get("number","singular")) == "plural":
 		var place: Vector3 = target.get("position",eye + Vector3.FORWARD * 5.0)
 		var actor: Node3D = target.get("entity",null)
