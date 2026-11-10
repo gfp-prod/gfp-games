@@ -136,29 +136,29 @@ func setup_atmosphere() -> void:
 	e.background_mode=Environment.BG_SKY
 	var sky:=Sky.new()
 	var s:=ProceduralSkyMaterial.new()
-	s.sky_top_color=Color("53636a")
-	s.sky_horizon_color=Color("77868b")
-	s.ground_bottom_color=Color("435047")
-	s.ground_horizon_color=Color("6c7974")
+	s.sky_top_color=Color("586f7b")
+	s.sky_horizon_color=Color("a0aa9e")
+	s.ground_bottom_color=Color("374940")
+	s.ground_horizon_color=Color("747f75")
 	s.use_debanding=true
 	sky.sky_material=s
 	e.sky=sky
 	e.ambient_light_source=Environment.AMBIENT_SOURCE_SKY
 	e.reflected_light_source=Environment.REFLECTION_SOURCE_BG
-	e.ambient_light_energy=.26
+	e.ambient_light_energy=.39
 	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
 	e.fog_enabled=true
-	e.fog_light_color=Color("697778")
-	e.fog_density=.0058
-	e.fog_sky_affect=.36
+	e.fog_light_color=Color("89958f")
+	e.fog_density=.0039
+	e.fog_sky_affect=.27
 	ambient.environment=e
 	add_child(ambient)
 	light_node=DirectionalLight3D.new()
 	light_node.name="LowAutumnSun"
-	light_node.light_color=Color("e8ece7")
-	light_node.light_energy=.70
+	light_node.light_color=Color("f4dfbe")
+	light_node.light_energy=1.03
 	light_node.shadow_enabled=true
-	light_node.rotation_degrees=Vector3(-48,29,-12)
+	light_node.rotation_degrees=Vector3(-38,32,-10)
 	add_child(light_node)
 
 func stream_x(z: float) -> float:
@@ -285,33 +285,46 @@ func build_terrain() -> void:
 	# No physics bodies on individual biome render meshes: their borders are visual only.
 
 func build_old_road() -> void:
-	# A readable worn earth trail visually connects the clearing to the priory.
-	# It follows the actual terrain, so it does not create a flat artificial floor.
+	# A worn track must blend back into the meadow, not read as a floating
+	# rectangular strip. Alpha-faded earth shoulders follow real terrain.
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var steps := 112
+	var steps: int = 148
+	var columns: Array[float] = [-1.82,-1.20,-.65,.65,1.20,1.82]
+	var opacity: Array[float] = [0.0,.69,1.0,1.0,.69,0.0]
 	for i in range(steps):
-		var z:float = 29.0 - float(i) * .65
-		var x:float = sin(float(i)*.075)*2.15 + sin(float(i)*.19)*.45
-		var half:float = 1.0 + .25*sin(float(i)*.21)
-		for side in [-1.0,1.0]:
-			var xx:float = x + half*side
-			var point := Vector3(xx,height_at(xx,z)+.065,z)
-			st.set_color(Color("a6875d").lerp(Color("695c44"),clampf((sin(float(i)*1.7)+1.0)*.23,0.0,.5)))
-			st.set_uv(Vector2(float(i)*.10, 0.0 if side<0.0 else 1.0))
+		var z: float = 29.0 - float(i)*.49
+		var winding: float = sin(float(i)*.059)*2.15 + sin(float(i)*.16)*.47
+		var width: float = .86 + .15*sin(float(i)*.18)
+		for j in range(columns.size()):
+			var xx: float = winding + width*columns[j]
+			var point := Vector3(xx,height_at(xx,z)+.043,z)
+			var pigment: Color = Color("94765b").lerp(Color("79694f"),
+				clampf((sin(float(i)*1.7)+1.0)*.18,0.0,.38))
+			pigment.a = opacity[j]
+			st.set_color(pigment)
+			st.set_normal(Vector3.UP)
+			st.set_uv(Vector2(float(i)*.13,float(j)/5.0*1.8))
 			st.add_vertex(point)
 	for i in range(steps-1):
-		var k:=i*2
-		st.add_index(k);st.add_index(k+1);st.add_index(k+2)
-		st.add_index(k+1);st.add_index(k+3);st.add_index(k+2)
-	var trail:=MeshInstance3D.new()
-	trail.name="OldPilgrimRoad"
+		for j in range(columns.size()-1):
+			var k: int = i*columns.size()+j
+			st.add_index(k)
+			st.add_index(k+1)
+			st.add_index(k+columns.size())
+			st.add_index(k+1)
+			st.add_index(k+columns.size()+1)
+			st.add_index(k+columns.size())
+	var trail := MeshInstance3D.new()
+	trail.name="OldPilgrimRoadSoftShoulders"
 	trail.mesh=st.commit()
-	var material:=StandardMaterial3D.new()
+	var material := StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo=true
 	material.albedo_texture=load(photo_or_fallback("res://assets/textures/earth_path.png"))
-	material.roughness=1.0
+	material.roughness=.98
+	material.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.cull_mode=BaseMaterial3D.CULL_DISABLED
+	material.texture_filter=BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	trail.material_override=material
 	add_child(trail)
 
