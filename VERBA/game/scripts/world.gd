@@ -29,6 +29,8 @@ var spontaneous_events: int = 0
 var flora: Array = []
 var items: Array = []
 var collected_pickup_ids: Array[String] = []
+# Immutable spawn templates allow loading older saves in an already-running world.
+var authored_pickup_templates: Dictionary = {}
 var next_drop_serial: int = 1
 var fires: Array = []
 var rain_fx: GPUParticles3D
@@ -889,6 +891,10 @@ func spawn_item(kind: String, word_key: String, p: Vector3,
 		next_drop_serial += 1
 	var i = PICKUP_SCRIPT.new()
 	i.setup(self,kind,word_key,p,id,dropped)
+	if not dropped and not authored_pickup_templates.has(i.persistent_id):
+		authored_pickup_templates[i.persistent_id] = {
+			"kind":kind,"word":word_key,"position":p
+		}
 	add_child(i)
 	items.append(i)
 
