@@ -21,7 +21,7 @@ static func make_open_binding() -> Node3D:
 	root.name = "LayeredLeatherGrimoire"
 	var cover: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("6d5045"),.82)
 	var leather_edge: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("3a2523"),.93)
-	var vellum: StandardMaterial3D = material("res://assets/textures/authored/vellum_cream.png",Color("f7f2e9"),.96)
+	var vellum: StandardMaterial3D = material("res://assets/textures/authored/vellum_cream.png",Color("988e7f"),.96)
 	var page_edge: StandardMaterial3D = ART.mat(Color("948475"),1.0)
 	var bronze: StandardMaterial3D = ART.mat(Color("a68b59"),.34)
 	bronze.metallic = .63
