@@ -1,28 +1,28 @@
-# Real photographic texture sources
+# VERBA photographic materials — bundled CC0 sources
 
-The Windows installer `GET_REAL_TEXTURES.bat` uses [Poly Haven's public API](https://polyhaven.com/our-api) to download actual **CC0** textures. These are photographic/photogrammetry-based assets, not AI-created texture approximations. The files are **not yet bundled in the ZIP** because the build environment cannot download their binary images. They are installed locally when the user runs the included installer and Godot imports them.
+**Updated November 10, 2026.** Previous instructions suggesting users must run `GET_REAL_TEXTURES.bat` are obsolete. The texture files are now downloaded, validated, bundled and imported directly within the Godot project through GitHub Actions. The game has no texture network dependency and requires no asset installer.
 
-| VERBA material | Source asset | License |
+## Source and license
+
+Original photographic surface maps: [Poly Haven](https://polyhaven.com), CC0 1.0. Source asset identifiers, original downloadable URLs, local paths, byte counts and SHA256 checksums are stored alongside the files in `assets/textures/real/SOURCES_MANIFEST.json`. All download and conversion happens at build time via `tools/fetch_polyhaven_cc0.py` and `.github/workflows/verba-cc0-materials.yml`.
+
+| In-game surface | Poly Haven asset ID | Current role |
 | --- | --- | --- |
-| Meadow | [Sparse Grass](https://polyhaven.com/a/sparse_grass) | CC0 |
-| Woodland | [Forest Ground 01](https://polyhaven.com/a/forrest_ground_01) | CC0 |
-| Autumn grove | [Forest Leaves 04](https://polyhaven.com/a/forest_leaves_04) | CC0 |
-| Creek stone | [Rocks Ground 01](https://polyhaven.com/a/rocks_ground_01) | CC0 |
-| Dirt path | [Dirt Floor](https://polyhaven.com/a/dirt_floor) | CC0 |
-| Stone | [Rock Surface](https://polyhaven.com/a/rock_surface) | CC0 |
-| Tree bark | [Bark Brown 01](https://polyhaven.com/a/bark_brown_01) | CC0 |
-| Moss-covered stones | [Concrete Moss](https://polyhaven.com/a/concrete_moss) | CC0 |
+| Meadow | `sparse_grass` | Grass/turf segments in baked terrain atlas |
+| Woodland soil | `forrest_ground_01` | Damp earth and leaf shadows |
+| Autumn/leaf litter | `forest_leaves_04` | Weathered orange grove terrain |
+| Creek/riverbank | `rocks_ground_01` | Stony wetland |
+| Worn road | `dirt_floor` | Baked physically flat trail |
+| Stone | `rock_surface` | Rocks, walls, masonry |
+| Moss | `concrete_moss` | Mossy boulders |
+| Plastered wall | `plastered_wall` | Cottage plaster |
+| Wood | `wood_planks` | Cottage joinery |
+| Roof | `roof_slates_02` | Cottage slate |
 
-Downloads install 1K JPEG albedo and OpenGL normal maps (where provided) using the API's download URLs and MD5 hashes. Users can re-run the downloader safely. All 3D visuals retain fallback materials if a download fails. **Powered by Poly Haven** — https://polyhaven.com/
+The five terrain materials are blended via the offline `tools/bake_vale_terrain.py` at 3072×3072 pixels into `assets/textures/real/vale_terrain_blend.jpg`, used by the single continuous world ground mesh. Baked-atlas hashes, world extent and individual input SHA256s live in `VALE_TERRAIN_BAKE.json`. The collision heightmap remains independent and unchanged.
 
-**Note:** photographic materials improve surfaces, but models, UV mapping, foliage silhouettes, lighting and character anatomy require separate artistic improvements. This release is primarily a critical locomotion/ground-rendering correction with actual materials integration, not finished art.
+**Normal maps:** eight valid source normal maps are bundled. Woodland and creek source normal maps produced unusable zero-byte files in the external asset service; those are absent by design (no fake successful imports). Albedo still works.
 
-## Added in v1.0 (verified source pages)
+**Quality disclaimer:** Source-photo realism does not guarantee a beautiful landscape. Texture placement, foliage, composition, light, building and creature art require separate review. Screenshot CI checks actual Godot renders.
 
-| Authored cottage material | Source | License |
-| --- | --- | --- |
-| Exterior plaster | [Plastered Wall](https://polyhaven.com/a/plastered_wall) | CC0 |
-| Timber beams / boards | [Wood Planks](https://polyhaven.com/a/wood_planks) | CC0 |
-| Roof cladding | [Roof Slates 02](https://polyhaven.com/a/roof_slates_02) | CC0 |
-
-The optional installer now downloads these three extra photo-material pairs, and the cottage asset's Godot mesh instances select them if present. The model **ships with generated textures for offline play**; no photos are misrepresented as bundled. Poly Haven credit: https://polyhaven.com — Powered by Poly Haven.
+**Credits:** Powered by Poly Haven, https://polyhaven.com/. API used only to source assets; runtime is entirely offline.
