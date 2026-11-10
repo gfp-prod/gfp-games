@@ -86,10 +86,18 @@ static func _add_curved_leaf(root: Node3D, side: float, paper: StandardMaterial3
 			var d: Vector3 = _page_vertex(side,u1,v1)
 			# Keep winding correct for both sides and avoid flipping normals
 			# by enabling two-sided parchment on thin physical sheets.
-			for item in [
+			var triangles: Array = [
 				[a,Vector2(u0,v0)],[b,Vector2(u1,v0)],[c,Vector2(u0,v1)],
 				[b,Vector2(u1,v0)],[d,Vector2(u1,v1)],[c,Vector2(u0,v1)]
-			]:
+			]
+			# Keep normal orientation identical on both wings of the book.
+			# Reversed winding on the left previously produced mismatched shading.
+			if side < 0.0:
+				triangles = [
+					[a,Vector2(u0,v0)],[c,Vector2(u0,v1)],[b,Vector2(u1,v0)],
+					[b,Vector2(u1,v0)],[c,Vector2(u0,v1)],[d,Vector2(u1,v1)]
+				]
+			for item in triangles:
 				mesh_tool.set_uv(item[1])
 				mesh_tool.add_vertex(item[0])
 	mesh_tool.generate_normals()
@@ -102,10 +110,10 @@ static func _add_curved_leaf(root: Node3D, side: float, paper: StandardMaterial3
 	root.add_child(parchment)
 
 static func _page_vertex(side: float, u: float, v: float) -> Vector3:
-	var edge: float = .042 + u*.745
+	var edge: float = .028 + u*.755
 	var x: float = side*edge
 	var y: float = -.513 + v*1.035
 	# Low in the gutter, high at the free edge, softly dog-eared corners.
-	var z: float = -.013 + .078*u*u + .011*sin(v*PI)*sin(u*PI)
+	var z: float = .029 + .048*u*u + .007*sin(v*PI)*sin(u*PI)
 	z += .009*pow(u,8.0)*pow(absf(v-.5)*2.0,5.0)
 	return Vector3(x,y,z)
