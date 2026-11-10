@@ -10,6 +10,7 @@ const SIM_OBJECT = preload("res://scripts/sim_object.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
+const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
 var magic
 var creatures: Array = []
@@ -727,19 +728,10 @@ func ecology_step(dt: float) -> void:
 		obj.simulate(dt,raining,nearby_fire,wind)
 		if obj.burning and not obj.dead and nearby_fire>1.5:
 			add_fire(obj.global_position,obj)
-	# A tiny chance of a self-contained ecological disturbance. Fire can
-	# propagate, grazing depletes food, animals hunt and the plants regenerate.
-	if not raining and rng.randf()<dt*.008:
-		var heat_sources: Array=[]
-		for obj in sim_objects:
-			if is_instance_valid(obj) and obj.burning:heat_sources.append(obj)
-		if heat_sources.size()>0:
-			var source=heat_sources[rng.randi_range(0,heat_sources.size()-1)]
-			for obj in sim_objects:
-				if obj != source and is_instance_valid(obj) and obj.flammable() and obj.global_position.distance_to(source.global_position)<3.5 and obj.water<.38:
-					if obj.apply_effect("ignite"):
-						add_fire(obj.global_position,obj)
-						break
+	# Local heat transfer, rather than arbitrary secondary magic effects.
+	# A burning tree naturally heats nearby fuel; moisture and wind alter the
+	# outcome using the same persistent state as magic and weather.
+	MATERIAL_EXCHANGE.transmit_heat(self,dt)
 
 func setup_rain() -> void:
 	rain_fx=GPUParticles3D.new()
@@ -927,9 +919,3 @@ func _process(delta: float) -> void:
 		for c in creatures:
 			if is_instance_valid(c) and f.global_position.distance_to(c.global_position)<2.0:
 				c.panic=maxf(c.panic,3.0)
-		if rng.randf()<delta*.06:
-			# Actual propagation occurs near burnable tree roots, not random teleports.
-			for t in flora:
-				if is_instance_valid(t) and t.global_position.distance_to(f.global_position)<3.4 and not bool(t.get_meta("burning")) and float(t.get_meta("wetness"))<.35:
-					add_fire(t.global_position + Vector3(rng.randf_range(-.5,.5),0,rng.randf_range(-.5,.5)),t)
-					break
