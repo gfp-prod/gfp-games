@@ -47,6 +47,8 @@ jobs:
         run: godot --headless --path . --script res://tests/physics_navigation_test.gd
       - name: Latin books and scholar progression
         run: godot --headless --path . --script res://tests/scholar_progression_test.gd
+      - name: Full in-world Latin book discovery and casting loop
+        run: godot --headless --path . --script res://tests/book_world_loop_test.gd
       - name: Latin grammar and natural-law spell regression
         run: godot --headless --path . --script res://tests/latin_laws_test.gd
       - name: Emergent heat transfer between natural objects
