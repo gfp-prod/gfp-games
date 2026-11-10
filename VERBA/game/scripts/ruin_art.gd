@@ -67,6 +67,59 @@ static func add_wall_collision(parent: Node3D,start: Vector3,finish: Vector3,
 		body.add_child(node)
 	return body
 
+static func add_collapsed_bell_tower(world: Node3D,center: Vector3,
+		stone: Material) -> Node3D:
+	# A partial decagonal masonry bell tower. Actual volume and negative
+	# space give the priory a distant landmark instead of a tiny arch on
+	# an empty hill. The broken crown is *not* a flat circular cylinder.
+	var root := Node3D.new()
+	root.name = "CollapsedPrioryBellTower"
+	root.position=center
+	world.add_child(root)
+	var sides: int = 11
+	var radius: float = 1.64
+	var rng := RandomNumberGenerator.new()
+	rng.seed=438867
+	var heights: Array[float] = []
+	for i in range(sides):
+		var a: float = TAU*float(i)/float(sides)
+		var h: float = 5.2+sin(a*3.1)*.73+rng.randf_range(-.34,.42)
+		heights.append(h)
+	for i in range(sides):
+		# The front and eastern portions have collapsed entirely, forming a
+		# huge arched rupture. We do not fake black door cutouts on solid slabs.
+		if i in [1,2,3]: continue
+		var a0: float = TAU*float(i)/float(sides)
+		var a1: float = TAU*float(i+1)/float(sides)
+		var p0 := Vector3(cos(a0)*radius,0,sin(a0)*radius)
+		var p1 := Vector3(cos(a1)*radius,0,sin(a1)*radius)
+		var psteps := PackedFloat32Array([
+			heights[i],maxf(1.1,(heights[i]+heights[(i+1)%sides])*.5-.26),
+			heights[(i+1)%sides]
+		])
+		add_broken_wall(root,p0,p1,psteps,.39,stone)
+		add_wall_collision(root,p0,p1,psteps,.39,"TowerMasonry_%02d" % i)
+	# Visible stone strips at the entrance, not a box doorway. The tower
+	# is naturally worn to a low parapet where its two ends have crumbled.
+	var capstone: StandardMaterial3D = world.textured(
+		"res://assets/textures/stone.png",Color("a69f90"))
+	for i in [0,4,6,8]:
+		var a: float = TAU*(float(i)+.46)/float(sides)
+		var edge: Vector3 = Vector3(cos(a)*radius,heights[i]+.08,
+			sin(a)*radius)
+		# World-local fractured ridge pieces get caught by the real existing
+		# stone meshes below, rather than constructing a second rock library.
+		var fragment := MeshInstance3D.new()
+		fragment.name = "AncientLooseCoping"
+		var mesh := BoxMesh.new()
+		mesh.size=Vector3(.45,.21,.40)
+		fragment.mesh=mesh
+		fragment.position=edge
+		fragment.rotation=Vector3(.03,a,.09)
+		fragment.material_override=capstone
+		root.add_child(fragment)
+	return root
+
 static func _quad(st: SurfaceTool, a: Vector3,b: Vector3,c: Vector3,d: Vector3,
 		u0: float,u1: float,v0: float,v1: float) -> void:
 	for p in [
