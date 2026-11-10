@@ -8,6 +8,11 @@ on:
       - "VERBA/game/tests/visual_pixel_gate.py"
       - "VERBA/game/tests/make_motion_gifs.py"
       - "VERBA/game/scripts/creature.gd"
+      - "VERBA/game/scripts/world.gd"
+      - "VERBA/game/scripts/world_laws.gd"
+      - "VERBA/game/scripts/latin_grammar.gd"
+      - "VERBA/game/scripts/material_exchange.gd"
+      - "VERBA/game/assets/models/cc0/nature/**"
       - "VERBA/game/assets/models/cc0/wildlife/**"
       - ".github/workflows/verba-visual-qa.yml"
   workflow_dispatch:
