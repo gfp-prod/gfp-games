@@ -14,6 +14,15 @@ func setup(w: Node3D, kind: String, word_key: String, p: Vector3) -> void:
 func _ready() -> void:
 	var m=ART.mat(Color("a39678"))
 	match item_type:
+		"book":
+			# An actual bound three-dimensional volume, not a glowing menu card.
+			var volume: PackedScene = load("res://assets/models/authored/Grimoire_Closed.glb")
+			var book_mesh: Node3D = volume.instantiate()
+			book_mesh.name = "FoundLatinVolume"
+			book_mesh.scale = Vector3.ONE * 0.44
+			book_mesh.rotation_degrees = Vector3(0,22,-7)
+			book_mesh.position = Vector3(0,0.23,0)
+			add_child(book_mesh)
 		"leaf":
 			m=ART.mat(Color("ad9b72"))
 			ART.box(self,Vector3(0,.30,0),Vector3(.28,.38,.045),m,Vector3(0,.16,.15))
@@ -43,7 +52,7 @@ func _ready() -> void:
 	c.shape=s
 	c.position.y=.30
 	body.add_child(c)
-	if item_type=="leaf":
+	if item_type in ["leaf","book"]:
 		var light:=OmniLight3D.new()
 		light.light_color=Color("d9ae65")
 		light.light_energy=.3
