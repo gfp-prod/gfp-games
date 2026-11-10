@@ -71,6 +71,18 @@ func _render_gallery() -> void:
 		var multiplier: float = 0.65 if desired < 0.65 else 1.0
 		camera.position = Vector3(3.8, 2.6, 6.5) * multiplier
 		camera.look_at(Vector3(0, desired * 0.52, 0), Vector3.UP)
+		# Baseline under precisely the same lighting and camera prevents enormous
+		# broken skins from passing a text-only asset test.
+		actor.visible = false
+		await process_frame
+		await RenderingServer.frame_post_draw
+		var baseline: Image = viewport.get_texture().get_image()
+		var baseline_path: String = "%s/%s_baseline.png" % [OUTFOLDER, species]
+		if baseline.save_png(baseline_path) != OK:
+			push_error("Cannot save visual baseline: " + baseline_path)
+			quit(4)
+			return
+		actor.visible = true
 		var phases := ["idle", "walk", "run"]
 		for phase in phases:
 			actor._update_anim(phase)
