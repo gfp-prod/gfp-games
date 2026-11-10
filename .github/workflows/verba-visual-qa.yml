@@ -38,6 +38,10 @@ jobs:
             godot --path . --rendering-method gl_compatibility \
             --script res://tests/visual_gallery.gd
           test "$(find visual-reports -name '*.png' | wc -l)" -ge 15
+      - name: Automatic screenshot coverage gate
+        run: |
+          python3 -m pip install --quiet --break-system-packages Pillow
+          python3 tests/visual_pixel_gate.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
