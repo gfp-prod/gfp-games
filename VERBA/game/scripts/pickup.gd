@@ -4,12 +4,20 @@ var item_type: String = "stone"
 var word: String = ""
 var phase := 0.0
 var world
+# Stable keys prevent collected ambient loot from magically respawning.
+# Dropped loot uses a separately assigned serial, not its coordinates.
+var persistent_id: String = ""
+var is_dropped: bool = false
 
-func setup(w: Node3D, kind: String, word_key: String, p: Vector3) -> void:
+func setup(w: Node3D, kind: String, word_key: String, p: Vector3,
+		key: String = "", dropped: bool = false) -> void:
 	world=w
 	item_type=kind
 	word=word_key
 	position=p
+	is_dropped=dropped
+	persistent_id = key if not key.is_empty() else (
+		"world:%s:%s:%d:%d" % [kind, word_key, roundi(p.x * 100.0), roundi(p.z * 100.0)])
 
 func _ready() -> void:
 	var m=ART.mat(Color("a39678"))
