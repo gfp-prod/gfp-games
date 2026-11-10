@@ -45,5 +45,6 @@ jobs:
           path: |
             VERBA/game/visual-reports/*.png
             VERBA/game/assets/models/cc0/wildlife/Hare.glb
+            VERBA/game/assets/models/cc0/wildlife/ForestRabbit.glb
           if-no-files-found: warn
           retention-days: 14
