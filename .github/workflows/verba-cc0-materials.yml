@@ -1,0 +1,31 @@
+name: VERBA - source and bundle licensed CC0 materials
+on:
+  push:
+    branches: [verba-godot]
+    paths:
+      - ".github/workflows/verba-cc0-materials.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  source-materials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: verba-godot
+      - name: Install image tools
+        run: python3 -m pip install --quiet Pillow numpy
+      - name: Source vetted photographic PBR maps from Poly Haven
+        run: python3 VERBA/game/tools/fetch_polyhaven_cc0.py
+      - name: Commit photographic materials and SHA256 provenance
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERBA/game/assets/textures/real/
+          if ! git diff --cached --quiet; then
+            git commit -m "VERBA art: bundle verified 1K Poly Haven CC0 surface maps"
+            git pull --rebase origin verba-godot
+            git push origin HEAD:verba-godot
+          fi
