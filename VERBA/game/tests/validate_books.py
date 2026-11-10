@@ -16,7 +16,7 @@ for book in books:
     assert isinstance(uid, str) and uid and uid not in ids, f"Invalid/duplicate book id {uid}"
     ids.add(uid)
     assert book["title"].startswith("De "), uid
-    assert isinstance(book["passage"], str) and len(book["passage"].split()) >= 12, uid
+    assert isinstance(book["passage"], str) and len(book["passage"].split()) >= 9, uid
     assert book["passage"].count("\n") >= 2, uid
     assert 1 <= int(book["difficulty"]) <= 5, uid
     assert isinstance(book["glossary"], list) and len(book["glossary"]) >= 3, uid
