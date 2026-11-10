@@ -6,6 +6,7 @@ on:
       - "VERBA/game/tests/visual_gallery.gd"
       - "VERBA/game/tests/world_gallery.gd"
       - "VERBA/game/tests/visual_pixel_gate.py"
+      - "VERBA/game/tests/make_motion_gifs.py"
       - "VERBA/game/scripts/creature.gd"
       - "VERBA/game/assets/models/cc0/wildlife/**"
       - ".github/workflows/verba-visual-qa.yml"
@@ -50,12 +51,15 @@ jobs:
         run: |
           python3 -m pip install --quiet --break-system-packages Pillow
           python3 tests/visual_pixel_gate.py
+      - name: Build actual animated motion previews
+        run: python3 tests/make_motion_gifs.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: verba-wildlife-visual-gallery
           path: |
             VERBA/game/visual-reports/*.png
+            VERBA/game/visual-reports/*.gif
             VERBA/game/assets/models/cc0/wildlife/Hare.glb
             VERBA/game/assets/models/cc0/wildlife/ForestRabbit.glb
           if-no-files-found: warn
