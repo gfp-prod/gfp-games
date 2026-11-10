@@ -1,0 +1,30 @@
+name: VERBA - bake photo-based blended valley terrain
+on:
+  push:
+    branches: [verba-godot]
+    paths: [".github/workflows/verba-terrain-bake.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bake-terrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: verba-godot
+      - name: Install texture baking dependencies
+        run: python3 -m pip install --quiet numpy Pillow
+      - name: Bake coherent continuous biomes and worn road from bundled CC0 textures
+        run: python3 VERBA/game/tools/bake_vale_terrain.py
+      - name: Commit complete offline atlas and provenance
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A VERBA/game/assets/textures/real/
+          if ! git diff --cached --quiet; then
+            git commit -m "VERBA art: smooth real-photo woodland terrain atlas and remove invalid maps"
+            git pull --rebase origin verba-godot
+            git push origin HEAD:verba-godot
+          fi
