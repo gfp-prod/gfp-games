@@ -844,7 +844,32 @@ func populate_collectibles() -> void:
 		if coords.size() != 2: continue
 		var x: float = float(coords[0])
 		var z: float = float(coords[1])
-		spawn_item("book",String(id),Vector3(x,height_at(x,z),z))
+		if String(id) == "de_herbis":
+			# Give the very first reading lesson a visible, solid world landmark,
+			# rather than hiding a small brown model in a field of grass.
+			var book_plinth = SIM_OBJECT.new()
+			book_plinth.configure(self,"stone",next_sim_id)
+			next_sim_id += 1
+			book_plinth.name = "FirstLatinReadingStone"
+			book_plinth.position = Vector3(x,height_at(x,z),z)
+			sim_objects.append(book_plinth)
+			add_child(book_plinth)
+			ART.box(book_plinth,Vector3(0,.38,0),Vector3(.91,.76,.73),stone_mat)
+			var solid: StaticBody3D = add_solid_box(book_plinth,Vector3(0,.38,0),
+				Vector3(.91,.76,.73),"SolidBookPlinth")
+			solid.set_meta("flora_ref",book_plinth)
+			var inscription := Label3D.new()
+			inscription.name = "DeHerbisCarvedTitle"
+			inscription.text = "DE HERBIS"
+			inscription.font_size = 32
+			inscription.pixel_size = .0021
+			inscription.modulate = Color("342c24")
+			inscription.no_depth_test = false
+			inscription.position = Vector3(0,.48,.372)
+			book_plinth.add_child(inscription)
+			spawn_item("book",String(id),Vector3(x,height_at(x,z)+.78,z))
+		else:
+			spawn_item("book",String(id),Vector3(x,height_at(x,z),z))
 	for w in [
 		["leaf","ventus",Vector2(1,23)],["leaf","muta",Vector2(-8,-8)],
 		["leaf","fuge",Vector2(5,-30)],["leaf","aqua",Vector2(-16,16)],
