@@ -59,8 +59,8 @@ static func populate(world: Node3D) -> void:
 
 	# One warm navigational accent, visible at dusk from the path but not
 	# enough artificial emissive lights to turn daytime into a theme park.
-	var post_x: float = 23.9
-	var post_z: float = 13.4
+	var post_x: float = 23.5
+	var post_z: float = 10.8
 	var post_ground: float = world.height_at(post_x,post_z)
 	var post := Node3D.new()
 	post.name="HandmadeBronzePathLantern"
@@ -72,15 +72,16 @@ static func populate(world: Node3D) -> void:
 	# A proper framed oil lantern: four metal rails, glazed amber window,
 	# footplate and small roof. It replaces a giant pale umbrella-like cone.
 	var glass: StandardMaterial3D = StandardMaterial3D.new()
-	glass.albedo_color = Color("9a8969")
+	glass.albedo_color = Color(.31,.27,.23,.55)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	glass.emission_enabled = true
-	glass.emission = Color("483519")
-	glass.emission_energy_multiplier = .28
+	glass.emission = Color("ad743a")
+	glass.emission_energy_multiplier = .13
 	glass.roughness = .32
 	var soot: Material = ART.mat(Color("413d36"),.74)
-	ART.box(post,Vector3(.72,1.82,0),Vector3(.275,.31,.275),glass)
-	ART.box(post,Vector3(.72,1.99,0),Vector3(.38,.075,.38),bronze)
-	ART.box(post,Vector3(.72,1.65,0),Vector3(.355,.073,.355),bronze)
+	ART.box(post,Vector3(.72,1.82,0),Vector3(.23,.275,.23),glass)
+	ART.box(post,Vector3(.72,1.99,0),Vector3(.34,.055,.34),soot)
+	ART.box(post,Vector3(.72,1.65,0),Vector3(.32,.055,.32),soot)
 	for side_x in [-1.0,1.0]:
 		for side_z in [-1.0,1.0]:
 			ART.bone(post,
@@ -92,7 +93,7 @@ static func populate(world: Node3D) -> void:
 	var glow := OmniLight3D.new()
 	glow.name="QuietLanternGlow"
 	glow.light_color=Color("f2c48c")
-	glow.light_energy=.26
+	glow.light_energy=.23
 	glow.omni_range=4.5
 	glow.position=Vector3(.72,1.82,0)
 	post.add_child(glow)
