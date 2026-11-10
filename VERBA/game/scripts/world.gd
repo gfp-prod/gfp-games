@@ -9,6 +9,7 @@ const MAGIC_SCRIPT = preload("res://scripts/magic.gd")
 const SIM_OBJECT = preload("res://scripts/sim_object.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
+const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 var player
 var magic
 var creatures: Array = []
@@ -17,6 +18,7 @@ var navigation_region: NavigationRegion3D
 var sim_objects: Array = []
 var next_sim_id: int = 1
 var ecology_timer: float = 0.0
+var autosave_elapsed: float = 0.0
 var natural_weather_timer: float = 0.0
 var natural_weather_at: float = 80.0
 var spontaneous_events: int = 0
@@ -75,6 +77,19 @@ func _ready() -> void:
 	populate_wildlife()
 	populate_collectibles()
 	setup_rain()
+	# Rendered gameplay resumes its living ecosystem; headless tests begin clean.
+	if DisplayServer.get_name() != "headless":
+		load_world()
+
+func save_world() -> bool:
+	return WORLD_PERSIST.save_world(self)
+
+func load_world() -> bool:
+	return WORLD_PERSIST.load_world(self)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and is_inside_tree() and player != null:
+		save_world()
 
 func setup_materials() -> void:
 	stone_mat=textured("res://assets/textures/stone.png",Color("e5e0d4"))
@@ -849,6 +864,11 @@ func extinguish() -> void:
 
 func _process(delta: float) -> void:
 	time += delta
+	if player != null and DisplayServer.get_name() != "headless":
+		autosave_elapsed += delta
+		if autosave_elapsed >= 45.0:
+			autosave_elapsed = 0.0
+			save_world()
 	if player == null: return
 	natural_weather_timer += delta
 	if natural_weather_timer >= natural_weather_at:
