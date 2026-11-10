@@ -14,6 +14,7 @@ on:
       - "VERBA/game/tests/make_motion_gifs.py"
       - "VERBA/game/scripts/creature.gd"
       - "VERBA/game/scripts/home_dressing.gd"
+      - "VERBA/game/scripts/scenic_details.gd"
       - "VERBA/game/scripts/ruin_art.gd"
       - "VERBA/game/scripts/foliage.gd"
       - "VERBA/game/scripts/pickup.gd"
