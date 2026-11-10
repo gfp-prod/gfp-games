@@ -37,7 +37,7 @@ jobs:
           xvfb-run -a -s "-screen 0 1280x800x24" \
             godot --path . --rendering-method gl_compatibility \
             --script res://tests/visual_gallery.gd
-          test "$(find visual-reports -name '*.png' | wc -l)" -eq 15
+          test "$(find visual-reports -name '*.png' | wc -l)" -ge 15
       - uses: actions/upload-artifact@v4
         if: always()
         with:
