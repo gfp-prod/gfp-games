@@ -18,10 +18,15 @@ var total_casts := 0
 var title_label: Label3D
 var header_label: Label3D
 var lexicon: Dictionary = {}
+var scholar
+var book_cursor: int = -1  # -1 means the spell lexicon; 0+ means a collected physical book
+var quiz_open: bool = false
+var study_feedback: String = ""
 
 func setup(p: CharacterBody3D, vocabulary: Dictionary) -> void:
 	player=p
 	lexicon=vocabulary
+	scholar=p.world.scholar
 
 func _ready() -> void:
 	# Two authored GLB states, both visible as world geometry attached to camera.
@@ -72,6 +77,49 @@ func toggle() -> void:
 		recall_streak=0
 	update_pages()
 
+func open_book(book_id: String) -> void:
+	if scholar == null or not scholar.has_book(book_id): return
+	book_cursor = scholar.owned.find(book_id)
+	quiz_open = false
+	study_feedback = ""
+	open = true
+	last_consult = Time.get_ticks_msec() / 1000.0
+	update_pages()
+
+func cycle_books() -> void:
+	if scholar == null or scholar.owned.is_empty():
+		study_feedback = "No books found yet."
+		update_pages()
+		return
+	book_cursor += 1
+	if book_cursor >= scholar.owned.size(): book_cursor = -1
+	quiz_open = false
+	study_feedback = ""
+	update_pages()
+
+func begin_study() -> bool:
+	if scholar == null or book_cursor < 0 or book_cursor >= scholar.owned.size():
+		return false
+	quiz_open = true
+	study_feedback = ""
+	update_pages()
+	return true
+
+func submit_answer(answer_index: int) -> Dictionary:
+	if not quiz_open or scholar == null or book_cursor < 0:
+		return {"ok":false,"message":"Open a Latin question in the book."}
+	var book_id: String = scholar.owned[book_cursor]
+	var outcome: Dictionary = scholar.answer(book_id,answer_index)
+	study_feedback = String(outcome.get("message",""))
+	if bool(outcome.get("first_time",false)):
+		for word in outcome.get("new_words",[]):
+			learn(String(word))
+		if DisplayServer.get_name() != "headless" and player != null:
+			player.world.save_world()
+	if bool(outcome.get("ok",false)): quiz_open = false
+	update_pages()
+	return outcome
+
 func turn_page(dir: int) -> void:
 	if not open: return
 	var pages_total: int = maxi(1, ceili(float(learned.size()) / 4.0))
@@ -81,6 +129,24 @@ func turn_page(dir: int) -> void:
 
 func update_pages() -> void:
 	if page_labels.size()<2: return
+	if scholar != null and book_cursor >= 0 and book_cursor < scholar.owned.size():
+		var id: String = scholar.owned[book_cursor]
+		var volume: Dictionary = scholar.get_book(id)
+		page_labels[0].text = String(volume.get("title","Liber")) + "\n" + \
+			String(volume.get("passage","")) + "\n\nB: other books"
+		if quiz_open:
+			var choices: Array = volume.get("options",[])
+			page_labels[1].text = String(volume.get("question","")) + "\n\n" + \
+				"1. " + String(choices[0]) + "\n2. " + String(choices[1]) + "\n3. " + String(choices[2]) + \
+				"\n\n" + study_feedback
+		else:
+			var glosses: Array = volume.get("glossary",[])
+			var mastered: String = "STUDIED" if scholar.completed.has(id) else "UNREAD"
+			page_labels[1].text = String(volume.get("subject","")).to_upper() + "  |  " + mastered + "\n" + \
+				"\n".join(glosses) + "\n\nN: comprehension\n" + \
+				"Scholar " + str(scholar.level) + "  Mana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana)) + \
+				"\n" + study_feedback
+		return
 	for side in range(2):
 		var line := ""
 		if side == 0:
@@ -95,7 +161,9 @@ func update_pages() -> void:
 			line += w.to_upper()+"\n"+String(def.get("meaning","?"))+"\n\n"
 		if side == 1:
 			line += "─────\n"+str(page_index+1)+" / "+str(maxi(1,ceili(float(learned.size())/4.0)))
-			line += "\nS: Preserve   L: Recall"
+			line += "\nB: Books   S: Save   L: Load"
+			if scholar != null:
+				line += "\nScholar " + str(scholar.level) + "  Mana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana))
 		page_labels[side].text=line
 
 func mark_cast(word: String) -> bool:
