@@ -6,6 +6,7 @@ const PLAYER_SCRIPT = preload("res://scripts/player.gd")
 const CREATURE_SCRIPT = preload("res://scripts/creature.gd")
 const PICKUP_SCRIPT = preload("res://scripts/pickup.gd")
 const MAGIC_SCRIPT = preload("res://scripts/magic.gd")
+const SCHOLAR = preload("res://scripts/scholar.gd")
 const SIM_OBJECT = preload("res://scripts/sim_object.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
@@ -13,6 +14,7 @@ const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
 var magic
+var scholar
 var creatures: Array = []
 var navigation_blockers: Array[Vector3] = []
 var navigation_region: NavigationRegion3D
@@ -72,6 +74,7 @@ func _ready() -> void:
 	populate_reactive_grass()
 	navigation_region = NAV_BUILDER.install(self)
 	magic=MAGIC_SCRIPT.new(self)
+	scholar=SCHOLAR.new()
 	player=PLAYER_SCRIPT.new()
 	player.name="Player"
 	player.world=self
@@ -834,6 +837,14 @@ func populate_wildlife() -> void:
 		creatures.append(n)
 
 func populate_collectibles() -> void:
+	# Data-defined books exist as independently collectible 3D volumes.
+	for id in scholar.books.keys():
+		var manuscript: Dictionary = scholar.get_book(String(id))
+		var coords: Array = manuscript.get("location",[])
+		if coords.size() != 2: continue
+		var x: float = float(coords[0])
+		var z: float = float(coords[1])
+		spawn_item("book",String(id),Vector3(x,height_at(x,z),z))
 	for w in [
 		["leaf","ventus",Vector2(1,23)],["leaf","muta",Vector2(-8,-8)],
 		["leaf","fuge",Vector2(5,-30)],["leaf","aqua",Vector2(-16,16)],
@@ -858,12 +869,18 @@ func spawn_item(kind: String, word_key: String, p: Vector3) -> void:
 
 func collect(item) -> void:
 	if not is_instance_valid(item): return
-	if item.item_type != "leaf" and player.inventory.size() >= 6:
+	if item.item_type not in ["leaf","book"] and player.inventory.size() >= 6:
 		player.say_world("Hands full",item.global_position+Vector3.UP*.5,Color("c7a98e"))
 		return
 	if item.item_type == "leaf":
 		player.book.learn(item.word)
 		player.say_world("+ " + item.word.to_upper(),item.global_position+Vector3.UP*.6,Color("dfc287"))
+	elif item.item_type == "book":
+		if not scholar.collect_book(item.word): return
+		player.book.open_book(item.word)
+		player.say_world("A volume found: " + String(scholar.get_book(item.word).get("title","Latin manuscript")),
+			item.global_position + Vector3.UP*1.0,Color("dfc287"))
+		if DisplayServer.get_name() != "headless": save_world()
 	else:
 		player.add_item(item.item_type)
 	items.erase(item)
