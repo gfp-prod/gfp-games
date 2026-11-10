@@ -50,15 +50,20 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 				if d<nearest: nearest=d; c=critter
 	cast_count+=1
 	var message:=""
+	var effective: bool = true
 	match effect:
 		"kindle":
-			if entity != null and entity.has_method("flammable") and not entity.flammable():
-				entity.apply_effect("heat",.5)
+			# Weather must be checked BEFORE applying heat/ignite to the target.
+			# Previously rain could return "suppressed" after setting it ablaze.
+			if world.raining:
+				effective = false
+				message="Rain suppresses the flame."
+			elif entity != null and entity.has_method("flammable") and not entity.flammable():
+				effective = bool(entity.apply_effect("heat",.5))
 				message="The stone warms, but will not burn."
 			elif entity != null and entity.has_method("apply_effect") and not entity.apply_effect("ignite"):
+				effective = false
 				message="That is too wet to ignite."
-			elif world.raining:
-				message="Rain suppresses the flame."
 			else:
 				world.add_fire(point,entity)
 				message="A flame takes hold."
@@ -102,15 +107,18 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 				message="The creature grows."
 			else:
 				var patch=world.spawn_growth_patch(point)
-				message="A new living patch takes root." if patch != null else "Nothing takes root."
+				effective = patch != null
+				message="A new living patch takes root." if effective else "Nothing takes root."
 		"sleep","flee","stop","come","transform","rise":
 			if c != null:
 				c.afflict(effect)
 				message="The creature obeys."
 			elif effect=="rise" and entity!=null and entity.has_method("apply_effect"):
-				entity.apply_effect("rise",1.0)
-				message="The object rises."
-			else: message="No creature heard the command."
+				effective = bool(entity.apply_effect("rise",1.0))
+				message="The object rises." if effective else "The object cannot rise."
+			else:
+				effective = false
+				message="No creature heard the command."
 		"frost":
 			world.extinguish()
 			for obj in world.sim_objects:
@@ -122,7 +130,7 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 	var surprise:=""
 	if rng.randf()<wildcard_rate:
 		surprise=wild_result(point)
-	return {"ok":true,"message":message,"wild":surprise,"point":point,"word":word,"remember_word":word}
+	return {"ok":effective,"message":message,"wild":surprise,"point":point,"word":word,"remember_word":word}
 
 func wild_result(point: Vector3) -> String:
 	match rng.randi_range(0,4):
