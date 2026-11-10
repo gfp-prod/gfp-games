@@ -11,6 +11,8 @@ import time
 from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.parse import quote
+from io import BytesIO
+from PIL import Image
 
 BASE = "https://api.polyhaven.com"
 ROOT = Path(__file__).resolve().parents[1] / "assets/textures/real"
@@ -90,12 +92,16 @@ def main() -> None:
             raw = get(url)
             if len(raw) < 8000 or raw[:2] not in (b"\xff\xd8", b"\x89P"):
                 raise RuntimeError(f"Invalid downloaded image {asset_id}/{api_channel}: {url}")
-            ext = "png" if raw.startswith(b"\x89PNG") else "jpg"
-            output = ROOT / f"{local}_{local_type}.{ext}"
-            output.write_bytes(raw)
+            # Keep the existing Godot file paths stable whether a pack ships
+            # source PNG or JPEG, and avoid giant 8K material dependencies.
+            img = Image.open(BytesIO(raw)).convert("RGB")
+            img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+            output = ROOT / f"{local}_{local_type}.jpg"
+            img.save(output, "JPEG", quality=92, subsampling=0, optimize=True)
+            saved = output.read_bytes()
             info = {"material": local, "asset_id": asset_id, "map": api_channel,
                     "path": str(output.relative_to(ROOT.parent.parent)),
-                    "url": url, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
+                    "url": url, "sha256": hashlib.sha256(saved).hexdigest(), "bytes": len(saved)}
             manifest["downloaded"].append(info)
             print(f"VERBA_POLYHAVEN: {local} {local_type} {len(raw)} bytes", flush=True)
     if missing:
