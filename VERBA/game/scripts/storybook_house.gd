@@ -143,14 +143,15 @@ static func make_roof() -> ArrayMesh:
 				if (ix*3+iz)%13 == 0:
 					color = color.lerp(Color("a39480"),.21)
 				if side < 0.0:
-					_roof_tri(st,ridge_a,ridge_b,eve_a,color)
-					_roof_tri(st,ridge_b,eve_b,eve_a,color)
-				else:
 					_roof_tri(st,ridge_a,eve_a,ridge_b,color)
 					_roof_tri(st,ridge_b,eve_a,eve_b,color)
+				else:
+					_roof_tri(st,ridge_a,ridge_b,eve_a,color)
+					_roof_tri(st,ridge_b,eve_b,eve_a,color)
 	st.generate_normals()
 	return st.commit()
 
+# Godot considers clockwise front faces; keep both slopes facing sky.
 # Tile UVs follow the eaves-to-ridge and front-to-back axes. Previously the
 # UVs mixed Y and Z, giving ugly white diagonal striping in the gable view.
 static func _roof_tri(st: SurfaceTool,a: Vector3,b: Vector3,c: Vector3,tint: Color) -> void:
@@ -344,8 +345,8 @@ static func _turret_body() -> ArrayMesh:
 		var q0 := Vector3(cos(b)*1.13,.13,sin(b)*1.13)
 		var p1 := Vector3(cos(a)*1.03,3.74,sin(a)*1.03)
 		var q1 := Vector3(cos(b)*1.03,3.74,sin(b)*1.03)
-		_tri(st,p0,p1,q0,Color.WHITE)
-		_tri(st,q0,p1,q1,Color.WHITE)
+		_tri(st,p0,q0,p1,Color.WHITE)
+		_tri(st,q0,q1,p1,Color.WHITE)
 	st.generate_normals()
 	return st.commit()
 
@@ -360,7 +361,7 @@ static func _turret_hat() -> ArrayMesh:
 		var top := Vector3(-.14,5.77,.05)
 		var tint: Color = Color("9aa891").lerp(Color("7b8677"),
 			float(i%3)*.17)
-		_tri(st,p,top,q,tint)
+		_tri(st,p,q,top,tint)
 	st.generate_normals()
 	return st.commit()
 
