@@ -231,7 +231,9 @@ func restore(record: Dictionary) -> bool:
 			restore_error = "invalid event actor"
 			return false
 	people = stored.duplicate(true)
-	events = history.duplicate(true)
+	events.clear()
+	for entry in history:
+		events.append(entry.duplicate(true))
 	tick_count = maxi(0,int(record.get("tick",0)))
 	next_event_id = maxi(1,int(record.get("next_event_id",1)))
 	recent_action = record.get("recent_action",{}).duplicate(true) if record.get("recent_action",{}) is Dictionary else {}
