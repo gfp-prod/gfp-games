@@ -281,7 +281,7 @@ func create_conversation_panel() -> void:
 	conversation_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	conversation_panel.offset_left = -378
 	conversation_panel.offset_right = 378
-	conversation_panel.offset_top = -302
+	conversation_panel.offset_top = -365
 	conversation_panel.offset_bottom = -20
 	var frame := StyleBoxFlat.new()
 	frame.bg_color = Color(.055,.066,.062,.94)
@@ -350,7 +350,7 @@ func refresh_conversation() -> void:
 		var suffix: String = "" if bool(choice.get("available",true)) else "   [unavailable]"
 		lines.append("%d. %s%s" % [int(choice.get("index",0))+1,
 			String(choice.get("label","")),suffix])
-	conversation_options.text = "\n".join(lines) + "\n\n1–4 respond     Esc / E leave"
+	conversation_options.text = "\n".join(lines) + "\n\n1–6 respond     Esc / E leave"
 	conversation_panel.visible = true
 
 func choose_conversation_option(index: int) -> Dictionary:
@@ -404,7 +404,7 @@ func _input(event: InputEvent) -> void:
 	if conversation_actor != null:
 		if event.keycode == KEY_ESCAPE or event.keycode == KEY_E:
 			end_conversation()
-		elif event.keycode >= KEY_1 and event.keycode <= KEY_4:
+		elif event.keycode >= KEY_1 and event.keycode <= KEY_6:
 			choose_conversation_option(event.keycode-KEY_1)
 		get_viewport().set_input_as_handled()
 		return
