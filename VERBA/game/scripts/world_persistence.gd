@@ -45,6 +45,9 @@ static func snapshot(world: Node3D) -> Dictionary:
 			"pitch":float(world.player.pitch.rotation.x),
 			"inventory":world.player.inventory.duplicate(),
 			"selected_slot":int(world.player.selected_slot),
+			"health":float(world.player.health),
+			"stamina":float(world.player.stamina),
+			"deaths":int(world.player.death_count),
 			"learned":world.player.book.learned.duplicate(),
 			"total_casts":int(world.player.book.total_casts)
 		}
@@ -209,6 +212,13 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 		world.player.rotation.y = float(player_data.get("yaw",world.player.rotation.y))
 		world.player.pitch.rotation.x = float(player_data.get("pitch",world.player.pitch.rotation.x))
 		world.player.velocity = Vector3.ZERO
+		# Older saves do not have survival fields; start those players healthy.
+		world.player.health = clampf(float(player_data.get("health",world.player.max_health)),
+			1.0,world.player.max_health)
+		world.player.stamina = clampf(float(player_data.get("stamina",world.player.max_stamina)),
+			0.0,world.player.max_stamina)
+		world.player.death_count = clampi(int(player_data.get("deaths",0)),0,999999)
+		world.player.damage_immunity = 0.0
 		if world.player.book != null:
 			if player_data.get("learned",null) is Array:
 				# World saves are authoritative: do not merge vocabulary from
