@@ -34,6 +34,12 @@ var rise_velocity: float = 0.0
 var diagnostics: Label
 var diagnostics_visible := false
 var last_motion: Vector2 = Vector2.ZERO
+var conversation_actor: Node3D
+var conversation_panel: PanelContainer
+var conversation_name: Label
+var conversation_body: Label
+var conversation_options: Label
+var conversation_reply: String = ""
 
 
 func _ready() -> void:
@@ -79,6 +85,7 @@ func _ready() -> void:
 	create_minimal_reticle()
 	create_first_steps()
 	create_diagnostics()
+	create_conversation_panel()
 	Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 
 func configure_inputs() -> void:
@@ -217,12 +224,111 @@ func create_first_steps() -> void:
 	head.add_theme_color_override("font_color", Color("f0d9ad"))
 	v.add_child(head)
 	var sub := Label.new()
-	sub.text = "WASD move · Mouse look · E take\nG grimoire · B books · N study\n1-3 answer · Enter cast · H help"
+	sub.text = "WASD move · Mouse look · E interact\nG grimoire · B books · N study\n1-3 answers/dialogue · Enter cast · H help"
 	sub.add_theme_font_size_override("font_size", 14)
 	sub.add_theme_color_override("font_color", Color("ded6bf"))
 	v.add_child(sub)
 	guide_clock = 0.0
 	guide_panel.visible = false
+
+func create_conversation_panel() -> void:
+	# Appears ONLY while speaking to a person in the world, unlike a
+	# permanent RPG dialogue HUD that spoils the exploration.
+	var layer := CanvasLayer.new()
+	layer.name = "WorldConversationOverlay"
+	layer.layer = 6
+	add_child(layer)
+	conversation_panel = PanelContainer.new()
+	conversation_panel.name = "LatinConversation"
+	conversation_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	conversation_panel.offset_left = -378
+	conversation_panel.offset_right = 378
+	conversation_panel.offset_top = -257
+	conversation_panel.offset_bottom = -20
+	var frame := StyleBoxFlat.new()
+	frame.bg_color = Color(.055,.066,.062,.94)
+	frame.border_color = Color(.55,.46,.32,.90)
+	frame.set_border_width_all(1)
+	frame.set_content_margin_all(16)
+	conversation_panel.add_theme_stylebox_override("panel",frame)
+	layer.add_child(conversation_panel)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation",9)
+	conversation_panel.add_child(stack)
+	conversation_name = Label.new()
+	conversation_name.add_theme_font_size_override("font_size",21)
+	conversation_name.add_theme_color_override("font_color",Color("ead3a7"))
+	stack.add_child(conversation_name)
+	conversation_body = Label.new()
+	conversation_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	conversation_body.add_theme_font_size_override("font_size",16)
+	conversation_body.add_theme_color_override("font_color",Color("e2dac9"))
+	stack.add_child(conversation_body)
+	conversation_options = Label.new()
+	conversation_options.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	conversation_options.add_theme_font_size_override("font_size",15)
+	conversation_options.add_theme_color_override("font_color",Color("cbbda4"))
+	stack.add_child(conversation_options)
+	conversation_panel.visible = false
+
+func _npc_in_conversation_reach(actor: Node3D) -> bool:
+	if not is_instance_valid(actor) or camera == null: return false
+	if global_position.distance_to(actor.global_position) > 4.3:
+		return false
+	# Actor collider is a physical ray target. The line of sight must hit
+	# that collider BEFORE any wall; this prevents talking through houses.
+	var origin: Vector3 = camera.global_position
+	var target: Vector3 = actor.global_position + Vector3.UP*1.28
+	var ray := PhysicsRayQueryParameters3D.create(origin,target)
+	ray.collision_mask = 4 | 16
+	ray.exclude = [get_rid()]
+	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(ray)
+	var body = hit.get("collider",null)
+	return body != null and body.has_meta("npc_ref") and body.get_meta("npc_ref") == actor
+
+func begin_conversation(actor: Node3D) -> bool:
+	if typing or book.open or conversation_actor != null:
+		return false
+	if not actor.has_method("is_talkable") or not actor.is_talkable():
+		return false
+	if not _npc_in_conversation_reach(actor): return false
+	conversation_actor = actor
+	conversation_reply = ""
+	refresh_conversation()
+	return true
+
+func refresh_conversation() -> void:
+	if conversation_actor == null or not is_instance_valid(conversation_actor):
+		conversation_panel.visible = false
+		return
+	var state: Dictionary = world.social.view(
+		conversation_actor.npc_id,world.scholar,inventory)
+	conversation_name.text = String(state.get("name","")) + "  /  " + String(state.get("role",""))
+	conversation_body.text = conversation_reply if not conversation_reply.is_empty() else String(state.get("spoken",""))
+	var choices: Array = state.get("options",[])
+	var lines: Array[String] = []
+	for choice in choices:
+		var suffix: String = "" if bool(choice.get("available",true)) else "   [unavailable]"
+		lines.append("%d. %s%s" % [int(choice.get("index",0))+1,
+			String(choice.get("label","")),suffix])
+	conversation_options.text = "\n".join(lines) + "\n\n1–3 respond     Esc / E leave"
+	conversation_panel.visible = true
+
+func choose_conversation_option(index: int) -> Dictionary:
+	if conversation_actor == null or not is_instance_valid(conversation_actor):
+		return {"ok":false,"message":"No conversation is open."}
+	var result: Dictionary = world.social.choose(
+		conversation_actor.npc_id,index,world.scholar,self)
+	conversation_reply = String(result.get("message",""))
+	refresh_conversation()
+	if bool(result.get("changed",false)) and DisplayServer.get_name() != "headless":
+		world.save_world()
+	return result
+
+func end_conversation() -> void:
+	conversation_actor = null
+	conversation_reply = ""
+	if is_instance_valid(conversation_panel): conversation_panel.visible = false
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -235,12 +341,19 @@ func _input(event: InputEvent) -> void:
 				book.turn_page(1);get_viewport().set_input_as_handled();return
 			if event.button_index==MOUSE_BUTTON_WHEEL_UP:
 				book.turn_page(-1);get_viewport().set_input_as_handled();return
-	if event is InputEventMouseMotion and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED and not book.open:
+	if event is InputEventMouseMotion and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED and not book.open and conversation_actor == null:
 		rotation.y-=event.relative.x*mouse_sensitivity
 		pitch.rotation.x=clampf(pitch.rotation.x-event.relative.y*mouse_sensitivity,-1.44,1.44)
 		get_viewport().set_input_as_handled()
 		return
 	if not (event is InputEventKey) or not event.pressed or event.echo: return
+	if conversation_actor != null:
+		if event.keycode == KEY_ESCAPE or event.keycode == KEY_E:
+			end_conversation()
+		elif event.keycode >= KEY_1 and event.keycode <= KEY_3:
+			choose_conversation_option(event.keycode-KEY_1)
+		get_viewport().set_input_as_handled()
+		return
 	if event.keycode==KEY_ESCAPE:
 		if typing:
 			typing=false;buffer="";echo.text=""
@@ -326,7 +439,7 @@ func _physics_process(delta: float) -> void:
 	var axes := Vector2(horizontal, vertical).normalized()
 	last_motion = axes
 	var direction := global_transform.basis * Vector3(axes.x, 0.0, axes.y)
-	var active: bool = not typing and not book.open
+	var active: bool = not typing and not book.open and conversation_actor == null
 	var target_speed: float = (run_speed if _is_move_key(KEY_SHIFT, "verba_sprint") else speed) if active else 0.0
 	velocity.x = direction.x * target_speed if active else 0.0
 	velocity.z = direction.z * target_speed if active else 0.0
@@ -366,11 +479,12 @@ func create_diagnostics() -> void:
 func _process(delta: float) -> void:
 	if not is_instance_valid(world): return
 	if world.scholar != null: world.scholar.regenerate(delta)
-	if not typing and not book.open:
+	if not typing and not book.open and conversation_actor == null:
 		var nearest:Dictionary=look_hit(3.8)
 		if nearest.has("entity") and nearest["entity"]!=null:
 			var n=nearest["entity"]
-			if n.has_method("afflict"): interaction_hint.text=n.species.capitalize()+"  ·  Enter to cast"
+			if n.has_method("is_talkable"): interaction_hint.text="E  ·  Speak with "+n.display_name
+			elif n.has_method("afflict"): interaction_hint.text=n.species.capitalize()+"  ·  Enter to cast"
 			elif n.has_method("get_state_report"): interaction_hint.text=n.get_state_report()
 			elif n.has_method("setup") and n.item_type=="leaf": interaction_hint.text="E  ·  Study manuscript leaf"
 			elif n.has_method("setup") and n.item_type=="book": interaction_hint.text="E  ·  Read Latin volume"
@@ -384,8 +498,8 @@ func _process(delta: float) -> void:
 	if is_instance_valid(guide_panel): guide_panel.visible = guide_visible
 	if is_instance_valid(diagnostics) and diagnostics_visible:
 		diagnostics.text = "WASD: %s  pos: %.1f, %.1f, %.1f\nMouse: %s  Book: %s  Typing: %s" % [str(last_motion),global_position.x,global_position.y,global_position.z,str(Input.mouse_mode),str(book.open),str(typing)]
-	reticle.visible=not book.open and not typing and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED
-	held.visible=not book.open and not held_type.is_empty()
+	reticle.visible=not book.open and not typing and conversation_actor == null and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED
+	held.visible=not book.open and conversation_actor == null and not held_type.is_empty()
 	if held.visible:
 		held.position.y=-.60+sin(Time.get_ticks_msec()*.001*2)*.012
 	# No permanent mouse-look tutorial overlay spoiling first-person composition.
@@ -401,7 +515,7 @@ func look_hit(distance: float=18.0) -> Dictionary:
 	var body=hit.get("collider",null)
 	var entity:Node3D=null
 	if body !=null:
-		for meta_key in ["creature_ref","flora_ref","pickup_ref"]:
+		for meta_key in ["creature_ref","flora_ref","pickup_ref","npc_ref"]:
 			if body.has_meta(meta_key): entity=body.get_meta(meta_key);break
 	return {"position":hit["position"],"entity":entity}
 
@@ -418,6 +532,9 @@ func interact() -> void:
 				nearest_dist = distance_to_item
 				n = candidate
 	if n==null or not is_instance_valid(n): return
+	if n.has_method("is_talkable"):
+		begin_conversation(n)
+		return
 	if n.has_method("setup") and n.has_method("_process") and n.has_method("_ready") and n.get("item_type")!=null:
 		world.collect(n)
 
