@@ -865,19 +865,19 @@
     "name": "Juno",
     "role": "Roadside attendant",
     "position": [
-      -30,
+      -36,
       43.6
     ],
     "home": [
-      -30,
+      -36,
       43.6
     ],
     "work": [
-      -28.9,
+      -35,
       44.2
     ],
     "market": [
-      -23.5,
+      -27.5,
       44
     ],
     "yaw": -1.57,
