@@ -77,6 +77,33 @@ func _dome_mesh(radius: float, height: float) -> ArrayMesh:
 	st.generate_normals()
 	return st.commit()
 
+func _furrow_point(origin: Vector3,x: float,z: float,center_z: float) -> Vector3:
+	var rise: float=.12 if absf(z-center_z)<.2 else .035
+	return Vector3(x,world.height_at(x,z)+rise,z)-origin
+
+func _furrow_mesh(origin: Vector3,center_z: float) -> ArrayMesh:
+	# Terrain-hugging continuous earth ridge with a gentle convex center.
+	# Formerly 20 separated cuboids / disks, which looked like placed props.
+	var tool:=SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for step in range(24):
+		var xa: float=13.94+float(step)*.305
+		var xb: float=13.94+float(step+1)*.305
+		for strip in range(2):
+			var za: float=center_z-.54+float(strip)*.54
+			var zb: float=za+.54
+			var a: Vector3=_furrow_point(origin,xa,za,center_z)
+			var b: Vector3=_furrow_point(origin,xa,zb,center_z)
+			var c: Vector3=_furrow_point(origin,xb,za,center_z)
+			var d: Vector3=_furrow_point(origin,xb,zb,center_z)
+			for item in [[a,Vector2(xa*.41,za*.7)],[b,Vector2(xa*.41,zb*.7)],
+					[c,Vector2(xb*.41,za*.7)],[b,Vector2(xa*.41,zb*.7)],
+					[d,Vector2(xb*.41,zb*.7)],[c,Vector2(xb*.41,za*.7)]]:
+				tool.set_uv(item[1])
+				tool.add_vertex(item[0])
+	tool.generate_normals()
+	return tool.commit()
+
 func _build_fields() -> void:
 	# Crops and growing plants belong to a single organized plot; no giant
 	# field blocks the entrance, the market, or the NPC navigation goal.
@@ -89,13 +116,13 @@ func _build_fields() -> void:
 	var harvest := ART.mat(Color("bc9d67"),.97)
 	for row in range(4):
 		var z: float=24.5+float(row)*1.72
-		# Narrow ridges follow real terrain, not a floating rectangular slab.
-		for piece in range(5):
-			var x: float=14.45+float(piece)*1.46
-			var ground: Vector3=_ground(x,z,.055)
-			var ridge := ART.orb(plot,ground-plot.global_position+Vector3(0,.035,0),
-				Vector3(.79,.135,.57),soil,12)
-			ridge.name = "CultivatedSoilRidge"
+		# Continuous furrows blend into the ground and follow every height
+		# sample. They read as cultivated soil, not scattered rubber disks.
+		var ridge:=MeshInstance3D.new()
+		ridge.name="ContinuousCultivatedEarth"
+		ridge.mesh=_furrow_mesh(plot.global_position,z)
+		ridge.material_override=soil
+		plot.add_child(ridge)
 		for plant in range(10):
 			var x: float=14.3+float(plant)*.71
 			var base: Vector3=_ground(x,z,.06)-plot.global_position
