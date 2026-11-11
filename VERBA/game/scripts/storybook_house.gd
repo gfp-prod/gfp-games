@@ -32,6 +32,15 @@ static func build(cabin: Node3D, world: Node3D) -> void:
 	roof.name = "CrookedMossSlateRoof"
 	roof.mesh = make_roof()
 	roof.material_override = roof_mat
+	# Continuous dark underlayment keeps the intentionally staggered slates
+	# from exposing glowing cream plaster through their tiny hand-cut gaps.
+	var felt := MeshInstance3D.new()
+	felt.name = "ContinuousMossSlateUnderlayment"
+	felt.mesh = make_roof_underlay()
+	var felt_mat := ART.mat(Color("536759"),1.0)
+	felt_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	felt.material_override = felt_mat
+	house.add_child(felt)
 	house.add_child(roof)
 
 	# Foundation: separate real stones placed at actual ground contact.
@@ -149,6 +158,33 @@ static func make_roof() -> ArrayMesh:
 				else:
 					_roof_tri(st,ridge_a,ridge_b,eve_a,color)
 					_roof_tri(st,ridge_b,eve_b,eve_a,color)
+	st.generate_normals()
+	return st.commit()
+
+static func make_roof_underlay() -> ArrayMesh:
+	# Same bowed roof silhouette, but a single regular skin tucked underneath
+	# the individually irregular slate pieces (one mesh / one draw call).
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var columns: int = 20
+	var rows: int = 24
+	for side in [-1.0,1.0]:
+		for i in range(columns):
+			for j in range(rows):
+				var u0: float = float(i)/float(columns)
+				var u1: float = float(i+1)/float(columns)
+				var z0: float = -3.11+float(j)*6.24/float(rows)
+				var z1: float = -3.11+float(j+1)*6.24/float(rows)
+				var a: Vector3 = _roof_point(side,u0,z0,-.070)
+				var b: Vector3 = _roof_point(side,u1,z0,-.070)
+				var c: Vector3 = _roof_point(side,u0,z1,-.070)
+				var d: Vector3 = _roof_point(side,u1,z1,-.070)
+				if side < 0.0:
+					_roof_tri(st,a,c,b,Color.WHITE)
+					_roof_tri(st,b,c,d,Color.WHITE)
+				else:
+					_roof_tri(st,a,b,c,Color.WHITE)
+					_roof_tri(st,b,d,c,Color.WHITE)
 	st.generate_normals()
 	return st.commit()
 
@@ -318,7 +354,10 @@ static func _add_turret(house: Node3D,world: Node3D,cabin: Node3D,
 	var hat := MeshInstance3D.new()
 	hat.name = "AsymmetricConicalTurretRoof"
 	hat.mesh = _turret_hat()
-	hat.material_override = slate
+	var turret_slate := ART.mat(Color("778679"),1.0)
+	turret_slate.vertex_color_use_as_albedo = true
+	turret_slate.cull_mode = BaseMaterial3D.CULL_DISABLED
+	hat.material_override = turret_slate
 	tower.add_child(hat)
 	for i in range(7):
 		var theta: float = TAU*float(i)/7.0
