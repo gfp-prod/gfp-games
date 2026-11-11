@@ -147,13 +147,15 @@ func setup_atmosphere() -> void:
 	ambient=WorldEnvironment.new()
 	ambient.name="MistAndSky"
 	var e:=Environment.new()
+	# Daytime has a blue open-world sky and warm distance haze; the earlier
+	# desaturated grey sky made every clearing look permanently overcast.
 	e.background_mode=Environment.BG_SKY
 	var sky:=Sky.new()
 	var s:=ProceduralSkyMaterial.new()
-	s.sky_top_color=Color("70899a")
-	s.sky_horizon_color=Color("c0c6b7")
-	s.ground_bottom_color=Color("43574a")
-	s.ground_horizon_color=Color("8b9a87")
+	s.sky_top_color=Color("729db4")
+	s.sky_horizon_color=Color("dfceb4")
+	s.ground_bottom_color=Color("476556")
+	s.ground_horizon_color=Color("9caf99")
 	s.use_debanding=true
 	sky.sky_material=s
 	e.sky=sky
@@ -162,9 +164,9 @@ func setup_atmosphere() -> void:
 	e.ambient_light_energy=.49
 	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
 	e.fog_enabled=true
-	e.fog_light_color=Color("adb8aa")
-	e.fog_density=.0060
-	e.fog_sky_affect=.27
+	e.fog_light_color=Color("bcc8bc")
+	e.fog_density=.0040
+	e.fog_sky_affect=.16
 	ambient.environment=e
 	add_child(ambient)
 	light_node=DirectionalLight3D.new()
@@ -180,13 +182,13 @@ func _update_day_night_art(night_value: float) -> void:
 	var env: Environment = ambient.environment
 	var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
 	if sky != null:
-		sky.sky_top_color = Color("70899a").lerp(Color("1c2d3d"),night_value)
-		sky.sky_horizon_color = Color("c0c6b7").lerp(Color("3c4957"),night_value)
-		sky.ground_bottom_color = Color("43574a").lerp(Color("172c30"),night_value)
-		sky.ground_horizon_color = Color("8b9a87").lerp(Color("2c4548"),night_value)
+		sky.sky_top_color = Color("729db4").lerp(Color("1c2d3d"),night_value)
+		sky.sky_horizon_color = Color("dfceb4").lerp(Color("3c4957"),night_value)
+		sky.ground_bottom_color = Color("476556").lerp(Color("172c30"),night_value)
+		sky.ground_horizon_color = Color("9caf99").lerp(Color("2c4548"),night_value)
 	env.ambient_light_energy = lerpf(.49,.15,night_value)
-	env.fog_light_color = Color("adb8aa").lerp(Color("3a4c56"),night_value)
-	env.fog_density = lerpf(.0060,.0084,night_value)
+	env.fog_light_color = Color("bcc8bc").lerp(Color("3a4c56"),night_value)
+	env.fog_density = lerpf(.0040,.0084,night_value)
 	light_node.light_color=Color("f7e5c5").lerp(Color("a4bcd2"),night_value)
 	light_node.light_energy=lerpf(.94,.20,night_value)
 
