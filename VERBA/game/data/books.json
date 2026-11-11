@@ -23,7 +23,8 @@
     "explanation": "Aqua herbam iuvat. Water helps the plant.",
     "xp": 24,
     "teaches": [
-      "crescite"
+      "crescite",
+      "crea"
     ],
     "location": [
       -3.3,
@@ -87,11 +88,44 @@
     "xp": 40,
     "teaches": [
       "ardete",
-      "aqua"
+      "aqua",
+      "accende",
+      "exstingue"
     ],
     "location": [
       7.5,
       -32
+    ]
+  },
+  {
+    "id": "de_motu",
+    "title": "De Motu Lapidum",
+    "subject": "motion",
+    "difficulty": 2,
+    "level_hint": 2,
+    "author": "Lapidarius",
+    "passage": "Lapis gravis est.\nMagister lapidem movet.\nDiscipulus lapidem leniter movet.",
+    "glossary": [
+      "lapis = stone (subject)",
+      "lapidem = stone (object)",
+      "movet = moves",
+      "leniter = gently"
+    ],
+    "question": "Quid magister movet?",
+    "options": [
+      "Librum",
+      "Lapidem",
+      "Lupum"
+    ],
+    "answer": 1,
+    "explanation": "Magister lapidem movet. The teacher moves the stone.",
+    "xp": 36,
+    "teaches": [
+      "move"
+    ],
+    "location": [
+      17,
+      -9
     ]
   }
 ]
