@@ -59,6 +59,10 @@ jobs:
         run: godot --headless --path . --script res://tests/physical_village_test.gd
       - name: Witness-restricted rumor dialogue
         run: godot --headless --path . --script res://tests/village_rumor_test.gd
+      - name: Book-learned Latin nurtures real harvested crops
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/latin_field_economy_test.gd 2>&1 | tee /tmp/verba-field-test.log
+          grep -q "PASS: study-gated plural Latin" /tmp/verba-field-test.log
       - name: Latin compositional spells
         run: godot --headless --path . --script res://tests/latin_composition_test.gd
       - name: Social trade regression
