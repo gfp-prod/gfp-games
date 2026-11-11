@@ -31,6 +31,8 @@ jobs:
         run: godot --headless --path . --script res://tests/village_sim_test.gd
       - name: Resource economy and simulation inspector
         run: godot --headless --path . --script res://tests/village_economy_test.gd
+      - name: Player-driven farm to bakery trade
+        run: godot --headless --path . --script res://tests/player_market_test.gd
       - name: Physical villagers interaction and movement
         run: godot --headless --path . --script res://tests/physical_village_test.gd
       - name: Witness-restricted rumor dialogue
