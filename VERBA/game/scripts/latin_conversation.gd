@@ -13,6 +13,8 @@ static func understand(utterance: String, patterns: Array, tier: int) -> Diction
 	var spoken: PackedStringArray = normalized.split(" ", false)
 	if spoken.size() > 7:
 		return {"ok": false, "message": "Try a shorter Latin request."}
+	var best_hint: String = ""
+	var best_overlap: int = 0
 	for pattern in patterns:
 		if not (pattern is Dictionary):
 			continue
@@ -30,10 +32,17 @@ static func understand(utterance: String, patterns: Array, tier: int) -> Diction
 				break
 			remaining.erase(String(word))
 		if not matched:
+			# Specific grammatical feedback belongs to the character, not to
+			# a floating school lesson. A partial match never earns rewards.
+			if tier >= int(pattern.get("min_stage", 0)):
+				var overlap: int = expected.size()-remaining.size()
+				if overlap >= 2 and overlap > best_overlap:
+					best_overlap = overlap
+					best_hint = String(pattern.get("hint", ""))
 			continue
 		if tier < int(pattern.get("min_stage", 0)):
 			return {"ok": false, "message": String(pattern.get("early", "Study the words before making this request."))}
 		return {"ok": true, "topic": String(pattern.get("topic", "")),
 			"form": model}
 	# Do not guess at unattested Latin, and do not reward a malformed case.
-	return {"ok": false, "message": "The listener hesitates. Try the case and verb forms in the manuscript."}
+	return {"ok": false, "message": best_hint if not best_hint.is_empty() else "The listener hesitates. Try the case and verb forms in the manuscript."}
