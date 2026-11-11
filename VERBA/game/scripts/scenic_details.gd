@@ -27,8 +27,6 @@ static func _add_creek_bridge(world: Node3D,root: Node3D) -> void:
 	var darkwood: StandardMaterial3D = world.textured(
 		"res://assets/textures/cottage_wood.png",Color("514b40"))
 	var rope := ART.mat(Color("5d5848"),.99)
-	var iron := ART.mat(Color("464a46"),.68)
-	iron.metallic = .43
 	# The bridge extends from one real bank to the other. All planks align
 	# to the cross-stream x axis; staggered joins and uneven edges feel old.
 	for k in range(18):
