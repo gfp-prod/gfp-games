@@ -167,14 +167,19 @@ static func _north_road_bridge(world, root: Node3D) -> void:
 	# Overlapping physics segments track the arched deck and bank transitions.
 	for side in [-1.0,1.0]:
 		var edge: Vector2=normal*(half_width-0.06)*side
-		var p0:=Vector3(eastern.x+edge.x,first_y-0.15,eastern.y+edge.y)
-		var p1:=Vector3(western.x+edge.x,last_y-0.15,western.y+edge.y)
-		ART.bone(bridge,p0,p1,.11,.11,aged,10)
+		for section in range(12):
+			var v0: float=float(section)/12.0
+			var v1: float=float(section+1)/12.0
+			var p0: Vector2=eastern.lerp(western,v0)+edge
+			var p1: Vector2=eastern.lerp(western,v1)+edge
+			ART.bone(bridge,Vector3(p0.x,lerpf(first_y,last_y,v0)+1.05*sin(v0*PI)-.15,p0.y),
+				Vector3(p1.x,lerpf(first_y,last_y,v1)+1.05*sin(v1*PI)-.15,p1.y),
+				.11,.11,aged,10)
 		# Low rail; the player can see the stream and still cross freely.
 		for k in range(6):
 			var u: float=float(k)/5.0
 			var point: Vector2=eastern.lerp(western,u)+edge
-			var y: float=lerpf(first_y,last_y,u)
+			var y: float=lerpf(first_y,last_y,u)+1.05*sin(u*PI)
 			ART.bone(bridge,Vector3(point.x,y-.12,point.y),
 				Vector3(point.x,y+.82,point.y),.065,.054,aged,8)
 		for k in range(5):
@@ -183,8 +188,8 @@ static func _north_road_bridge(world, root: Node3D) -> void:
 			var start: Vector2=eastern.lerp(western,u0)+edge
 			var stop: Vector2=eastern.lerp(western,u1)+edge
 			ART.bone(bridge,
-				Vector3(start.x,lerpf(first_y,last_y,u0)+.72,start.y),
-				Vector3(stop.x,lerpf(first_y,last_y,u1)+.72,stop.y),
+				Vector3(start.x,lerpf(first_y,last_y,u0)+1.05*sin(u0*PI)+.72,start.y),
+				Vector3(stop.x,lerpf(first_y,last_y,u1)+1.05*sin(u1*PI)+.72,stop.y),
 				.033,.033,aged,7)
 
 static func _station(world,root: Node3D) -> void:
