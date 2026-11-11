@@ -79,6 +79,10 @@ func _run() -> void:
 	if world.scholar.mana>=magic_before or world.scholar.mana<0:
 		_fail("Latin heating created free magic without paying mana")
 		return
+	world.workplaces.refresh_from_economy(true)
+	if not world.workplaces.production_lamps["blacksmith_light"].visible or world.workplaces.production_lamps["blacksmith_light"].light_color!=Color("b8b7f4"):
+		_fail("Charged furnace has no visible, distinct magical flame")
+		return
 	var second_ignition: Dictionary=player.cast_latin("ignis",{"entity":forge_body,"position":forge_body.global_position})
 	if bool(second_ignition.get("ok",true)) or int(artisans.charged_hearths["blacksmith"])!=1:
 		_fail("A prepared magical furnace accepted an unlimited duplicate charge")
