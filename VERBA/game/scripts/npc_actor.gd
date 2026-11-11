@@ -89,6 +89,28 @@ func _ready() -> void:
 			Vector3(0,-.22,-.11))
 		ART.bone(figure,Vector3(-.12,1.47,.04),
 			Vector3(.50,.99,.17),.052,.045,trim,7)
+	# A petrol-station attendant looks like a twentieth-century worker,
+	# not a medieval pilgrim. A slim uniform, two separate legs and a
+	# peaked cap keep the silhouette readable without an external installer.
+	if npc_id=="juno":
+		figure.visible=false
+		var attendant:=Node3D.new()
+		attendant.name="DistinctModernAttendant"
+		add_child(attendant)
+		var shirt:=ART.mat(Color("5c7373"),.94)
+		var denim:=ART.mat(Color("485461"),.98)
+		var apron:=ART.mat(Color("b2a17e"),.95)
+		ART.box(attendant,Vector3(0,1.13,0),Vector3(.74,.88,.37),shirt)
+		ART.box(attendant,Vector3(0,.84,-.21),Vector3(.68,.63,.08),apron)
+		for side in [-1.0,1.0]:
+			ART.box(attendant,Vector3(side*.19,.39,0),Vector3(.27,.79,.27),denim)
+			ART.box(attendant,Vector3(side*.20,.06,-.10),Vector3(.31,.15,.46),leather)
+			ART.bone(attendant,Vector3(side*.43,1.42,0),
+				Vector3(side*.51,.99,-.06),.115,.081,shirt,10)
+			ART.orb(attendant,Vector3(side*.52,.94,-.06),Vector3(.095,.105,.084),skin,10)
+		ART.orb(attendant,Vector3(0,1.76,0),Vector3(.23,.27,.21),skin,12)
+		ART.box(attendant,Vector3(0,2.04,-.03),Vector3(.51,.15,.45),denim)
+		ART.box(attendant,Vector3(0,2.01,-.26),Vector3(.40,.052,.27),denim)
 	var collider := StaticBody3D.new()
 	collider.name = "LivingNPCConversationCollider"
 	collider.collision_layer = 4 if mobile else (4 | 16)
