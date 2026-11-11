@@ -105,7 +105,6 @@ static func make_opaque_plaster() -> StandardMaterial3D:
 	# to decide whether the player sees a solid wall.
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	material.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
-	material.albedo_color.a = 1.0
 	return material
 
 static func _paint(path: String, tint: Color) -> StandardMaterial3D:
