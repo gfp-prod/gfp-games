@@ -43,6 +43,8 @@ static func parse(words: PackedStringArray, surface: String) -> Dictionary:
 		modifier = words[2]
 		if not ADVERBS.has(modifier):
 			return {"ok":false,"message":"The third word must be an attested Latin adverb."}
+		if verb=="crea":
+			return {"ok":false,"message":"Speed does not modify creation; remove the adverb."}
 	return {"ok":true,"surface":surface,"command":verb,"effect":VERBS[verb],
 		"kind":kind,"number":"singular","modifier":modifier,
 		"strength":float(ADVERBS.get(modifier,1.0)),
