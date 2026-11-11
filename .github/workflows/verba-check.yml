@@ -57,6 +57,8 @@ jobs:
         run: bash tests/godot_guard.sh res://tests/grimoire_geometry_test.gd
       - name: Cottage, sculpted glove and riverbank hero-art regression
         run: bash tests/godot_guard.sh res://tests/hero_art_test.gd
+      - name: Real cottage level footing and living vegetation exclusion
+        run: bash tests/godot_guard.sh res://tests/cottage_footprint_test.gd
       - name: Real hinged vellum page turn and in-book ink transition
         run: bash tests/godot_guard.sh res://tests/grimoire_page_turn_test.gd
       - name: Latin books and scholar progression
