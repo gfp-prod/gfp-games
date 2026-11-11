@@ -206,6 +206,9 @@ func _physics_process(delta: float) -> void:
 	wetness = minf(1.0, wetness + delta * 0.23) if world.raining else maxf(0.0, wetness - delta * .06)
 	# Needs and injury are individual to this animal; they persist after spells.
 	if dead:
+		if world.familiar_id == persistent_id:
+			world.familiar_id = ""
+			world.familiar_mode = "follow"
 		if using_library_mesh:
 			_update_anim("death")
 		else:
@@ -229,61 +232,85 @@ func _physics_process(delta: float) -> void:
 	if stop_time > 0: stop_time -= delta
 	if panic > 0: panic -= delta
 	var player_distance: float = global_position.distance_to(world.player.global_position)
-	var threatened := player_distance < (4.5 if species in ["hare","deer"] else 2.0)
-	if world.nearest_fire_distance(global_position) < 6.0: threatened = true
-	var predator: Node3D=null
-	if species == "hare":predator=world.nearest_creature(position,"fox",10.0)
-	if species in ["hare","deer"]:
-		var wolf:Node3D=world.nearest_creature(position,"wolf",11.0)
-		if wolf != null and (predator == null or global_position.distance_to(wolf.global_position)<global_position.distance_to(predator.global_position)):predator=wolf
-	if predator != null and predator != self:threatened = true
-	if species == "wisp": threatened = false
-	if threatened and asleep <= 0:
-		panic = 3.0
-		state = "flee"
-		intent = (position - predator.position).normalized() if predator != null else (position - world.player.position).normalized()
-	elif panic <= 0 and asleep <= 0 and stop_time <= 0:
-		state = "wander"
-		state_timer -= delta
-		if state_timer < 0: choose_direction()
-	if stop_time > 0 or asleep > 0: state = "still"
-	if species in ["hare","deer"] and state == "wander" and hunger > .24:
-		target_resource=world.nearest_food(position,10.0)
-		if target_resource != null:
-			state="forage"
-			intent=(target_resource.position-position).normalized()
-			if global_position.distance_to(target_resource.global_position)<1.1 and feed_cooldown <=0.0:
-				if target_resource.apply_effect("eat",.55):
-					hunger=maxf(0.0,hunger-.19)
-					energy=minf(1.0,energy+.05)
-					feed_cooldown=2.5
-	elif species in ["fox","wolf"] and state == "wander" and hunger>.20:
-		var target_kind: String="hare" if species == "fox" else "deer"
-		var prey=world.nearest_creature(position,target_kind,13.0)
-		if prey != null and prey != self and not prey.dead:
-			intent=(prey.position-position).normalized()
-			state="hunt"
-			if global_position.distance_to(prey.global_position)<1.45 and attack_cooldown <= 0.0:
-				prey.afflict("injure")
-				hunger=maxf(0.0,hunger-.22)
-				attack_cooldown=4.0
-	elif species == "crow" and state == "wander" and hunger>.35:
-		for other in world.creatures:
-			if other != self and is_instance_valid(other) and other.dead and global_position.distance_to(other.global_position)<10.0:
-				intent=(other.position-position).normalized()
-				state="scavenge"
-				if global_position.distance_to(other.global_position)<1.2 and feed_cooldown<=0.0:
-					hunger=maxf(0.0,hunger-.25)
-					feed_cooldown=5.0
-				break
-	# If an exhausted animal is safe, it occasionally rests without a spell.
-	if energy < .12 and state == "wander" and panic <=0:
-		asleep=6.0;energy=minf(1.0,energy+.30)
-	var factor := 0.0 if state == "still" else (1.8 if state == "flee" else 1.25 if state == "hunt" else 0.3)
+	var companion: bool = world.familiar_id == persistent_id
+	if companion:
+		# Tamed animals no longer flee from their owner, forage at random,
+		# chase prey or wander away. All physical navigation/animation below
+		# remains the same as for wild animals.
+		panic = 0.0
+		target_resource = null
+		if world.familiar_mode == "rest" or asleep > 0.0:
+			state = "still"
+			intent = Vector3.ZERO
+		elif world.familiar_mode == "stay":
+			state = "still"
+			intent = Vector3.ZERO
+		else:
+			var toward_player: Vector3 = world.player.global_position-global_position
+			toward_player.y = 0.0
+			if toward_player.length() > 2.6:
+				intent = toward_player.normalized()
+				state = "follow"
+			else:
+				intent = Vector3.ZERO
+				state = "still"
+	else:
+		var offering_keeps_calm: bool = (species == "hare" and world.player.inventory.has("herb")) or (species == "crow" and world.player.inventory.has("amber"))
+		var threatened := player_distance < (4.5 if species in ["hare","deer"] else 2.0) and not offering_keeps_calm
+		if world.nearest_fire_distance(global_position) < 6.0: threatened = true
+		var predator: Node3D=null
+		if species == "hare":predator=world.nearest_creature(position,"fox",10.0)
+		if species in ["hare","deer"]:
+			var wolf:Node3D=world.nearest_creature(position,"wolf",11.0)
+			if wolf != null and (predator == null or global_position.distance_to(wolf.global_position)<global_position.distance_to(predator.global_position)):predator=wolf
+		if predator != null and predator != self:threatened = true
+		if species == "wisp": threatened = false
+		if threatened and asleep <= 0:
+			panic = 3.0
+			state = "flee"
+			intent = (position - predator.position).normalized() if predator != null else (position - world.player.position).normalized()
+		elif panic <= 0 and asleep <= 0 and stop_time <= 0:
+			state = "wander"
+			state_timer -= delta
+			if state_timer < 0: choose_direction()
+		if stop_time > 0 or asleep > 0: state = "still"
+		if species in ["hare","deer"] and state == "wander" and hunger > .24:
+			target_resource=world.nearest_food(position,10.0)
+			if target_resource != null:
+				state="forage"
+				intent=(target_resource.position-position).normalized()
+				if global_position.distance_to(target_resource.global_position)<1.1 and feed_cooldown <=0.0:
+					if target_resource.apply_effect("eat",.55):
+						hunger=maxf(0.0,hunger-.19)
+						energy=minf(1.0,energy+.05)
+						feed_cooldown=2.5
+		elif species in ["fox","wolf"] and state == "wander" and hunger>.20:
+			var target_kind: String="hare" if species == "fox" else "deer"
+			var prey=world.nearest_creature(position,target_kind,13.0)
+			if prey != null and prey != self and not prey.dead:
+				intent=(prey.position-position).normalized()
+				state="hunt"
+				if global_position.distance_to(prey.global_position)<1.45 and attack_cooldown <= 0.0:
+					prey.afflict("injure")
+					hunger=maxf(0.0,hunger-.22)
+					attack_cooldown=4.0
+		elif species == "crow" and state == "wander" and hunger>.35:
+			for other in world.creatures:
+				if other != self and is_instance_valid(other) and other.dead and global_position.distance_to(other.global_position)<10.0:
+					intent=(other.position-position).normalized()
+					state="scavenge"
+					if global_position.distance_to(other.global_position)<1.2 and feed_cooldown<=0.0:
+						hunger=maxf(0.0,hunger-.25)
+						feed_cooldown=5.0
+					break
+		# If an exhausted animal is safe, it occasionally rests without a spell.
+		if energy < .12 and state == "wander" and panic <=0:
+			asleep=6.0;energy=minf(1.0,energy+.30)
+	var factor := 0.0 if state == "still" else (1.45 if state == "follow" else 1.8 if state == "flee" else 1.25 if state == "hunt" else 0.3)
 	if species == "crow" and state != "still":
 		factor *= 1.1
 	var motion: Vector3 = Vector3(intent.x,0,intent.z).normalized() * speed * factor
-	if position.length() > 55.0: motion = -Vector3(position.x,0,position.z).normalized() * speed * 0.7
+	if position.length() > 55.0 and not companion: motion = -Vector3(position.x,0,position.z).normalized() * speed * 0.7
 	# Route selection is separate from ecology. When the creature changes its
 	# intention, Godot resolves a path around tree trunks and structures.
 	replan_after -= delta
@@ -316,7 +343,7 @@ func _physics_process(delta: float) -> void:
 	# CharacterBody3D physics: collision-safe movement against the same solid
 	# terrain/walls/trees as the player, with gravity and sliding.
 	var future: Vector3 = position + motion * delta
-	if absf(future.x - world.stream_x(future.z)) < 3.1 and species != "crow":
+	if absf(future.x - world.stream_x(future.z)) < 3.1 and species != "crow" and not companion:
 		motion = Vector3.ZERO
 		choose_direction()
 	velocity.x = motion.x
@@ -401,6 +428,18 @@ func _update_anim(action: String) -> void:
 	animation_player.speed_scale = 1.12 if action == "run" else 1.0
 
 func afflict(kind: String) -> void:
+	# An addressed, successful Latin invocation becomes an actual persistent
+	# familiar order, not just a few seconds of wild-animal panic.
+	if world != null and world.familiar_id == persistent_id:
+		match kind:
+			"come":
+				world.familiar_mode = "follow"
+				asleep = 0.0
+			"stop":
+				world.familiar_mode = "stay"
+				asleep = 0.0
+			"sleep":
+				world.familiar_mode = "rest"
 	match kind:
 		"sleep": asleep = 12.0; panic = 0.0
 		"flee": panic = 11.0; state = "flee"; intent = (position - world.player.position).normalized()
