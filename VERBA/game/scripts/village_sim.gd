@@ -91,6 +91,8 @@ func _candidate(source_id: String, allow_spouse: bool = true) -> String:
 		if not allow_spouse and id == String(people[source_id]["spouse"]): continue
 		if bool(people[id]["alive"]): possible.append(id)
 	if possible.is_empty(): return ""
+	# JSON normalizes Dictionary insertion order; selection order must not depend on it.
+	possible.sort()
 	return possible[rng.randi_range(0,possible.size()-1)]
 
 func _witnesses(actor: String, target: String) -> Array[String]:
@@ -98,7 +100,9 @@ func _witnesses(actor: String, target: String) -> Array[String]:
 	# Recorded witnesses are the only NPCs who learn its contents automatically.
 	var found: Array[String] = [actor]
 	if not target.is_empty() and not found.has(target): found.append(target)
-	for id in people:
+	var ordered_ids: Array = people.keys()
+	ordered_ids.sort()
+	for id in ordered_ids:
 		if id == actor or id == target: continue
 		if rng.randf() < 0.12: found.append(id)
 	return found
