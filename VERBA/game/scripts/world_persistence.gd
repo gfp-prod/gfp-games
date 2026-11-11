@@ -63,6 +63,8 @@ static func snapshot(world: Node3D) -> Dictionary:
 		"objects":objects,"animals":animals,"player":player,"scholar":scholarship,
 		"social":world.social.snapshot() if world.social != null else {},
 		"familiar":{"id":String(world.familiar_id),"mode":String(world.familiar_mode)},
+		"construction":world.construction.snapshot() if world.construction != null else {},
+		"harvest_counts":world.harvest_counts.duplicate(),
 		"collected_pickups":world.collected_pickup_ids.duplicate(),
 		"dropped_pickups":dropped,"next_drop_serial":world.next_drop_serial,
 		"weather":{"raining":bool(world.raining),
@@ -151,6 +153,18 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 		if String(creature.persistent_id) == stored_id and not stored_id.is_empty():
 			world.familiar_id = stored_id
 			break
+	# Salvage stock must persist so saving and reloading cannot regenerate
+	# finite wood/stone deposits infinitely.
+	world.harvest_counts.clear()
+	var saved_harvest: Variant = data.get("harvest_counts",{})
+	if saved_harvest is Dictionary:
+		for key in saved_harvest.keys():
+			if String(key).begins_with("sim:") or String(key)=="woodpile:hermitage":
+				world.harvest_counts[String(key)] = clampi(int(saved_harvest[key]),0,12)
+	# Older saves have no structures, so their terrain and inventory stay valid.
+	if world.construction != null:
+		var built: Variant = data.get("construction",{})
+		world.construction.restore(built if built is Dictionary else {})
 	var climate: Dictionary = data.get("weather",{})
 	world.wind = float(climate.get("wind",world.wind))
 	world.rain_remaining = float(climate.get("rain_remaining",world.rain_remaining))
@@ -190,7 +204,7 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 	for dropped in data.get("dropped_pickups",[]):
 		if not (dropped is Dictionary): continue
 		var kind: String = String(dropped.get("kind",""))
-		if kind not in ["stone","herb","amber","torch","lantern"]: continue
+		if kind not in ["stone","wood","herb","amber","torch","lantern"]: continue
 		var key: String = String(dropped.get("id",""))
 		if not key.begins_with("drop:"): continue
 		var p: Vector3 = _as_vector(dropped.get("position",[]),Vector3.ZERO)
@@ -202,7 +216,7 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 		if player_data.get("inventory",null) is Array:
 			world.player.inventory.clear()
 			for entry in player_data["inventory"]:
-				if entry is String and entry in ["stone","herb","amber","torch","lantern"] and world.player.inventory.size() < 6:
+				if entry is String and entry in ["stone","wood","herb","amber","torch","lantern"] and world.player.inventory.size() < 6:
 					world.player.inventory.append(entry)
 			world.player.selected_slot = clampi(int(player_data.get("selected_slot",0)),
 				0,maxi(0,world.player.inventory.size()-1))
