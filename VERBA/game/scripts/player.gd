@@ -21,6 +21,13 @@ var interaction_hint: Label
 var prompt_time:=0.0
 var speed:=5.0
 var run_speed:=8.6
+var max_health: float = 100.0
+var health: float = 100.0
+var max_stamina: float = 100.0
+var stamina: float = 100.0
+var damage_immunity: float = 0.0
+var death_count: int = 0
+var survival_label: Label
 var jump_speed:=5.5
 var gravity:=16.0
 var mouse_sensitivity:=.0022
@@ -195,6 +202,14 @@ func create_minimal_reticle() -> void:
 	interaction_hint.add_theme_color_override("font_color",Color("c6bba9",.87))
 	interaction_hint.text=""
 	layer.add_child(interaction_hint)
+	survival_label = Label.new()
+	survival_label.name = "VitaEtVigorWhenNeeded"
+	survival_label.position = Vector2(26,651)
+	survival_label.add_theme_font_size_override("font_size",16)
+	survival_label.add_theme_color_override("font_color",Color("dcc9a6"))
+	survival_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	survival_label.visible = false
+	layer.add_child(survival_label)
 
 func create_first_steps() -> void:
 	# One compact introductory card, hidden after play begins; H brings it back.
@@ -436,6 +451,10 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _physics_process(delta: float) -> void:
+	damage_immunity = maxf(0.0,damage_immunity-delta)
+	if damage_immunity <= 0.0 and health < max_health:
+		# Slow natural recovery gives herbs a reason to matter.
+		health = minf(max_health,health+delta*.045)
 	# Actual CharacterBody3D movement: floor snapping, gravity, wall sliding, jumping.
 	# Unlike v1.1, nothing teleports the player to a procedural terrain-height
 	# function; ground and objects are real physics colliders.
@@ -445,13 +464,19 @@ func _physics_process(delta: float) -> void:
 	last_motion = axes
 	var direction := global_transform.basis * Vector3(axes.x, 0.0, axes.y)
 	var active: bool = not typing and not book.open and conversation_actor == null
-	var target_speed: float = (run_speed if _is_move_key(KEY_SHIFT, "verba_sprint") else speed) if active else 0.0
+	var sprinting: bool = active and axes.length_squared() > .02 and stamina > 4.0 and _is_move_key(KEY_SHIFT, "verba_sprint")
+	if sprinting:
+		stamina = maxf(0.0,stamina-delta*14.0)
+	else:
+		stamina = minf(max_stamina,stamina+delta*11.0)
+	var target_speed: float = (run_speed if sprinting else speed) if active else 0.0
 	velocity.x = direction.x * target_speed if active else 0.0
 	velocity.z = direction.z * target_speed if active else 0.0
 	if is_on_floor():
 		if velocity.y < 0.0: velocity.y = -0.15
-		if active and _is_move_key(KEY_SPACE, "verba_jump"):
+		if active and stamina >= 9.0 and _is_move_key(KEY_SPACE, "verba_jump"):
 			velocity.y = jump_speed
+			stamina = maxf(0.0,stamina-9.0)
 	else:
 		velocity.y -= gravity * delta
 	move_and_slide()
@@ -509,6 +534,13 @@ func _process(delta: float) -> void:
 	if is_instance_valid(guide_panel): guide_panel.visible = guide_visible
 	if is_instance_valid(diagnostics) and diagnostics_visible:
 		diagnostics.text = "WASD: %s  pos: %.1f, %.1f, %.1f\nMouse: %s  Book: %s  Typing: %s" % [str(last_motion),global_position.x,global_position.y,global_position.z,str(Input.mouse_mode),str(book.open),str(typing)]
+	if is_instance_valid(survival_label):
+		survival_label.visible = health < max_health-.05 or stamina < max_stamina-.5
+		if survival_label.visible:
+			survival_label.text = "VITA  %d / %d     VIGOR  %d / %d" % [
+				ceili(health),int(max_health),ceili(stamina),int(max_stamina)]
+			survival_label.add_theme_color_override("font_color",
+				Color("df9187") if health < 35.0 else Color("dcc9a6"))
 	reticle.visible=not book.open and not typing and conversation_actor == null and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED
 	held.visible=not book.open and conversation_actor == null and not held_type.is_empty()
 	if held.visible:
@@ -588,7 +620,10 @@ func use_item() -> void:
 		"herb":
 			if target!=null and target.has_method("afflict"):
 				target.panic=0;target.asleep=0
-			say_world("The herb is crushed.",point,Color("a4bc8a"))
+			var healed: float = minf(max_health-health,32.0)
+			health = minf(max_health,health+32.0)
+			say_world("The herb is crushed. Vita +%d" % int(healed),
+				point,Color("a4bc8a"))
 			inventory.remove_at(selected_slot)
 			selected_slot=0;refresh_held_model()
 		"stone":
@@ -615,6 +650,44 @@ func drop_item() -> void:
 	refresh_held_model()
 	var p=camera.global_position-camera.global_transform.basis.z*1.9
 	world.spawn_item(item,"",Vector3(p.x,world.height_at(p.x,p.z),p.z),true)
+
+func take_damage(amount: float, source: String) -> bool:
+	# The wolf's attack cooldown and this separate invulnerability gate
+	# prevent multi-frame hits from turning a fair encounter into instant death.
+	if amount <= 0.0 or damage_immunity > 0.0 or health <= 0.0:
+		return false
+	health = maxf(0.0,health-amount)
+	damage_immunity = 1.4
+	if health <= 0.0:
+		_recover_from_defeat(source)
+	else:
+		say_world("Wounded by %s. Vita %d" % [source,ceili(health)],
+			camera.global_position-camera.global_transform.basis.z*2.3,
+			Color("d08b7f"))
+	if DisplayServer.get_name() != "headless":
+		world.save_world()
+	return true
+
+func _recover_from_defeat(source: String) -> void:
+	# Failure has a persistent cost, but never destroys accumulated Latin
+	# scholarship or turns an open sandbox into a compulsory reload.
+	var fallen_at: Vector3 = global_position
+	death_count += 1
+	if not inventory.is_empty():
+		selected_slot = clampi(selected_slot,0,inventory.size()-1)
+		var lost: String = inventory[selected_slot]
+		inventory.remove_at(selected_slot)
+		world.spawn_item(lost,"",Vector3(fallen_at.x,
+			world.height_at(fallen_at.x,fallen_at.z)+.1,fallen_at.z),true)
+		selected_slot = 0
+		refresh_held_model()
+	position = Vector3(0.0,world.height_at(0.0,26.0)+.22,26.0)
+	velocity = Vector3.ZERO
+	health = 60.0
+	stamina = 65.0
+	damage_immunity = 5.0
+	say_world("You survived %s, but something was lost." % source,
+		position+Vector3.UP*1.7,Color("e0bd9f"))
 
 func cast_latin(spoken: String, target: Dictionary) -> Dictionary:
 	# Check resources BEFORE applying a physical spell to the world.
