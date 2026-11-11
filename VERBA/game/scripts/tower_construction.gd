@@ -186,34 +186,172 @@ func place_saved_part(record: Dictionary) -> void:
 	var timber := ART.mat(Color("8a745e"),.97)
 	var deep := ART.mat(Color("4b443b"),.97)
 	match kind:
-		"floor":
-			ART.box(node,Vector3.ZERO,size,stone)
+		"floor","upper_floor":
+			ART.box(node,Vector3.ZERO,size,stone if kind=="floor" else timber)
 			for offset in [-1.31,1.31]:
-				ART.box(node,Vector3(offset,.16,0),
-					Vector3(.12,.11,3.03),timber)
-				ART.box(node,Vector3(0,.16,offset),
-					Vector3(3.03,.11,.12),timber)
-			# Four physical footing posts reach into irregular terrain.
+				ART.box(node,Vector3(offset,.16,0),Vector3(.12,.11,3.03),deep)
+				ART.box(node,Vector3(0,.16,offset),Vector3(3.03,.11,.12),deep)
 			for dx in [-1.23,1.23]:
 				for dz in [-1.23,1.23]:
 					var ground: float = world.height_at(center.x+dx,center.z+dz)
 					var length: float = maxf(.18,center.y-ground)
-					ART.box(node,Vector3(dx,-length*.5,dz),
-						Vector3(.24,length,.24),deep)
-		"wall":
+					ART.box(node,Vector3(dx,-length*.5,dz),Vector3(.24,length,.24),deep)
+		"wall","upper_wall":
 			ART.box(node,Vector3.ZERO,size,timber)
 			var across: bool = side%2==0
 			var brace: Vector3 = Vector3(1.25,0,0) if across else Vector3(0,0,1.25)
 			var upright := Vector3.UP*1.27
 			ART.bone(node,-brace-upright,brace+upright,.10,.08,deep,8)
 			ART.bone(node,brace-upright,-brace+upright,.09,.08,deep,8)
+		"door":
+			# An actual opening in a timber frame: never a full invisible wall.
+			node.rotation.y=PI*.5 if side%2==1 else 0.0
+			for x in [-1.20,1.20]:
+				var beam: Vector3=Vector3(x,0,0)
+				ART.box(node,beam,Vector3(.50,2.75,.23),timber)
+				world.add_solid_box(node,beam,Vector3(.50,2.75,.23),"TowerDoorPost_"+key+str(x))
+			var lintel: Vector3=Vector3(0,1.17,0)
+			ART.box(node,lintel,Vector3(1.98,.4,.23),deep)
+			world.add_solid_box(node,lintel,Vector3(1.98,.4,.23),"TowerDoorLintel_"+key)
+			var pivot:=Node3D.new()
+			pivot.name="DoorPivot"
+			pivot.position=Vector3(-.81,-.26,0)
+			node.add_child(pivot)
+			var leaf:=StaticBody3D.new()
+			leaf.name="InteractiveTowerDoor"
+			leaf.collision_layer=16
+			leaf.collision_mask=0
+			leaf.set_meta("tower_ref",node)
+			leaf.position.x=.70
+			pivot.add_child(leaf)
+			ART.box(leaf,Vector3.ZERO,Vector3(1.37,2.16,.12),timber)
+			var c:=CollisionShape3D.new()
+			var leaf_box:=BoxShape3D.new()
+			leaf_box.size=Vector3(1.37,2.16,.12)
+			c.shape=leaf_box
+			leaf.add_child(c)
+			for y in [-.81,.81]:
+				ART.box(leaf,Vector3(0,y,.078),Vector3(1.20,.08,.075),deep)
+			pivot.rotation.y=-PI*.52 if bool(record.get("open",false)) else 0.0
 		"shelf":
 			for y in [-.54,-.03,.47]:
 				ART.box(node,Vector3(0,y,0),Vector3(1.32,.09,.41),timber)
 			for x in [-.58,.58]:
 				ART.box(node,Vector3(x,0,0),Vector3(.09,1.4,.42),deep)
-	world.add_solid_box(node,Vector3.ZERO,size,"SolidTower_"+key)
-	parts[key] = {"kind":kind,"gx":cell.x,"gz":cell.y,"face":side,"node":node}
+		"stairs":
+			# A walkable continuous convex ramp *under* visible wooden treads,
+			# avoiding the stock character controller's inability to climb
+			# disconnected 25cm vertical box steps.
+			node.rotation.y=float(side)*PI*.5
+			var lower: Vector2i=cell-_direction(side)
+			var higher: Vector2i=cell+_direction(side)
+			var lo: float=_floor_y(lower)-_floor_y(cell)+.16
+			var hi: float=_floor_y(higher)-_floor_y(cell)+UPPER_LEVEL+.18
+			var rail:=StaticBody3D.new()
+			rail.name="WalkableTowerStairRamp"
+			rail.collision_layer=16
+			rail.collision_mask=0
+			var hull:=ConvexPolygonShape3D.new()
+			hull.points=PackedVector3Array([
+				Vector3(-.78,lo-.23,-3.0),Vector3(.78,lo-.23,-3.0),
+				Vector3(-.78,lo,-3.0),Vector3(.78,lo,-3.0),
+				Vector3(-.78,lo-.23,1.52),Vector3(.78,lo-.23,1.52),
+				Vector3(-.78,hi,1.52),Vector3(.78,hi,1.52)])
+			var ramp_shape:=CollisionShape3D.new()
+			ramp_shape.shape=hull
+			rail.add_child(ramp_shape)
+			node.add_child(rail)
+			for i in range(12):
+				var t: float=(float(i)+.5)/12.0
+				var zz: float=-3.0+t*4.52
+				var yy: float=lerpf(lo,hi,t)-.12
+				ART.box(node,Vector3(0,yy,zz),Vector3(1.60,.12,.37),timber)
+			for edge in [-.78,.78]:
+				ART.bone(node,Vector3(edge,lo+.40,-3.0),Vector3(edge,hi+.40,1.52),.06,.055,deep,8)
+		"roof":
+			var slate:=ART.mat(Color("5b665f"),.98)
+			for side_sign in [-1.0,1.0]:
+				var roof_center:=Vector3(side_sign*.76,.68,0)
+				var tilt:=Vector3(0,0,side_sign*PI/5.3)
+				ART.box(node,roof_center,Vector3(1.89,.17,3.42),slate,tilt)
+				var collision:=world.add_solid_box(node,roof_center,Vector3(1.89,.17,3.42),"TowerRoofPitch_"+key+str(side_sign))
+				collision.rotation=tilt
+			ART.bone(node,Vector3(0,1.37,-1.7),Vector3(0,1.37,1.7),.12,.12,deep,9)
+		"lamp":
+			var brass:=ART.mat(Color("8f7445"),.6)
+			var flame:=ART.mat(Color("ffdfab"),.44,Color("e2a257"))
+			ART.box(node,Vector3.ZERO,Vector3(.26,.48,.26),brass)
+			ART.orb(node,Vector3(0,.17,0),Vector3(.15,.15,.15),flame,10)
+			var point_light:=OmniLight3D.new()
+			point_light.name="TowerLampWarmLight"
+			point_light.light_color=Color("ffd29b")
+			point_light.light_energy=.80
+			point_light.omni_range=7.0
+			point_light.shadow_enabled=false
+			node.add_child(point_light)
+			point_light.position.y=.20
+	if kind in ["floor","upper_floor","wall","upper_wall","shelf","lamp"]:
+		var solid=world.add_solid_box(node,Vector3.ZERO,size,"SolidTower_"+key)
+		if kind=="shelf": solid.set_meta("tower_ref",node)
+	elif kind=="roof":
+		# Roof pitch colliders above replace the obstructive full-cube shape.
+		pass
+	elif kind=="stairs":
+		pass
+	elif kind=="door":
+		pass
+	parts[key] = {"kind":kind,"gx":cell.x,"gz":cell.y,"face":side,"node":node,
+		"open":bool(record.get("open",false)),"book_id":String(record.get("book_id",""))}
+	if kind=="door": node.set_meta("tower_door_key",key)
+	if kind=="shelf":
+		node.set_meta("tower_shelf_key",key)
+		_update_shelf_visual(key)
+
+func _update_shelf_visual(key: String) -> void:
+	if not parts.has(key): return
+	var part: Dictionary=parts[key]
+	var node: Node3D=part["node"]
+	var existing: Node=node.get_node_or_null("DisplayedLatinVolume")
+	if existing!=null: existing.queue_free()
+	var volume: String=String(part.get("book_id",""))
+	if volume.is_empty(): return
+	var display:=Node3D.new()
+	display.name="DisplayedLatinVolume"
+	display.position=Vector3(0,.05,0)
+	node.add_child(display)
+	var binding:=ART.mat(Color("52453e"),.85)
+	var gilding:=ART.mat(Color("c7ab75"),.68)
+	ART.box(display,Vector3(0,0,0),Vector3(.27,.39,.12),binding)
+	ART.box(display,Vector3(0,.08,.064),Vector3(.18,.035,.008),gilding)
+
+func shelve_book(key: String, scholar) -> Dictionary:
+	if not parts.has(key) or String(parts[key]["kind"])!="shelf":
+		return {"ok":false,"message":"That is not a bookcase."}
+	if not String(parts[key].get("book_id","")).is_empty():
+		return {"ok":false,"message":"This shelf already holds a Latin volume."}
+	for book_id in scholar.owned:
+		var assigned: bool=false
+		for entry in parts.values():
+			if String(entry.get("book_id",""))==String(book_id): assigned=true
+		if assigned: continue
+		parts[key]["book_id"]=String(book_id)
+		_update_shelf_visual(key)
+		if DisplayServer.get_name()!="headless": world.save_world()
+		return {"ok":true,"message":"Shelved %s." % String(scholar.get_book(String(book_id)).get("title",book_id))}
+	return {"ok":false,"message":"Find a new Latin book to place here."}
+
+func toggle_door(key: String) -> Dictionary:
+	if not parts.has(key) or String(parts[key]["kind"])!="door":
+		return {"ok":false,"message":"This is not a tower door."}
+	var part: Dictionary=parts[key]
+	var node: Node3D=part["node"]
+	var pivot: Node3D=node.get_node_or_null("DoorPivot")
+	if pivot==null: return {"ok":false,"message":"The door is damaged."}
+	part["open"]=not bool(part.get("open",false))
+	pivot.rotation.y=-PI*.52 if bool(part["open"]) else 0.0
+	if DisplayServer.get_name()!="headless": world.save_world()
+	return {"ok":true,"message":"Door opened." if bool(part["open"]) else "Door closed."}
+
 
 func ensure_preview() -> MeshInstance3D:
 	if is_instance_valid(preview):return preview
