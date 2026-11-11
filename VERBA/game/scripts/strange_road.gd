@@ -120,13 +120,34 @@ static func _north_road_bridge(world, root: Node3D) -> void:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var parts: int=20
 	var half_width: float=1.31
+	# Collision is one continuous body with overlapping convex segments.
+	# A single concave plane fails some physics queries along triangle seams.
+	var collider:=StaticBody3D.new()
+	collider.name="WalkableNorthRoadBridgeDeck"
+	collider.collision_layer=16
+	collider.collision_mask=0
+	bridge.add_child(collider)
 	for index in range(parts):
 		var u0: float=float(index)/float(parts)
 		var u1: float=float(index+1)/float(parts)
 		var at0: Vector2=eastern.lerp(western,u0)
 		var at1: Vector2=eastern.lerp(western,u1)
-		var y0: float=lerpf(first_y,last_y,u0)+0.04*sin(u0*PI)
-		var y1: float=lerpf(first_y,last_y,u1)+0.04*sin(u1*PI)
+		var y0: float=lerpf(first_y,last_y,u0)+1.05*sin(u0*PI)
+		var y1: float=lerpf(first_y,last_y,u1)+1.05*sin(u1*PI)
+		var middle: Vector2=at0.lerp(at1,0.5)
+		var start3:=Vector3(at0.x,y0,at0.y)
+		var end3:=Vector3(at1.x,y1,at1.y)
+		var forward3: Vector3=(end3-start3).normalized()
+		var across3: Vector3=Vector3(normal.x,0.0,normal.y)
+		var up3: Vector3=across3.cross(forward3).normalized()
+		var box_shape:=BoxShape3D.new()
+		box_shape.size=Vector3(start3.distance_to(end3)+.16,.18,half_width*2.0)
+		var collision_part:=CollisionShape3D.new()
+		collision_part.name="BridgeSlopeSegment_%d" % index
+		collision_part.shape=box_shape
+		collision_part.transform=Transform3D(Basis(forward3,up3,across3),
+			Vector3(middle.x,(y0+y1)*.5,middle.y)-up3*.07)
+		collider.add_child(collision_part)
 		var a:=Vector3(at0.x+normal.x*half_width,y0,at0.y+normal.y*half_width)
 		var b:=Vector3(at0.x-normal.x*half_width,y0,at0.y-normal.y*half_width)
 		var c:=Vector3(at1.x+normal.x*half_width,y1,at1.y+normal.y*half_width)
@@ -143,16 +164,7 @@ static func _north_road_bridge(world, root: Node3D) -> void:
 	deck.mesh=plank_mesh
 	deck.material_override=timber
 	bridge.add_child(deck)
-	# A triangle surface retains the continuous real slope from bank to bank,
-	# rather than an invisible flat box that blocks entry at either end.
-	var collider:=StaticBody3D.new()
-	collider.name="WalkableNorthRoadBridgeDeck"
-	collider.collision_layer=16
-	collider.collision_mask=0
-	var shape:=CollisionShape3D.new()
-	shape.shape=plank_mesh.create_trimesh_shape()
-	collider.add_child(shape)
-	bridge.add_child(collider)
+	# Overlapping physics segments track the arched deck and bank transitions.
 	for side in [-1.0,1.0]:
 		var edge: Vector2=normal*(half_width-0.06)*side
 		var p0:=Vector3(eastern.x+edge.x,first_y-0.15,eastern.y+edge.y)
