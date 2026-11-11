@@ -188,7 +188,7 @@ func witness_event(kind: String, actor: String, target: String = "") -> bool:
 	return true
 
 func snapshot() -> Dictionary:
-	return {"version":VERSION,"tick":tick_count,"rng_state":rng.state,
+	return {"version":VERSION,"tick":tick_count,"rng_state":str(rng.state),
 		"next_event_id":next_event_id,"people":people.duplicate(true),
 		"events":events.duplicate(true),"recent_action":recent_action.duplicate(true)}
 
