@@ -143,6 +143,16 @@ func harvest_resource(source: Node3D) -> Dictionary:
 		return {"ok":false,"message":"That material is beyond your reach."}
 	if player.inventory.size()>=6:
 		return {"ok":false,"message":"Your hands are full."}
+	# Living plants are harvestable matter, not inexhaustible pickup spawners.
+	# Food is already saved and shared with wildlife grazing and Latin growth.
+	if sim_objects.has(source) and source.has_method("apply_effect") and String(source.kind) in ["grass","fern"]:
+		if bool(source.dead) or bool(source.burning) or float(source.food)<0.65:
+			return {"ok":false,"message":"This patch has too little healthy growth. Water it or let it recover."}
+		if not source.apply_effect("harvest",1.0):
+			return {"ok":false,"message":"The plant cannot be harvested yet."}
+		player.add_item("herb")
+		if DisplayServer.get_name()!="headless": save_world()
+		return {"ok":true,"message":"Gathered a herb from living growth.","material":"herb"}
 	var material: String = ""
 	var key: String = ""
 	var limit: int = 0
