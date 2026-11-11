@@ -7,11 +7,19 @@ const TREE = preload("res://scripts/landmark_tree.gd")
 func _initialize() -> void:
 	print("HERO_QA_STAGE cottage_start")
 	var roof: ArrayMesh = STORY.make_roof()
+	var underlay: ArrayMesh = STORY.make_roof_underlay()
 	var walls: ArrayMesh = STORY.make_wall_shell()
 	var roofs: PackedVector3Array = roof.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	var facades: PackedVector3Array = walls.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	var roof_bounds: AABB = roof.get_aabb()
 	var wall_bounds: AABB = walls.get_aabb()
+	var underlay_bounds: AABB = underlay.get_aabb()
+	if underlay.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() < 4000:
+		_fail("Shingle gaps would reveal bright walls without a continuous roof liner")
+		return
+	if absf(roof_bounds.size.x-underlay_bounds.size.x) > .08:
+		_fail("Underlay no longer follows both pitched roof slopes")
+		return
 	if roofs.size() < 4000 or roof_bounds.size.x < 6.3 or roof_bounds.size.y < 2.6:
 		_fail("Crooked slate roof lost its real pitched, tessellated geometry")
 		return
