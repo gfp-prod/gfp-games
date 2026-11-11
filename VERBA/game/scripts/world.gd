@@ -171,12 +171,12 @@ func harvest_resource(source: Node3D) -> Dictionary:
 	if source.has_meta("resource_deposit"):
 		material = String(source.get_meta("resource_deposit"))
 		key = String(source.get_meta("harvest_id",""))
-		limit = 12
+		limit = 6 if material=="ore" else 12
 	elif source.has_method("apply_effect") and String(source.kind)=="stone":
 		material = "stone"
 		key = "sim:%d" % int(source.uid)
 		limit = 3
-	if material not in ["wood","stone"] or key.is_empty():
+	if material not in ["wood","stone","ore"] or key.is_empty():
 		return {"ok":false,"message":"Nothing useful can be taken."}
 	var used: int = maxi(0,int(harvest_counts.get(key,0)))
 	if used>=limit:
