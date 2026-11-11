@@ -32,7 +32,7 @@ func stage(scholar) -> int:
 func memory(id: String) -> Dictionary:
 	return memories.get(id, {"topics": [], "rapport": 0, "traded": false})
 
-func view(id: String, scholar, inventory: Array) -> Dictionary:
+func view(id: String, scholar, inventory: Array, coins: int=0) -> Dictionary:
 	var definition: Dictionary = npc(id)
 	if definition.is_empty(): return {}
 	var tier: int = stage(scholar)
@@ -70,8 +70,8 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 			var cost: int=int(supply_prices[good])
 			menu.append({"index":lines.size()+["grain","wood","ore"].find(good),
 				"label":"Buy %s from Sela for %d coins." % [good,cost],
-				"available":int(village_sim.economy.stocks.get(good,0))>0 and inventory.size()<6,
-				"reason":"The market has no supply or room to hand it over."})
+				"available":int(village_sim.economy.stocks.get(good,0))>0 and inventory.size()<6 and coins>=cost,
+				"reason":"The market has no stock, room, or sufficient payment."})
 	var spoken: String = String(introductions[mini(tier, introductions.size()-1)])
 	if id=="daro" and village_sim!=null:
 		spoken+="\n"+COMMISSIONS.describe(village_sim)
