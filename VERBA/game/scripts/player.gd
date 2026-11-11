@@ -680,6 +680,12 @@ func use_item() -> void:
 				point,Color("a4bc8a"))
 			inventory.remove_at(selected_slot)
 			selected_slot=0;refresh_held_model()
+		"bread":
+			var recovered: float=minf(max_stamina-stamina,45.0)
+			stamina=minf(max_stamina,stamina+45.0)
+			say_world("A warm loaf. Vigor +%d" % int(recovered),point,Color("d6b98b"))
+			inventory.remove_at(selected_slot)
+			selected_slot=0;refresh_held_model()
 		"stone":
 			var body=RigidBody3D.new()
 			body.position=camera.global_position-camera.global_transform.basis.z*1.2
