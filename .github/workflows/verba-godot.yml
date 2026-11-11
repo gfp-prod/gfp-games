@@ -112,7 +112,10 @@ jobs:
 
   visual-capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Nineteen real, GPU-backed captures at 1280x720 on software OpenGL
+    # occasionally complete after 20 minutes; do not silently time out
+    # after capturing 18 of 19 views.
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: VERBA/game
