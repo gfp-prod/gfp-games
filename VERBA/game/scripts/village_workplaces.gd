@@ -20,6 +20,7 @@ func _ready() -> void:
 	_build_fields()
 	_build_bakery()
 	_build_forge()
+	_build_ore_vein()
 	_build_market()
 	refresh_from_economy(true)
 
@@ -293,6 +294,25 @@ func _build_forge() -> void:
 		tools.append(tool)
 	_slots("tools",tools)
 	_sign(anvil,"FERRUM",Vector3(0,2.48,-.25),leather.albedo_color)
+
+func _build_ore_vein() -> void:
+	# The beginner forge has a truly finite nearby iron seam. Harvesting
+	# an ore nodule uses the SAME saved per-object extraction quota as stone.
+	var point: Vector2=Vector2(26.4,21.3)
+	var mineral:=world.spawn_reactive_stone(
+		_ground(point.x,point.y,.08),Vector3(1.35,.85,1.05),
+		ART.mat(Color("52616a"),.64))
+	mineral.name="FerrousOutcrop"
+	mineral.set_meta("resource_deposit","ore")
+	mineral.set_meta("harvest_id","sim:%d" % int(mineral.uid))
+	mineral.set_meta("ore_vein",true)
+	var iron:=ART.mat(Color("757f83"),.49)
+	iron.metallic=.38
+	for i in range(5):
+		var theta: float=TAU*float(i)/5.0
+		ART.stone(mineral,Vector3(cos(theta)*.38,.31,sin(theta)*.28),
+			Vector3(.22,.24,.20),iron)
+	_sign(mineral,"VENAE FERRI",Vector3(0,1.67,0),Color("c2b39a"))
 
 func _build_market() -> void:
 	# Simple proper stall makes the exchange point legible without putting
