@@ -46,38 +46,38 @@ jobs:
             exit 1
           fi
       - name: Runtime smoke test
-        run: godot --headless --path . --script res://tests/smoke_test.gd
+        run: bash tests/godot_guard.sh res://tests/smoke_test.gd
       - name: Independent ecology state
-        run: godot --headless --path . --script res://tests/ecology_smoke_test.gd
+        run: bash tests/godot_guard.sh res://tests/ecology_smoke_test.gd
       - name: Physics and navigation regression
-        run: godot --headless --path . --script res://tests/physics_navigation_test.gd
+        run: bash tests/godot_guard.sh res://tests/physics_navigation_test.gd
       - name: Physically blocked pickups cannot be looted through walls
-        run: godot --headless --path . --script res://tests/pickup_line_of_sight_test.gd
+        run: bash tests/godot_guard.sh res://tests/pickup_line_of_sight_test.gd
       - name: Bound book geometry, page normals and ink contact
-        run: godot --headless --path . --script res://tests/grimoire_geometry_test.gd
+        run: bash tests/godot_guard.sh res://tests/grimoire_geometry_test.gd
       - name: Cottage, sculpted glove and riverbank hero-art regression
-        run: timeout --signal=TERM --kill-after=5s 90s godot --headless --path . --script res://tests/hero_art_test.gd
+        run: bash tests/godot_guard.sh res://tests/hero_art_test.gd
       - name: Real hinged vellum page turn and in-book ink transition
-        run: godot --headless --path . --script res://tests/grimoire_page_turn_test.gd
+        run: bash tests/godot_guard.sh res://tests/grimoire_page_turn_test.gd
       - name: Latin books and scholar progression
-        run: godot --headless --path . --script res://tests/scholar_progression_test.gd
+        run: bash tests/godot_guard.sh res://tests/scholar_progression_test.gd
       - name: Full in-world Latin book discovery and casting loop
-        run: godot --headless --path . --script res://tests/book_world_loop_test.gd
+        run: bash tests/godot_guard.sh res://tests/book_world_loop_test.gd
       - name: Latin grammar and natural-law spell regression
-        run: godot --headless --path . --script res://tests/latin_laws_test.gd
+        run: bash tests/godot_guard.sh res://tests/latin_laws_test.gd
       - name: Magic failure is physically and economically inert
-        run: godot --headless --path . --script res://tests/magic_fizzle_test.gd
+        run: bash tests/godot_guard.sh res://tests/magic_fizzle_test.gd
       - name: Emergent heat transfer between natural objects
-        run: godot --headless --path . --script res://tests/material_exchange_test.gd
+        run: bash tests/godot_guard.sh res://tests/material_exchange_test.gd
       - name: Continuous offscreen ecology at lower simulation frequency
-        run: godot --headless --path . --script res://tests/ecology_lod_test.gd
+        run: bash tests/godot_guard.sh res://tests/ecology_lod_test.gd
       - name: Persistent ecosystem JSON save and restore
-        run: godot --headless --path . --script res://tests/persistence_test.gd
+        run: bash tests/godot_guard.sh res://tests/persistence_test.gd
       - name: Complete save, loot, wildlife identity and recovery regression
-        run: godot --headless --path . --script res://tests/save_integrity_regression_test.gd
+        run: bash tests/godot_guard.sh res://tests/save_integrity_regression_test.gd
       - name: Imported wildlife rig and animation validation
-        run: godot --headless --path . --script res://tests/wildlife_asset_test.gd
+        run: bash tests/godot_guard.sh res://tests/wildlife_asset_test.gd
       - name: Moonlit sky and atmosphere are not a darkened daylight sky
-        run: godot --headless --path . --script res://tests/day_night_art_test.gd
+        run: bash tests/godot_guard.sh res://tests/day_night_art_test.gd
       - name: Scene/node and ecology CPU profiling baseline
-        run: godot --headless --path . --script res://tests/performance_baseline.gd
+        run: bash tests/godot_guard.sh res://tests/performance_baseline.gd
