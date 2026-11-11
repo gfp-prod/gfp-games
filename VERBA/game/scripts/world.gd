@@ -22,6 +22,7 @@ const EXTERNAL_ART = preload("res://scripts/external_art.gd")
 const STORYBOOK_HOUSE = preload("res://scripts/storybook_house.gd")
 const LANDMARK_TREE = preload("res://scripts/landmark_tree.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
+const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
 var magic
@@ -88,6 +89,7 @@ func _ready() -> void:
 	build_terrain()
 	# The road is blended into the terrain atlas offline; no floating road mesh.
 	build_landmarks()
+	STRANGE_ROAD.build(self)
 	build_stone_ridges()
 	build_first_words_cairn()
 	build_plural_tablet()
@@ -319,6 +321,16 @@ func stream_x(z: float) -> float:
 # smooth, short transition are flattened. All other valley heights match.
 func height_at(x: float,z: float) -> float:
 	var raw: float = _raw_height_at(x,z)
+	# Two small intentionally levelled authored sites. The surrounding hills
+	# blend back over 4–5 metres; no hovering floors or invisible terrain seams.
+	var station_edge: float=maxf(absf(x+27.0)/9.0,absf(z-44.0)/7.0)
+	if station_edge<1.48:
+		raw=lerpf(raw,_raw_height_at(-27.0,44.0),
+			1.0-smoothstep(1.0,1.48,station_edge))
+	var castle_edge: float=maxf(absf(x+49.0)/10.0,absf(z-44.0)/10.0)
+	if castle_edge<1.45:
+		raw=lerpf(raw,_raw_height_at(-49.0,44.0),
+			1.0-smoothstep(1.0,1.45,castle_edge))
 	if absf(x-29.0) > 13.0 or absf(z-8.0) > 13.0:
 		return raw
 	var local: Vector2 = cottage_local_xz(x,z)
