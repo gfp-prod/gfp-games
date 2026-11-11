@@ -980,6 +980,18 @@ func spawn_item(kind: String, word_key: String, p: Vector3,
 	add_child(i)
 	items.append(i)
 
+func retire_book_pickup(book_id: String) -> void:
+	# A book received from an NPC is the SAME collectible volume as its
+	# original authored world object. Prevent ghost duplicates in this
+	# scene, and record a tombstone for save/load.
+	for item in items.duplicate():
+		if not is_instance_valid(item) or item.item_type != "book" or item.word != book_id:
+			continue
+		if not item.is_dropped and not collected_pickup_ids.has(item.persistent_id):
+			collected_pickup_ids.append(item.persistent_id)
+		items.erase(item)
+		item.queue_free()
+
 func collect(item) -> void:
 	if not is_instance_valid(item): return
 	if item.item_type not in ["leaf","book"] and player.inventory.size() >= 6:
