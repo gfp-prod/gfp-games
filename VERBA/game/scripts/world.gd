@@ -25,6 +25,9 @@ var magic
 var scholar
 var creatures: Array = []
 var npcs: Array = []
+# Adoption selects an existing persistent wild animal: no second pet entity.
+var familiar_id: String = ""
+var familiar_mode: String = "follow"
 var social
 var navigation_blockers: Array[Vector3] = []
 var navigation_region: NavigationRegion3D
@@ -115,6 +118,50 @@ func populate_social_npcs() -> void:
 		actor.setup(self,social.npc(String(key)))
 		add_child(actor)
 		npcs.append(actor)
+
+func familiar() -> Node3D:
+	if familiar_id.is_empty(): return null
+	for creature in creatures:
+		if is_instance_valid(creature) and creature.persistent_id == familiar_id and not creature.dead:
+			return creature
+	return null
+
+func bond_animal(creature: Node3D) -> Dictionary:
+	# The first familiar is one of the existing living, saved wild creatures.
+	# A hare trusts an offered herb; a crow accepts a shiny piece of amber.
+	if not is_instance_valid(creature) or creature.dead or creature.species not in ["hare","crow"]:
+		return {"ok":false,"message":"Only a living hare or crow can be befriended."}
+	if player == null or player.global_position.distance_to(creature.global_position) > 3.7:
+		return {"ok":false,"message":"Move closer before offering a gift."}
+	if not familiar_id.is_empty():
+		return {"ok":false,"message":"A familiar already travels with you."}
+	var offering: String = "herb" if creature.species == "hare" else "amber"
+	if not player.inventory.has(offering):
+		return {"ok":false,"message":"Offer an %s to the crow." % offering if offering == "amber" else "Offer a herb to the hare."}
+	player.inventory.erase(offering)
+	player.selected_slot = clampi(player.selected_slot,0,maxi(0,player.inventory.size()-1))
+	player.refresh_held_model()
+	familiar_id = String(creature.persistent_id)
+	familiar_mode = "follow"
+	creature.panic = 0.0
+	creature.asleep = 0.0
+	creature.stop_time = 0.0
+	if DisplayServer.get_name() != "headless":
+		save_world()
+	return {"ok":true,"message":"The %s accepts your gift and follows you." % creature.species}
+
+func cycle_familiar_order() -> Dictionary:
+	if familiar() == null:
+		return {"ok":false,"message":"You have no living familiar."}
+	match familiar_mode:
+		"follow": familiar_mode = "stay"
+		"stay": familiar_mode = "rest"
+		_: familiar_mode = "follow"
+	if familiar_mode == "follow" and familiar() != null:
+		familiar().asleep = 0.0
+	if DisplayServer.get_name() != "headless":
+		save_world()
+	return {"ok":true,"message":"Familiar: " + familiar_mode}
 
 func save_world() -> bool:
 	return WORLD_PERSIST.save_world(self)
