@@ -45,6 +45,8 @@ static func snapshot(world: Node3D) -> Dictionary:
 			"pitch":float(world.player.pitch.rotation.x),
 			"inventory":world.player.inventory.duplicate(),
 			"selected_slot":int(world.player.selected_slot),
+			"coins":world.player.coins,
+			"professions":world.player.professions.snapshot(),
 			"health":float(world.player.health),
 			"stamina":float(world.player.stamina),
 			"deaths":int(world.player.death_count),
@@ -219,7 +221,7 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 	for dropped in data.get("dropped_pickups",[]):
 		if not (dropped is Dictionary): continue
 		var kind: String = String(dropped.get("kind",""))
-		if kind not in ["stone","wood","herb","amber","torch","lantern","grain","bread","tools"]: continue
+		if kind not in ["stone","wood","herb","amber","torch","lantern","grain","bread","tools","ore","herb_bread"]: continue
 		var key: String = String(dropped.get("id",""))
 		if not key.begins_with("drop:"): continue
 		var p: Vector3 = _as_vector(dropped.get("position",[]),Vector3.ZERO)
@@ -231,7 +233,7 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 		if player_data.get("inventory",null) is Array:
 			world.player.inventory.clear()
 			for entry in player_data["inventory"]:
-				if entry is String and entry in ["stone","wood","herb","amber","torch","lantern","grain","bread","tools"] and world.player.inventory.size() < 6:
+				if entry is String and entry in ["stone","wood","herb","amber","torch","lantern","grain","bread","tools","ore","herb_bread"] and world.player.inventory.size() < 6:
 					world.player.inventory.append(entry)
 			world.player.selected_slot = clampi(int(player_data.get("selected_slot",0)),
 				0,maxi(0,world.player.inventory.size()-1))
@@ -248,6 +250,9 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 			0.0,world.player.max_stamina)
 		world.player.death_count = clampi(int(player_data.get("deaths",0)),0,999999)
 		world.player.damage_immunity = 0.0
+		world.player.coins=clampi(int(player_data.get("coins",0)),0,1000000)
+		var saved_careers: Variant=player_data.get("professions",{})
+		if not (saved_careers is Dictionary) or not world.player.professions.restore(saved_careers): return false
 		if world.player.book != null:
 			if player_data.get("learned",null) is Array:
 				# World saves are authoritative: do not merge vocabulary from
