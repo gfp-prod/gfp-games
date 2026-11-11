@@ -4,6 +4,7 @@ extends RefCounted
 ## shares its door position and collidable body, while adding a small side turret.
 ## All surfaces are offline resources: no networking or runtime asset loading.
 const ART = preload("res://scripts/art.gd")
+const INTERIOR = preload("res://scripts/cottage_interior.gd")
 
 static func build(cabin: Node3D, world: Node3D) -> void:
 	var house := Node3D.new()
@@ -96,6 +97,8 @@ static func build(cabin: Node3D, world: Node3D) -> void:
 	_add_planter(house,wood)
 	_add_chimney(house,damp_stone,soot,metal)
 	_add_turret(house,world,cabin,damp_stone,roof_mat,wood,soot)
+	# Visible floor and collidable study belong to the same authored building.
+	INTERIOR.furnish(house,world,cabin)
 
 static func make_opaque_plaster() -> StandardMaterial3D:
 	var material := _paint("res://assets/textures/real/cottage_plaster_diffuse.jpg",
