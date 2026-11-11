@@ -178,6 +178,18 @@ func _act(id: String, action: String) -> void:
 	p["last_action"] = action
 	recent_action[id] = action
 
+func _stabilize_floats() -> void:
+	# JSON persistence has finite decimal precision. Quantize at each tick,
+	# rather than allowing an in-memory world to drift from its reloaded twin.
+	for id in people:
+		var p: Dictionary=people[id]
+		for key in ["hunger","fatigue","loneliness","mood"]:
+			p[key]=snappedf(float(p[key]),0.001)
+		for key in ["trust","grievance"]:
+			var values: Dictionary=p[key]
+			for other in values:
+				values[other]=snappedf(float(values[other]),0.001)
+
 func step() -> void:
 	tick_count += 1
 	# Local scarcity changes the incentives without dictating a plot. It is
@@ -199,6 +211,7 @@ func step() -> void:
 		p["fatigue"] = minf(100.0,float(p["fatigue"])+2.5)
 		p["loneliness"] = minf(100.0,float(p["loneliness"])+2.0)
 		_act(id,_select(p))
+	_stabilize_floats()
 
 func witness_event(kind: String, actor: String, target: String = "") -> bool:
 	if not people.has(actor): return false
