@@ -148,8 +148,8 @@ func setup_atmosphere() -> void:
 	e.background_mode=Environment.BG_SKY
 	var sky:=Sky.new()
 	var s:=ProceduralSkyMaterial.new()
-	s.sky_top_color=Color("7394a6")
-	s.sky_horizon_color=Color("becbb8")
+	s.sky_top_color=Color("70899a")
+	s.sky_horizon_color=Color("c0c6b7")
 	s.ground_bottom_color=Color("43574a")
 	s.ground_horizon_color=Color("8b9a87")
 	s.use_debanding=true
@@ -157,18 +157,18 @@ func setup_atmosphere() -> void:
 	e.sky=sky
 	e.ambient_light_source=Environment.AMBIENT_SOURCE_SKY
 	e.reflected_light_source=Environment.REFLECTION_SOURCE_BG
-	e.ambient_light_energy=.47
+	e.ambient_light_energy=.49
 	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
 	e.fog_enabled=true
-	e.fog_light_color=Color("a9b9aa")
-	e.fog_density=.0050
+	e.fog_light_color=Color("adb8aa")
+	e.fog_density=.0060
 	e.fog_sky_affect=.27
 	ambient.environment=e
 	add_child(ambient)
 	light_node=DirectionalLight3D.new()
 	light_node.name="LowAutumnSun"
 	light_node.light_color=Color("f7e5c5")
-	light_node.light_energy=1.10
+	light_node.light_energy=.94
 	light_node.shadow_enabled=true
 	light_node.rotation_degrees=Vector3(-38,32,-10)
 	add_child(light_node)
@@ -178,15 +178,15 @@ func _update_day_night_art(night_value: float) -> void:
 	var env: Environment = ambient.environment
 	var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
 	if sky != null:
-		sky.sky_top_color = Color("7394a6").lerp(Color("1c2d3d"),night_value)
-		sky.sky_horizon_color = Color("becbb8").lerp(Color("3c4957"),night_value)
+		sky.sky_top_color = Color("70899a").lerp(Color("1c2d3d"),night_value)
+		sky.sky_horizon_color = Color("c0c6b7").lerp(Color("3c4957"),night_value)
 		sky.ground_bottom_color = Color("43574a").lerp(Color("172c30"),night_value)
 		sky.ground_horizon_color = Color("8b9a87").lerp(Color("2c4548"),night_value)
-	env.ambient_light_energy = lerpf(.47,.15,night_value)
-	env.fog_light_color = Color("a9b9aa").lerp(Color("3a4c56"),night_value)
-	env.fog_density = lerpf(.0050,.0071,night_value)
+	env.ambient_light_energy = lerpf(.49,.15,night_value)
+	env.fog_light_color = Color("adb8aa").lerp(Color("3a4c56"),night_value)
+	env.fog_density = lerpf(.0060,.0084,night_value)
 	light_node.light_color=Color("f7e5c5").lerp(Color("a4bcd2"),night_value)
-	light_node.light_energy=lerpf(1.10,.20,night_value)
+	light_node.light_energy=lerpf(.94,.20,night_value)
 
 func stream_x(z: float) -> float:
 	return -20.0+4.4*sin(z*.075)+1.7*sin(z*.21)
@@ -549,7 +549,8 @@ func build_forest() -> void:
 			"autumn" if p.x > 0 else "broadleaf",1.12)
 	# Frame the first reading stone without planting a wall of trees in its
 	# path: two calm foreground silhouettes at different heights/depths.
-	for p in [Vector2(-12.5,20.5), Vector2(14.2,14.5),Vector2(-15.5,38.0)]:
+	for p in [Vector2(-12.5,20.5),Vector2(14.2,14.5),Vector2(-15.5,38.0),
+			Vector2(-17.5,27.0),Vector2(18.2,30.3)]:
 		spawn_tree(Vector3(p.x,height_at(p.x,p.y),p.y),
 			"broadleaf",1.14 if p.x < 0.0 else 1.03)
 	spawn_tree(Vector3(-37,height_at(-37,31),31),"dead",1.25)
@@ -592,7 +593,7 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 		# Preserve UVs, bark and opacity while tinting leaf surfaces only.
 		var imported: Node3D = node.get_node_or_null("CC0ImportedArt") as Node3D
 		if imported != null:
-			var leaf_tint: Color = Color("738765") if kind != "autumn" else Color("806b5a")
+			var leaf_tint: Color = Color("647c69") if kind != "autumn" else Color("806b5a")
 			# Autumn is a varied amber/olive canopy, not the same salmon pink
 			# copied thirty times along the ridge. Preserve a few rust accents.
 			if kind == "autumn":
@@ -604,9 +605,9 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 				elif variation < .86:
 					leaf_tint = Color("866965")
 				else:
-					leaf_tint = Color("a88767")
+					leaf_tint = Color("998266")
 			else:
-				leaf_tint = leaf_tint.lerp(Color("9da88a"),r.randf_range(.0,.48))
+				leaf_tint = leaf_tint.lerp(Color("899b87"),r.randf_range(.0,.48))
 			for member in imported.find_children("*","MeshInstance3D",true,false):
 				var part: MeshInstance3D = member as MeshInstance3D
 				if part == null or part.mesh == null: continue
