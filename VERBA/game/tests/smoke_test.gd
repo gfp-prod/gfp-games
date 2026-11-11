@@ -55,6 +55,10 @@ func run_checks() -> void:
 		printerr("FAIL: grass would be visible where the cottage floor belongs")
 		quit(10)
 		return
+	if cottage.find_child("DarkUnderlayBeneathFloorboards",true,false) == null:
+		printerr("FAIL: grass is visible through the interior floorboard gaps")
+		quit(12)
+		return
 	if cottage.find_child("HermitDeskPhysical",true,false) == null:
 		printerr("FAIL: scholar's desk lacks the expected collision")
 		quit(11)
