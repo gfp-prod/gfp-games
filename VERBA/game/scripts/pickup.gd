@@ -46,6 +46,10 @@ func _ready() -> void:
 					.078,.078,binding,12)
 			var seal := ART.mat(Color("753f32"),.75)
 			ART.orb(self,Vector3(.0,.20,.064),Vector3(.053,.032,.018),seal,12)
+		"wood":
+			var bark := ART.mat(Color("75604b"),.99)
+			ART.box(self,Vector3(0,.15,0),Vector3(.44,.22,.68),bark,
+				Vector3(0,.23,0))
 		"stone": ART.stone(self,Vector3(0,.18,0),Vector3(.22,.16,.27),ART.mat(Color("62665e")))
 		"herb":
 			ART.bone(self,Vector3(0,.07,0),Vector3(0,.55,0),.024,.008,ART.mat(Color("66805a")))
