@@ -64,7 +64,9 @@ func _ready() -> void:
 		l.outline_size=0
 		l.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 		l.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
-		l.position=Vector3(side*.36,-.02,.073)
+		# Ink follows the actual vellum. It used to hover three to five
+		# centimetres above the physical leaf, casting obvious false depth.
+		l.position=Vector3(side*.36,-.02,.046)
 		l.no_depth_test=false
 		l.double_sided=false
 		book.add_child(l)
@@ -164,6 +166,10 @@ func update_pages() -> void:
 				"\n".join(glosses) + "\n\nN: comprehension\n" + \
 				"Scholar " + str(scholar.level) + " XP " + str(scholar.xp) + "/" + str(scholar.next_level_xp()) + "\nMana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana)) + \
 				"\n" + study_feedback
+		# Book passage, answer feedback and glosses share the same real
+		# paper-space width gate as the lexicon, not an overflowing HUD.
+		for label in page_labels:
+			label.text = _ink_wrap(label.text,22)
 		return
 	for side in range(2):
 		# The Latin lexicon has longer definitions than the graded story text.
@@ -185,7 +191,7 @@ func update_pages() -> void:
 			line += "\nB: Books   S: Save\nL: Load"
 			if scholar != null:
 				line += "\nScholar " + str(scholar.level) + " XP " + str(scholar.xp) + "/" + str(scholar.next_level_xp()) + "\nMana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana))
-		page_labels[side].text=line
+		page_labels[side].text=_ink_wrap(line,22)
 
 func _ink_wrap(paragraph: String, max_columns: int) -> String:
 	# Real page-space column limit. Label3D has no reliable automatic
