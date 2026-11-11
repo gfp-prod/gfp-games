@@ -41,6 +41,10 @@ func _run() -> void:
 		if actor==null or actor.find_child(pair[1],true,false)==null:
 			fail("Worker lacks recognizable physical role silhouette: "+str(pair[0]))
 			return
+	var fields=district.find_child("DaroWorkingFarm",true,false)
+	if fields==null or fields.find_children("ContinuousCultivatedEarth","MeshInstance3D",true,false).size()!=4:
+		fail("Field regressed to disconnected soil disks instead of four terrain-hugging beds")
+		return
 	var economy=world.village_sim.economy
 	var slots: Dictionary=district.displays
 	for kind in ["grain","bread","tools"]:
@@ -59,6 +63,9 @@ func _run() -> void:
 		return
 	if not district.inspect_workplace("forge").contains("No work possible"):
 		fail("Player inspection claims forging possible without ore")
+		return
+	if district.production_lamps["baker_light"].visible or district.production_lamps["blacksmith_light"].visible:
+		fail("Fire lights remain on during a real industry shortage")
 		return
 	if district.production_lamps["baker"].visible:
 		fail("Baker oven burns without grain input")
