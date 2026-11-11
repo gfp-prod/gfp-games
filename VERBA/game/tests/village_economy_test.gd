@@ -64,7 +64,9 @@ func _run() -> void:
 	var left: String=JSON.stringify(JSON.parse_string(JSON.stringify(sim.snapshot())))
 	var right: String=JSON.stringify(JSON.parse_string(JSON.stringify(copy.snapshot())))
 	if left!=right:
-		_fail("Economic replay diverged after restore")
+		var pos: int=0
+		while pos<mini(left.length(),right.length()) and left[pos]==right[pos]: pos+=1
+		_fail("Economic replay diverged byte=%d original=%s restored=%s" % [pos,left.substr(maxi(0,pos-65),140),right.substr(maxi(0,pos-65),140)])
 		return
 	print("PASS: real input/output production, finite food and currency, zero-stock refusal, 720-tick bounds, inspector ranking and deterministic economic save/replay")
 	quit(0)
