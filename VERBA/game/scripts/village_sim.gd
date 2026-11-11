@@ -3,6 +3,7 @@ extends RefCounted
 ## Each fixed tick evaluates circumstances; actions emit causal, witnessed events.
 const VERSION := 1
 const ECONOMY = preload("res://scripts/village_economy.gd")
+const COMMISSIONS = preload("res://scripts/wizard_commissions.gd")
 const ROLES := [
 	["mara","scribe","crow",82,53,24],
 	["tomas","keeper","crow",75,36,30],
@@ -34,6 +35,8 @@ var work_orders: Dictionary = {}
 var field_fertility: int = 0
 var seeded := false
 var restore_error: String = ""
+var current_day: int = 0
+var commissions: Dictionary = {}
 
 func _init(seed_value: int = 1938) -> void:
 	reset(seed_value)
@@ -45,6 +48,8 @@ func reset(seed_value: int) -> void:
 	recent_action.clear()
 	work_orders.clear()
 	field_fertility=0
+	current_day=0
+	commissions.clear()
 	last_scores.clear()
 	economy=ECONOMY.new()
 	tick_count = 0
@@ -246,6 +251,14 @@ func _stabilize_floats() -> void:
 			for other in values:
 				values[other]=snappedf(float(values[other]),0.001)
 
+func advance_day(day: int) -> void:
+	# Offscreen social consequences run once per calendar day, not every
+	# rendered frame or every arbitrary simulation tick.
+	if day<=current_day: return
+	for next_day in range(current_day+1,day+1):
+		current_day=next_day
+		COMMISSIONS.day_passed(self)
+
 func step() -> void:
 	tick_count += 1
 	# A worker who cannot reach an obstructed workplace eventually gives
@@ -298,6 +311,7 @@ func snapshot() -> Dictionary:
 		"next_event_id":next_event_id,"people":people.duplicate(true),
 		"events":events.duplicate(true),"recent_action":recent_action.duplicate(true),
 		"work_orders":work_orders.duplicate(true),"field_fertility":field_fertility,
+		"current_day":current_day,"commissions":commissions.duplicate(true),
 		"economy":economy.snapshot()}
 
 func restore(record: Dictionary) -> bool:
@@ -341,6 +355,19 @@ func restore(record: Dictionary) -> bool:
 		if not next_economy.restore(saved_economy):
 			restore_error="invalid resource economy"
 			return false
+	var saved_day: int=int(record.get("current_day",0))
+	var saved_jobs: Variant=record.get("commissions",{})
+	if saved_day<0 or saved_day>3600000 or not (saved_jobs is Dictionary) or saved_jobs.size()>16:
+		restore_error="invalid history or commissions"
+		return false
+	for job_id in saved_jobs:
+		if String(job_id)!="farm_fertility" or not (saved_jobs[job_id] is Dictionary):
+			restore_error="invalid commission"
+			return false
+		var stage: String=String(saved_jobs[job_id].get("status",""))
+		if stage not in COMMISSIONS.STATES or int(saved_jobs[job_id].get("cycle",0))<1:
+			restore_error="invalid commission state"
+			return false
 	var saved_field: int=int(record.get("field_fertility",0))
 	if saved_field<0 or saved_field>6:
 		restore_error="invalid field fertility"
@@ -361,6 +388,8 @@ func restore(record: Dictionary) -> bool:
 	economy=next_economy
 	work_orders=saved_orders.duplicate(true)
 	field_fertility=saved_field
+	current_day=saved_day
+	commissions=saved_jobs.duplicate(true)
 	people = stored.duplicate(true)
 	events.clear()
 	for entry in history:
