@@ -26,6 +26,10 @@ var events: Array[Dictionary] = []
 var tick_count := 0
 var next_event_id := 1
 var recent_action: Dictionary = {}
+# Opt-in scene-world labor. Headless simulations preserve the original
+# deterministic immediate-work semantics for long-run and replay tests.
+var spatial_work_enabled: bool = false
+var work_orders: Dictionary = {}
 var seeded := false
 var restore_error: String = ""
 
@@ -37,6 +41,7 @@ func reset(seed_value: int) -> void:
 	people.clear()
 	events.clear()
 	recent_action.clear()
+	work_orders.clear()
 	last_scores.clear()
 	economy=ECONOMY.new()
 	tick_count = 0
@@ -78,7 +83,12 @@ func _unresolved_crime_known(p: Dictionary) -> bool:
 			return true
 	return false
 
+
 func _select(p: Dictionary) -> String:
+	# Once someone starts an actual work journey, they finish or abandon
+	# that journey rather than magically producing again on the next tick.
+	if spatial_work_enabled and work_orders.has(String(p["id"])):
+		return "work"
 	var scores: Dictionary = {}
 	for action in ["eat","rest","work","socialize","court","steal","investigate"]:
 		# Gumbel-free small bounded noise avoids action lockstep, not arbitrary decisions.
@@ -136,9 +146,14 @@ func _act(id: String, action: String) -> void:
 		"rest":
 			p["fatigue"] = maxf(0.0,float(p["fatigue"])-55.0)
 		"work":
-			if economy.work(id,String(p["role"]),p):
-				p["fatigue"] = minf(100.0,float(p["fatigue"])+12.0)
-				p["mood"] = minf(100.0,float(p["mood"])+float(p["crow"])*0.035)
+			var job_role: String = String(p["role"])
+			if spatial_work_enabled and job_role in ["farmer","baker","blacksmith"]:
+				# A work order is permission to travel and labor, not a resource
+				# transaction. Inventory changes only on physical completion.
+				if not work_orders.has(id) and economy.can_work(job_role):
+					work_orders[id] = {"role":job_role,"phase":"labor","tick":tick_count}
+			elif economy.work(id,job_role,p):
+				_finish_wage(p)
 		"socialize":
 			var other: String = _candidate(id)
 			if not other.is_empty():
@@ -179,6 +194,30 @@ func _act(id: String, action: String) -> void:
 	p["last_action"] = action
 	recent_action[id] = action
 
+func _finish_wage(p: Dictionary) -> void:
+	p["fatigue"] = minf(100.0,float(p["fatigue"])+12.0)
+	p["mood"] = minf(100.0,float(p["mood"])+float(p["crow"])*0.035)
+
+func advance_work(id: String) -> bool:
+	# The farmer must finish field labor before leaving with a visible
+	# harvest. Grain enters storage only on a separate cart delivery.
+	if not spatial_work_enabled or not work_orders.has(id): return false
+	var order: Dictionary=work_orders[id]
+	if String(order.get("role",""))!="farmer" or String(order.get("phase",""))!="labor": return false
+	order["phase"]="delivery"
+	return true
+
+func complete_work(id: String) -> bool:
+	if not spatial_work_enabled or not work_orders.has(id) or not people.has(id): return false
+	var order: Dictionary=work_orders[id]
+	var job_role: String=String(order.get("role",""))
+	var needed: String="delivery" if job_role=="farmer" else "labor"
+	if String(order.get("phase",""))!=needed or String(people[id]["role"])!=job_role: return false
+	work_orders.erase(id)
+	if not economy.work(id,job_role,people[id]): return false
+	_finish_wage(people[id])
+	return true
+
 func _stabilize_floats() -> void:
 	# JSON persistence has finite decimal precision. Quantize at each tick,
 	# rather than allowing an in-memory world to drift from its reloaded twin.
@@ -193,6 +232,11 @@ func _stabilize_floats() -> void:
 
 func step() -> void:
 	tick_count += 1
+	# A worker who cannot reach an obstructed workplace eventually gives
+	# up without manufacturing cargo. Next tick re-evaluates their needs.
+	for id in work_orders.keys():
+		if tick_count-int(work_orders[id].get("tick",tick_count))>24:
+			work_orders.erase(id)
 	# Local scarcity changes the incentives without dictating a plot. It is
 	# possible to earn money, lose customers, or become desperate later.
 	economy.tick=tick_count
@@ -229,13 +273,14 @@ func inspector(id: String) -> Dictionary:
 	return {"id":id,"person":p.duplicate(true),"ranked_actions":ranked,
 		"stocks":economy.stocks.duplicate(true),"treasury":economy.treasury,
 		"recent_transactions":economy.transactions.slice(maxi(0,economy.transactions.size()-8)),
+		"work_order":work_orders.get(id,{}).duplicate(true),
 		"tick":tick_count}
 
 func snapshot() -> Dictionary:
 	return {"version":VERSION,"tick":tick_count,"rng_state":str(rng.state),
 		"next_event_id":next_event_id,"people":people.duplicate(true),
 		"events":events.duplicate(true),"recent_action":recent_action.duplicate(true),
-		"economy":economy.snapshot()}
+		"work_orders":work_orders.duplicate(true),"economy":economy.snapshot()}
 
 func restore(record: Dictionary) -> bool:
 	restore_error = ""
@@ -278,7 +323,21 @@ func restore(record: Dictionary) -> bool:
 		if not next_economy.restore(saved_economy):
 			restore_error="invalid resource economy"
 			return false
+	var saved_orders: Variant=record.get("work_orders",{})
+	if not (saved_orders is Dictionary):
+		restore_error="invalid work orders"
+		return false
+	for id in saved_orders:
+		if not stored.has(id) or not (saved_orders[id] is Dictionary):
+			restore_error="unknown work order"
+			return false
+		var job_role: String=String(saved_orders[id].get("role",""))
+		var phase: String=String(saved_orders[id].get("phase",""))
+		if job_role not in ["farmer","baker","blacksmith"] or String(stored[id]["role"])!=job_role or phase not in ["labor","delivery"] or (phase=="delivery" and job_role!="farmer"):
+			restore_error="invalid work phase"
+			return false
 	economy=next_economy
+	work_orders=saved_orders.duplicate(true)
 	people = stored.duplicate(true)
 	events.clear()
 	for entry in history:
