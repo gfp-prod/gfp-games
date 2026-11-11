@@ -89,7 +89,7 @@ func inspect(kind: String,where: Vector3,face: int,inventory: Array) -> Dictiona
 	if kind != "floor":
 		if not parts.has(_base_key(cell)):
 			return {"ok":false,"message":"Place a stone-and-oak floor beneath it first."}
-	elif not site.x == INF:
+	elif site.x != INF:
 		if pos.distance_to(Vector3(site.x,0,site.y)) > 13.5:
 			return {"ok":false,"message":"Extend the tower near your first foundation."}
 	else:
