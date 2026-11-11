@@ -75,6 +75,10 @@ jobs:
           grep -q "PASS: authoritative clock day/night" /tmp/verba-wizard-loop.log
       - name: Social trade regression
         run: godot --headless --path . --script res://tests/social_dialogue_test.gd
+      - name: Immortal return and persistent passing time
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/survival_loop_test.gd 2>&1 | tee /tmp/verba-survival-test.log
+          grep -q "PASS: wolf pursuit, physical bite" /tmp/verba-survival-test.log
       - name: Save integrity regression
         run: godot --headless --path . --script res://tests/save_integrity_regression_test.gd
       - name: Ecology baseline
