@@ -157,6 +157,35 @@ func _run() -> void:
 	if not world.social.choose("orin",3,world.scholar,player).get("ok",false) or player.coins!=6 or economy.treasury!=funds_before-4 or int(economy.stocks["tools"])!=tools_before+1:
 		fail("Smith sale was not a finite ledger transaction")
 		return
+	# Earned coins must buy finite replacement material, or neither trade
+	# can become a sustainable profession after the first six mined ore.
+	var grain_available: int=int(economy.stocks["grain"])
+	var wood_available: int=int(economy.stocks["wood"])
+	var ore_available: int=int(economy.stocks["ore"])
+	var merchant_menu: Array=world.social.view("sela",world.scholar,player.inventory,player.coins)["options"]
+	if merchant_menu.size()!=6:
+		fail("Sela cannot sell the three real trade ingredients")
+		return
+	var treasury_before: int=economy.treasury
+	if not world.social.choose("sela",3,world.scholar,player).get("ok",false):
+		fail("Merchant did not sell grain from public stocks")
+		return
+	if not world.social.choose("sela",4,world.scholar,player).get("ok",false):
+		fail("Merchant did not sell timber for physical fires")
+		return
+	if not world.social.choose("sela",5,world.scholar,player).get("ok",false):
+		fail("Merchant did not sell ore for repeatable forging")
+		return
+	if player.coins!=2 or economy.treasury!=treasury_before+4 or int(economy.stocks["grain"])!=grain_available-1 or int(economy.stocks["wood"])!=wood_available-1 or int(economy.stocks["ore"])!=ore_available-1:
+		fail("Market transactions did not debit goods and return the exact four coins to treasury")
+		return
+	if not player.inventory.has("grain") or not player.inventory.has("wood") or not player.inventory.has("ore"):
+		fail("Purchased goods never became real carried items")
+		return
+	var unaffordable: Dictionary=world.social.view("sela",world.scholar,player.inventory,0)
+	if bool(unaffordable["options"][5].get("available",true)):
+		fail("Merchant advertised expensive goods as affordable to a broke wizard")
+		return
 	var saved: Dictionary=PERSIST.snapshot(world)
 	var restored=load("res://main.tscn").instantiate()
 	root.add_child(restored)
@@ -164,7 +193,7 @@ func _run() -> void:
 	if not PERSIST.apply_snapshot(restored,JSON.parse_string(JSON.stringify(saved))):
 		fail("Profession progression and crafted goods corrupted world save")
 		return
-	if restored.player.coins!=6 or restored.player.professions.experience!=prof.experience or int(restored.harvest_counts.get(ore_key,0))!=6:
+	if restored.player.coins!=2 or restored.player.professions.experience!=prof.experience or int(restored.harvest_counts.get(ore_key,0))!=6 or not restored.player.inventory.has("ore"):
 		fail("Crafting, mining and currency history did not persist")
 		return
 	var legacy: Dictionary=PERSIST.snapshot(restored)
