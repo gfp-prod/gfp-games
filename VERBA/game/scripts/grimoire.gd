@@ -147,6 +147,7 @@ func turn_page(dir: int) -> void:
 func update_pages() -> void:
 	if page_labels.size()<2: return
 	if scholar != null and book_cursor >= 0 and book_cursor < scholar.owned.size():
+		for label in page_labels: label.font_size = 34
 		var id: String = scholar.owned[book_cursor]
 		var volume: Dictionary = scholar.get_book(id)
 		page_labels[0].text = String(volume.get("title","Liber")) + "\n" + \
@@ -165,23 +166,45 @@ func update_pages() -> void:
 				"\n" + study_feedback
 		return
 	for side in range(2):
+		# The Latin lexicon has longer definitions than the graded story text.
+		# Its smaller type and hard word-wrap must fit the physical vellum.
+		page_labels[side].font_size = 27
 		var line := ""
 		if side == 0:
-			line = "L I B E R   V E R B O R U M\n\n"
+			line = "LIBER VERBORUM\n\n"
 		else:
-			line = "M E M O R I A    •    %d\n\n" % total_casts
+			line = "MEMORIA  •  %d\n\n" % total_casts
 		for i in range(2):
 			var idx := page_index*4+side*2+i
 			if idx>=learned.size(): continue
 			var w: String=learned[idx]
 			var def: Dictionary=lexicon.get(w,{})
-			line += w.to_upper()+"\n"+String(def.get("meaning","?"))+"\n\n"
+			line += w.to_upper()+"\n"+_ink_wrap(String(def.get("meaning","?")),22)+"\n\n"
 		if side == 1:
 			line += "─────\n"+str(page_index+1)+" / "+str(maxi(1,ceili(float(learned.size())/4.0)))
-			line += "\nB: Books   S: Save   L: Load"
+			line += "\nB: Books   S: Save\nL: Load"
 			if scholar != null:
 				line += "\nScholar " + str(scholar.level) + " XP " + str(scholar.xp) + "/" + str(scholar.next_level_xp()) + "\nMana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana))
 		page_labels[side].text=line
+
+func _ink_wrap(paragraph: String, max_columns: int) -> String:
+	# Real page-space column limit. Label3D has no reliable automatic
+	# wrapping on a changing, curved first-person book surface.
+	var result: PackedStringArray = PackedStringArray()
+	for paragraph_line in paragraph.split("\n"):
+		var current: String = ""
+		for raw_word in paragraph_line.split(" ",false):
+			var word: String = String(raw_word)
+			if current.is_empty():
+				current = word
+			elif current.length()+1+word.length() <= max_columns:
+				current += " "+word
+			else:
+				result.append(current)
+				current = word
+		if not current.is_empty(): result.append(current)
+		elif paragraph_line.is_empty(): result.append("")
+	return "\n".join(result)
 
 func mark_cast(word: String) -> bool:
 	total_casts += 1
