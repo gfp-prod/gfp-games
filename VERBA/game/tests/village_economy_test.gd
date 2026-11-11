@@ -30,7 +30,7 @@ func _run() -> void:
 	if not restored.restore(JSON.parse_string(JSON.stringify(before))):
 		_fail("JSON economic restore failed")
 		return
-	if JSON.stringify(restored.snapshot())!=JSON.stringify(JSON.parse_string(JSON.stringify(before))):
+	if JSON.stringify(JSON.parse_string(JSON.stringify(restored.snapshot())))!=JSON.stringify(JSON.parse_string(JSON.stringify(before))):
 		_fail("Economic save/load changed resource ledger")
 		return
 	var corrupted: Dictionary=e.snapshot()
