@@ -362,10 +362,12 @@ func inspect_workplace(kind: String) -> String:
 func refresh_from_economy(force: bool=false) -> void:
 	if world == null or world.village_sim == null: return
 	var economy = world.village_sim.economy
+	var baker_magic: bool=world.player!=null and int(world.player.professions.charged_hearths.get("baker",0))>0
+	var smith_magic: bool=world.player!=null and int(world.player.professions.charged_hearths.get("blacksmith",0))>0
 	var sig: String="%d:%d:%d:%d:%d" % [
 		int(economy.stocks["grain"]),int(economy.stocks["bread"]),
 		int(economy.stocks["tools"]),int(economy.stocks["ore"]),
-		int(economy.stocks["wood"])] + ":%d" % int(world.village_sim.field_fertility)
+		int(economy.stocks["wood"])] + ":%d:%d:%d" % [int(world.village_sim.field_fertility),int(baker_magic),int(smith_magic)]
 	if not force and sig==prior_signature: return
 	prior_signature=sig
 	# Scale actual planted stalks, not a disconnected glow decal.
@@ -382,12 +384,18 @@ func refresh_from_economy(force: bool=false) -> void:
 		for i in range(nodes.size()):
 			var node: Node3D=nodes[i]
 			node.visible = i<shown
-	var baking: bool=economy.can_work("baker")
-	var smithing: bool=economy.can_work("blacksmith")
+	var baking: bool=economy.can_work("baker") or baker_magic
+	var smithing: bool=economy.can_work("blacksmith") or smith_magic
 	production_lamps["baker"].visible=baking
 	production_lamps["baker_light"].visible=baking
 	production_lamps["blacksmith"].visible=smithing
 	production_lamps["blacksmith_light"].visible=smithing
+	# A bound magical hearth glows pale-violet instead of an ordinary amber
+	# fire. Preparing spells thus has a visible, persistent world consequence.
+	production_lamps["baker_light"].light_color=Color("b8b7f4") if baker_magic else Color("ffc483")
+	production_lamps["baker_light"].light_energy=.95 if baker_magic else .56
+	production_lamps["blacksmith_light"].light_color=Color("b8b7f4") if smith_magic else Color("ffc78a")
+	production_lamps["blacksmith_light"].light_energy=1.04 if smith_magic else .64
 
 func _process(delta: float) -> void:
 	refresh_elapsed+=delta
