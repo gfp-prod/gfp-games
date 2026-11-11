@@ -34,19 +34,21 @@ func _ready() -> void:
 	ART.box(stone,Vector3(0,.09,0),Vector3(1.00,.18,.50),granite)
 	inscription=Label3D.new()
 	inscription.name="LatinForestInscription"
-	inscription.text="SILVA\nTRANS RIVUM"
-	inscription.font_size=32
-	inscription.pixel_size=.0035
+	# Three short carved lines fit the slab at oblique viewing angles;
+	# never use a free-facing billboard that can intersect the stone.
+	inscription.text="SILVA\nTRANS\nRIVUM"
+	inscription.font_size=34
+	inscription.pixel_size=.0028
 	inscription.modulate=Color("413b34")
 	inscription.outline_modulate=Color("28251f")
 	inscription.outline_size=4
-	inscription.billboard=BaseMaterial3D.BILLBOARD_ENABLED
+	inscription.billboard=BaseMaterial3D.BILLBOARD_DISABLED
 	inscription.no_depth_test=false
-	inscription.position=Vector3(0,.82,-.21)
+	inscription.position=Vector3(0,.81,-.176)
 	add_child(inscription)
 	ember=OmniLight3D.new()
 	ember.name="RememberedWayGlow"
-	ember.position=Vector3(0,1.1,-.30)
+	ember.position=Vector3(0,1.04,-.32)
 	ember.light_color=Color("e0c38c")
 	ember.light_energy=.7
 	ember.omni_range=3.2
