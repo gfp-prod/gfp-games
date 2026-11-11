@@ -152,8 +152,8 @@ static func make_herb_sprigs() -> ArrayMesh:
 			var base := Vector3.UP*(.075+t*.26)+axis*(.06+t*.08)
 			var tip := base+axis*.10+Vector3.UP*.095
 			for direction in [-1.0,1.0]:
-				var end := tip+side*direction*.067
-				for v in [base-side*direction*.029,base+side*direction*.029,end]:
+				var leaf_end: Vector3 = tip + side*float(direction)*.067
+				for v in [base-side*float(direction)*.029,base+side*float(direction)*.029,leaf_end]:
 					st.set_color(Color("71875f").lerp(Color("b1b78a"),t*.48))
 					st.add_vertex(v)
 	st.generate_normals()
