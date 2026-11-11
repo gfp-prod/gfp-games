@@ -224,7 +224,7 @@ func create_first_steps() -> void:
 	head.add_theme_color_override("font_color", Color("f0d9ad"))
 	v.add_child(head)
 	var sub := Label.new()
-	sub.text = "WASD move · Mouse look · E interact\nG grimoire · B books · N study\n1-3 answers/dialogue · Enter cast · H help"
+	sub.text = "WASD move · Mouse look · E interact\nG grimoire · B books · N study\n1-3 answers/dialogue · Enter cast\nC familiar orders · H help"
 	sub.add_theme_font_size_override("font_size", 14)
 	sub.add_theme_color_override("font_color", Color("ded6bf"))
 	v.add_child(sub)
@@ -420,6 +420,10 @@ func _input(event: InputEvent) -> void:
 	elif event.keycode==KEY_E:
 		interact()
 		get_viewport().set_input_as_handled()
+	elif event.keycode==KEY_C:
+		var order: Dictionary = world.cycle_familiar_order()
+		say_world(String(order.get("message","")),camera.global_position-camera.global_transform.basis.z*2.3,Color("c2d4b8"))
+		get_viewport().set_input_as_handled()
 	elif event.keycode==KEY_F:
 		use_item()
 		get_viewport().set_input_as_handled()
@@ -485,7 +489,13 @@ func _process(delta: float) -> void:
 		if nearest.has("entity") and nearest["entity"]!=null:
 			var n=nearest["entity"]
 			if n.has_method("is_talkable"): interaction_hint.text="E  ·  Speak with "+n.display_name
-			elif n.has_method("afflict"): interaction_hint.text=n.species.capitalize()+"  ·  Enter to cast"
+			elif n.has_method("afflict"):
+				if String(n.persistent_id) == world.familiar_id:
+					interaction_hint.text="Your familiar  ·  C orders / Enter Latin"
+				elif world.familiar_id.is_empty() and n.species in ["hare","crow"]:
+					interaction_hint.text="E  ·  Befriend "+n.species+"  /  Enter cast"
+				else:
+					interaction_hint.text=n.species.capitalize()+"  ·  Enter to cast"
 			elif n.has_method("get_state_report"): interaction_hint.text=n.get_state_report()
 			elif n.has_method("setup") and n.item_type=="leaf": interaction_hint.text="E  ·  Study manuscript leaf"
 			elif n.has_method("setup") and n.item_type=="book": interaction_hint.text="E  ·  Read Latin volume"
@@ -535,6 +545,11 @@ func interact() -> void:
 	if n==null or not is_instance_valid(n): return
 	if n.has_method("is_talkable"):
 		begin_conversation(n)
+		return
+	if n.has_method("afflict"):
+		var bond: Dictionary = world.bond_animal(n)
+		say_world(String(bond.get("message","")),camera.global_position-camera.global_transform.basis.z*2.5,
+			Color("c3d3a0") if bool(bond.get("ok",false)) else Color("c3a18b"))
 		return
 	if n.has_method("setup") and n.has_method("_process") and n.has_method("_ready") and n.get("item_type")!=null:
 		world.collect(n)
