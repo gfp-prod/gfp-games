@@ -15,6 +15,7 @@ const SIM_OBJECT = preload("res://scripts/sim_object.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
 const COTTAGE_HERO = preload("res://scripts/cottage_hero.gd")
+const LANDMARK_TREE = preload("res://scripts/landmark_tree.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
@@ -557,6 +558,11 @@ func build_forest() -> void:
 		spawn_tree(Vector3(p.x,height_at(p.x,p.y),p.y),
 			"broadleaf",1.14 if p.x < 0.0 else 1.03)
 	spawn_tree(Vector3(-37,height_at(-37,31),31),"dead",1.25)
+	# A single visually distinctive weeping ash on the creek bank.
+	# Its sim object and trunk collider are handled by spawn_tree as normal.
+	var willow_z: float = 7.0
+	var willow_x: float = stream_x(willow_z)-4.9
+	spawn_tree(Vector3(willow_x,height_at(willow_x,willow_z),willow_z),"willow",1.07)
 
 
 func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
@@ -578,6 +584,9 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 	var source_name: String
 	var target_height: float
 	match kind:
+		"willow":
+			source_name = ""
+			target_height = 7.2
 		"autumn":
 			var variants: Array[String] = ["MapleTree_1.gltf","MapleTree_2.gltf","MapleTree_3.gltf"]
 			source_name=variants[r.randi_range(0,variants.size()-1)]
@@ -589,7 +598,12 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 			source_name="BirchTree_1.gltf" if r.randf()<0.5 else "BirchTree_3.gltf"
 			target_height=7.1
 	var path: String="res://assets/models/cc0/nature/"+source_name
-	var attached: bool=EXTERNAL_ART.attach_scaled(node,path,target_height)
+	var attached: bool = false
+	if kind == "willow":
+		LANDMARK_TREE.decorate(node)
+		attached = true
+	else:
+		attached = EXTERNAL_ART.attach_scaled(node,path,target_height)
 	if attached and kind != "dead":
 		# Quaternius alpha foliage is excellent geometry but its raw neon
 		# yellow/salmon palette looked too toy-like in our actual Godot footage.
@@ -633,7 +647,7 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 	var shape:=CollisionShape3D.new()
 	var cylinder:=CylinderShape3D.new()
 	cylinder.height=4.7
-	cylinder.radius=.43 if kind=="autumn" else .29
+	cylinder.radius=.61 if kind=="willow" else .43 if kind=="autumn" else .29
 	shape.shape=cylinder
 	shape.position.y=2.35
 	collider.add_child(shape)
