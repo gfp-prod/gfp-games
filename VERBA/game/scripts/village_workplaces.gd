@@ -110,6 +110,8 @@ func _build_fields() -> void:
 	# Seed cart and real sacks are outside the 4m-by-7m field.
 	var cart := _site("DaroGrainCart",13.0,23.0)
 	ART.box(cart,Vector3(0,.53,0),Vector3(2.0,.22,1.2),dark_wood)
+	world.add_solid_box(cart,Vector3(0,.49,0),Vector3(1.99,.87,1.16),"PhysicalHarvestCart")
+	world.navigation_blockers.append(cart.global_position)
 	for x in [-.83,.83]:
 		for z in [-.52,.52]:
 			ART.bone(cart,Vector3(x,.13,z),Vector3(x,.56,z),.07,.065,dark_wood,8)
@@ -137,6 +139,8 @@ func _build_bakery() -> void:
 	var wheat := ART.mat(Color("d5bd86"),.94)
 	# Distinct domed kiln with a dark opening, chimney and peel rack.
 	ART.box(bakery,Vector3(.05,.33,.28),Vector3(2.45,.61,2.2),masonry)
+	world.add_solid_box(bakery,Vector3(.05,1.12,.29),Vector3(2.35,2.18,2.15),"PhysicalBakeOven")
+	world.navigation_blockers.append(bakery.global_position)
 	# A true hemisphere, not the full stone sphere that made the oven look
 	# like a loose boulder placed on a rectangular table.
 	var dome:=MeshInstance3D.new()
@@ -162,6 +166,8 @@ func _build_bakery() -> void:
 	# finite bakery stock each frame, but no new physical pickups are minted.
 	var stand := _site("IdaBreadCounter",6.7,13.7)
 	ART.box(stand,Vector3(0,.84,0),Vector3(2.05,.17,1.04),wood)
+	world.add_solid_box(stand,Vector3(0,.61,0),Vector3(2.0,1.08,1.0),"PhysicalBreadCounter")
+	world.navigation_blockers.append(stand.global_position)
 	for x in [-.89,.89]:
 		for z in [-.37,.37]:
 			ART.bone(stand,Vector3(x,.06,z),Vector3(x,.83,z),.073,.06,wood,7)
@@ -184,6 +190,8 @@ func _build_forge() -> void:
 	var glow := ART.mat(Color("e2a05f"),.35,Color("a65a30"))
 	var leather := ART.mat(Color("b5a17c"),.95)
 	ART.box(forge,Vector3(.0,.48,.47),Vector3(2.25,.93,1.27),stone)
+	world.add_solid_box(forge,Vector3(0,.92,.47),Vector3(2.19,1.75,1.25),"PhysicalCoalForge")
+	world.navigation_blockers.append(forge.global_position)
 	ART.box(forge,Vector3(.0,1.17,.54),Vector3(2.32,.48,.75),stone)
 	var coal := ART.box(forge,Vector3(0,.86,-.23),
 		Vector3(1.35,.14,.44),glow)
@@ -193,6 +201,7 @@ func _build_forge() -> void:
 	var anvil := _site("OrinAnvilAndToolRack",19.8,16.45)
 	ART.bone(anvil,Vector3(0,.08,0),Vector3(0,.78,0),.24,.20,timber,10)
 	ART.box(anvil,Vector3(0,.9,0),Vector3(1.33,.25,.61),iron)
+	world.add_solid_box(anvil,Vector3(0,.62,0),Vector3(1.32,.96,.60),"PhysicalAnvil")
 	ART.cone(anvil,Vector3(.82,.90,0),.26,.22,iron,.03,9)
 	ART.bone(anvil,Vector3(1.3,.17,-.8),Vector3(1.3,2.2,-.8),.07,.067,timber,8)
 	ART.bone(anvil,Vector3(1.3,2.14,-.8),Vector3(1.3,2.14,1.0),.07,.067,timber,8)
