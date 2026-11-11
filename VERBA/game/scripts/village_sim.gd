@@ -197,11 +197,10 @@ func step() -> void:
 	economy.tick=tick_count
 	if tick_count % 19 == 0:
 		var lost: int=economy.shortage("grain",rng.randi_range(2,5))
-		var affected: String = _candidate("")
-		if not affected.is_empty():
-			people[affected]["wealth"] = maxi(0,int(people[affected]["wealth"])-rng.randi_range(5,11))
-			people[affected]["mood"] = maxf(0.0,float(people[affected]["mood"])-12.0)
-			_event("shortage",affected,"",lost)
+		if lost>0:
+			# A harvest loss is an actual grain deficit; the baker feels it.
+			people["ida"]["mood"]=maxf(0.0,float(people["ida"]["mood"])-12.0)
+			_event("shortage","daro","ida",lost)
 	var ordered: Array = people.keys()
 	ordered.sort()
 	for id in ordered:
