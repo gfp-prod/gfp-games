@@ -240,9 +240,9 @@ func apply_pose(alpha: float) -> void:
 	# The player starts empty-handed. Book comes up from below eye-line.
 	# A smaller, tilted book reads as a volume held in the player's hands.
 	# The former full-screen pages resembled two yellow UI panels.
-	book.position=Vector3(.39,-1.11,-.91).lerp(Vector3(.005,-.17,-1.02),alpha)
-	book.rotation=Vector3(.66,-.35,-.20).lerp(Vector3(-.26,-.026,.014),alpha)
-	book.scale=Vector3.ONE * lerpf(.67,.96,alpha)
+	book.position=Vector3(.39,-1.11,-.91).lerp(Vector3(.005,-.24,-1.02),alpha)
+	book.rotation=Vector3(.66,-.35,-.20).lerp(Vector3(-.39,-.026,.014),alpha)
+	book.scale=Vector3.ONE * lerpf(.67,.88,alpha)
 	book.visible = alpha > .005
 	# At halfway the covers fold outward. The two GLB versions give a genuinely
 	# physical model throughout the animation instead of a static UI card.
