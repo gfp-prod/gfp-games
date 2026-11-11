@@ -138,7 +138,8 @@ func restore(data: Dictionary) -> bool:
 	var saved: Variant=data.get("experience",{})
 	var flames: Variant=data.get("charged_hearths",{})
 	if not (saved is Dictionary) or not (flames is Dictionary): return false
-	var out_x: Dictionary={},out_f: Dictionary={}
+	var out_x: Dictionary={}
+	var out_f: Dictionary={}
 	for career in ["baker","blacksmith"]:
 		if not saved.has(career) or not flames.has(career): return false
 		var xp: int=int(saved[career])
