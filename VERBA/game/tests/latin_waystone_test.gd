@@ -1,0 +1,67 @@
+extends SceneTree
+## A learned, spoken Latin direction changes a real physical object in the
+## valley; its state is derived from existing social memory, not duplicated.
+const PERSIST=preload("res://scripts/world_persistence.gd")
+
+func _initialize() -> void:
+	call_deferred("_run")
+
+func _fail(reason: String) -> void:
+	push_error("Latin waystone: "+reason)
+	quit(1)
+
+func _run() -> void:
+	var world=load("res://main.tscn").instantiate()
+	root.add_child(world)
+	await process_frame
+	var stone=world.forest_waystone
+	if stone==null or stone.inscription==null or stone.ember==null:
+		_fail("Mara's world stone does not exist")
+		return
+	var collider=stone.find_child("CollidableWaystone",true,false) as StaticBody3D
+	if collider==null or collider.get_child_count()==0 or collider.collision_layer!=16:
+		_fail("The stone is not collidable physical scenery")
+		return
+	if stone.revealed or stone.ember.visible:
+		_fail("The forest inscription was revealed before language understanding")
+		return
+	var prior: Dictionary=world.social.speak("mara","Ubi est silva?",world.scholar,world.player)
+	stone.update_from_knowledge()
+	if bool(prior.get("ok",false)) or stone.revealed or stone.ember.visible:
+		_fail("Guessing an unstudied phrase revealed the ancient route")
+		return
+	if not world.scholar.collect_book("de_herbis") or not bool(world.scholar.answer("de_herbis",0).get("first_time",false)):
+		_fail("The real beginner manuscript cannot be understood")
+		return
+	var answer: Dictionary=world.social.speak("mara","Silva est ubi?",world.scholar,world.player)
+	if not bool(answer.get("ok",false)):
+		_fail("The world did not recognize the same valid Latin question in free order")
+		return
+	stone.update_from_knowledge()
+	if not stone.revealed or not stone.ember.visible:
+		_fail("Mara's Latin directions did not illuminate the physical waystone")
+		return
+	var past: Dictionary=world.social.memory("mara")
+	if not past.get("topics",[]).has("forest") or int(past.get("rapport",0))!=1:
+		_fail("The revealed waystone is not grounded in a one-time social fact")
+		return
+	world.social.speak("mara","Ubi est silva?",world.scholar,world.player)
+	stone.update_from_knowledge()
+	if int(world.social.memory("mara").get("rapport",0))!=1:
+		_fail("Repeated speech exploits the social relationship")
+		return
+	var saved: Dictionary=PERSIST.snapshot(world)
+	world.social.memories.clear()
+	stone.update_from_knowledge()
+	if stone.revealed or stone.ember.visible:
+		_fail("The waystone retained an out-of-sync local state")
+		return
+	if not PERSIST.apply_snapshot(world,JSON.parse_string(JSON.stringify(saved))):
+		_fail("The real valley cannot reload its learned language encounter")
+		return
+	stone.update_from_knowledge()
+	if not stone.revealed or not stone.ember.visible:
+		_fail("The visible world forgot Mara's advice across save/load")
+		return
+	print("PASS: understood Latin reveals collidable forest waystone, resists guessing and repetition, persists through unified social save")
+	quit(0)
