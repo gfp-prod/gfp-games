@@ -26,7 +26,7 @@ static func _add_creek_bridge(world: Node3D,root: Node3D) -> void:
 	timber.uv1_scale=Vector3(1.4,2.5,2.5)
 	var darkwood: StandardMaterial3D = world.textured(
 		"res://assets/textures/cottage_wood.png",Color("514b40"))
-	var rope := ART.mat(Color("7e7055"),.98)
+	var rope := ART.mat(Color("5d5848"),.99)
 	var iron := ART.mat(Color("464a46"),.68)
 	iron.metallic = .43
 	# The bridge extends from one real bank to the other. All planks align
@@ -44,16 +44,21 @@ static func _add_creek_bridge(world: Node3D,root: Node3D) -> void:
 				var zpost: float = railing*1.13
 				ART.bone(bridge,Vector3(xx,-.12,zpost),
 					Vector3(xx,.91,zpost),.07,.065,darkwood,9)
-				ART.orb(bridge,Vector3(xx,.93,zpost),
-					Vector3(.085,.074,.085),iron,9)
+				ART.cone(bridge,Vector3(xx,.94,zpost),
+					.10,.14,darkwood,.034,8)
 	# Continuous dark support beams under the planks and handrails over the
 	# narrow crossing (rails stay low enough to keep the water visible).
 	for sign in [-1.0,1.0]:
 		var edge_z: float = sign*1.03
 		ART.bone(bridge,Vector3(-6.5,-.23,edge_z),
 			Vector3(6.5,-.23,edge_z),.105,.09,darkwood,9)
-		ART.bone(bridge,Vector3(-6.3,.71,sign*1.13),
-			Vector3(6.3,.71,sign*1.13),.045,.045,rope,9)
+	# Sagging hand-tied rope spans the five support posts; a single batched
+	# mesh replaces the two implausibly straight, bright crossing rails.
+	var handrope := MeshInstance3D.new()
+	handrope.name="TiedAndSaggingRopeHandrails"
+	handrope.mesh=_bridge_handrope_mesh()
+	handrope.material_override=rope
+	bridge.add_child(handrope)
 	world.add_solid_box(bridge,Vector3(0,-.13,0),
 		Vector3(12.8,.32,2.20),"CrossableBridgeDeck")
 	# Warm stone abutments partly embedded in the banks. Their size gives
@@ -64,6 +69,36 @@ static func _add_creek_bridge(world: Node3D,root: Node3D) -> void:
 		for dz in [-.86,.85]:
 			ART.stone(root,Vector3(endpoint_x,y+.04,z+dz),
 				Vector3(.55,.22,.57),world.stone_mat)
+
+static func _bridge_handrope_mesh() -> ArrayMesh:
+	# Rope sags gently between upright supports, with enough polygon sections
+	# to keep its thin silhouette intact from either bank.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for sign in [-1.0,1.0]:
+		for span in range(4):
+			var ax: float = (float(span*4)-8.5)*.71
+			var bx: float = (float((span+1)*4)-8.5)*.71
+			for segment in range(9):
+				var ta: float = float(segment)/9.0
+				var tb: float = float(segment+1)/9.0
+				var a := Vector3(lerpf(ax,bx,ta),
+					.82-.13*sin(ta*PI),sign*1.13)
+				var b := Vector3(lerpf(ax,bx,tb),
+					.82-.13*sin(tb*PI),sign*1.13)
+				var tangent: Vector3 = (b-a).normalized()
+				var cross: Vector3 = tangent.cross(Vector3.UP).normalized()
+				var upper: Vector3 = tangent.cross(cross).normalized()
+				for side in range(7):
+					var angle0: float = TAU*float(side)/7.0
+					var angle1: float = TAU*float(side+1)/7.0
+					var ra: Vector3 = cross*cos(angle0)*.025+upper*sin(angle0)*.025
+					var rb: Vector3 = cross*cos(angle1)*.025+upper*sin(angle1)*.025
+					for vertex in [a+ra,b+ra,a+rb,b+ra,b+rb,a+rb]:
+						st.add_vertex(vertex)
+	st.generate_normals()
+	return st.commit()
+
 
 static func _wildflower_mesh() -> ArrayMesh:
 	# Each bloom is true 3D; five modest petals, 2 slender leaves and stem.
