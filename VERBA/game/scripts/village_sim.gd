@@ -61,7 +61,7 @@ func _score(p: Dictionary, action: String) -> float:
 		"work": return 15.0 + crow*32.0 + (8.0 if int(p["wealth"]) < 4 else 0.0) - float(p["fatigue"])*0.30
 		"socialize": return float(p["loneliness"])*0.80 + cat*22.0 - float(p["fatigue"])*0.12
 		"court": return float(p["loneliness"])*0.58 + cat*25.0 + wolf*8.0 - (22.0 if not String(p["spouse"]).is_empty() else 0.0)
-		"steal": return (22.0 if int(p["wealth"]) < 3 else -25.0) + wolf*20.0 - crow*14.0
+		"steal": return (46.0 if int(p["wealth"]) < 3 else -25.0) + wolf*28.0 - crow*14.0
 		"investigate": return 18.0 + wolf*30.0 if String(p["role"])=="guard" and _unresolved_crime_known(p) else -1.0
 	return -1.0
 
@@ -171,6 +171,14 @@ func _act(id: String, action: String) -> void:
 
 func step() -> void:
 	tick_count += 1
+	# Local scarcity changes the incentives without dictating a plot. It is
+	# possible to earn money, lose customers, or become desperate later.
+	if tick_count % 19 == 0:
+		var affected: String = _candidate("")
+		if not affected.is_empty():
+			people[affected]["wealth"] = maxi(0,int(people[affected]["wealth"])-rng.randi_range(5,11))
+			people[affected]["mood"] = maxf(0.0,float(people[affected]["mood"])-12.0)
+			_event("shortage",affected)
 	var ordered: Array = people.keys()
 	ordered.sort()
 	for id in ordered:
