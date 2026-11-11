@@ -3,8 +3,10 @@ extends RefCounted
 ## Stored state contains data only, so it survives Godot scene rebuilds.
 const BOOK_PATH: String = "res://data/books.json"
 const GRAMMAR = preload("res://scripts/latin_grammar.gd")
+const LATIN_PRACTICE = preload("res://scripts/latin_practice.gd")
 
 var books: Dictionary = {}
+var practice = LATIN_PRACTICE.new()
 var owned: Array[String] = []
 var completed: Array[String] = []
 var studied_forms: Array[String] = ["ignis","cresce","pluvia","lux","veni","dormi"]
@@ -82,8 +84,12 @@ func cost_for(spoken_form: String) -> float:
 	if String(parsed.get("form",""))=="composed imperative":
 		# The first compositional spell is earned through actual manuscript study.
 		if not studied_forms.has(command): return INF
-		return 9.0 + (3.0 if not String(parsed.get("modifier","")).is_empty() else 0.0)
-	return 7.0 if studied_forms.has(command) else 16.0
+		var base: float=9.0+(3.0 if not String(parsed.get("modifier","")).is_empty() else 0.0)
+		return base-(1.0 if practice.mastery(command)>=3 else 0.0)
+	var base: float=7.0 if studied_forms.has(command) else 16.0
+	# A small tangible advantage after actual delayed typed recall, not
+	# after simply clicking vocabulary or advancing the game calendar.
+	return base-(1.0 if practice.mastery(command)>=3 else 0.0)
 
 func can_cast(spoken_form: String) -> bool:
 	return mana >= cost_for(spoken_form)
@@ -100,7 +106,8 @@ func regenerate(delta: float) -> void:
 func snapshot() -> Dictionary:
 	return {"level":level,"xp":xp,"mana":mana,"max_mana":max_mana,
 		"owned":owned.duplicate(),"completed":completed.duplicate(),
-		"studied_forms":studied_forms.duplicate(),"subjects":subjects.duplicate()}
+		"studied_forms":studied_forms.duplicate(),"subjects":subjects.duplicate(),
+		"practice":practice.snapshot()}
 
 func restore(data: Dictionary) -> void:
 	# Ignore unknown books and reject invented saved words.
@@ -123,3 +130,8 @@ func restore(data: Dictionary) -> void:
 	for id in completed:
 		var topic: String = String(books[id]["subject"])
 		subjects[topic] = int(subjects.get(topic,0)) + 1
+	# Existing saves without practice history get a fresh, unlocked review
+	# deck; malformed progress cannot create fake wizard mastery bonuses.
+	var stored_practice: Variant=data.get("practice",{})
+	if not (stored_practice is Dictionary) or not practice.restore(stored_practice):
+		practice.restore({})
