@@ -167,7 +167,7 @@ static func _add_door(house: Node3D,wood: Material,soot: Material,metal: Materia
 		var h: float = 2.35 - .10*absf(float(i)-2.0)
 		ART.box(house,Vector3(x,.23+h*.5,2.69),
 			Vector3(.205,h,.10),wood,
-			Vector3(0,radians(sin(float(i)*1.75)*1.9),0))
+			Vector3(0,deg_to_rad(sin(float(i)*1.75)*1.9),0))
 	ART.bone(house,Vector3(center-.66,.18,2.77),
 		Vector3(center-.66,2.53,2.77),.11,.105,soot,8)
 	ART.bone(house,Vector3(center+.65,.18,2.77),
