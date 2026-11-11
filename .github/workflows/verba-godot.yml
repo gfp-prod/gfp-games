@@ -65,6 +65,10 @@ jobs:
           grep -q "PASS: study-gated plural Latin" /tmp/verba-field-test.log
       - name: Latin compositional spells
         run: godot --headless --path . --script res://tests/latin_composition_test.gd
+      - name: Apprenticeship and real commissioned Latin harvest loop
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/wizard_commission_loop_test.gd 2>&1 | tee /tmp/verba-wizard-loop.log
+          grep -q "PASS: authoritative clock day/night" /tmp/verba-wizard-loop.log
       - name: Social trade regression
         run: godot --headless --path . --script res://tests/social_dialogue_test.gd
       - name: Save integrity regression
