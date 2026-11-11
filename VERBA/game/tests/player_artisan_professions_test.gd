@@ -39,9 +39,22 @@ func _run() -> void:
 	player.global_position=Vector3(8.9,world.height_at(8.9,14.2)+.2,14.2)
 	prepare(player,["grain","wood"])
 	var stamina_before: float=player.stamina
-	var first: Dictionary=prof.craft("bakery",player)
-	if not first.get("ok",false) or not player.inventory.has("bread") or player.inventory.has("grain") or player.inventory.has("wood"):
-		fail("Oven didn't convert real grain and fuel into a carried loaf")
+	# Prove the ordinary player-facing F key reaches the physical oven,
+	# not merely the headless career calculation.
+	await physics_frame
+	player.camera.look_at(oven.global_position+Vector3.UP*1.0,Vector3.UP)
+	await physics_frame
+	var aim: Dictionary=player.look_hit(4.5)
+	var aimed_object=aim.get("entity",null)
+	if aimed_object==null or not aimed_object.has_meta("workplace_kind") or String(aimed_object.get_meta("workplace_kind"))!="bakery":
+		fail("First-person eye ray cannot actually reach the oven collider")
+		return
+	var f_key:=InputEventKey.new()
+	f_key.keycode=KEY_F
+	f_key.pressed=true
+	player._input(f_key)
+	if not player.inventory.has("bread") or player.inventory.has("grain") or player.inventory.has("wood"):
+		fail("Pressing real F at the oven did not make a carried loaf")
 		return
 	if prof.experience["baker"]!=1 or absf(player.stamina-(stamina_before-18.0))>.01:
 		fail("Physical baking did not spend correct stamina or gain profession skill")
