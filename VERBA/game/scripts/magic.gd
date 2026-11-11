@@ -28,6 +28,28 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 	word = String(parsed.get("surface",word))
 	if String(parsed.get("form",""))=="composed imperative":
 		return cast_composed(parsed,eye,target)
+	# Crops are planted terrain meshes, not unrelated magical foliage. A
+	# targeted Latin growth command now nurtures Daro\u0027s *actual* field,
+	# and its potential is paid out only after a farmer delivers the crop.
+	var farm_point: Vector3=target.get("position",eye+Vector3.FORWARD*5.0)
+	if String(parsed.get("effect",""))=="grow" and target.get("entity",null)==null and world.workplaces!=null and world.workplaces.is_field_target(farm_point):
+		if eye.distance_to(farm_point)>16.0:
+			return {"ok":false,"message":"The field is beyond your voice."}
+		var field_command: String=String(parsed["command"])
+		var field_growth: int=1
+		if field_command=="crescite":
+			# The plural harvest command has to be learned from the physical
+			# botany book; repeating an unknown verb should not skip study.
+			if not world.scholar.completed.has("de_herbis"):
+				return {"ok":false,"message":"Study De Herbis before addressing the whole field."}
+			field_growth=2
+		var applied: int=world.village_sim.bless_field(field_growth)
+		if applied<=0:
+			return {"ok":false,"message":"The furrows cannot hold more growth. Let Daro bring in the harvest."}
+		world.workplaces.refresh_from_economy(true)
+		cast_count+=1
+		return {"ok":true,"message":"The stalks grow taller. %d extra grain awaits Daro\u0027s next delivery." % applied,
+			"point":farm_point,"word":word,"remember_word":field_command,"wild":""}
 	if word.contains(" ") or String(parsed.get("number","singular")) == "plural":
 		var place: Vector3 = target.get("position",eye + Vector3.FORWARD * 5.0)
 		var actor: Node3D = target.get("entity",null)
