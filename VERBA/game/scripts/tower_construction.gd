@@ -7,8 +7,16 @@ const LIMIT: float = 58.0
 const COSTS: Dictionary = {
 	"floor": {"stone": 1, "wood": 1},
 	"wall": {"wood": 2},
-	"shelf": {"wood": 1}
+	"shelf": {"wood": 1},
+	"door": {"wood": 2},
+	"upper_floor": {"stone": 1, "wood": 2},
+	"upper_wall": {"wood": 2},
+	"stairs": {"wood": 3},
+	"roof": {"wood": 3},
+	"lamp": {"wood": 1, "amber": 1}
 }
+const UPPER_LEVEL: float = 3.0
+const BUILD_ORDER: Array[String] = ["floor","wall","door","shelf","upper_floor","upper_wall","stairs","roof","lamp"]
 var world
 var root: Node3D
 var parts: Dictionary = {}
@@ -26,10 +34,20 @@ func _cell_at(point: Vector3) -> Vector2i:
 
 func _key(kind: String,cell: Vector2i,side: int) -> String:
 	# Godot node names cannot contain colons; use stable filename-safe IDs.
-	return "%s_%d_%d_%d" % [kind,cell.x,cell.y,side if kind == "wall" else 0]
+	return "%s_%d_%d_%d" % [kind,cell.x,cell.y,side if kind in ["wall","door","upper_wall","stairs"] else 0]
 
 func _base_key(cell: Vector2i) -> String:
 	return _key("floor",cell,0)
+
+func _upper_key(cell: Vector2i) -> String:
+	return _key("upper_floor",cell,0)
+
+func _direction(face: int) -> Vector2i:
+	match posmod(face,4):
+		0: return Vector2i(0,1)
+		1: return Vector2i(1,0)
+		2: return Vector2i(0,-1)
+		_: return Vector2i(-1,0)
 
 func _world_pos(cell: Vector2i) -> Vector3:
 	return Vector3(float(cell.x)*CELL,0.0,float(cell.y)*CELL)
@@ -46,8 +64,8 @@ func _part_center(kind: String,cell: Vector2i,side: int) -> Vector3:
 	var point: Vector3 = _world_pos(cell)
 	var y: float = _floor_y(cell)
 	match kind:
-		"wall":
-			point.y = y+1.42
+		"wall","door","upper_wall":
+			point.y = y+1.42+(UPPER_LEVEL if kind=="upper_wall" else 0.0)
 			match side:
 				0: point.z -= 1.43
 				1: point.x += 1.43
@@ -57,18 +75,22 @@ func _part_center(kind: String,cell: Vector2i,side: int) -> Vector3:
 			point.y = y+.82
 			point.x += .35
 			point.z -= .64
-		_:
-			point.y = y
+		"upper_floor": point.y = y+UPPER_LEVEL
+		"stairs": point.y = y
+		"roof": point.y = y+UPPER_LEVEL*2.0
+		"lamp": point.y = y+1.95
+		_: point.y = y
 	return point
 
 func _dimensions(kind: String,side: int) -> Vector3:
 	match kind:
-		"wall":
+		"wall","door","upper_wall":
 			return Vector3(.20,2.75,2.90) if side%2==1 else Vector3(2.90,2.75,.20)
-		"shelf":
-			return Vector3(1.37,1.43,.45)
-		_:
-			return Vector3(2.96,.25,2.96)
+		"stairs": return Vector3(1.48,3.0,4.5)
+		"roof": return Vector3(3.2,1.4,3.2)
+		"lamp": return Vector3(.32,.54,.32)
+		"shelf": return Vector3(1.37,1.43,.45)
+		_: return Vector3(2.96,.25,2.96)
 
 func inspect(kind: String,where: Vector3,face: int,inventory: Array) -> Dictionary:
 	if not COSTS.has(kind):
@@ -87,10 +109,27 @@ func inspect(kind: String,where: Vector3,face: int,inventory: Array) -> Dictiona
 	var id: String = _key(kind,cell,posmod(face,4))
 	if parts.has(id):
 		return {"ok":false,"message":"There is already a piece in that position."}
-	if kind != "floor":
-		if not parts.has(_base_key(cell)):
-			return {"ok":false,"message":"Place a stone-and-oak floor beneath it first."}
-	elif site.x != INF:
+	if kind in ["wall","door"]:
+		for other in ["wall","door"]:
+			if parts.has(_key(other,cell,posmod(face,4))):
+				return {"ok":false,"message":"That edge already has a wall or doorway."}
+	if kind != "floor" and not parts.has(_base_key(cell)):
+		return {"ok":false,"message":"Place a stone-and-oak floor beneath it first."}
+	if kind in ["upper_wall","roof"] and not parts.has(_upper_key(cell)):
+		return {"ok":false,"message":"An upper floor must support this piece."}
+	if kind=="stairs":
+		var along: Vector2i=_direction(face)
+		var lower: Vector2i=cell-along
+		var higher: Vector2i=cell+along
+		if not parts.has(_base_key(lower)) or not parts.has(_upper_key(higher)):
+			return {"ok":false,"message":"Stairs need an approach floor and an adjacent upper landing."}
+		var low_height: float=_floor_y(lower)
+		var high_height: float=_floor_y(higher)
+		if absf(low_height-high_height)>0.55 or absf(low_height-_floor_y(cell))>0.55:
+			return {"ok":false,"message":"The staircase needs nearly level underlying terrain."}
+	if kind=="upper_floor" and site.x==INF:
+		return {"ok":false,"message":"Build a ground-level foundation first."}
+	if kind=="floor" and site.x != INF:
 		if pos.distance_to(Vector3(site.x,0,site.y)) > 13.5:
 			return {"ok":false,"message":"Extend the tower near your first foundation."}
 	else:
