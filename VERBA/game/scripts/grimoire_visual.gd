@@ -147,7 +147,7 @@ static func _add_curved_leaf(root: Node3D, side: float, paper: StandardMaterial3
 			for item in triangles:
 				mesh_tool.set_uv(item[1])
 				mesh_tool.add_vertex(item[0])
-	mesh_tool.generate_normals()
+	mesh_tool.generate_normals(true)
 	var parchment := MeshInstance3D.new()
 	parchment.name = "SlightlyCurledVellumLeft" if side < 0.0 else "SlightlyCurledVellumRight"
 	parchment.mesh = mesh_tool.commit()
@@ -206,7 +206,7 @@ static func _build_turning_leaf_mesh() -> ArrayMesh:
 		for u in [0.0,1.0]:
 			_sheet_edge(st,_turn_vertex(u,v0,1.0),_turn_vertex(u,v1,1.0),
 				_turn_vertex(u,v0,-1.0),_turn_vertex(u,v1,-1.0))
-	st.generate_normals()
+	st.generate_normals(true)
 	return st.commit()
 
 
