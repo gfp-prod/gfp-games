@@ -10,7 +10,7 @@ static func populate(world: Node3D) -> void:
 	world.add_child(root)
 	var oak: StandardMaterial3D = world.textured("res://assets/textures/cottage_wood.png",Color("a08b76"))
 	var stone: Material = world.stone_mat
-	var worn_paving: StandardMaterial3D = world.textured("res://assets/textures/real/earth_path_diffuse.jpg",Color("ada18c"))
+	var worn_paving: StandardMaterial3D = world.textured("res://assets/textures/real/earth_path_diffuse.jpg",Color("7d7569"))
 	worn_paving.roughness = 1.0
 	var dark := ART.mat(Color("3e4037"),.92)
 	var bronze := ART.mat(Color("9e8659"),.48)
@@ -20,15 +20,15 @@ static func populate(world: Node3D) -> void:
 
 	# An approach curve to the cottage threshold, with real uneven stones
 	# buried under the soil rather than enormous cobblestones floating on top.
-	var steps: int = 16
+	var steps: int = 13
 	for i in range(steps):
 		var t: float = float(i)/float(steps-1)
 		var x: float = lerpf(24.0,27.8,t) + sin(t*PI*1.5)*.39
 		var z: float = lerpf(19.4,10.7,t)
 		var y: float = world.height_at(x,z)
-		if i%3 != 1:
+		if i%2 == 0:
 			ART.stone(root,Vector3(x,y+.012,z),
-				Vector3(rng.randf_range(.48,.71),.045,rng.randf_range(.29,.51)),worn_paving)
+				Vector3(rng.randf_range(.36,.62),.038,rng.randf_range(.24,.45)),worn_paving)
 		# Shallow edging where feet have worn the approach.
 		if i%3 == 0:
 			for side in [-1.0,1.0]:
