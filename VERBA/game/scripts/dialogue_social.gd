@@ -56,6 +56,14 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 			menu.append({"index":5,"label":"Refuse the request.","available":true,"reason":""})
 		elif request_status=="ready":
 			menu.append({"index":4,"label":"Collect payment for the magical harvest.","available":true,"reason":""})
+	# Artisan commerce appears only while carrying a real crafted good.
+	if id in ["ida","orin"] and village_sim!=null:
+		var buyer_item: String="bread" if id=="ida" else "tools"
+		if inventory.has(buyer_item):
+			menu.append({"index":lines.size(),
+				"label":"Sell %s to %s for %d coins." % [buyer_item,String(definition["name"]),2 if id=="ida" else 4],
+				"available":village_sim.economy.treasury >= (2 if id=="ida" else 4),
+				"reason":"The village cannot pay."})
 	var spoken: String = String(introductions[mini(tier, introductions.size()-1)])
 	if id=="daro" and village_sim!=null:
 		spoken+="\n"+COMMISSIONS.describe(village_sim)
@@ -112,6 +120,8 @@ func choose(id: String, index: int, scholar, player) -> Dictionary:
 		if status=="ready" and index==4: return COMMISSIONS.receive_payment(village_sim,player)
 		return {"ok":false,"changed":false,"message":"Daro has no such offer at present."}
 	var options: Array = definition.get("choices", [])
+	if id in ["ida","orin"] and village_sim!=null and index==options.size() and player.professions.sale_available(id,player):
+		return player.professions.sell_to(id,player)
 	if index < 0 or index >= options.size():
 		return {"ok": false, "message": "Choose a spoken response."}
 	var choice: Dictionary = options[index]
