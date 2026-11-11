@@ -40,8 +40,10 @@ func _run() -> void:
 		if not hit.is_empty():
 			_fail("A supposedly open station/castle interior is blocked by "+String(hit["collider"].name))
 			return
-	if station.find_child("FuelPump_-2.27",true,false)==null or castle.find_child("SolidMasonryTower",true,false)==null:
-		_fail("Gas pumps or collidable castle turrets missing")
+	var pumps: Array[Node]=station.find_children("FuelPump_*","StaticBody3D",true,false)
+	var turrets: Array[Node]=castle.find_children("SolidMasonryTower","StaticBody3D",true,false)
+	if pumps.size()<2 or turrets.size()<4:
+		_fail("Expected two physical pumps and four towers, got %d pumps/%d towers" % [pumps.size(),turrets.size()])
 		return
 	if world.npcs.size()!=13 or not world.village_sim.people.has("juno"):
 		_fail("Roadside clerk missing physical NPC or autonomous citizen state")
