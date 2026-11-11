@@ -216,8 +216,8 @@
     "name": "Orin",
     "role": "Village blacksmith",
     "position": [
-      15,
-      17
+      20,
+      18
     ],
     "home": [
       15,
@@ -496,8 +496,8 @@
     "name": "Daro",
     "role": "Village farmer",
     "position": [
-      18,
-      7
+      15,
+      21
     ],
     "home": [
       18,
