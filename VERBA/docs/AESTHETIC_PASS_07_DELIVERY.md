@@ -32,6 +32,18 @@ The new cottage study rendered, but revealed grass blades and terrain breaking t
 - `tests/cottage_footprint_test.gd` samples the level interior, the turret area, the unchanged outer valley, and vegetation relocation. The test runs in the real Godot game.
 - The `world_cottage_interior_study.png` screenshot is retained specifically to catch this regression visually.
 
+## Final visual inspection and regression closeout
+
+The floorboard underlay removed the grassy seam color, but a separate **curated fern batch** in `home_dressing.gd` still placed a full plant inside the writing room. That batch had its own placement logic and bypassed the general grass-exclusion function. Fixed the source placement, retaining the exact 128-instance batch size and deterministic seed. The rain barrel was also moved clear of the attached study turret.
+
+The actual post-fix `world_cottage_interior_study.png` now shows the clean wood floor, desk, stool and bookshelf without the previous fern intersecting the room. Front, rear and woodland angles show continuous opaque plaster. The moonlight cottage render remains available for checking that daytime work did not break darkness.
+
+**Verified build runs:**
+- [Godot gameplay, geometry, ecological clearance and regression suite — PASS](https://github.com/gfp-prod/gfp-games/actions/runs/42959462419)
+- [Actual Godot OpenGL screenshot and visual pixel QA — PASS](https://github.com/gfp-prod/gfp-games/actions/runs/42959404031)
+
+The new ecological regression scans every instance in the key grass, foliage, pebble and curated fern batches for unauthorized placement in the building footprint. This corrects an earlier blind spot where asset geometry tests passed while the rendered room was still physically full of weeds.
+
 ## Daytime exterior palette
 The former world sky was a nearly uniform pale gray. `scripts/world.gd` now uses a slightly bluer clear-day gradient and a warmer horizon, reduces daylight haze density, and preserves distinct moonlit values. The existing day/night regression is retained. This is a **lighting and composition adjustment**, not a substitute for more distinctive world-scale assets.
 
