@@ -13,6 +13,7 @@ const MAGIC_SCRIPT = preload("res://scripts/magic.gd")
 const SCHOLAR = preload("res://scripts/scholar.gd")
 const SOCIAL = preload("res://scripts/dialogue_social.gd")
 const VILLAGE_SIM = preload("res://scripts/village_sim.gd")
+const WORLD_CALENDAR = preload("res://scripts/world_calendar.gd")
 const VILLAGE_WORKPLACES = preload("res://scripts/village_workplaces.gd")
 const SIM_LAB = preload("res://scripts/simulation_lab.gd")
 const NPC_ACTOR = preload("res://scripts/npc_actor.gd")
@@ -37,6 +38,7 @@ var construction
 var harvest_counts: Dictionary = {}
 var social
 var village_sim
+var world_calendar = WORLD_CALENDAR.new()
 var workplaces
 var simulation_lab
 var village_elapsed: float = 0.0
@@ -229,6 +231,16 @@ func cycle_familiar_order() -> Dictionary:
 	if DisplayServer.get_name() != "headless":
 		save_world()
 	return {"ok":true,"message":"Familiar: " + familiar_mode}
+
+func skip_days(count: int) -> void:
+	# Developer-only calendar acceleration uses the SAME daily transition as
+	# real play. Work remains bounded; no fake fast-forward currency is minted.
+	for i in range(clampi(count,0,12)):
+		world_calendar.advance_days(1)
+		if village_sim!=null:
+			village_sim.advance_day(world_calendar.day)
+			for j in range(4): village_sim.step()
+	if workplaces!=null: workplaces.refresh_from_economy(true)
 
 func save_world() -> bool:
 	return WORLD_PERSIST.save_world(self)
@@ -1233,6 +1245,14 @@ func extinguish() -> void:
 
 func _process(delta: float) -> void:
 	time += delta
+	# One authoritative time source drives the sun, seasons, and daily
+	# social deadlines. No NPC or quest keeps an independent clock.
+	var days_passed: int=world_calendar.advance(delta)
+	if days_passed>0 and village_sim!=null:
+		village_sim.advance_day(world_calendar.day)
+	if light_node!=null:
+		light_node.rotation_degrees.x=-10.0-50.0*sin((world_calendar.fraction()*24.0-6.0)*TAU/24.0)
+		light_node.rotation_degrees.y=-60.0+190.0*world_calendar.fraction()
 	if player != null and DisplayServer.get_name() != "headless":
 		autosave_elapsed += delta
 		if autosave_elapsed >= 45.0:
@@ -1258,7 +1278,7 @@ func _process(delta: float) -> void:
 	# Night magic used to dim sunlight while leaving a bright noon sky.
 	# The visual state now transitions in a finite duration and stops
 	# changing renderer resources once it reaches either endpoint.
-	var desired_night: float = 1.0 if night_remaining > 0.0 else 0.0
+	var desired_night: float = maxf(world_calendar.darkness(),1.0 if night_remaining > 0.0 else 0.0)
 	var previous_night: float = night_visual_blend
 	night_visual_blend = move_toward(night_visual_blend,desired_night,delta*.57)
 	if absf(night_visual_blend-previous_night) > .0001:

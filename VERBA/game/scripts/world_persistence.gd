@@ -64,6 +64,7 @@ static func snapshot(world: Node3D) -> Dictionary:
 		"social":world.social.snapshot() if world.social != null else {},
 		"village":world.village_sim.snapshot() if world.village_sim != null else {},
 		"village_elapsed":world.village_elapsed,
+		"calendar":world.world_calendar.snapshot(),
 		"familiar":{"id":String(world.familiar_id),"mode":String(world.familiar_mode)},
 		"construction":world.construction.snapshot() if world.construction != null else {},
 		"harvest_counts":world.harvest_counts.duplicate(),
@@ -75,6 +76,10 @@ static func snapshot(world: Node3D) -> Dictionary:
 
 static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 	if int(data.get("schema",0)) != 1: return false
+	# Validate new calendar data before touching the scene or inventory. Old
+	# saves omit the key and retain the initial dawn calendar.
+	var saved_clock: Variant=data.get("calendar",{})
+	if not (saved_clock is Dictionary) or not world.world_calendar.restore(saved_clock): return false
 	var state_by_id: Dictionary = {}
 	for record in data.get("objects",[]):
 		if record is Dictionary and record.has("id"):
@@ -214,7 +219,7 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 	for dropped in data.get("dropped_pickups",[]):
 		if not (dropped is Dictionary): continue
 		var kind: String = String(dropped.get("kind",""))
-		if kind not in ["stone","wood","herb","amber","torch","lantern"]: continue
+		if kind not in ["stone","wood","herb","amber","torch","lantern","grain","bread","tools"]: continue
 		var key: String = String(dropped.get("id",""))
 		if not key.begins_with("drop:"): continue
 		var p: Vector3 = _as_vector(dropped.get("position",[]),Vector3.ZERO)
@@ -226,7 +231,7 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 		if player_data.get("inventory",null) is Array:
 			world.player.inventory.clear()
 			for entry in player_data["inventory"]:
-				if entry is String and entry in ["stone","wood","herb","amber","torch","lantern"] and world.player.inventory.size() < 6:
+				if entry is String and entry in ["stone","wood","herb","amber","torch","lantern","grain","bread","tools"] and world.player.inventory.size() < 6:
 					world.player.inventory.append(entry)
 			world.player.selected_slot = clampi(int(player_data.get("selected_slot",0)),
 				0,maxi(0,world.player.inventory.size()-1))

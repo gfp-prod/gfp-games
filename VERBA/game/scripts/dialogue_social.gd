@@ -3,6 +3,7 @@ extends RefCounted
 ## and this tiny deterministic state machine owns no UI/physics resources.
 ## Topics reward relationship ONCE; revisiting is not a rapport exploit.
 const NPC_DATA = "res://data/npcs.json"
+const COMMISSIONS = preload("res://scripts/wizard_commissions.gd")
 
 var definitions: Dictionary = {}
 var memories: Dictionary = {}
@@ -46,7 +47,21 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 		var blocked: String = _reason(choice, scholar, inventory, past)
 		menu.append({"index": idx, "label": label,
 			"available": blocked.is_empty(), "reason": blocked})
+	# Commission choices are generated from authoritative village state, not
+	# detached dialogue flags. Never put inaccessible choices in player UI.
+	if id=="daro" and village_sim!=null:
+		var request_status: String=COMMISSIONS.state(village_sim)
+		if request_status=="offered":
+			menu.append({"index":4,"label":"Help Daro restore the harvest.","available":true,"reason":""})
+			menu.append({"index":5,"label":"Refuse the request.","available":true,"reason":""})
+		elif request_status=="ready":
+			menu.append({"index":4,"label":"Collect payment for the magical harvest.","available":true,"reason":""})
 	var spoken: String = String(introductions[mini(tier, introductions.size()-1)])
+	if id=="daro" and village_sim!=null:
+		spoken+="\n"+COMMISSIONS.describe(village_sim)
+		var confidence: float=float(village_sim.people["daro"]["trust"].get("wizard",0.0))
+		if confidence>15.0: spoken+=" Daro speaks to you warmly."
+		elif confidence < -8.0: spoken+=" His words have become guarded."
 	if id=="ida" and village_sim!=null:
 		var grain: int=int(village_sim.economy.stocks.get("grain",0))
 		if grain<2:
@@ -78,6 +93,8 @@ func _reason(choice: Dictionary, scholar, inventory: Array, past: Dictionary) ->
 	var market_good: String=String(choice.get("market_give",""))
 	if not market_good.is_empty():
 		if village_sim==null: return "The market is not operating."
+		if String(choice.get("id",""))=="grain_exchange" and float(village_sim.people["daro"]["trust"].get("wizard",0.0))<=-15.0:
+			return "Daro will not trade until you repair his trust."
 		if int(village_sim.economy.stocks.get(market_good,0))<int(choice.get("market_min",1)):
 			return "The village has no %s left to exchange." % market_good
 		var offered: String=String(choice.get("market_take",""))
@@ -88,6 +105,12 @@ func _reason(choice: Dictionary, scholar, inventory: Array, past: Dictionary) ->
 func choose(id: String, index: int, scholar, player) -> Dictionary:
 	var definition: Dictionary = npc(id)
 	if definition.is_empty(): return {"ok": false, "message": "There is nobody to speak with."}
+	if id=="daro" and village_sim!=null and index>=4:
+		var status: String=COMMISSIONS.state(village_sim)
+		if status=="offered" and index==4: return COMMISSIONS.accept(village_sim)
+		if status=="offered" and index==5: return COMMISSIONS.refuse(village_sim)
+		if status=="ready" and index==4: return COMMISSIONS.receive_payment(village_sim,player)
+		return {"ok":false,"changed":false,"message":"Daro has no such offer at present."}
 	var options: Array = definition.get("choices", [])
 	if index < 0 or index >= options.size():
 		return {"ok": false, "message": "Choose a spoken response."}

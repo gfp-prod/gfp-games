@@ -34,9 +34,18 @@ func _capture() -> void:
 		{"name":"gas_station","eye":Vector2(-20.2,35.6),"look":Vector2(-33,44)},
 		{"name":"castle_gate","eye":Vector2(-32,33),"look":Vector2(-49,44)},
 		{"name":"station_shop","eye":Vector2(-30.8,44),"look":Vector2(-36.4,44)},
-		{"name":"castle_archive","eye":Vector2(-47,44),"look":Vector2(-51.6,44)}
+		{"name":"castle_archive","eye":Vector2(-47,44),"look":Vector2(-51.6,44)},
+		{"name":"enchanted_farm","eye":Vector2(9,32),"look":Vector2(17,26),"enchanted":true},
+		{"name":"village_after_dark","eye":Vector2(4,24),"look":Vector2(12,15),"night":true}
 	]
 	for view in views:
+		if bool(view.get("enchanted",false)):
+			world.village_sim.bless_field(4)
+			world.workplaces.refresh_from_economy(true)
+		if bool(view.get("night",false)):
+			world.world_calendar.elapsed=220.0
+			world.night_visual_blend=world.world_calendar.darkness()
+			world._update_day_night_art(world.night_visual_blend)
 		var eye: Vector2=view["eye"]
 		var look: Vector2=view["look"]
 		camera.global_position=Vector3(eye.x,world.height_at(eye.x,eye.y)+1.67,eye.y)
@@ -64,5 +73,5 @@ func _capture() -> void:
 		if image.save_png(path)!=OK:
 			_fail("Cannot save "+path)
 			return
-	print("PASS: eleven fixed-view 1280x720 screenshots captured with nontrivial rendered content")
+	print("PASS: thirteen fixed-view 1280x720 screenshots captured including enchanted crops and calendar night")
 	quit(0)
