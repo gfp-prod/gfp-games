@@ -65,6 +65,8 @@ jobs:
         run: bash tests/godot_guard.sh res://tests/scholar_progression_test.gd
       - name: Full in-world Latin book discovery and casting loop
         run: bash tests/godot_guard.sh res://tests/book_world_loop_test.gd
+      - name: Physical NPC conversation, Latin progression, trade and persistence
+        run: bash tests/godot_guard.sh res://tests/social_dialogue_test.gd
       - name: Latin grammar and natural-law spell regression
         run: bash tests/godot_guard.sh res://tests/latin_laws_test.gd
       - name: Magic failure is physically and economically inert
