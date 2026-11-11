@@ -23,6 +23,15 @@ The newly added interior photo uncovered a second weakness: the old cottage's `S
 - `storybook_house.gd` installs the interior into the live cottage; `hero_art_test.gd` asserts the rendered floor covers the cottage footprint, and `smoke_test.gd` checks the live scene contains a visible floor and a physical desk.
 - `world_gallery.gd` adds `cottage_interior_study`, a camera aimed at the new furnishing arrangement.
 
+## Ground-clearance follow-up after inspecting the actual furnished interior
+The new cottage study rendered, but revealed grass blades and terrain breaking through the boards near the bookshelf. More furniture was **not** the fix. The world terrain was never flattened under the built footprint, and decorative grass was still distributed there.
+
+- `world.gd` now distinguishes `_raw_height_at()` from `height_at()`, flattening only the oriented cottage footprint to its original center elevation. A short smooth transition retains the surrounding terrain. Outside the cottage plot the height function is identical to its old result.
+- `world.gd` adds authoritative cottage-local coordinates and a deterministic vegetation-exclusion function. `foliage.gd` and `ground_dressing.gd` relocate otherwise obstructing static grass/litter/pebbles outside the structure. Living grass patches use the same object IDs and are relocated rather than changing object count.
+- `cottage_interior.gd` includes a continuous dark subfloor beneath the wood planks. It blocks green terrain color from showing as narrow stripes through the board seams, without changing the original floor collider.
+- `tests/cottage_footprint_test.gd` samples the level interior, the turret area, the unchanged outer valley, and vegetation relocation. The test runs in the real Godot game.
+- The `world_cottage_interior_study.png` screenshot is retained specifically to catch this regression visually.
+
 ## Daytime exterior palette
 The former world sky was a nearly uniform pale gray. `scripts/world.gd` now uses a slightly bluer clear-day gradient and a warmer horizon, reduces daylight haze density, and preserves distinct moonlit values. The existing day/night regression is retained. This is a **lighting and composition adjustment**, not a substitute for more distinctive world-scale assets.
 
