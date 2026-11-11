@@ -35,12 +35,26 @@ func _record(kind: String, who: String, item: String, amount: int) -> void:
 	transactions.append({"tick":tick,"kind":kind,"actor":who,"item":item,"amount":amount})
 	if transactions.size()>128: transactions.pop_front()
 
+func can_work(role: String) -> bool:
+	if not RECIPES.has(role): return false
+	if role=="merchant": return int(stocks.get("grain",0))>0 and int(stocks.get("bread",0))<CAP
+	var recipe: Dictionary=RECIPES[role]
+	for item in recipe["inputs"]:
+		if int(stocks.get(item,0))<int(recipe["inputs"][item]): return false
+	for item in recipe["outputs"]:
+		if int(stocks.get(item,0))+int(recipe["outputs"][item])>CAP: return false
+	return true
+
 func work(id: String, role: String, person: Dictionary) -> bool:
 	if not RECIPES.has(role): return false
 	var recipe: Dictionary = RECIPES[role]
 	if role=="merchant":
-		# A merchant trades existing goods; cannot print money.
-		return false
+		# Move real inventory through the market; no goods are fabricated.
+		if not can_work(role): return false
+		stocks["grain"]=int(stocks["grain"])-1
+		stocks["bread"]=int(stocks["bread"])+1
+		_record("distribution",id,"grain",1)
+		return true
 	var inputs: Dictionary = recipe["inputs"]
 	for item in inputs:
 		if int(stocks.get(item,0)) < int(inputs[item]): return false
