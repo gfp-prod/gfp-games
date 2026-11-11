@@ -10,6 +10,8 @@ static func populate(world: Node3D) -> void:
 	world.add_child(root)
 	var oak: StandardMaterial3D = world.textured("res://assets/textures/cottage_wood.png",Color("a08b76"))
 	var stone: Material = world.stone_mat
+	var worn_paving: StandardMaterial3D = world.textured("res://assets/textures/real/earth_path_diffuse.jpg",Color("ada18c"))
+	worn_paving.roughness = 1.0
 	var dark := ART.mat(Color("3e4037"),.92)
 	var bronze := ART.mat(Color("9e8659"),.48)
 	bronze.metallic = .46
@@ -26,13 +28,13 @@ static func populate(world: Node3D) -> void:
 		var y: float = world.height_at(x,z)
 		if i%3 != 1:
 			ART.stone(root,Vector3(x,y+.012,z),
-				Vector3(rng.randf_range(.58,.79),.045,rng.randf_range(.32,.53)),stone)
+				Vector3(rng.randf_range(.48,.71),.045,rng.randf_range(.29,.51)),worn_paving)
 		# Shallow edging where feet have worn the approach.
 		if i%3 == 0:
 			for side in [-1.0,1.0]:
 				var edge_x: float = x+side*1.20
 				ART.stone(root,Vector3(edge_x,world.height_at(edge_x,z),z),
-					Vector3(rng.randf_range(.23,.33),.09,.24),stone)
+					Vector3(rng.randf_range(.20,.30),.065,.24),worn_paving)
 
 	# A workaday woodpile near the side of the house. Timber is substantial
 	# but its approximate collider only covers the physically visible stack.
