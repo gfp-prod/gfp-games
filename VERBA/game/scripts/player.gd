@@ -4,6 +4,7 @@ const ART = preload("res://scripts/art.gd")
 const GRIMOIRE = preload("res://scripts/grimoire.gd")
 const INCANTATION = preload("res://scripts/incantation.gd")
 const GRAMMAR = preload("res://scripts/latin_grammar.gd")
+const ARTISAN = preload("res://scripts/player_professions.gd")
 var world
 var camera: Camera3D
 var pitch: Node3D
@@ -11,6 +12,8 @@ var book
 var held: Node3D
 var held_type: String = ""
 var inventory: Array[String] = []
+var professions = ARTISAN.new()
+var coins: int = 0
 var selected_slot := 0
 var typing := false
 var buffer := ""
@@ -179,6 +182,13 @@ func refresh_held_model() -> void:
 			prop.add_child(l)
 		"wood": ART.box(prop,Vector3(0,.22,-.13),Vector3(.21,.18,.45),ART.mat(Color("81694f")))
 		"grain": ART.box(prop,Vector3(0,.17,-.13),Vector3(.25,.32,.22),ART.mat(Color("bb9c69")))
+		"ore": ART.stone(prop,Vector3(0,.13,-.11),Vector3(.22,.19,.21),ART.mat(Color("626e72"),.42))
+		"herb_bread":
+			ART.orb(prop,Vector3(0,.17,-.13),Vector3(.29,.15,.23),ART.mat(Color("ad7d48")),12)
+			ART.orb(prop,Vector3(0,.29,-.12),Vector3(.11,.05,.10),ART.mat(Color("668655")),9)
+		"tools":
+			ART.bone(prop,Vector3(0,-.15,-.1),Vector3(0,.42,-.1),.06,.046,ART.mat(Color("735b46")))
+			ART.box(prop,Vector3(0,.40,-.10),Vector3(.37,.14,.14),ART.mat(Color("555c60"),.53))
 		"bread": ART.orb(prop,Vector3(0,.17,-.13),Vector3(.25,.15,.21),ART.mat(Color("a76a3f")),12)
 		"stone": ART.stone(prop,Vector3(0,.12,-.13),Vector3(.19,.15,.22),ART.mat(Color("74766e")))
 		"herb":
@@ -341,7 +351,7 @@ func refresh_conversation() -> void:
 		conversation_panel.visible = false
 		return
 	var state: Dictionary = world.social.view(
-		conversation_actor.npc_id,world.scholar,inventory)
+		conversation_actor.npc_id,world.scholar,inventory,coins)
 	conversation_name.text = String(state.get("name","")) + "  /  " + String(state.get("role",""))
 	conversation_body.text = conversation_reply if not conversation_reply.is_empty() else String(state.get("spoken",""))
 	var choices: Array = state.get("options",[])
@@ -587,8 +597,10 @@ func _process(delta: float) -> void:
 					interaction_hint.text="E  ·  Befriend "+n.species+"  /  Enter cast"
 				else:
 					interaction_hint.text=n.species.capitalize()+"  ·  Enter to cast"
-			elif n.has_meta("workplace_kind"): interaction_hint.text="E  ·  Inspect workshop"
-			elif n.has_meta("resource_deposit"): interaction_hint.text="E  ·  Salvage wood"
+			elif n.has_meta("workplace_kind"):
+				var station: String=String(n.get_meta("workplace_kind"))
+				interaction_hint.text="E  ·  Inspect / F craft / Enter IGNIS to kindle" if station in ["bakery","forge"] else "E  ·  Inspect stock"
+			elif n.has_meta("resource_deposit"): interaction_hint.text="E  ·  Gather "+String(n.get_meta("resource_deposit"))
 			elif n.has_method("apply_effect") and String(n.kind)=="stone": interaction_hint.text="E  ·  Gather stone"
 			elif n.has_method("apply_effect") and String(n.kind) in ["grass","fern"]:
 				interaction_hint.text="E  ·  Harvest herb" if not n.dead and not n.burning and n.food>=.65 else n.get_state_report()
@@ -606,10 +618,10 @@ func _process(delta: float) -> void:
 	if is_instance_valid(diagnostics) and diagnostics_visible:
 		diagnostics.text = "WASD: %s  pos: %.1f, %.1f, %.1f\nMouse: %s  Book: %s  Typing: %s" % [str(last_motion),global_position.x,global_position.y,global_position.z,str(Input.mouse_mode),str(book.open),str(typing)]
 	if is_instance_valid(survival_label):
-		survival_label.visible = health < max_health-.05 or stamina < max_stamina-.5
+		survival_label.visible = health < max_health-.05 or stamina < max_stamina-.5 or coins>0
 		if survival_label.visible:
-			survival_label.text = "VITA  %d / %d     VIGOR  %d / %d" % [
-				ceili(health),int(max_health),ceili(stamina),int(max_stamina)]
+			survival_label.text = "VITA  %d / %d     VIGOR  %d / %d     NUMMI  %d" % [
+				ceili(health),int(max_health),ceili(stamina),int(max_stamina),coins]
 			survival_label.add_theme_color_override("font_color",
 				Color("df9187") if health < 35.0 else Color("dcc9a6"))
 	reticle.visible=not book.open and not typing and conversation_actor == null and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED
@@ -661,8 +673,11 @@ func interact() -> void:
 		begin_conversation(n)
 		return
 	if n.has_meta("workplace_kind"):
-		say_world(world.workplaces.inspect_workplace(String(n.get_meta("workplace_kind"))),
-			camera.global_position-camera.global_transform.basis.z*2.4,Color("d9c4a2"))
+		var workshop: String=String(n.get_meta("workplace_kind"))
+		var report: String=world.workplaces.inspect_workplace(workshop)
+		if workshop in ["bakery","forge"]:
+			report+="\n"+professions.describe(workshop,self)
+		say_world(report,camera.global_position-camera.global_transform.basis.z*2.4,Color("d9c4a2"))
 		return
 	if n.has_meta("resource_deposit") or (n.has_method("apply_effect") and String(n.kind) in ["stone","grass","fern"]):
 		var gathered: Dictionary = world.harvest_resource(n)
@@ -706,6 +721,14 @@ func use_item() -> void:
 	var point=camera.global_position-camera.global_transform.basis.z*3.2
 	var hit=look_hit(4.5)
 	var target=hit.get("entity",null)
+	if target!=null and target.has_meta("workplace_kind"):
+		var station: String=String(target.get_meta("workplace_kind"))
+		if station in ["bakery","forge"] and not professions.recipe(station,held_type).is_empty():
+			var work: Dictionary=professions.craft(station,self)
+			say_world(String(work.get("message","")),point,
+				Color("b3d1ad") if bool(work.get("ok",false)) else Color("d3a28f"))
+			if bool(work.get("ok",false)) and DisplayServer.get_name()!="headless": world.save_world()
+			return
 	match held_type:
 		"torch": world.add_fire(hit.get("position",point),target)
 		"lantern": say_world("The lantern casts its quiet light.",point,Color("f0d7ac"))
@@ -718,9 +741,10 @@ func use_item() -> void:
 				point,Color("a4bc8a"))
 			inventory.remove_at(selected_slot)
 			selected_slot=0;refresh_held_model()
-		"bread":
-			var recovered: float=minf(max_stamina-stamina,45.0)
-			stamina=minf(max_stamina,stamina+45.0)
+		"bread","herb_bread":
+			var recovered: float=minf(max_stamina-stamina,65.0 if held_type=="herb_bread" else 45.0)
+			stamina=minf(max_stamina,stamina+recovered)
+			if held_type=="herb_bread": health=minf(max_health,health+15.0)
 			say_world("A warm loaf. Vigor +%d" % int(recovered),point,Color("d6b98b"))
 			inventory.remove_at(selected_slot)
 			selected_slot=0;refresh_held_model()

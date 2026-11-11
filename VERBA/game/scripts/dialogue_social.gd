@@ -32,7 +32,7 @@ func stage(scholar) -> int:
 func memory(id: String) -> Dictionary:
 	return memories.get(id, {"topics": [], "rapport": 0, "traded": false})
 
-func view(id: String, scholar, inventory: Array) -> Dictionary:
+func view(id: String, scholar, inventory: Array, coins: int=0) -> Dictionary:
 	var definition: Dictionary = npc(id)
 	if definition.is_empty(): return {}
 	var tier: int = stage(scholar)
@@ -56,6 +56,22 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 			menu.append({"index":5,"label":"Refuse the request.","available":true,"reason":""})
 		elif request_status=="ready":
 			menu.append({"index":4,"label":"Collect payment for the magical harvest.","available":true,"reason":""})
+	# Artisan commerce appears only while carrying a real crafted good.
+	if id in ["ida","orin"] and village_sim!=null:
+		var buyer_item: String="bread" if id=="ida" else "tools"
+		if inventory.has(buyer_item):
+			menu.append({"index":lines.size(),
+				"label":"Sell %s to %s for %d coins." % [buyer_item,String(definition["name"]),2 if id=="ida" else 4],
+				"available":village_sim.economy.treasury >= (2 if id=="ida" else 4),
+				"reason":"The village cannot pay."})
+	if id=="sela" and village_sim!=null:
+		var supply_prices: Dictionary={"grain":1,"wood":1,"ore":2}
+		for good in ["grain","wood","ore"]:
+			var cost: int=int(supply_prices[good])
+			menu.append({"index":lines.size()+["grain","wood","ore"].find(good),
+				"label":"Buy %s from Sela for %d coins." % [good,cost],
+				"available":int(village_sim.economy.stocks.get(good,0))>0 and inventory.size()<6 and coins>=cost,
+				"reason":"The market has no stock, room, or sufficient payment."})
 	var spoken: String = String(introductions[mini(tier, introductions.size()-1)])
 	if id=="daro" and village_sim!=null:
 		spoken+="\n"+COMMISSIONS.describe(village_sim)
@@ -112,6 +128,11 @@ func choose(id: String, index: int, scholar, player) -> Dictionary:
 		if status=="ready" and index==4: return COMMISSIONS.receive_payment(village_sim,player)
 		return {"ok":false,"changed":false,"message":"Daro has no such offer at present."}
 	var options: Array = definition.get("choices", [])
+	if id=="sela" and village_sim!=null and index>=options.size() and index<options.size()+3:
+		var supplies: Array[String]=["grain","wood","ore"]
+		return player.professions.buy_from_market(player,supplies[index-options.size()])
+	if id in ["ida","orin"] and village_sim!=null and index==options.size() and player.professions.sale_available(id,player):
+		return player.professions.sell_to(id,player)
 	if index < 0 or index >= options.size():
 		return {"ok": false, "message": "Choose a spoken response."}
 	var choice: Dictionary = options[index]

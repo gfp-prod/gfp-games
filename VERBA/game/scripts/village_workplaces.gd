@@ -20,6 +20,7 @@ func _ready() -> void:
 	_build_fields()
 	_build_bakery()
 	_build_forge()
+	_build_ore_vein()
 	_build_market()
 	refresh_from_economy(true)
 
@@ -294,6 +295,25 @@ func _build_forge() -> void:
 	_slots("tools",tools)
 	_sign(anvil,"FERRUM",Vector3(0,2.48,-.25),leather.albedo_color)
 
+func _build_ore_vein() -> void:
+	# The beginner forge has a truly finite nearby iron seam. Harvesting
+	# an ore nodule uses the SAME saved per-object extraction quota as stone.
+	var point: Vector2=Vector2(26.4,21.3)
+	var mineral: Node3D=world.spawn_reactive_stone(
+		_ground(point.x,point.y,.08),Vector3(1.35,.85,1.05),
+		ART.mat(Color("52616a"),.64))
+	mineral.name="FerrousOutcrop"
+	mineral.set_meta("resource_deposit","ore")
+	mineral.set_meta("harvest_id","sim:%d" % int(mineral.uid))
+	mineral.set_meta("ore_vein",true)
+	var iron:=ART.mat(Color("757f83"),.49)
+	iron.metallic=.38
+	for i in range(5):
+		var theta: float=TAU*float(i)/5.0
+		ART.stone(mineral,Vector3(cos(theta)*.38,.31,sin(theta)*.28),
+			Vector3(.22,.24,.20),iron)
+	_sign(mineral,"VENAE FERRI",Vector3(0,1.67,0),Color("c2b39a"))
+
 func _build_market() -> void:
 	# Simple proper stall makes the exchange point legible without putting
 	# a solid pillar in the crowd's shared navigation destination.
@@ -342,10 +362,12 @@ func inspect_workplace(kind: String) -> String:
 func refresh_from_economy(force: bool=false) -> void:
 	if world == null or world.village_sim == null: return
 	var economy = world.village_sim.economy
+	var baker_magic: bool=world.player!=null and int(world.player.professions.charged_hearths.get("baker",0))>0
+	var smith_magic: bool=world.player!=null and int(world.player.professions.charged_hearths.get("blacksmith",0))>0
 	var sig: String="%d:%d:%d:%d:%d" % [
 		int(economy.stocks["grain"]),int(economy.stocks["bread"]),
 		int(economy.stocks["tools"]),int(economy.stocks["ore"]),
-		int(economy.stocks["wood"])] + ":%d" % int(world.village_sim.field_fertility)
+		int(economy.stocks["wood"])] + ":%d:%d:%d" % [int(world.village_sim.field_fertility),int(baker_magic),int(smith_magic)]
 	if not force and sig==prior_signature: return
 	prior_signature=sig
 	# Scale actual planted stalks, not a disconnected glow decal.
@@ -362,12 +384,18 @@ func refresh_from_economy(force: bool=false) -> void:
 		for i in range(nodes.size()):
 			var node: Node3D=nodes[i]
 			node.visible = i<shown
-	var baking: bool=economy.can_work("baker")
-	var smithing: bool=economy.can_work("blacksmith")
+	var baking: bool=economy.can_work("baker") or baker_magic
+	var smithing: bool=economy.can_work("blacksmith") or smith_magic
 	production_lamps["baker"].visible=baking
 	production_lamps["baker_light"].visible=baking
 	production_lamps["blacksmith"].visible=smithing
 	production_lamps["blacksmith_light"].visible=smithing
+	# A bound magical hearth glows pale-violet instead of an ordinary amber
+	# fire. Preparing spells thus has a visible, persistent world consequence.
+	production_lamps["baker_light"].light_color=Color("b8b7f4") if baker_magic else Color("ffc483")
+	production_lamps["baker_light"].light_energy=.95 if baker_magic else .56
+	production_lamps["blacksmith_light"].light_color=Color("b8b7f4") if smith_magic else Color("ffc78a")
+	production_lamps["blacksmith_light"].light_energy=1.04 if smith_magic else .64
 
 func _process(delta: float) -> void:
 	refresh_elapsed+=delta

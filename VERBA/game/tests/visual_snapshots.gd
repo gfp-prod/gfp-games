@@ -30,6 +30,7 @@ func _capture() -> void:
 		{"name":"village_farm","eye":Vector2(9,32),"look":Vector2(17,26)},
 		{"name":"village_bakery","eye":Vector2(12,11.5),"look":Vector2(8.9,16.2)},
 		{"name":"village_forge","eye":Vector2(17.5,13.5),"look":Vector2(21.7,18.7)},
+		{"name":"ferrous_outcrop","eye":Vector2(23.1,23.6),"look":Vector2(26.4,21.3)},
 		{"name":"north_road_bridge","eye":Vector2(-7.5,30.0),"look":Vector2(-19,38)},
 		{"name":"gas_station","eye":Vector2(-20.2,35.6),"look":Vector2(-33,44)},
 		{"name":"castle_gate","eye":Vector2(-32,33),"look":Vector2(-49,44)},
@@ -105,5 +106,44 @@ func _capture() -> void:
 	if correction_frame==null or correction_frame.save_png(directory+"/grimoire_correction.png")!=OK:
 		_fail("Could not save scholar's correction view")
 		return
-	print("PASS: fifteen real rendered 1280x720 views including wizard parchment retrieval and corrective feedback")
+	# The two actual player careers use the same first-person camera and
+	# held 3D items as normal play. These are not mockup/item catalog frames.
+	world.player.book.toggle()
+	world.player.inventory.clear()
+	world.player.inventory.append_array(["grain","wood"])
+	world.player.refresh_held_model()
+	world.player.global_position=Vector3(8.9,world.height_at(8.9,13.65)+.20,13.65)
+	if not bool(world.player.professions.craft("bakery",world.player).get("ok",false)):
+		_fail("Player could not bake a real loaf for the visual capture")
+		return
+	world.player.camera.look_at(Vector3(8.9,world.height_at(8.9,16.25)+1.0,15.4),Vector3.UP)
+	for i in range(45): await process_frame
+	RenderingServer.force_draw()
+	var loaf_image: Image=root.get_texture().get_image()
+	if loaf_image==null or loaf_image.save_png(directory+"/artisan_baked_loaf.png")!=OK:
+		_fail("Could not photograph a real crafted loaf in first person")
+		return
+	world.player.inventory.clear()
+	world.player.inventory.append("ore")
+	world.player.refresh_held_model()
+	world.player.global_position=Vector3(21.8,world.height_at(21.8,16.8)+.20,16.8)
+	var physical_forge=world.workplaces.find_child("PhysicalCoalForge",true,false)
+	if physical_forge==null:
+		_fail("No physical smith's furnace for visual capture")
+		return
+	if not bool(world.player.cast_latin("ignis",{
+		"entity":physical_forge,"position":physical_forge.global_position}).get("ok",false)):
+		_fail("Actual Latin failed to fuel the blacksmith's furnace")
+		return
+	if not bool(world.player.professions.craft("forge",world.player).get("ok",false)):
+		_fail("Player could not forge a tool for the visual capture")
+		return
+	world.player.camera.look_at(Vector3(21.8,world.height_at(21.8,19.1)+1.0,18.55),Vector3.UP)
+	for i in range(35): await process_frame
+	RenderingServer.force_draw()
+	var tool_image: Image=root.get_texture().get_image()
+	if tool_image==null or tool_image.save_png(directory+"/artisan_forged_tool.png")!=OK:
+		_fail("Could not photograph the actual forged tool in first person")
+		return
+	print("PASS: eighteen real rendered 1280x720 views including player-made bread, Latin-forged tool, existing world and parchment practice")
 	quit(0)

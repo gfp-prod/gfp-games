@@ -50,6 +50,11 @@ func _ready() -> void:
 			ART.orb(self,Vector3(0,.19,0),Vector3(.23,.24,.16),ART.mat(Color("bba477")))
 		"bread":
 			ART.orb(self,Vector3(0,.18,0),Vector3(.27,.17,.22),ART.mat(Color("b67645")))
+		"herb_bread":
+			ART.orb(self,Vector3(0,.18,0),Vector3(.28,.17,.23),ART.mat(Color("a97843")))
+			ART.orb(self,Vector3(0,.33,0),Vector3(.11,.04,.09),ART.mat(Color("61855b")))
+		"ore":
+			ART.stone(self,Vector3(0,.19,0),Vector3(.26,.23,.28),ART.mat(Color("5f6d72"),.53))
 		"tools":
 			ART.bone(self,Vector3(0,.06,0),Vector3(0,.48,0),.050,.047,ART.mat(Color("6c503b")))
 			ART.box(self,Vector3(0,.47,0),Vector3(.37,.14,.15),ART.mat(Color("777b7d"),.58))
