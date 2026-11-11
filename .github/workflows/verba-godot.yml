@@ -1,7 +1,7 @@
 name: VERBA independent Godot CI
 on:
   push:
-    branches: [verba-godot, "verba/**"]
+    branches: [verba-godot]
     paths: ["VERBA/game/**", ".github/workflows/verba-godot.yml"]
   pull_request:
     paths: ["VERBA/game/**", ".github/workflows/verba-godot.yml"]
