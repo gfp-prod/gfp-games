@@ -37,3 +37,11 @@
 | Lighting and weather | Built-in Godot Environment and existing proven public techniques | Unique authored grading/VFX if it improves side-by-side screenshots |
 
 **Not installed by writing this register:** Every item above is a prospect unless already marked bundled. Adoption requires a separate proof commit and visual test.
+
+## NPC tooling evaluation (2026-11-11)
+
+- **LimboAI 1.5.x**, MIT, https://github.com/limbonaut/limboai — compatible Godot 4.5 line. 1.7/1.8 require newer Godot; do not install newest. The C++ GDExtension makes Windows/Linux packaging and regression testing mandatory. Keep the new lightweight utility core; reserve LimboAI for physical action execution after a one-NPC isolated behavior-tree test. **Not installed.**
+- **gdUnit4**, https://github.com/godot-gdunit-labs/gdUnit4 — compatible 4.5.2 test ecosystem. **Deferred** because the existing SceneTree tests run in Godot 4.5.2 headlessly without new plugin dependencies; the new root workflow now actually invokes those tests. Reconsider when tests need scene mocking or parameterized fixtures.
+- **godot-simulation-plugins**, MIT, https://github.com/grgy078033/godot-simulation-plugins — NPC routines, relationships, and world events. Evaluate relationship data compatibility with VERBA's existing Mara/Tomas persistent rapport first; do not create competing authority over saved relationships. **Not installed.**
+- **Godot AI Workbench**, https://github.com/ZemDen/godot-ai-workbench — Windows Godot editor/MCP instrumentation and screenshot/debugger access. Interesting for Claude + Godot local QA, but requires an external local executable and explicit installation; **not bundled or installed** in this pass.
+- **VERBA utility simulation**, authored in-tree at game/scripts/village_sim.gd — no external library, added because a simple 12-agent deterministic headless model is lower-cost and easier to test than adopting a native AI runtime before physical action execution exists. Native tests run from repo-root GitHub Actions at .github/workflows/verba-godot.yml.
