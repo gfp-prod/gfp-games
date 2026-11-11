@@ -48,7 +48,7 @@ func _run() -> void:
 		if point.distance_to(clear)<2.0:
 			_fail("Built interiors still admit decorative vegetation")
 			return
-		var station: Node3D=district.find_child("ValeFuelStation",true,false)
+	var station: Node3D=district.find_child("ValeFuelStation",true,false)
 	var castle: Node3D=district.find_child("CastleOfTheSecondRoad",true,false)
 	var shop: Marker3D=station.find_child("StationWalkableInterior",true,false)
 	var shop_gate: Marker3D=station.find_child("StationOpenEntrance",true,false)
