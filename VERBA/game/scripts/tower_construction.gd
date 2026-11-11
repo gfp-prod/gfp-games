@@ -25,7 +25,8 @@ func _cell_at(point: Vector3) -> Vector2i:
 	return Vector2i(roundi(point.x/CELL),roundi(point.z/CELL))
 
 func _key(kind: String,cell: Vector2i,side: int) -> String:
-	return "%s:%d:%d:%d" % [kind,cell.x,cell.y,side if kind == "wall" else 0]
+	# Godot node names cannot contain colons; use stable filename-safe IDs.
+	return "%s_%d_%d_%d" % [kind,cell.x,cell.y,side if kind == "wall" else 0]
 
 func _base_key(cell: Vector2i) -> String:
 	return _key("floor",cell,0)
