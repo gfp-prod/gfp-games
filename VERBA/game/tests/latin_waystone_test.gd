@@ -37,6 +37,14 @@ func _run() -> void:
 	if not bool(assisted.get("ok",false)) or stone.revealed or world.social.memory("mara")["topics"].has("forest"):
 		_fail("English scaffold either stopped working or faked Latin knowledge")
 		return
+	# Legacy pre-production dialogue saved an English-obtained 'forest'
+	# topic. It must not be silently upgraded into spoken Latin mastery.
+	world.social.restore({"mara":{"topics":["forest"],"rapport":1,"traded":false}})
+	stone.update_from_knowledge()
+	if stone.revealed or world.social.memory("mara").get("spoken_topics",[]).has("forest"):
+		_fail("Legacy English directions were mistaken for produced Latin")
+		return
+	world.social.memories.clear()
 	if not world.scholar.collect_book("de_herbis") or not bool(world.scholar.answer("de_herbis",0).get("first_time",false)):
 		_fail("The real beginner manuscript cannot be understood")
 		return
@@ -54,7 +62,7 @@ func _run() -> void:
 		_fail("Mara's Latin directions did not illuminate the physical waystone")
 		return
 	var past: Dictionary=world.social.memory("mara")
-	if not past.get("topics",[]).has("forest") or int(past.get("rapport",0))!=1:
+	if not past.get("topics",[]).has("forest") or not past.get("spoken_topics",[]).has("forest") or int(past.get("rapport",0))!=1:
 		_fail("The revealed waystone is not grounded in a one-time social fact")
 		return
 	world.social.speak("mara","Ubi est silva?",world.scholar,world.player)
@@ -72,8 +80,8 @@ func _run() -> void:
 		_fail("The real valley cannot reload its learned language encounter")
 		return
 	stone.update_from_knowledge()
-	if not stone.revealed or not stone.ember.visible:
-		_fail("The visible world forgot Mara's advice across save/load")
+	if not stone.revealed or not stone.ember.visible or not world.social.memory("mara").get("spoken_topics",[]).has("forest"):
+		_fail("The visible world forgot proven Latin across save/load")
 		return
 	# Fresh launch, not just reusing the same live world instance.
 	var new_world=load("res://main.tscn").instantiate()
