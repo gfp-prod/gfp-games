@@ -33,7 +33,7 @@ func _run() -> void:
 	if not world.scholar.collect_book("de_herbis") or not bool(world.scholar.answer("de_herbis",0).get("first_time",false)):
 		_fail("The real beginner manuscript cannot be understood")
 		return
-	var answer: Dictionary=world.social.speak("mara","Silva est ubi?",world.scholar,world.player)
+	var answer: Dictionary=world.social.speak("mara","Ubi silva est?",world.scholar,world.player)
 	if not bool(answer.get("ok",false)):
 		_fail("The world did not recognize the same valid Latin question in free order")
 		return
