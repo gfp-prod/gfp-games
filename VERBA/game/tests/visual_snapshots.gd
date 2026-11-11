@@ -165,6 +165,10 @@ func _capture() -> void:
 		return
 	# Correctly produced Latin also alters scenery, not just a menu.
 	world.player.end_conversation()
+	# The fixed-angle QA camera is not the player's active gaze. Relocate
+	# the player away from Mara so her live E-interaction prompt does not
+	# appear spuriously over the waystone screenshot.
+	world.player.position=Vector3(-12.5,world.height_at(-12.5,28.0)+.22,28.0)
 	world.forest_waystone.update_from_knowledge()
 	if not world.forest_waystone.revealed:
 		_fail("Mara's learned direction did not reveal the real forest stone")
@@ -174,6 +178,9 @@ func _capture() -> void:
 	camera.global_position=marker+Vector3(1.1,1.55,-3.0)
 	camera.look_at(marker+Vector3.UP*.85,Vector3.UP)
 	for i in range(14): await process_frame
+	# The fixed QA camera isn't where the player is aiming. Suppress the
+	# unrelated interaction hint; keep the genuine 3D inscription visible.
+	world.player.interaction_hint.visible=false
 	RenderingServer.force_draw()
 	var guided: Image=root.get_texture().get_image()
 	if guided==null or guided.save_png(directory+"/latin_waystone_revealed.png")!=OK:
