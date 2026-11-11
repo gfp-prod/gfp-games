@@ -11,7 +11,6 @@ func _run() -> void:
 	var social=SOCIAL.new()
 	social.village_sim=sim
 	var inventory: Array[String]=["herb"]
-	var mock_player=RefCounted.new()
 	# Actual game player is required for refreshing held item; test uses a
 	# tiny node with the same inventory and UI-facing surface.
 	var player=load("res://tests/market_player_stub.gd").new()
@@ -43,7 +42,8 @@ func _run() -> void:
 	if not social.view("ida",null,player.inventory)["spoken"].contains("nearly empty"):
 		fail("Baker failed to recognize real grain shortage")
 		return
-	player.inventory=["herb"]
+	player.inventory.clear()
+	player.inventory.append("herb")
 	if social.choose("daro",3,null,player).get("ok",false):
 		fail("Farmer gave out grain from empty stores")
 		return
