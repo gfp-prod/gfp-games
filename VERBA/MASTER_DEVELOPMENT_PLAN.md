@@ -1,13 +1,17 @@
 # VERBA — Master Development Plan
-Version: 2026-11-10 | Engine: Godot 4.5.x | Platform: Windows PC, offline | Source: `verba-godot/VERBA/game`
+Version: 2026-11-11 (reconciled to live Godot repository) | Engine: Godot 4.5.x | Platform: Windows PC, offline | Source: `verba-godot/VERBA/game`
 
-## Actual progress — November 11, 2026
+## Live development truth — November 11, 2026
 
-**Shipped into the alpha branch, not full-phase completion:** The early physically collected Latin books, one-time comprehension XP/max mana, grammatical incantations, ecology and persistent world remain playable. The first social milestone now adds two actual characters with book-gated Latin dialogue, remembered topics and a real herb-for-book trade. First familiar mechanics add bonding an existing hare/crow and ordering it to follow, stay or rest by keyboard or Latin. The first survival mechanics add stamina, injury, herb healing, physical wolf attacks and persistent partial-loss respawns. All have dedicated Godot tests and are documented in [Gameplay Milestone 08](docs/GAMEPLAY_MILESTONE_08_DELIVERY.md).
+**Merged into the actual playable `verba-godot` branch (not whole-phase completion):** The authored gas-station/castle road district and a Latin-speaking station attendant; two-story collidable wizard tower and in-world book shelving; finite farm, bakery, forge and market workplaces with visibly performed NPC labor; persistent Latin-enhanced physical crops and paid wizard commissions; a single authoritative world calendar; real Latin reading, grammar and compositional spells; and a research-grounded, in-grimoire sequence of contextual typed retrieval, delayed in-world recall and corrective morphology. Earlier features include wildlife, familiars, survival, book collection, and social routines. These features were delivered in merged PRs #12–19 and prior milestones. They are still alpha systems, not final art/content acceptance.
 
-**Still missing or partial:** This is one small starter valley, not the open-world road circuit; there is no gas station, castle, hamlet or multi-region streaming system. NPC schedules, comprehensive social conversations, two more enemy families and advanced pet behaviors remain planned. Modular tower building and resource harvesting **have not been implemented**. Phase 3 and Phase 4 are therefore *entered*, not completed; Phase 5 has not begun.
+**Open development branches, not yet shipped:** PR #20 adds player baking/blacksmithing careers and is still a draft pending release gates. PR #21 adds the empirical *Liber Experimentorum* inside the actual grimoire and is still pending rendered visual acceptance. PR #22 lets immortal defeat advance the authoritative village calendar by one day, also pending rendered visual acceptance. Do not describe any of these three as part of the downloaded base branch until merged.
 
-**Next execution gate:** A real construction loop (obtain wood/stone → select piece → snap a solid wall/floor/shelf on a home plot → spend material → save/reopen with every piece identical). Do not instead spend another entire pass on cottage trim.
+**Still incomplete:** No complete streaming open world, generational inheritance/aging, comprehensive material simulation, multiple polished enemy families, fully emergent NPC dialogue, broad Latin morphology, or finished character/creature animation and environmental art. Current staged Latin dialogue is mainly authored choices; true spontaneous typed conversational output remains a separate milestone. A passing Godot build or a generated screenshot is not itself artistic sign-off.
+
+**Immediate execution gates:** (1) complete native and rendered QA and integrate the outstanding draft features without breaking the playable loop; (2) make at least one real in-world NPC request/response require understood and correctly produced Latin, affecting a physical/social outcome; (3) play-test the complete book → recall → targeted spell → changed village livelihood → relationship/trade → tower → risk → world return loop; (4) inspect fixed-angle and real first-person captures for anatomy, proportions, readability, collision, and painterly/stylized art consistency. Expansion into new regions follows these gates, not vice versa.
+
+The phase descriptions below define **desired acceptance criteria**, not a claim that all earlier milestones remain untouched or are finished. Reconcile them with the live branch and its test results before creating new work.
 
 ## Creative target
 
