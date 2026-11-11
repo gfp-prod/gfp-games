@@ -14,6 +14,7 @@ const SCHOLAR = preload("res://scripts/scholar.gd")
 const SIM_OBJECT = preload("res://scripts/sim_object.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
+const COTTAGE_HERO = preload("res://scripts/cottage_hero.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
@@ -439,6 +440,8 @@ func build_landmarks() -> void:
 		apply_cottage_photographic_materials(cottage_model)
 	else:
 		push_error("VERBA cottage asset failed to import")
+	# Finish the actual cabin parent: coordinates match the imported model and its colliders.
+	COTTAGE_HERO.decorate(cabin)
 	# An independently solid cottage shell with doorway, floor, chimney and walls.
 	# The source GLB is visual artwork only and supplies NO physics by default.
 	add_solid_box(cabin, Vector3(-3.02, 1.8, 0), Vector3(.42, 3.5, 5.5), "WestCottageWall")
