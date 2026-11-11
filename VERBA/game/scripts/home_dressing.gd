@@ -57,7 +57,12 @@ static func populate(world: Node3D) -> void:
 			for zz in [-half_len,half_len]:
 				ART.orb(wood_root,Vector3(x_local,y_local,zz),
 					Vector3(.12,.11,.02),ART.mat(Color("a48a70"),1.0),10)
-	world.add_solid_box(wood_root,Vector3(0,.37,0),Vector3(1.3,.7,1.18),"PhysicalStackedWood")
+	# A physically visible salvaging source, rather than a magic resource menu.
+	wood_root.set_meta("resource_deposit","wood")
+	wood_root.set_meta("harvest_id","woodpile:hermitage")
+	var log_collider: StaticBody3D = world.add_solid_box(wood_root,
+		Vector3(0,.37,0),Vector3(1.3,.7,1.18),"PhysicalStackedWood")
+	log_collider.set_meta("harvest_ref",wood_root)
 
 	# One warm navigational accent, visible at dusk from the path but not
 	# enough artificial emissive lights to turn daytime into a theme park.
