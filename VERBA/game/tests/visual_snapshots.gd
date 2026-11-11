@@ -26,7 +26,11 @@ func _capture() -> void:
 	var views: Array[Dictionary] = [
 		{"name":"spawn_meadow","eye":Vector2(0,26),"look":Vector2(8,14)},
 		{"name":"cottage_facade","eye":Vector2(34,18),"look":Vector2(29,8)},
-		{"name":"village_market","eye":Vector2(4,24),"look":Vector2(12,15)}
+		{"name":"village_market","eye":Vector2(4,24),"look":Vector2(12,15)},
+		{"name":"gas_station","eye":Vector2(-17,37),"look":Vector2(-27,44)},
+		{"name":"castle_gate","eye":Vector2(-32,45),"look":Vector2(-49,44)},
+		{"name":"station_shop","eye":Vector2(-24.8,44),"look":Vector2(-31.0,44)},
+		{"name":"castle_archive","eye":Vector2(-47,44),"look":Vector2(-51.6,44)}
 	]
 	for view in views:
 		var eye: Vector2=view["eye"]
@@ -56,5 +60,5 @@ func _capture() -> void:
 		if image.save_png(path)!=OK:
 			_fail("Cannot save "+path)
 			return
-	print("PASS: three fixed-view 1280x720 screenshots captured with nontrivial rendered content")
+	print("PASS: seven fixed-view 1280x720 screenshots captured with nontrivial rendered content")
 	quit(0)
