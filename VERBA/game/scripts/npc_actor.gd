@@ -89,6 +89,67 @@ func _ready() -> void:
 			Vector3(0,-.22,-.11))
 		ART.bone(figure,Vector3(-.12,1.47,.04),
 			Vector3(.50,.99,.17),.052,.045,trim,7)
+	# Role identity belongs to the person: the same figure carries these
+	# tools whether travelling, trading or standing at the workplace.
+	# Do not replace every citizen with the same cone-robe silhouette.
+	match npc_id:
+		"ida":
+			var flour:=ART.mat(Color("d2c4a1"),.98)
+			var apron:=ART.box(figure,Vector3(0,.94,-.33),
+				Vector3(.56,.95,.10),flour)
+			apron.name="VisibleBakerApron"
+			ART.cone(figure,Vector3(0,2.09,0),.27,.28,flour,.17,11)
+			ART.bone(figure,Vector3(-.22,1.37,-.34),
+				Vector3(.22,1.37,-.34),.03,.03,trim,7)
+		"orin":
+			var hide:=ART.mat(Color("775b42"),.99)
+			var metal:=ART.mat(Color("737e81"),.52)
+			var apron:=ART.box(figure,Vector3(0,.98,-.35),
+				Vector3(.65,1.08,.13),hide)
+			apron.name="VisibleSmithApron"
+			ART.box(figure,Vector3(0,.71,-.42),
+				Vector3(.61,.13,.18),leather)
+			var hammer:=Node3D.new()
+			hammer.name="VisibleSmithHammer"
+			hammer.position=Vector3(.46,1.05,-.16)
+			figure.add_child(hammer)
+			ART.bone(hammer,Vector3(0,-.33,0),
+				Vector3(0,.31,0),.048,.036,leather,8)
+			ART.box(hammer,Vector3(0,.27,0),Vector3(.41,.17,.23),metal)
+		"daro":
+			var straw:=ART.mat(Color("b8a477"),.99)
+			var brim:=ART.cone(figure,Vector3(0,2.02,0),.49,.075,
+				straw,.41,14)
+			brim.name="VisibleFarmerHat"
+			ART.cone(figure,Vector3(0,2.14,0),.29,.23,straw,.21,12)
+			var staff:=Node3D.new()
+			staff.name="VisibleFarmerRake"
+			staff.position=Vector3(-.54,.96,-.11)
+			figure.add_child(staff)
+			ART.bone(staff,Vector3(0,-.77,0),Vector3(0,1.03,0),
+				.039,.029,leather,8)
+			ART.box(staff,Vector3(0,1.02,0),Vector3(.47,.10,.09),trim)
+		"sela":
+			var purse:=ART.mat(Color("b89a61"),.93)
+			var bag:=ART.box(figure,Vector3(-.47,.73,-.23),
+				Vector3(.38,.45,.24),purse)
+			bag.name="VisibleMerchantPouch"
+			for side in [-1.0,1.0]:
+				ART.bone(figure,Vector3(-.47+side*.14,1.00,-.29),
+					Vector3(-.47+side*.14,.85,-.29),.023,.023,leather,7)
+		"nima":
+			var instrument:=ART.orb(figure,Vector3(-.22,1.03,-.40),
+				Vector3(.28,.37,.11),ART.mat(Color("926849"),.91),12)
+			instrument.name="VisibleBardLute"
+			ART.bone(figure,Vector3(-.33,1.17,-.40),
+				Vector3(.18,1.55,-.40),.065,.053,leather,9)
+		"titus":
+			var iron:=ART.mat(Color("7d8180"),.56)
+			var shield:=ART.box(figure,Vector3(-.44,1.05,-.20),
+				Vector3(.14,.83,.54),iron)
+			shield.name="VisibleGuardShield"
+		_:
+			pass
 	# A petrol-station attendant looks like a twentieth-century worker,
 	# not a medieval pilgrim. A slim uniform, two separate legs and a
 	# peaked cap keep the silhouette readable without an external installer.
