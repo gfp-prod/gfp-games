@@ -1,0 +1,262 @@
+[
+  {
+    "id": "starter_ignis",
+    "source": "starter",
+    "mode": "form",
+    "prompt": "Name fire (noun, nominative singular).",
+    "answer": "ignis",
+    "example": "Ignis lignum urit.",
+    "translation": "Fire burns wood.",
+    "explanation": "ignis is a third-declension noun. It names fire; it is not an imperative."
+  },
+  {
+    "id": "starter_cresce",
+    "source": "starter",
+    "mode": "form",
+    "prompt": "Command one plant: Grow!",
+    "answer": "cresce",
+    "example": "Herba in horto crescit.",
+    "translation": "A plant grows in the garden.",
+    "explanation": "cresce is the singular imperative of crescere. crescit means 'it grows', not a command."
+  },
+  {
+    "id": "starter_pluvia",
+    "source": "starter",
+    "mode": "form",
+    "prompt": "Name rain (nominative singular).",
+    "answer": "pluvia",
+    "example": "Pluvia in hortum cadit.",
+    "translation": "Rain falls into the garden.",
+    "explanation": "pluvia is a first-declension feminine noun; naming it differs from commanding rain."
+  },
+  {
+    "id": "starter_lux",
+    "source": "starter",
+    "mode": "form",
+    "prompt": "Name light (nominative singular).",
+    "answer": "lux",
+    "example": "Lux in domo est.",
+    "translation": "There is light in the house.",
+    "explanation": "lux is the nominative; lucis is its genitive."
+  },
+  {
+    "id": "starter_veni",
+    "source": "starter",
+    "mode": "form",
+    "prompt": "Command one person: Come!",
+    "answer": "veni",
+    "example": "Veni, amice!",
+    "translation": "Come, friend!",
+    "explanation": "veni is a singular imperative. To address several people, use venite."
+  },
+  {
+    "id": "starter_dormi",
+    "source": "starter",
+    "mode": "form",
+    "prompt": "Command one person: Sleep!",
+    "answer": "dormi",
+    "example": "Dormi, amice.",
+    "translation": "Sleep, friend.",
+    "explanation": "dormi is the singular imperative of dormire; dormite addresses several."
+  },
+  {
+    "id": "herbis_herba",
+    "source": "de_herbis",
+    "mode": "cloze",
+    "prompt": "Complete the Latin: ___ in horto crescit. (A plant grows in the garden.)",
+    "answer": "herba",
+    "example": "Herba in horto crescit.",
+    "translation": "A plant grows in the garden.",
+    "explanation": "herba is nominative singular because the plant performs the action."
+  },
+  {
+    "id": "herbis_herbam",
+    "source": "de_herbis",
+    "mode": "cloze",
+    "prompt": "Complete: Aqua ___ iuvat. (Water helps the plant.)",
+    "answer": "herbam",
+    "example": "Aqua herbam iuvat.",
+    "translation": "Water helps the plant.",
+    "explanation": "herbam is accusative singular: the plant is the direct object of iuvat."
+  },
+  {
+    "id": "herbis_crescite",
+    "source": "de_herbis",
+    "mode": "form",
+    "prompt": "Command several plants: Grow!",
+    "answer": "crescite",
+    "example": "Crescite, herbae!",
+    "translation": "Grow, plants!",
+    "explanation": "crescite is plural imperative. Cresce would address one plant."
+  },
+  {
+    "id": "herbis_crea",
+    "source": "de_herbis",
+    "mode": "form",
+    "prompt": "Command one person or thing: Create!",
+    "answer": "crea",
+    "example": "Crea herbam.",
+    "translation": "Create a plant.",
+    "explanation": "crea is the singular imperative of creare; herbam is its accusative object."
+  },
+  {
+    "id": "animals_lupus",
+    "source": "de_animalibus",
+    "mode": "cloze",
+    "prompt": "Complete: ___ in silva ambulat. (A wolf walks in the forest.)",
+    "answer": "lupus",
+    "example": "Lupus in silva ambulat.",
+    "translation": "A wolf walks in the forest.",
+    "explanation": "lupus is the nominative subject. lupum would mark the direct object."
+  },
+  {
+    "id": "animals_lupum",
+    "source": "de_animalibus",
+    "mode": "cloze",
+    "prompt": "Complete: Cervus ___ videt. (A deer sees a wolf.)",
+    "answer": "lupum",
+    "example": "Cervus lupum videt.",
+    "translation": "A deer sees a wolf.",
+    "explanation": "lupum is accusative singular: the wolf is the thing seen."
+  },
+  {
+    "id": "animals_venite",
+    "source": "de_animalibus",
+    "mode": "form",
+    "prompt": "Command several people: Come!",
+    "answer": "venite",
+    "example": "Venite, amici!",
+    "translation": "Come, friends!",
+    "explanation": "venite is plural imperative. Compare veni for one person."
+  },
+  {
+    "id": "animals_dormite",
+    "source": "de_animalibus",
+    "mode": "form",
+    "prompt": "Command several people: Sleep!",
+    "answer": "dormite",
+    "example": "Dormite, amici.",
+    "translation": "Sleep, friends.",
+    "explanation": "dormite is plural imperative of dormire."
+  },
+  {
+    "id": "fire_ignem",
+    "source": "de_igne_et_aqua",
+    "mode": "cloze",
+    "prompt": "Complete: Aqua ___ exstinguit. (Water puts out the fire.)",
+    "answer": "ignem",
+    "example": "Aqua ignem exstinguit.",
+    "translation": "Water extinguishes the fire.",
+    "explanation": "ignem is accusative singular. The fire receives the action; ignis names the subject."
+  },
+  {
+    "id": "fire_aqua",
+    "source": "de_igne_et_aqua",
+    "mode": "cloze",
+    "prompt": "Complete: ___ ignem exstinguit. (Water puts out fire.)",
+    "answer": "aqua",
+    "example": "Aqua ignem exstinguit.",
+    "translation": "Water puts out fire.",
+    "explanation": "aqua is nominative singular, the subject of exstinguit."
+  },
+  {
+    "id": "fire_accende",
+    "source": "de_igne_et_aqua",
+    "mode": "form",
+    "prompt": "Command one person: Light it!",
+    "answer": "accende",
+    "example": "Accende lignum.",
+    "translation": "Light the wood!",
+    "explanation": "accende is a singular imperative of accendere; lignum is its direct object."
+  },
+  {
+    "id": "fire_exstingue",
+    "source": "de_igne_et_aqua",
+    "mode": "form",
+    "prompt": "Command one person: Extinguish it!",
+    "answer": "exstingue",
+    "example": "Exstingue ignem.",
+    "translation": "Put out the fire!",
+    "explanation": "exstingue is a singular imperative; ignem is the accusative object."
+  },
+  {
+    "id": "fire_ardete",
+    "source": "de_igne_et_aqua",
+    "mode": "form",
+    "prompt": "Command several: Burn!",
+    "answer": "ardete",
+    "example": "Ardete, flammae!",
+    "translation": "Burn, flames!",
+    "explanation": "ardete is plural imperative; arde would address one."
+  },
+  {
+    "id": "motion_move",
+    "source": "de_motu",
+    "mode": "form",
+    "prompt": "Command one person: Move!",
+    "answer": "move",
+    "example": "Move lapidem.",
+    "translation": "Move the stone.",
+    "explanation": "move is singular imperative of movere; lapidem is accusative."
+  },
+  {
+    "id": "motion_lapidem",
+    "source": "de_motu",
+    "mode": "cloze",
+    "prompt": "Complete: Magister ___ movet. (The teacher moves the stone.)",
+    "answer": "lapidem",
+    "example": "Magister lapidem movet.",
+    "translation": "The teacher moves the stone.",
+    "explanation": "lapidem is accusative singular. A subject would be lapis."
+  },
+  {
+    "id": "motion_leniter",
+    "source": "de_motu",
+    "mode": "form",
+    "prompt": "How do you say gently (Latin adverb)?",
+    "answer": "leniter",
+    "example": "Discipulus lapidem leniter movet.",
+    "translation": "The student moves the stone gently.",
+    "explanation": "leniter is an adverb modifying how the action is done; it does not decline."
+  },
+  {
+    "id": "castle_arx",
+    "source": "de_castello",
+    "mode": "cloze",
+    "prompt": "Complete: ___ in colle stat. (The citadel stands on a hill.)",
+    "answer": "arx",
+    "example": "Arx in colle stat.",
+    "translation": "The citadel stands on a hill.",
+    "explanation": "arx is a third-declension noun and the nominative subject of stat."
+  },
+  {
+    "id": "castle_colle",
+    "source": "de_castello",
+    "mode": "cloze",
+    "prompt": "Complete: Arx in ___ stat. (The citadel stands on a hill.)",
+    "answer": "colle",
+    "example": "Arx in colle stat.",
+    "translation": "The citadel stands on a hill.",
+    "explanation": "colle is ablative singular after in when describing a static location."
+  },
+  {
+    "id": "castle_porta",
+    "source": "de_castello",
+    "mode": "cloze",
+    "prompt": "Complete: ___ in muro est. (The gate is in the wall.)",
+    "answer": "porta",
+    "example": "Porta in muro est.",
+    "translation": "The gate is in the wall.",
+    "explanation": "porta is nominative singular; it is the subject of est."
+  },
+  {
+    "id": "castle_murus",
+    "source": "de_castello",
+    "mode": "form",
+    "prompt": "What is wall as a Latin nominative singular noun?",
+    "answer": "murus",
+    "example": "Murus ex lapidibus factus est.",
+    "translation": "The wall was made from stones.",
+    "explanation": "murus is the nominative. muro is an ablative form used after in for location."
+  }
+]
