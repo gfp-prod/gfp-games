@@ -16,6 +16,9 @@ const COSTS: Dictionary = {
 	"lamp": {"wood": 1, "amber": 1}
 }
 const UPPER_LEVEL: float = 3.0
+
+func get_build_choices() -> Array[String]:
+	return BUILD_ORDER.duplicate()
 const BUILD_ORDER: Array[String] = ["floor","wall","door","shelf","upper_floor","upper_wall","stairs","roof","lamp"]
 var world
 var root: Node3D
@@ -209,10 +212,12 @@ func place_saved_part(record: Dictionary) -> void:
 			for x in [-1.20,1.20]:
 				var beam: Vector3=Vector3(x,0,0)
 				ART.box(node,beam,Vector3(.50,2.75,.23),timber)
-				world.add_solid_box(node,beam,Vector3(.50,2.75,.23),"TowerDoorPost_"+key+str(x))
+				var post=world.add_solid_box(node,beam,Vector3(.50,2.75,.23),"TowerDoorPost_"+key+str(x))
+				post.set_meta("tower_ref",node)
 			var lintel: Vector3=Vector3(0,1.17,0)
 			ART.box(node,lintel,Vector3(1.98,.4,.23),deep)
-			world.add_solid_box(node,lintel,Vector3(1.98,.4,.23),"TowerDoorLintel_"+key)
+			var frame=world.add_solid_box(node,lintel,Vector3(1.98,.4,.23),"TowerDoorLintel_"+key)
+			frame.set_meta("tower_ref",node)
 			var pivot:=Node3D.new()
 			pivot.name="DoorPivot"
 			pivot.position=Vector3(-.81,-.26,0)
