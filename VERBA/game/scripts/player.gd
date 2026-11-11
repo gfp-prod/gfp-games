@@ -425,6 +425,24 @@ func _input(event: InputEvent) -> void:
 		echo.text=buffer.to_upper()+"  ◦"
 		get_viewport().set_input_as_handled()
 		return
+	# The grimoire uses the SAME typed Latin input as casting. Consume
+	# letters first: G, B, R and H may be part of a Latin answer rather
+	# than shortcuts. Escape closes the physical book as usual.
+	if book.open and book.practice_open:
+		if event.keycode==KEY_TAB:
+			book.leave_practice()
+			book.update_pages()
+		elif book.practice_answered:
+			if event.keycode==KEY_R: book.begin_practice()
+			elif event.keycode==KEY_B: book.cycle_books()
+		elif event.keycode in [KEY_ENTER,KEY_KP_ENTER]:
+			book.submit_practice()
+		elif event.keycode==KEY_BACKSPACE:
+			book.erase_practice_character()
+		elif event.unicode>=32:
+			book.write_practice_character(String.chr(event.unicode))
+		get_viewport().set_input_as_handled()
+		return
 	if event.keycode==KEY_F3:
 		diagnostics_visible = not diagnostics_visible
 		if is_instance_valid(diagnostics): diagnostics.visible = diagnostics_visible
@@ -443,7 +461,9 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if book.open:
-		if book.quiz_open and event.keycode >= KEY_1 and event.keycode <= KEY_3:
+		if event.keycode==KEY_R:
+			book.begin_practice()
+		elif book.quiz_open and event.keycode >= KEY_1 and event.keycode <= KEY_3:
 			book.submit_answer(event.keycode - KEY_1)
 		elif event.keycode == KEY_B:
 			book.cycle_books()
