@@ -144,6 +144,13 @@ func choose(id: String, index: int, scholar, player, spoken_latin: bool = false)
 	var blocked: String = _reason(choice, scholar, player.inventory, previous, spoken_latin)
 	if not blocked.is_empty():
 		return {"ok": false, "message": blocked, "changed": false}
+	# Asking in English is still a legitimate way to explore. However,
+	# only productive Latin establishes the remembered linguistic guidance
+	# that can illuminate Mara's physical waystone.
+	if id=="mara" and String(choice.get("id",""))=="forest" and not spoken_latin:
+		var directions: Array=choice.get("reply",[])
+		return {"ok":true,"changed":false,
+			"message":String(directions[mini(stage(scholar),directions.size()-1)])}
 	var reward: String = String(choice.get("grants_book", ""))
 	var required_item: String = String(choice.get("requires_item", ""))
 	var market_good: String=String(choice.get("market_give",""))
