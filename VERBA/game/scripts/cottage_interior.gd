@@ -15,6 +15,12 @@ static func furnish(house: Node3D, world: Node3D, cabin: Node3D) -> void:
 	var brass := ART.mat(Color("837350"),.61)
 	brass.metallic = .27
 
+	# A continuous dark subfloor is just below the planks. This prevents the
+	# terrain atlas showing as bright green stripes in the tiny board gaps.
+	var subfloor := ART.box(room,Vector3(0,.269,0),
+		Vector3(5.48,.068,4.91),darkwood)
+	subfloor.name = "DarkUnderlayBeneathFloorboards"
+
 	# One authored wood-plank mesh instead of a dozen individual render nodes.
 	var floor := MeshInstance3D.new()
 	floor.name = "ContinuousSolidLookingCottageFloor"
@@ -82,7 +88,7 @@ static func furnish(house: Node3D, world: Node3D, cabin: Node3D) -> void:
 
 static func _textured_wood() -> StandardMaterial3D:
 	var wood := StandardMaterial3D.new()
-	wood.albedo_color = Color("c1aa8c")
+	wood.albedo_color = Color("d7bea0")
 	wood.roughness = .96
 	wood.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	var path := "res://assets/textures/real/cottage_wood_diffuse.jpg"
@@ -105,7 +111,7 @@ static func make_floor_mesh() -> ArrayMesh:
 		var top: float = .305+rng.randf_range(0,.004)
 		var z0: float = -2.43
 		var z1: float = 2.45
-		var tint: Color = Color("b7a486").lerp(Color("96866d"),
+		var tint: Color = Color("cbb695").lerp(Color("a7957d"),
 			rng.randf_range(.12,.51))
 		if i%4==0:
 			tint = tint.lerp(Color("817b6b"),.14)
