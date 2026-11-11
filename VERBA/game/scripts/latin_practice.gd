@@ -1,8 +1,8 @@
 extends RefCounted
-## Research-grounded RECALL practice owned by Scholar, not an alternate spellbook.
-## Reviewed on REAL UTC days: fast-forwarding the fantasy calendar cannot
-## pretend that a human has remembered Latin after a week's retention interval.
-## Fixed intervals are a transparent heuristic, not an empirically optimal SRS.
+## The wizard's memory exercises live inside the physical grimoire.
+## Delayed typed retrieval uses the world's own dawns, never the device date.
+## No login-day rewards or education-app terms appear in the fiction.
+## Fixed expanding intervals are a simple, testable spacing heuristic.
 const DATA_PATH: String = "res://data/latin_review.json"
 const INTERVAL_DAYS := [1,3,7,14,30,60]
 var cards: Dictionary = {}
@@ -21,10 +21,6 @@ func _init() -> void:
 		if String(entry.get("prompt","")).is_empty() or String(entry.get("answer","")).is_empty(): continue
 		if String(entry.get("mode","")) not in ["form","cloze"]: continue
 		cards[card_id]=entry.duplicate(true)
-
-static func real_day() -> int:
-	# Absolute UTC date, independent of world-calendar/year acceleration.
-	return int(floor(Time.get_unix_time_from_system()/86400.0))
 
 static func normalize(raw_text: String) -> String:
 	# Latin macrons aid pronunciation but are not required for keyboard recall.
@@ -72,15 +68,15 @@ func next_due(completed: Array, today: int) -> Dictionary:
 
 func submit(card_id: String, response: String, completed: Array, today: int) -> Dictionary:
 	if not cards.has(card_id):
-		return {"ok":false,"message":"Unknown Latin lesson."}
+		return {"ok":false,"message":"This exercise is not written in your grimoire."}
 	var card: Dictionary=cards[card_id]
 	if not eligible(card,completed):
-		return {"ok":false,"message":"Read and understand this volume first."}
+		return {"ok":false,"message":"Study the source manuscript first."}
 	var record: Dictionary=progress.get(card_id,{})
 	if int(record.get("due_day",0))>today:
-		return {"ok":false,"message":"That word is not due for recall yet."}
+		return {"ok":false,"message":"That word rests in memory. Return after another dawn."}
 	var supplied: String=normalize(response)
-	if supplied.is_empty(): return {"ok":false,"message":"Write an answer before checking."}
+	if supplied.is_empty(): return {"ok":false,"message":"The parchment awaits your Latin."}
 	var correct: bool=supplied==normalize(String(card["answer"]))
 	var repetitions: int=int(record.get("repetitions",0))+1 if correct else 0
 	var next_interval: int=INTERVAL_DAYS[mini(repetitions-1,INTERVAL_DAYS.size()-1)] if correct else 1
@@ -91,10 +87,10 @@ func submit(card_id: String, response: String, completed: Array, today: int) -> 
 		"lapses":int(record.get("lapses",0))+(0 if correct else 1)
 	}
 	recent_source=String(card["source"])
-	var label: String="Remembered" if correct else "Not yet"
+	var label: String="BENE" if correct else "CORRIGENDUM"
 	# Corrective feedback includes the full model and morphological reason;
 	# never mislabel a guessed/recognized item as genuinely recalled.
-	var note: String="%s. %s\n%s\n%s\nReview again in %d real day(s)." % [
+	var note: String="%s — %s\n%s\n%s\nRevisit after %d dawn(s)." % [
 		label,String(card["answer"]),String(card.get("example","")),
 		String(card.get("explanation","")),next_interval]
 	return {"ok":true,"correct":correct,"answer":String(card["answer"]),
@@ -104,9 +100,9 @@ func submit(card_id: String, response: String, completed: Array, today: int) -> 
 		"explanation":String(card.get("explanation",""))}
 
 func mastery(form: String) -> int:
-	# Discount only after actual delayed RECALL on distinct real dates.
-	# Reading/repeating a passage or fast-forwarding in-game time does not
-	# increase mastery. A failed recall resets the current success streak.
+	# Discount only after three successful recalls across scheduled world days.
+	# Reading/repeating a passage or skipping ahead in the calendar alone
+	# does not increase mastery. A failure resets the current success streak.
 	var high: int=0
 	for key in progress:
 		if cards.has(key) and normalize(String(cards[key]["answer"]))==normalize(form):
