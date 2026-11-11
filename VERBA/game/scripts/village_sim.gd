@@ -23,6 +23,7 @@ var tick_count := 0
 var next_event_id := 1
 var recent_action: Dictionary = {}
 var seeded := false
+var restore_error: String = ""
 
 func _init(seed_value: int = 1938) -> void:
 	reset(seed_value)
@@ -201,19 +202,34 @@ func snapshot() -> Dictionary:
 		"events":events.duplicate(true),"recent_action":recent_action.duplicate(true)}
 
 func restore(record: Dictionary) -> bool:
-	if int(record.get("version",0))!=VERSION: return false
+	restore_error = ""
+	if int(record.get("version",0))!=VERSION:
+		restore_error = "schema version"
+		return false
 	var stored: Variant = record.get("people",{})
-	if not (stored is Dictionary) or stored.size()!=ROLES.size(): return false
+	if not (stored is Dictionary) or stored.size()!=ROLES.size():
+		restore_error = "population: %d" % stored.size()
+		return false
 	for row in ROLES:
-		if not stored.has(row[0]) or not (stored[row[0]] is Dictionary): return false
-		if String(stored[row[0]].get("id",""))!=row[0]: return false
+		if not stored.has(row[0]) or not (stored[row[0]] is Dictionary):
+			restore_error = "missing person: %s" % row[0]
+			return false
+		if String(stored[row[0]].get("id",""))!=row[0]:
+			restore_error = "identity mismatch: %s" % row[0]
+			return false
 		var spouse: String = String(stored[row[0]].get("spouse",""))
 		if not spouse.is_empty():
-			if not stored.has(spouse) or String(stored[spouse].get("spouse",""))!=row[0]: return false
+			if not stored.has(spouse) or String(stored[spouse].get("spouse",""))!=row[0]:
+				restore_error = "non-reciprocal spouse: %s" % row[0]
+				return false
 	var history: Variant = record.get("events",[])
-	if not (history is Array) or history.size()>256: return false
+	if not (history is Array) or history.size()>256:
+		restore_error = "history length"
+		return false
 	for entry in history:
-		if not (entry is Dictionary) or not stored.has(String(entry.get("actor",""))): return false
+		if not (entry is Dictionary) or not stored.has(String(entry.get("actor",""))):
+			restore_error = "invalid event actor"
+			return false
 	people = stored.duplicate(true)
 	events = history.duplicate(true)
 	tick_count = maxi(0,int(record.get("tick",0)))
