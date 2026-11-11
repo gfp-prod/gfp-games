@@ -51,5 +51,13 @@ func run_checks() -> void:
 		printerr("FAIL: actual cottage facade is backface-culled or transparent")
 		quit(9)
 		return
+	if cottage.find_child("ContinuousSolidLookingCottageFloor",true,false) == null:
+		printerr("FAIL: grass would be visible where the cottage floor belongs")
+		quit(10)
+		return
+	if cottage.find_child("HermitDeskPhysical",true,false) == null:
+		printerr("FAIL: scholar's desk lacks the expected collision")
+		quit(11)
+		return
 	print("PASS: scene, world, player, grimoire, wildlife, and lexicon instantiated")
 	quit(0)
