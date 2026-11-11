@@ -76,6 +76,7 @@ func _run() -> void:
 	player.refresh_held_model()
 	var previous_drops: int = world.items.size()
 	var defeats: int = player.death_count
+	var previous_day: int = world.world_calendar.day
 	player.health = 8.0
 	player.damage_immunity = 0.0
 	if not player.take_damage(25.0,"wolf"):
@@ -83,6 +84,9 @@ func _run() -> void:
 		return
 	if player.death_count != defeats+1 or absf(player.health-60.0) > .01:
 		_fail("Defeat failed to respawn an injured but living player")
+		return
+	if world.world_calendar.day != previous_day+1:
+		_fail("Immortal return failed to advance the same persistent village calendar")
 		return
 	if world.items.size() != previous_drops+1 or player.inventory.has("stone"):
 		_fail("Defeat has no item-loss consequence")
@@ -106,6 +110,9 @@ func _run() -> void:
 	if absf(player.health-73.5) > .01 or absf(player.stamina-21.0) > .01 or player.death_count != defeats+1:
 		_fail("Injury, stamina or defeats changed across a save reload")
 		return
+	if world.world_calendar.day != previous_day+1:
+		_fail("The lost day of immortal recovery vanished on save/reload")
+		return
 	var legacy: Dictionary = history.duplicate(true)
 	legacy["player"].erase("health")
 	legacy["player"].erase("stamina")
@@ -113,7 +120,7 @@ func _run() -> void:
 	if not PERSIST.apply_snapshot(world,legacy) or player.health != 100.0 or player.stamina != 100.0:
 		_fail("Legacy saves should start healthy without survival fields")
 		return
-	print("PASS: wolf pursuit and physical bite, solid-wall protection, herb healing, consequential defeat and survival save/legacy restore")
+	print("PASS: wolf pursuit, physical bite, herb healing, immortal one-day absence and persistent consequences")
 	quit(0)
 
 func _fail(message: String) -> void:

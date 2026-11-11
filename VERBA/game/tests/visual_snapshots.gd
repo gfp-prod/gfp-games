@@ -105,6 +105,21 @@ func _capture() -> void:
 	if correction_frame==null or correction_frame.save_png(directory+"/grimoire_correction.png")!=OK:
 		_fail("Could not save scholar's correction view")
 		return
+	# The observation folio must also be inspected in real perspective.
+	# Both entries below pass through the same player casting path as play.
+	world.player.book.leave_practice()
+	var trial_target: Dictionary={"position":world.player.global_position+Vector3(0,0,-3)}
+	world.player.cast_latin("crescite arbor",trial_target)
+	world.player.cast_latin("lux",trial_target)
+	if not world.player.book.begin_journal():
+		_fail("Cannot open physical experiment folio for visual QA")
+		return
+	for i in range(12): await process_frame
+	RenderingServer.force_draw()
+	var trial_frame: Image=root.get_texture().get_image()
+	if trial_frame==null or trial_frame.get_width()<640 or trial_frame.save_png(directory+"/grimoire_experiments.png")!=OK:
+		_fail("Could not save wizard field experiment view")
+		return
 	# Review a first-person, actually rendered Latin NPC exchange. Capturing
 	# both the written request and the response catches clipped or invisible UI.
 	world.player.book.toggle()
@@ -148,5 +163,5 @@ func _capture() -> void:
 	if answered==null or answered.save_png(directory+"/conversation_latin_reply.png")!=OK:
 		_fail("Could not save the actually rendered conversation result")
 		return
-	print("PASS: seventeen actual 1280x720 rendered views including real Latin conversation entry and response")
+	print("PASS: eighteen actual 1280x720 rendered views including field notebook and productive Latin conversation")
 	quit(0)

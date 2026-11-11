@@ -357,7 +357,7 @@ func refresh_conversation() -> void:
 	if conversation_listening:
 		conversation_options.text = "\n".join(lines) + "\n\n> " + conversation_buffer + "▌\nEnter: speak    Esc: stop writing"
 	else:
-		conversation_options.text = "\n".join(lines) + "\n\nEnter: speak Latin    1–6 respond    Esc / E leave"
+		conversation_options.text = "\n".join(lines) + "\n\nEnter: speak Latin    1–6 respond    Esc / E leave""
 	conversation_panel.visible = true
 
 func choose_conversation_option(index: int) -> Dictionary:
@@ -485,6 +485,17 @@ func _input(event: InputEvent) -> void:
 			book.write_practice_character(String.chr(event.unicode))
 		get_viewport().set_input_as_handled()
 		return
+	# The experimental folio is another page of the same physical book.
+	# Close it before interpreting letter keys as ordinary book controls.
+	if book.open and book.journal_open:
+		if event.keycode in [KEY_TAB,KEY_J]:
+			book.leave_journal()
+		elif event.keycode in [KEY_A,KEY_LEFT]:
+			book.shift_journal(-1)
+		elif event.keycode in [KEY_D,KEY_RIGHT]:
+			book.shift_journal(1)
+		get_viewport().set_input_as_handled()
+		return
 	if event.keycode==KEY_F3:
 		diagnostics_visible = not diagnostics_visible
 		if is_instance_valid(diagnostics): diagnostics.visible = diagnostics_visible
@@ -503,7 +514,9 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if book.open:
-		if event.keycode==KEY_R:
+		if event.keycode==KEY_J:
+			book.begin_journal()
+		elif event.keycode==KEY_R:
 			book.begin_practice()
 		elif book.quiz_open and event.keycode >= KEY_1 and event.keycode <= KEY_3:
 			book.submit_answer(event.keycode - KEY_1)
@@ -826,8 +839,24 @@ func _recover_from_defeat(source: String) -> void:
 	health = 60.0
 	stamina = 65.0
 	damage_immunity = 5.0
-	say_world("You survived %s, but something was lost." % source,
+	# The wizard survives, but the world does not stop for him. This is
+	# the authoritative calendar's real day transition: village jobs,
+	# commissions and finite resources continue to evolve.
+	world.skip_days(1)
+	say_world("You awaken one dawn later. Lost to %s; the vale has changed." % source,
 		position+Vector3.UP*1.7,Color("e0bd9f"))
+
+func _record_field_observation(spoken: String, outcome: Dictionary, target: Dictionary, cause: String) -> void:
+	if world==null or world.scholar==null or world.world_calendar==null:
+		return
+	var place: String="open ground"
+	var actor: Variant=target.get("entity",null)
+	if actor is Node3D and is_instance_valid(actor):
+		place=String(actor.name).replace("_"," ")
+	elif world.workplaces!=null and target.get("position",null) is Vector3 \
+			and world.workplaces.is_field_target(target["position"]):
+		place="Daro's field"
+	world.scholar.experiments.observe(spoken,outcome,place,world.world_calendar.day,cause)
 
 func cast_latin(spoken: String, target: Dictionary) -> Dictionary:
 	# Check resources BEFORE applying a physical spell to the world.
@@ -838,9 +867,13 @@ func cast_latin(spoken: String, target: Dictionary) -> Dictionary:
 	# as insufficient mana when the player happens to be exhausted.
 	var parsed: Dictionary = GRAMMAR.parse(spoken)
 	if not bool(parsed.get("ok",false)):
-		return {"ok":false,"message":String(parsed.get("message","Unknown Latin."))}
+		var invalid: Dictionary={"ok":false,"message":String(parsed.get("message","Unknown Latin."))}
+		_record_field_observation(spoken,invalid,target,"grammar")
+		return invalid
 	if not world.scholar.can_cast(spoken):
-		return {"ok":false,"message":"Not enough mana. Read, rest, or remember the words."}
+		var depleted: Dictionary={"ok":false,"message":"Not enough mana. Read, rest, or remember the words."}
+		_record_field_observation(spoken,depleted,target,"energy")
+		return depleted
 	var result: Dictionary = world.magic.cast(spoken,camera.global_position,target)
 	if bool(result.get("ok",false)):
 		world.scholar.pay_cast(spoken)
@@ -850,6 +883,7 @@ func cast_latin(spoken: String, target: Dictionary) -> Dictionary:
 		if book!=null and not book.open and Time.get_ticks_msec()/1000.0-book.last_consult>30.0:
 			world.scholar.practice.acknowledge_world_use(String(parsed["command"]),
 				world.scholar.completed,world.world_calendar.day)
+	_record_field_observation(spoken,result,target,"world")
 	return result
 
 func finish_cast() -> void:
@@ -863,6 +897,8 @@ func finish_cast() -> void:
 	var display_pos: Vector3=hit.get("position",camera.global_position-camera.global_transform.basis.z*4.0)
 	if not result["ok"]:
 		say_world(String(result["message"]),camera.global_position-camera.global_transform.basis.z*2.8,Color("c38b7e"))
+		# A failed trial still belongs in the authoritative world record.
+		if DisplayServer.get_name()!="headless": world.save_world()
 		return
 	var remembered:bool=book.mark_cast(String(result.get("remember_word",text_cast)))
 	say_world(text_cast,display_pos+Vector3.UP*1.3,Color("f7dda1") if remembered else Color("d5a869"))

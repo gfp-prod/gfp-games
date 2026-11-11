@@ -13,13 +13,19 @@ This document is **for developers, not an in-game screen**. In the player's worl
 
 Controls: open grimoire with **G**; **R** opens the next exercise; type normally; **Enter** inscribes the answer; **R** following feedback advances; **Tab** exits to the grimoire; **Escape** closes the book. The game intercepts character keys before global shortcuts, so Latin answers can contain G, B, R and H without closing the exercise.
 
+### The field notebook: observation, not mastery
+
+Each typed spell attempt now makes a bounded, empirical entry in the wizard's existing physical grimoire. **G**, then **J** opens *Liber Experimentorum*; **A / D** turns between recent observations, and **J / Tab** returns to other readings. Each folio preserves the actual Latin attempted, where the player aimed, the current in-world day, whether the effect worked, and the world's truthful explanation of what happened. Correct spelling alone does not guarantee an effect: wet fuel, the wrong material, insufficient mana or a grammatical mismatch can resist an invocation.
+
+The journal records actual world outcomes only. It does **not** give vocabulary XP, certify a grammatical form, award magical power, or act as a disguised multiple-choice exercise. The existing authentic recall and manuscript system remains the sole source of language mastery. Identical trials on the same day are deduplicated, history is capped at 32, and old and malformed saves migrate without synthetic rewards. Its primary goal is to make reflection on physical causality fun and diegetic; the observation page is not itself proof of educational efficacy.
+
 ## Meaningful speech to real villagers
 
 After the first demonstrated book comprehension, the player can press **Enter** during a physically reachable NPC conversation, write a Latin utterance, and press **Enter** to say it. A novice still has assisted English choices; mastered dialogue shifts meaningful transactions to productive Latin. Tomas requires a complete request *Da mihi librum* to exchange a real carried herb for the unique *De Igne et Aqua* volume. *Da* is the singular imperative of *do*; *mihi* is dative (to me); *librum* is accusative (the book as direct object). Word order can vary without changing case roles. *Da mihi liber* and *Da me librum* are rejected. Ida accepts *Frumentum tibi fero* (I bring you grain): *frumentum* accusative, *tibi* dative, *fero* first-person singular; the existing finite bakery ledger exchanges a real sack for a loaf. Mara understands *Ubi est silva?* only after the first understood manuscript and provides directions and persistent rapport.
 
 The NPCs model sentences in context and reduce hints as comprehension increases. Speech uses exact authored morphological patterns, **not** unrestricted language parsing. It does not grant XP, fake retrieval credit, or overwrite the existing social/economic save. These are first meaningful-output interactions; broader grammar, open questions, and later unprompted recall remain to be built.
 
-## Educational evidence (external to the fiction)
+# Educational evidence (external to the fiction)
 
 - Dunlosky, Rawson, Marsh, Nathan & Willingham (2013), *Improving Students' Learning With Effective Learning Techniques*, *Psychological Science in the Public Interest* 14(1). DOI: https://doi.org/10.1177/1529100612453266. A broad review rated practice testing and distributed practice as high-utility learning techniques. This supports typed recollection and return intervals rather than rereading alone.
 - Karpicke & Roediger (2008), *The Critical Importance of Retrieval for Learning*, *Science* 319:966–968. DOI: https://doi.org/10.1126/science.1152408. An experiment on foreign-language vocabulary showed that continued retrieval improved later recall even when additional restudy did not.

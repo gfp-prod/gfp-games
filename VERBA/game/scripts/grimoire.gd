@@ -32,6 +32,9 @@ var practice_card: Dictionary = {}
 var practice_buffer: String = ""
 var practice_feedback: String = ""
 var practice_answered: bool = false
+# The field journal is inked on the same geometry, never an overlay.
+var journal_open: bool = false
+var journal_cursor: int = 0
 
 func setup(p: CharacterBody3D, vocabulary: Dictionary) -> void:
 	player=p
@@ -92,7 +95,9 @@ func has_word(word: String) -> bool:
 
 func toggle() -> void:
 	open = not open
-	if not open: leave_practice()
+	if not open:
+		leave_practice()
+		leave_journal()
 	if open:
 		last_consult = Time.get_ticks_msec() / 1000.0
 		recall_streak=0
@@ -101,6 +106,7 @@ func toggle() -> void:
 func open_book(book_id: String) -> void:
 	if scholar == null or not scholar.has_book(book_id): return
 	leave_practice()
+	leave_journal()
 	book_cursor = scholar.owned.find(book_id)
 	quiz_open = false
 	study_feedback = ""
@@ -110,6 +116,7 @@ func open_book(book_id: String) -> void:
 
 func cycle_books() -> void:
 	leave_practice()
+	leave_journal()
 	if scholar == null or scholar.owned.is_empty():
 		study_feedback = "No books found yet."
 		update_pages()
@@ -122,6 +129,7 @@ func cycle_books() -> void:
 
 func begin_study() -> bool:
 	leave_practice()
+	leave_journal()
 	if scholar == null or book_cursor < 0 or book_cursor >= scholar.owned.size():
 		return false
 	quiz_open = true
@@ -138,6 +146,7 @@ func leave_practice() -> void:
 
 func begin_practice() -> bool:
 	if scholar==null or player==null or player.world==null: return false
+	leave_journal()
 	var day: int=player.world.world_calendar.day
 	var next_card: Dictionary=scholar.practice.next_due(scholar.completed,day)
 	if next_card.is_empty():
@@ -155,6 +164,26 @@ func begin_practice() -> bool:
 	practice_open=true
 	update_pages()
 	return true
+
+func leave_journal() -> void:
+	journal_open=false
+	journal_cursor=0
+	update_pages()
+
+func begin_journal() -> bool:
+	if scholar==null: return false
+	leave_practice()
+	book_cursor=-1
+	quiz_open=false
+	journal_open=true
+	journal_cursor=0
+	update_pages()
+	return true
+
+func shift_journal(direction: int) -> void:
+	if not journal_open or scholar==null: return
+	journal_cursor=clampi(journal_cursor+direction,0,maxi(0,scholar.experiments.entries.size()-1))
+	update_pages()
 
 func write_practice_character(character: String) -> bool:
 	if not practice_open or practice_answered or character.length()!=1: return false
@@ -217,6 +246,19 @@ func turn_page(dir: int) -> void:
 
 func update_pages() -> void:
 	if page_labels.size()<2: return
+	if journal_open and scholar!=null:
+		for label in page_labels: label.font_size=29
+		var records: Array[Dictionary]=scholar.experiments.entries
+		if records.is_empty():
+			page_labels[0].text=_ink_wrap("LIBER EXPERIMENTORUM\n\nNo trials have been recorded.\n\nSpeak Latin into the world, and watch what changes.",24)
+			page_labels[1].text=_ink_wrap("OBSERVATIONES\n\nA scholar records what truly happened, not what was hoped.\n\nJ / Tab: return",24)
+			return
+		journal_cursor=clampi(journal_cursor,0,records.size()-1)
+		var finding: Dictionary=records[journal_cursor]
+		var status: String="ACCOMPLISHED" if bool(finding["worked"]) else "UNFULFILLED"
+		page_labels[0].text=_ink_wrap("LIBER EXPERIMENTORUM\n\nDIES %d\n\n%s\n\n%s\n\n%s" % [int(finding["day"]),String(finding["latin"]).to_upper(),String(finding["place"]),status],24)
+		page_labels[1].text=_ink_wrap("OBSERVATIONES\n\n"+String(finding["note"]).substr(0,135)+"\n\n%d / %d\nA/D: other trials\nJ / Tab: return" % [journal_cursor+1,records.size()],24)
+		return
 	if practice_open and not practice_card.is_empty():
 		for label in page_labels: label.font_size=30
 		page_labels[0].text=_ink_wrap("EXERCITIA MEMORIAE\n\n"+String(practice_card["prompt"])+
@@ -270,7 +312,7 @@ func update_pages() -> void:
 			line += w.to_upper()+"\n"+_ink_wrap(String(def.get("meaning","?")),22)+"\n\n"
 		if side == 1:
 			line += "─────\n"+str(page_index+1)+" / "+str(maxi(1,ceili(float(learned.size())/4.0)))
-			line += "\nB: Books  R: Recollect\nS: Save  L: Load"
+			line += "\nB: Books  R: Recall\nJ: Trials  S: Save  L: Load"
 			if scholar != null and player != null and player.world != null:
 				line += "\nRecollections " + str(scholar.practice.due_count(scholar.completed,player.world.world_calendar.day))
 			if scholar != null:

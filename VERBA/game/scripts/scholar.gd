@@ -4,9 +4,11 @@ extends RefCounted
 const BOOK_PATH: String = "res://data/books.json"
 const GRAMMAR = preload("res://scripts/latin_grammar.gd")
 const LATIN_PRACTICE = preload("res://scripts/latin_practice.gd")
+const EXPERIMENT_JOURNAL = preload("res://scripts/experiment_journal.gd")
 
 var books: Dictionary = {}
 var practice = LATIN_PRACTICE.new()
+var experiments = EXPERIMENT_JOURNAL.new()
 var owned: Array[String] = []
 var completed: Array[String] = []
 var studied_forms: Array[String] = ["ignis","cresce","pluvia","lux","veni","dormi"]
@@ -107,7 +109,8 @@ func snapshot() -> Dictionary:
 	return {"level":level,"xp":xp,"mana":mana,"max_mana":max_mana,
 		"owned":owned.duplicate(),"completed":completed.duplicate(),
 		"studied_forms":studied_forms.duplicate(),"subjects":subjects.duplicate(),
-		"practice":practice.snapshot()}
+		"practice":practice.snapshot(),
+		"experiments":experiments.snapshot()}
 
 func restore(data: Dictionary) -> void:
 	# Ignore unknown books and reject invented saved words.
@@ -135,3 +138,8 @@ func restore(data: Dictionary) -> void:
 	var stored_practice: Variant=data.get("practice",{})
 	if not (stored_practice is Dictionary) or not practice.restore(stored_practice):
 		practice.restore({})
+	# These notes have no effect on study, spells or mana. Legacy and
+	# malformed saves safely start with a fresh field record.
+	var stored_experiments: Variant = data.get("experiments", {})
+	if not (stored_experiments is Dictionary) or not experiments.restore(stored_experiments):
+		experiments.restore({})
