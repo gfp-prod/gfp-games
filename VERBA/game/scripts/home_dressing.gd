@@ -120,8 +120,11 @@ static func populate(world: Node3D) -> void:
 		var radial: float = sqrt(rng.randf())*5.4
 		var x: float = patch.x+cos(a)*radial
 		var z: float = patch.y+sin(a)*radial
-		if Vector2(x,z).distance_to(Vector2(28,12)) < 2.0:
-			x += 3.0
+		# Retain deterministic clump count but keep the cottage interior and
+		# the attached turret clear of ferns and other planted geometry.
+		var outside: Vector2 = world.move_vegetation_outside_cottage(x,z)
+		x = outside.x
+		z = outside.y
 		var size: float = rng.randf_range(.49,.92)
 		var basis := Basis(Vector3.UP,rng.randf_range(0,TAU)).scaled(Vector3(size,size*.8,size))
 		clumps.set_instance_transform(i,Transform3D(basis,
@@ -228,7 +231,8 @@ static func _add_kitchen_garden(world: Node3D,root: Node3D,rng: RandomNumberGene
 	# hoops, a little visible water at the open top.
 	var barrel := Node3D.new()
 	barrel.name="RainBarrelByPorch"
-	barrel.position = Vector3(33.55,world.height_at(33.55,9.8),9.8)
+	# The old barrel overlapped the attached study turret; keep it in the yard.
+	barrel.position = Vector3(35.6,world.height_at(35.6,10.5),10.5)
 	root.add_child(barrel)
 	var stave: Material = world.textured(
 		"res://assets/textures/cottage_wood.png",Color("837361"))
