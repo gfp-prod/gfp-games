@@ -5,7 +5,17 @@ on:
     paths:
       - "VERBA/game/**"
       - ".github/workflows/verba-check.yml"
+  pull_request:
+    paths:
+      - "VERBA/game/**"
+      - ".github/workflows/verba-check.yml"
   workflow_dispatch:
+
+# Also validate the full legacy game loop before merge, rather than
+# discovering an obsolete integration assertion only after release.
+concurrency:
+  group: verba-full-godot-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
