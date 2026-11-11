@@ -163,5 +163,21 @@ func _capture() -> void:
 	if answered==null or answered.save_png(directory+"/conversation_latin_reply.png")!=OK:
 		_fail("Could not save the actually rendered conversation result")
 		return
-	print("PASS: eighteen actual 1280x720 rendered views including field notebook and productive Latin conversation")
+	# Correctly produced Latin also alters scenery, not just a menu.
+	world.player.end_conversation()
+	world.forest_waystone.update_from_knowledge()
+	if not world.forest_waystone.revealed:
+		_fail("Mara's learned direction did not reveal the real forest stone")
+		return
+	camera.current=true
+	var marker: Vector3=world.forest_waystone.global_position
+	camera.global_position=marker+Vector3(1.1,1.55,3.0)
+	camera.look_at(marker+Vector3.UP*.85,Vector3.UP)
+	for i in range(14): await process_frame
+	RenderingServer.force_draw()
+	var guided: Image=root.get_texture().get_image()
+	if guided==null or guided.save_png(directory+"/latin_waystone_revealed.png")!=OK:
+		_fail("Could not capture the physically revealed forest direction")
+		return
+	print("PASS: nineteen actual rendered views including Latin-revealed waystone and in-world NPC conversation")
 	quit(0)
