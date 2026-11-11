@@ -59,8 +59,11 @@ func _run() -> void:
 	if not copy.restore(JSON.parse_string(JSON.stringify(snapshot))):
 		fail("Could not restore an in-progress physical delivery: "+copy.restore_error)
 		return
-	if String(copy.work_orders["daro"]["phase"])!="delivery" or copy.economy.stocks!=before:
-		fail("Save/load minted or lost resources in transit")
+	var cargo_kept: bool=String(copy.work_orders["daro"]["phase"])=="delivery"
+	for item in before:
+		if int(copy.economy.stocks[item])!=int(before[item]): cargo_kept=false
+	if not cargo_kept:
+		fail("Save/load minted, lost, or settled cargo in transit")
 		return
 	if not sim.complete_work("daro") or sim.complete_work("daro"):
 		fail("Farmer was not able to deposit exactly one physical harvest")
