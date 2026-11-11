@@ -27,7 +27,7 @@ func _run() -> void:
 	if stone.inscription.billboard!=BaseMaterial3D.BILLBOARD_DISABLED:
 		_fail("Forest inscription has become a clipping camera-facing billboard")
 		return
-	if not is_equal_approx(stone.inscription.rotation.y,PI):
+	if stone.inscription.transform.basis.z.dot(Vector3.FORWARD) < 0.95:
 		_fail("The inlaid inscription no longer faces the approach path")
 		return
 	var collider=stone.find_child("CollidableWaystone",true,false) as StaticBody3D
