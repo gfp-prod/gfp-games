@@ -3,6 +3,7 @@ extends RefCounted
 const ART = preload("res://scripts/art.gd")
 const GRAMMAR = preload("res://scripts/latin_grammar.gd")
 const WORLD_LAWS = preload("res://scripts/world_laws.gd")
+const COMMISSIONS = preload("res://scripts/wizard_commissions.gd")
 var world
 var lexicon: Dictionary = {}
 var rng:=RandomNumberGenerator.new()
@@ -47,6 +48,7 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 		if applied<=0:
 			return {"ok":false,"message":"The furrows cannot hold more growth. Let Daro bring in the harvest."}
 		world.workplaces.refresh_from_economy(true)
+		COMMISSIONS.spell_applied(world.village_sim,field_command)
 		cast_count+=1
 		return {"ok":true,"message":"The stalks grow taller. %d extra grain awaits Daro\u0027s next delivery." % applied,
 			"point":farm_point,"word":word,"remember_word":field_command,"wild":""}
@@ -151,6 +153,10 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 				if is_instance_valid(critter) and critter.global_position.distance_to(point)<10.0: critter.stop_time=2.0
 			message="Frost stifles warmth and movement."
 		_: message="The utterance resonates."
+	# A fulfilled promise and a burned field have socially different outcomes.
+	# Only a spell that actually took effect can count as sabotage.
+	if effective and effect=="kindle" and world.workplaces!=null and world.workplaces.is_field_target(point):
+		COMMISSIONS.spell_applied(world.village_sim,"kindle")
 	var surprise:=""
 	if rng.randf()<wildcard_rate:
 		surprise=wild_result(point)
