@@ -299,7 +299,7 @@ func _build_ore_vein() -> void:
 	# The beginner forge has a truly finite nearby iron seam. Harvesting
 	# an ore nodule uses the SAME saved per-object extraction quota as stone.
 	var point: Vector2=Vector2(26.4,21.3)
-	var mineral:=world.spawn_reactive_stone(
+	var mineral: Node3D=world.spawn_reactive_stone(
 		_ground(point.x,point.y,.08),Vector3(1.35,.85,1.05),
 		ART.mat(Color("52616a"),.64))
 	mineral.name="FerrousOutcrop"
