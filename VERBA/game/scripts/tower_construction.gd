@@ -212,11 +212,11 @@ func place_saved_part(record: Dictionary) -> void:
 			for x in [-1.20,1.20]:
 				var beam: Vector3=Vector3(x,0,0)
 				ART.box(node,beam,Vector3(.50,2.75,.23),timber)
-				var post=world.add_solid_box(node,beam,Vector3(.50,2.75,.23),"TowerDoorPost_"+key+str(x))
+				var post: StaticBody3D=world.add_solid_box(node,beam,Vector3(.50,2.75,.23),"TowerDoorPost_"+key+str(x))
 				post.set_meta("tower_ref",node)
 			var lintel: Vector3=Vector3(0,1.17,0)
 			ART.box(node,lintel,Vector3(1.98,.4,.23),deep)
-			var frame=world.add_solid_box(node,lintel,Vector3(1.98,.4,.23),"TowerDoorLintel_"+key)
+			var frame: StaticBody3D=world.add_solid_box(node,lintel,Vector3(1.98,.4,.23),"TowerDoorLintel_"+key)
 			frame.set_meta("tower_ref",node)
 			var pivot:=Node3D.new()
 			pivot.name="DoorPivot"
@@ -279,7 +279,7 @@ func place_saved_part(record: Dictionary) -> void:
 				var roof_center:=Vector3(side_sign*.76,.68,0)
 				var tilt:=Vector3(0,0,side_sign*PI/5.3)
 				ART.box(node,roof_center,Vector3(1.89,.17,3.42),slate,tilt)
-				var collision:=world.add_solid_box(node,roof_center,Vector3(1.89,.17,3.42),"TowerRoofPitch_"+key+str(side_sign))
+				var collision: StaticBody3D=world.add_solid_box(node,roof_center,Vector3(1.89,.17,3.42),"TowerRoofPitch_"+key+str(side_sign))
 				collision.rotation=tilt
 			ART.bone(node,Vector3(0,1.37,-1.7),Vector3(0,1.37,1.7),.12,.12,deep,9)
 		"lamp":
@@ -296,7 +296,7 @@ func place_saved_part(record: Dictionary) -> void:
 			node.add_child(point_light)
 			point_light.position.y=.20
 	if kind in ["floor","upper_floor","wall","upper_wall","shelf","lamp"]:
-		var solid=world.add_solid_box(node,Vector3.ZERO,size,"SolidTower_"+key)
+		var solid: StaticBody3D=world.add_solid_box(node,Vector3.ZERO,size,"SolidTower_"+key)
 		if kind=="shelf": solid.set_meta("tower_ref",node)
 	elif kind=="roof":
 		# Roof pitch colliders above replace the obstructive full-cube shape.
