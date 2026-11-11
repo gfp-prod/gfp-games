@@ -33,6 +33,8 @@ jobs:
         run: godot --headless --path . --script res://tests/physical_village_test.gd
       - name: Witness-restricted rumor dialogue
         run: godot --headless --path . --script res://tests/village_rumor_test.gd
+      - name: Latin compositional spells
+        run: godot --headless --path . --script res://tests/latin_composition_test.gd
       - name: Social trade regression
         run: godot --headless --path . --script res://tests/social_dialogue_test.gd
       - name: Save integrity regression

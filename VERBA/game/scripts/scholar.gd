@@ -79,6 +79,10 @@ func cost_for(spoken_form: String) -> float:
 	if not bool(parsed.get("ok",false)):
 		return INF
 	var command: String = String(parsed["command"])
+	if String(parsed.get("form",""))=="composed imperative":
+		# The first compositional spell is earned through actual manuscript study.
+		if not studied_forms.has(command): return INF
+		return 9.0 + (3.0 if not String(parsed.get("modifier","")).is_empty() else 0.0)
 	return 7.0 if studied_forms.has(command) else 16.0
 
 func can_cast(spoken_form: String) -> bool:
