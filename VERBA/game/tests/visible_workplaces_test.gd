@@ -42,7 +42,7 @@ func _run() -> void:
 			fail("Worker lacks recognizable physical role silhouette: "+str(pair[0]))
 			return
 	var fields=district.find_child("DaroWorkingFarm",true,false)
-	if fields==null or fields.find_children("ContinuousCultivatedEarth","MeshInstance3D",true,false).size()!=4:
+	if fields==null or fields.find_children("ContinuousCultivatedEarth*","MeshInstance3D",true,false).size()!=4:
 		fail("Field regressed to disconnected soil disks instead of four terrain-hugging beds")
 		return
 	var economy=world.village_sim.economy
