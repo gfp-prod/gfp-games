@@ -99,6 +99,25 @@ func submit(card_id: String, response: String, completed: Array, today: int) -> 
 		"translation":String(card.get("translation","")),
 		"explanation":String(card.get("explanation",""))}
 
+func acknowledge_world_use(command: String, completed: Array, today: int) -> bool:
+	# A successful, typed spell is meaning-focused OUTPUT. If enough time
+	# has passed since consulting the book (checked by Player), the wizard
+	# may prove a due memory by actually changing the world. Never give
+	# credit for an invalid spell, a failed physical action, or another use
+	# of the same already-recalled word on the same day.
+	var form: String=normalize(command)
+	var ordered: Array=cards.keys()
+	ordered.sort()
+	for id in ordered:
+		var card: Dictionary=cards[id]
+		if normalize(String(card["answer"]))!=form or not eligible(card,completed):
+			continue
+		if int(progress.get(id,{}).get("due_day",0))>today:
+			continue
+		var outcome: Dictionary=submit(String(id),form,completed,today)
+		return bool(outcome.get("correct",false))
+	return false
+
 func mastery(form: String) -> int:
 	# Discount only after three successful recalls across scheduled world days.
 	# Reading/repeating a passage or skipping ahead in the calendar alone
