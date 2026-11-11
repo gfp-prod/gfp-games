@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Opt-in in-game development HUD. F8 show/hide, F9 next NPC, F10 +24h.
+## Opt-in in-game development HUD. F8 show/hide, F9 next NPC, F10 +1 day.
 ## No production gameplay interaction is intercepted while the panel is hidden.
 var world
 var panel: PanelContainer
@@ -39,7 +39,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 		KEY_F10:
 			if visible_debug:
-				for i in range(24): world.village_sim.step()
+				world.skip_days(1)
 				_refresh()
 				get_viewport().set_input_as_handled()
 
@@ -60,7 +60,9 @@ func _refresh() -> void:
 	var p: Dictionary=state["person"]
 	var lines: PackedStringArray=[
 		"VERBA | SIMULATION LAB",
-		"F8 toggle | F9 next person | F10 advance 24 ticks",
+		"F8 toggle | F9 next person | F10 advance 1 calendar day",
+		world.world_calendar.describe(),
+		"Wizard commission: "+String(sim.commissions.get("farm_fertility",{}).get("status","offered")),
 		"Day %d  Hour %02d  Treasury %d" % [int(sim.tick_count/24),int(sim.tick_count%24),int(state["treasury"])],
 		"",
 		"%s — %s  [%s]" % [id.to_upper(),p["role"],p["nature"]],
@@ -68,6 +70,7 @@ func _refresh() -> void:
 		"Hunger %.0f  Fatigue %.0f  Lonely %.0f" % [p["hunger"],p["fatigue"],p["loneliness"]],
 		"Coins %d  Mood %.0f  Last %s" % [p["wealth"],p["mood"],p["last_action"]],
 		"Spouse %s  Memories %d" % [p["spouse"],p["known_events"].size()],
+		"Wizard trust %.0f" % float(p["trust"].get("wizard",0.0)),
 		"",
 		"NEXT ACTION SCORES"
 	]
