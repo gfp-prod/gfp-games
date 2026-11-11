@@ -59,6 +59,7 @@ static func snapshot(world: Node3D) -> Dictionary:
 	return {"schema":1,"saved_unix":Time.get_unix_time_from_system(),
 		"objects":objects,"animals":animals,"player":player,"scholar":scholarship,
 		"social":world.social.snapshot() if world.social != null else {},
+		"familiar":{"id":String(world.familiar_id),"mode":String(world.familiar_mode)},
 		"collected_pickups":world.collected_pickup_ids.duplicate(),
 		"dropped_pickups":dropped,"next_drop_serial":world.next_drop_serial,
 		"weather":{"raining":bool(world.raining),
@@ -135,6 +136,18 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 		animal.dead = bool(record.get("dead",false))
 		if animal.model != null:
 			animal.model.scale = Vector3.ONE * float(animal.growth)
+	# Bonded creatures are always existing stable-ID animals, never an extra
+	# spawned copy. Old saves without the field simply have no familiar.
+	var familiar_data: Dictionary = data.get("familiar",{}) if data.get("familiar",{}) is Dictionary else {}
+	var stored_id: String = String(familiar_data.get("id",""))
+	var stored_mode: String = String(familiar_data.get("mode","follow"))
+	world.familiar_id = ""
+	world.familiar_mode = stored_mode if stored_mode in ["follow","stay","rest"] else "follow"
+	for creature in world.creatures:
+		if not is_instance_valid(creature) or creature.dead: continue
+		if String(creature.persistent_id) == stored_id and not stored_id.is_empty():
+			world.familiar_id = stored_id
+			break
 	var climate: Dictionary = data.get("weather",{})
 	world.wind = float(climate.get("wind",world.wind))
 	world.rain_remaining = float(climate.get("rain_remaining",world.rain_remaining))
