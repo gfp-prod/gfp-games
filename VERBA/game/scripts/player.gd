@@ -723,7 +723,7 @@ func use_item() -> void:
 	var target=hit.get("entity",null)
 	if target!=null and target.has_meta("workplace_kind"):
 		var station: String=String(target.get_meta("workplace_kind"))
-		if station in ["bakery","forge"]:
+		if station in ["bakery","forge"] and not professions.recipe(station,held_type).is_empty():
 			var work: Dictionary=professions.craft(station,self)
 			say_world(String(work.get("message","")),point,
 				Color("b3d1ad") if bool(work.get("ok",false)) else Color("d3a28f"))
