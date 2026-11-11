@@ -169,7 +169,7 @@ func update_pages() -> void:
 		# Book passage, answer feedback and glosses share the same real
 		# paper-space width gate as the lexicon, not an overflowing HUD.
 		for label in page_labels:
-			label.text = _ink_wrap(label.text,22)
+			label.text = _ink_wrap(label.text,24)
 		return
 	for side in range(2):
 		# The Latin lexicon has longer definitions than the graded story text.
