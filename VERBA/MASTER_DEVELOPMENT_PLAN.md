@@ -1,6 +1,14 @@
 # VERBA — Master Development Plan
 Version: 2026-11-10 | Engine: Godot 4.5.x | Platform: Windows PC, offline | Source: `verba-godot/VERBA/game`
 
+## Actual progress — November 11, 2026
+
+**Shipped into the alpha branch, not full-phase completion:** The early physically collected Latin books, one-time comprehension XP/max mana, grammatical incantations, ecology and persistent world remain playable. The first social milestone now adds two actual characters with book-gated Latin dialogue, remembered topics and a real herb-for-book trade. First familiar mechanics add bonding an existing hare/crow and ordering it to follow, stay or rest by keyboard or Latin. The first survival mechanics add stamina, injury, herb healing, physical wolf attacks and persistent partial-loss respawns. All have dedicated Godot tests and are documented in [Gameplay Milestone 08](docs/GAMEPLAY_MILESTONE_08_DELIVERY.md).
+
+**Still missing or partial:** This is one small starter valley, not the open-world road circuit; there is no gas station, castle, hamlet or multi-region streaming system. NPC schedules, comprehensive social conversations, two more enemy families and advanced pet behaviors remain planned. Modular tower building and resource harvesting **have not been implemented**. Phase 3 and Phase 4 are therefore *entered*, not completed; Phase 5 has not begun.
+
+**Next execution gate:** A real construction loop (obtain wood/stone → select piece → snap a solid wall/floor/shelf on a home plot → spend material → save/reopen with every piece identical). Do not instead spend another entire pass on cottage trim.
+
 ## Creative target
 
 An open-ended 3D Latin-learning wizard-life survival RPG. Exploration feels like *Adventure Time*: a bright meadow can be funny or peaceful, the roadside gas station can sit beside a medieval castle, and the next path may lead into a village or an ancient ruin. Surrealism is treated as ordinary by the inhabitants. Cozy and eerie moods are interleaved, not confined to separate biomes.
