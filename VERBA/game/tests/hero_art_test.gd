@@ -1,11 +1,20 @@
 extends SceneTree
 ## Regression gate for authored hero silhouettes used by the actual game.
 const STORY = preload("res://scripts/storybook_house.gd")
+const ROOM = preload("res://scripts/cottage_interior.gd")
 const HANDS = preload("res://scripts/glove_art.gd")
 const TREE = preload("res://scripts/landmark_tree.gd")
 
 func _initialize() -> void:
 	print("HERO_QA_STAGE cottage_start")
+	var floor: ArrayMesh = ROOM.make_floor_mesh()
+	var floor_bounds: AABB = floor.get_aabb()
+	if floor_bounds.size.x < 5.3 or floor_bounds.size.z < 4.7:
+		_fail("Cottage has no full-size solid-looking interior deck")
+		return
+	if floor_bounds.position.y + floor_bounds.size.y < .30:
+		_fail("Interior deck sits below the existing invisible floor collider")
+		return
 	var roof: ArrayMesh = STORY.make_roof()
 	var underlay: ArrayMesh = STORY.make_roof_underlay()
 	var walls: ArrayMesh = STORY.make_wall_shell()
