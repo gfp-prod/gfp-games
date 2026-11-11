@@ -389,7 +389,8 @@ func snapshot() -> Dictionary:
 	for key in parts.keys():
 		var part: Dictionary = parts[key]
 		serialized.append({"kind":String(part["kind"]),"gx":int(part["gx"]),
-			"gz":int(part["gz"]),"face":int(part["face"])})
+			"gz":int(part["gz"]),"face":int(part["face"]),
+			"open":bool(part.get("open",false)),"book_id":String(part.get("book_id",""))})
 	return {"parts":serialized}
 
 func restore(data: Dictionary) -> void:
@@ -403,7 +404,7 @@ func restore(data: Dictionary) -> void:
 	var recovered: Array = data.get("parts",[])
 	if recovered.size()>128: return
 	# Foundations first: walls/shelves may only exist atop saved floors.
-	for kind in ["floor","wall","shelf"]:
+	for kind in ["floor","upper_floor","wall","door","upper_wall","stairs","shelf","roof","lamp"]:
 		for row in recovered:
 			if not (row is Dictionary) or String(row.get("kind",""))!=kind: continue
 			var gx: int = int(row.get("gx",999))
@@ -414,4 +415,6 @@ func restore(data: Dictionary) -> void:
 			if kind=="floor" and site.x==INF:
 				site=Vector2(float(gx)*CELL,float(gz)*CELL)
 			place_saved_part({"kind":kind,"gx":gx,"gz":gz,
-				"face":clampi(int(row.get("face",0)),0,3)})
+				"face":clampi(int(row.get("face",0)),0,3),
+				"open":bool(row.get("open",false)),
+				"book_id":String(row.get("book_id","")) if kind=="shelf" else ""})
