@@ -31,6 +31,10 @@ jobs:
         run: godot --headless --path . --script res://tests/village_sim_test.gd
       - name: Resource economy and simulation inspector
         run: godot --headless --path . --script res://tests/village_economy_test.gd
+      - name: Two-story tower construction
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/two_story_tower_test.gd 2>&1 | tee /tmp/verba-two-story-test.log
+          grep -q "PASS: two-story tower supports physical floors" /tmp/verba-two-story-test.log
       - name: Living herb harvest and spell regeneration
         run: |
           timeout 90s godot --headless --path . --script res://tests/living_herb_test.gd 2>&1 | tee /tmp/verba-herb-test.log
