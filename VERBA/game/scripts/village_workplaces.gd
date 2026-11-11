@@ -50,24 +50,51 @@ func _sign(parent: Node3D, writing: String, at: Vector3, tone: Color) -> void:
 func _slots(item: String, nodes: Array) -> void:
 	displays[item] = nodes
 
+func _dome_mesh(radius: float, height: float) -> ArrayMesh:
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var rings: int=9
+	var segments: int=20
+	for ring in range(rings):
+		var a0: float=(float(ring)/float(rings))*PI*.5
+		var a1: float=(float(ring+1)/float(rings))*PI*.5
+		var r0: float=radius*cos(a0)
+		var r1: float=radius*cos(a1)
+		var y0: float=height*sin(a0)
+		var y1: float=height*sin(a1)
+		for segment in range(segments):
+			var t0: float=TAU*float(segment)/float(segments)
+			var t1: float=TAU*float(segment+1)/float(segments)
+			var p0:=Vector3(cos(t0)*r0,y0,sin(t0)*r0)
+			var p1:=Vector3(cos(t0)*r1,y1,sin(t0)*r1)
+			var p2:=Vector3(cos(t1)*r0,y0,sin(t1)*r0)
+			var p3:=Vector3(cos(t1)*r1,y1,sin(t1)*r1)
+			for entry in [[p0,Vector2(t0/TAU,a0)],[p1,Vector2(t0/TAU,a1)],
+					[p2,Vector2(t1/TAU,a0)],[p1,Vector2(t0/TAU,a1)],
+					[p3,Vector2(t1/TAU,a1)],[p2,Vector2(t1/TAU,a0)]]:
+				st.set_uv(entry[1])
+				st.add_vertex(entry[0])
+	st.generate_normals()
+	return st.commit()
+
 func _build_fields() -> void:
 	# Crops and growing plants belong to a single organized plot; no giant
 	# field blocks the entrance, the market, or the NPC navigation goal.
 	var plot := _site("DaroWorkingFarm",18.0,27.0)
-	var soil := _material("res://assets/textures/real/stone_diffuse.jpg",Color("624d3c"))
+	var soil := _material("res://assets/textures/real/earth_path_diffuse.jpg",Color("99765b"))
 	var leaf := ART.mat(Color("73845b"),.98)
 	var stalk := ART.mat(Color("bca56e"),.95)
 	var dark_wood := _material("res://assets/textures/real/cottage_wood_diffuse.jpg",Color("76604b"))
 	var rope := ART.mat(Color("a99978"),1.0)
-	var harvest := ART.mat(Color("c4b080"),.97)
+	var harvest := ART.mat(Color("bc9d67"),.97)
 	for row in range(4):
 		var z: float=24.5+float(row)*1.72
 		# Narrow ridges follow real terrain, not a floating rectangular slab.
 		for piece in range(5):
 			var x: float=14.45+float(piece)*1.46
 			var ground: Vector3=_ground(x,z,.055)
-			var ridge := ART.box(plot,ground-plot.global_position+Vector3(0,.05,0),
-				Vector3(1.37,.15,1.04),soil)
+			var ridge := ART.orb(plot,ground-plot.global_position+Vector3(0,.035,0),
+				Vector3(.79,.135,.57),soil,12)
 			ridge.name = "CultivatedSoilRidge"
 		for plant in range(10):
 			var x: float=14.3+float(plant)*.71
@@ -76,7 +103,7 @@ func _build_fields() -> void:
 			ART.bone(plot,base,base+Vector3(sway,.85+float((row+plant)%3)*.075,0),
 				.024,.012,stalk,7)
 			ART.orb(plot,base+Vector3(sway,.77,.02),
-				Vector3(.12,.16,.08),harvest,8)
+				Vector3(.090,.14,.06),harvest,9)
 			for side in [-1.0,1.0]:
 				ART.bone(plot,base+Vector3(0,.21,0),
 					base+Vector3(side*.21,.45,.07),.036,.008,leaf,6)
@@ -110,21 +137,30 @@ func _build_bakery() -> void:
 	var wheat := ART.mat(Color("d5bd86"),.94)
 	# Distinct domed kiln with a dark opening, chimney and peel rack.
 	ART.box(bakery,Vector3(.05,.33,.28),Vector3(2.45,.61,2.2),masonry)
-	ART.orb(bakery,Vector3(0,1.17,.34),Vector3(1.20,1.11,1.02),masonry,18)
-	ART.orb(bakery,Vector3(0,.90,-.665),Vector3(.65,.48,.065),soot,15)
-	var embers := ART.orb(bakery,Vector3(0,.65,-.714),
-		Vector3(.43,.135,.058),ART.mat(Color("ed9a58"),.55,Color("be5224")),12)
+	# A true hemisphere, not the full stone sphere that made the oven look
+	# like a loose boulder placed on a rectangular table.
+	var dome:=MeshInstance3D.new()
+	dome.name="ContinuousHemisphericalKiln"
+	dome.mesh=_dome_mesh(1.17,1.42)
+	dome.material_override=masonry
+	dome.position=Vector3(0,.60,.34)
+	bakery.add_child(dome)
+	ART.cone(bakery,Vector3(0,.68,.34),1.21,.22,masonry,1.16,18)
+	ART.orb(bakery,Vector3(0,.95,-.862),Vector3(.57,.42,.09),soot,16)
+	var embers := ART.orb(bakery,Vector3(0,.67,-.966),
+		Vector3(.43,.11,.063),ART.mat(Color("ed9a58"),.55,Color("be5224")),12)
 	embers.name="BakerWorkingEmbers"
 	production_lamps["baker"]=embers
-	ART.bone(bakery,Vector3(.62,1.67,.86),Vector3(.68,3.48,.93),.27,.23,roof,11)
-	for side in [-1.0,1.0]:
-		ART.bone(bakery,Vector3(side*1.1,.03,-1.32),
-			Vector3(side*1.1,2.08,-1.32),.11,.10,wood,9)
-	ART.box(bakery,Vector3(0,2.11,-1.32),Vector3(2.56,.16,.90),roof)
-	_sign(bakery,"PANIS",Vector3(0,1.90,-1.82),wheat.albedo_color)
+	ART.bone(bakery,Vector3(.64,1.69,.83),Vector3(.69,3.42,.91),.24,.22,roof,11)
+	# Only a narrow wooden peel rack remains; the bulky porch roof blocked
+	# the oven when approaching from the village.
+	ART.bone(bakery,Vector3(-1.60,.08,-.25),Vector3(-1.60,1.67,-.25),.065,.055,wood,8)
+	for dy in [.43,1.08]:
+		ART.bone(bakery,Vector3(-1.60,dy,-.35),Vector3(-2.11,dy,-.35),.05,.044,wood,8)
+	_sign(bakery,"PANIS",Vector3(.85,1.30,-.81),wheat.albedo_color)
 	# Display food is *not* decorative infinite loot: visibility reads the
 	# finite bakery stock each frame, but no new physical pickups are minted.
-	var stand := _site("IdaBreadCounter",8.1,13.5)
+	var stand := _site("IdaBreadCounter",6.7,13.7)
 	ART.box(stand,Vector3(0,.84,0),Vector3(2.05,.17,1.04),wood)
 	for x in [-.89,.89]:
 		for z in [-.37,.37]:
