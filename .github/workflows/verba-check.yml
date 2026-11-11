@@ -71,6 +71,8 @@ jobs:
         run: bash tests/godot_guard.sh res://tests/familiar_progression_test.gd
       - name: Wolf survival, stamina, herb recovery and consequential defeat
         run: bash tests/godot_guard.sh res://tests/survival_loop_test.gd
+      - name: Gather physical wood and stone and persist a snapped solid tower
+        run: bash tests/godot_guard.sh res://tests/tower_construction_test.gd
       - name: Latin grammar and natural-law spell regression
         run: bash tests/godot_guard.sh res://tests/latin_laws_test.gd
       - name: Magic failure is physically and economically inert
