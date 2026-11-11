@@ -94,6 +94,25 @@ static func make_open_binding() -> Node3D:
 			Vector3(grip-side*.15,-.56,.143),.039,.028,glove,8)
 	return root
 
+static func make_turning_leaf() -> Node3D:
+	# A physical sheet hinged at the center gutter. The player can see
+	# its parchment face move in 3D rather than watching a page-number snap.
+	var hinge := Node3D.new()
+	hinge.name = "PageTurnHinge"
+	hinge.position = Vector3(0,0,.104)
+	var leaf := MeshInstance3D.new()
+	leaf.name = "PageTurningVellumSheet"
+	var page := QuadMesh.new()
+	page.size = Vector2(.76,1.045)
+	leaf.mesh = page
+	leaf.position = Vector3(.40,0,0)
+	var vellum := material("res://assets/textures/authored/vellum_cream.png",Color("a99d8b"),.98)
+	vellum.cull_mode = BaseMaterial3D.CULL_DISABLED
+	leaf.material_override = vellum
+	hinge.add_child(leaf)
+	hinge.visible = false
+	return hinge
+
 static func _add_curved_leaf(root: Node3D, side: float, paper: StandardMaterial3D) -> void:
 	var mesh_tool := SurfaceTool.new()
 	mesh_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
