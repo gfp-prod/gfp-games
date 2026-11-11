@@ -11,6 +11,14 @@
 4. `scripts/scenic_details.gd`: replaced bright ruler-straight bridge handrails with batched dark sagging ropes between posts, carved wood caps, unchanged physical deck.
 5. `tests/hero_art_test.gd` and `verba-check.yml`: assert cottage roof topology and batched vegetation, bilateral modeled hand geometry, and the weeping-tree's nontrivial 3D silhouette. `world_gallery.gd` now includes the creek-side `world_willow_bank.png` framing shot. The visual workflow watches all new art source files.
 
+## Hidden engine compile error found and corrected
+
+A severe QA blind spot was discovered during this pass: Godot may return exit code zero while printing `SCRIPT ERROR: Parse Error` and failing to compile a referenced script. The first green *visual* jobs after the cottage addition were therefore misleading. In particular, `cottage_hero.gd` could not infer an untyped leaf tip (`end`) and the cottage add-on had not truly loaded. Fixed that declaration with an explicit `Vector3` type in commit `a6991d0`.
+
+The post-fix Godot engine suite passed at run [42942273448](https://github.com/gfp-prod/gfp-games/actions/runs/42942273448). The stronger end-to-end check also passed at [42942873868](https://github.com/gfp-prod/gfp-games/actions/runs/42942873868). This stronger workflow now rejects hidden script errors at import and in every engine regression script via `tests/godot_guard.sh`. The visual workflow captures the renderer's output logs and rejects hidden Godot errors in actual screenshot runs.
+
+The first *genuine* post-compile screenshots exposed a physically floating second roof above the imported cottage. Lowered/narrowed the shingles and roof trim in `cottage_hero.gd`. Do not claim the revised roof is artistically approved until the new screenshots have been inspected.
+
 ## What real rendered reviews showed
 
 - The physical grimoire remains readable; the glove fingers now curve against its lower leather binding, but look deliberately stylized and need further authoring.
