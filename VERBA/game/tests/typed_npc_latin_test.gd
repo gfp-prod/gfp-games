@@ -68,9 +68,25 @@ func _run() -> void:
 	if bool(social.speak("tomas","Da mihi librum",scholar,player).get("ok",false)):
 		_fail("The same Latin request duplicated a unique book")
 		return
-	# Speaking to Ida participates in the existing finite village economy.
-	player.inventory.append("grain")
-	player.refresh_held_model()
+	# The grain for Ida must be earned, not conjured by this test: help
+	# Daro with a real learned field spell, then receive a finite wage.
+	var commission: Dictionary = social.choose("daro",4,scholar,player)
+	if not bool(commission.get("ok",false)):
+		_fail("Daro did not offer an actual harvest commission")
+		return
+	var field: Vector3 = Vector3(18.0,world.height_at(18.0,27.0),27.0)
+	player.position=Vector3(18.0,world.height_at(18.0,25.0)+.25,25.0)
+	await physics_frame
+	var field_before: int = int(world.village_sim.field_fertility)
+	var improved: Dictionary = player.cast_latin("crescite, herbae",{"position":field})
+	if not bool(improved.get("ok",false)) or int(world.village_sim.field_fertility)<=field_before:
+		_fail("Learned Latin did not enrich Daro's actual field")
+		return
+	var earned: Dictionary = social.choose("daro",4,scholar,player)
+	if not bool(earned.get("ok",false)) or not player.inventory.has("grain"):
+		_fail("A real wizard commission failed to pay an actual sack of grain")
+		return
+	# Speaking to Ida then participates in the existing finite economy.
 	var bread_before: int = int(world.village_sim.economy.stocks.get("bread",0))
 	if bread_before < 1:
 		_fail("The test village has no starting loaf for the baker to exchange")
