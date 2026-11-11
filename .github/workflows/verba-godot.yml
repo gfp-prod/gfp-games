@@ -1,7 +1,7 @@
 name: VERBA independent Godot CI
 on:
   push:
-    branches: [verba-godot, "verba/**"]
+    branches: [verba-godot]
     paths: ["VERBA/game/**", ".github/workflows/verba-godot.yml"]
   pull_request:
     paths: ["VERBA/game/**", ".github/workflows/verba-godot.yml"]
@@ -29,6 +29,10 @@ jobs:
           use-dotnet: false
       - name: Static validation
         run: python tests/check_project.py
+      - name: Physical book grammar and canonical lexicon agreement
+        run: python tests/validate_books.py
+      - name: Original licensed textures and terrain atlas integrity
+        run: python tests/validate_visual_assets.py
       - name: Import and compile project
         run: godot --headless --path . --editor --import --quit
       - name: World smoke
