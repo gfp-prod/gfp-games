@@ -18,6 +18,15 @@ func _run() -> void:
 	if stone==null or stone.inscription==null or stone.ember==null:
 		_fail("Mara's world stone does not exist")
 		return
+	# Physical inscription is a three-line inlaid carving, not a billboard
+	# that can clip through its own narrow stone in first-person.
+	var carved_lines: PackedStringArray=stone.inscription.text.split("\n")
+	if carved_lines.size()!=3 or carved_lines[0]!="SILVA" or carved_lines[1]!="TRANS" or carved_lines[2]!="RIVUM":
+		_fail("Forest inscription no longer fits as three individually carved lines")
+		return
+	if stone.inscription.billboard!=BaseMaterial3D.BILLBOARD_DISABLED:
+		_fail("Forest inscription has become a clipping camera-facing billboard")
+		return
 	var collider=stone.find_child("CollidableWaystone",true,false) as StaticBody3D
 	if collider==null or collider.get_child_count()==0 or collider.collision_layer!=16:
 		_fail("The stone is not collidable physical scenery")
