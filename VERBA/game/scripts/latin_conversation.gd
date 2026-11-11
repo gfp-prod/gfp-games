@@ -29,7 +29,7 @@ static func understand(utterance: String, patterns: Array, tier: int) -> Diction
 		for word in expected:
 			if not remaining.has(String(word)):
 				matched = false
-				break
+				continue
 			remaining.erase(String(word))
 		if not matched:
 			# Specific grammatical feedback belongs to the character, not to
