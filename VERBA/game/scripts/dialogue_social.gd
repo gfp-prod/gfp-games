@@ -6,6 +6,7 @@ const NPC_DATA = "res://data/npcs.json"
 
 var definitions: Dictionary = {}
 var memories: Dictionary = {}
+var village_sim = null # shared authoritative world; no competing relationship save
 
 func _init() -> void:
 	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(NPC_DATA))
@@ -109,10 +110,37 @@ func choose(id: String, index: int, scholar, player) -> Dictionary:
 	var tier: int = stage(scholar)
 	var replies: Array = choice.get("reply", [])
 	var speech: String = String(replies[mini(tier, replies.size()-1)])
+	if topic_id == "rumors":
+		var rumor: String = heard_report(id)
+		speech = rumor if not rumor.is_empty() else "I have heard nothing certain. Ask someone who saw it."
 	if not reward.is_empty():
 		speech += "\nDe Igne et Aqua is now among your books. G opens your grimoire."
 	return {"ok": true, "changed": true, "message": speech,
 		"reward_book": reward, "rapport": int(previous["rapport"])}
+
+func heard_report(id: String) -> String:
+	if village_sim == null or not village_sim.people.has(id): return ""
+	var person: Dictionary = village_sim.people[id]
+	var known: Array = person.get("known_events",[])
+	for i in range(known.size()-1,-1,-1):
+		for event in village_sim.events:
+			if int(event["id"])!=int(known[i]): continue
+			var actor_id: String = String(event["actor"])
+			var target_id: String = String(event.get("target",""))
+			var actor_name: String = String(npc(actor_id).get("name",actor_id.capitalize()))
+			var target_name: String = String(npc(target_id).get("name",target_id.capitalize()))
+			match String(event["type"]):
+				"theft":
+					return "%s stole from %s. I know the people involved." % [actor_name,target_name]
+				"law_response":
+					return "%s investigated %s over a theft." % [actor_name,target_name]
+				"shortage":
+					return "%s lost supplies. Things have been difficult." % actor_name
+				"courtship":
+					return "%s has been courting %s." % [actor_name,target_name]
+				"rejection":
+					return "%s turned down %s." % [target_name,actor_name]
+	return ""
 
 func snapshot() -> Dictionary:
 	var out: Dictionary = {}

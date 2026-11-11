@@ -104,6 +104,7 @@ func _ready() -> void:
 	scholar=SCHOLAR.new()
 	social=SOCIAL.new()
 	village_sim=VILLAGE_SIM.new(ground_seed)
+	social.village_sim=village_sim
 	populate_social_npcs()
 	construction=CONSTRUCTION.new(self)
 	player=PLAYER_SCRIPT.new()
