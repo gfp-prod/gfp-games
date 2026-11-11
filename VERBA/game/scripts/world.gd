@@ -11,6 +11,8 @@ const CREATURE_SCRIPT = preload("res://scripts/creature.gd")
 const PICKUP_SCRIPT = preload("res://scripts/pickup.gd")
 const MAGIC_SCRIPT = preload("res://scripts/magic.gd")
 const SCHOLAR = preload("res://scripts/scholar.gd")
+const SOCIAL = preload("res://scripts/dialogue_social.gd")
+const NPC_ACTOR = preload("res://scripts/npc_actor.gd")
 const SIM_OBJECT = preload("res://scripts/sim_object.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
@@ -22,6 +24,8 @@ var player
 var magic
 var scholar
 var creatures: Array = []
+var npcs: Array = []
+var social
 var navigation_blockers: Array[Vector3] = []
 var navigation_region: NavigationRegion3D
 var sim_objects: Array = []
@@ -89,6 +93,8 @@ func _ready() -> void:
 	navigation_region = NAV_BUILDER.install(self)
 	magic=MAGIC_SCRIPT.new(self)
 	scholar=SCHOLAR.new()
+	social=SOCIAL.new()
+	populate_social_npcs()
 	player=PLAYER_SCRIPT.new()
 	player.name="Player"
 	player.world=self
@@ -100,6 +106,15 @@ func _ready() -> void:
 	# Rendered gameplay resumes its living ecosystem; headless tests begin clean.
 	if DisplayServer.get_name() != "headless":
 		load_world()
+
+func populate_social_npcs() -> void:
+	# People are distinct authored world entities, not placed UI stations.
+	# They do not consume sim_object IDs or disturb existing save identities.
+	for key in social.definitions.keys():
+		var actor = NPC_ACTOR.new()
+		actor.setup(self,social.npc(String(key)))
+		add_child(actor)
+		npcs.append(actor)
 
 func save_world() -> bool:
 	return WORLD_PERSIST.save_world(self)
