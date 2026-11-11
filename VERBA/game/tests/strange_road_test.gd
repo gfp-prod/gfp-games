@@ -48,6 +48,14 @@ func _run() -> void:
 		if point.distance_to(clear)<2.0:
 			_fail("Built interiors still admit decorative vegetation")
 			return
+	# Floor grade follows the station after relocation; a misplaced terrain
+	# flattening mask once sent an entire grassy hill through the shop.
+	var shop_ground: float=world.height_at(-33.0,44.0)
+	for x in [-36.0,-33.0,-30.0]:
+		for z in [41.0,44.0,47.0]:
+			if absf(world.height_at(x,z)-shop_ground)>.05:
+				_fail("Station floor still intersects ungraded terrain")
+				return
 	var station: Node3D=district.find_child("ValeFuelStation",true,false)
 	var castle: Node3D=district.find_child("CastleOfTheSecondRoad",true,false)
 	var shop: Marker3D=station.find_child("StationWalkableInterior",true,false)
