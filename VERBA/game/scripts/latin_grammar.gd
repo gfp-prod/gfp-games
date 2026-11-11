@@ -1,4 +1,5 @@
 extends RefCounted
+const COMPOSITION = preload("res://scripts/latin_composition.gd")
 ## A deliberately small, checked Latin grammar, not an AI guessing Latin.
 ## More forms can be generated offline from audited morphology tables.
 ## A verb addresses its subject in the vocative, so "venite, lupi" is
@@ -56,9 +57,11 @@ static func parse(input_text: String) -> Dictionary:
 	normalized = normalized.strip_edges()
 	while normalized.contains("  "): normalized = normalized.replace("  ", " ")
 	var bits: PackedStringArray = normalized.split(" ", false)
-	if bits.is_empty() or bits.size() > 2:
+	if bits.is_empty() or bits.size() > 3:
 		return {"ok":false,"message":"Speak one Latin invocation, optionally addressing a creature or plant."}
 	var verb: String = bits[0]
+	if COMPOSITION.knows_verb(verb):
+		return COMPOSITION.parse(bits,normalized)
 	if bits.size() == 1 and NAMINGS.has(verb):
 		return {"ok":true,"surface":normalized,"command":verb,"number":"singular",
 			"kind":"","effect":String(NAMINGS[verb]),"meaning":"Naming invocation","form":"noun invocation"}
