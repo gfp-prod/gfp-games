@@ -69,6 +69,14 @@ func _reason(choice: Dictionary, scholar, inventory: Array, past: Dictionary) ->
 	var required_item: String = String(choice.get("requires_item", ""))
 	if not required_item.is_empty() and not inventory.has(required_item):
 		return String(choice.get("locked", "You do not have the necessary item."))
+	var market_good: String=String(choice.get("market_give",""))
+	if not market_good.is_empty():
+		if village_sim==null: return "The market is not operating."
+		if int(village_sim.economy.stocks.get(market_good,0))<int(choice.get("market_min",1)):
+			return "The village has no %s left to exchange." % market_good
+		var offered: String=String(choice.get("market_take",""))
+		if int(village_sim.economy.stocks.get(offered,0))>=village_sim.economy.CAP:
+			return "The storehouse cannot accept more supplies."
 	return ""
 
 func choose(id: String, index: int, scholar, player) -> Dictionary:
@@ -84,6 +92,19 @@ func choose(id: String, index: int, scholar, player) -> Dictionary:
 		return {"ok": false, "message": blocked, "changed": false}
 	var reward: String = String(choice.get("grants_book", ""))
 	var required_item: String = String(choice.get("requires_item", ""))
+	var market_good: String=String(choice.get("market_give",""))
+	if not market_good.is_empty():
+		var offered: String=String(choice.get("market_take",""))
+		if village_sim==null or not village_sim.economy.player_exchange(id,offered,market_good,player.inventory):
+			return {"ok":false,"changed":false,"message":"That exchange is no longer possible."}
+		player.selected_slot=clampi(player.selected_slot,0,maxi(0,player.inventory.size()-1))
+		player.refresh_held_model()
+		var market_replies: Array=choice.get("reply",[])
+		var market_speech: String=String(market_replies[mini(stage(scholar),market_replies.size()-1)])
+		# The transaction is public to its participants, not globally omniscient.
+		village_sim.witness_event("market_trade",id)
+		return {"ok":true,"changed":true,"message":market_speech,
+			"market_give":market_good,"market_take":offered}
 	# Preconditions above are checked before the item is removed. Collecting
 	# a book happens exactly once even across reloads or repeated conversations.
 	if not reward.is_empty():
@@ -135,7 +156,7 @@ func heard_report(id: String) -> String:
 				"law_response":
 					return "%s investigated %s over a theft." % [actor_name,target_name]
 				"shortage":
-					return "%s lost supplies. Things have been difficult." % actor_name
+					return "Daro lost grain in the harvest. Ida may have trouble baking."
 				"courtship":
 					return "%s has been courting %s." % [actor_name,target_name]
 				"rejection":
