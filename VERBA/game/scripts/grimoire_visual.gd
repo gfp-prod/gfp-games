@@ -4,6 +4,7 @@ extends RefCounted
 ## Coordinates match the camera-held book's two ink-bearing Label3D surfaces.
 
 const ART = preload("res://scripts/art.gd")
+const GLOVE_ART = preload("res://scripts/glove_art.gd")
 
 static func material(texture_path: String, tint: Color, rough: float, metallic: float = 0.0) -> StandardMaterial3D:
 	var result := StandardMaterial3D.new()
@@ -85,27 +86,8 @@ static func make_open_binding() -> Node3D:
 	# it the first-person camera showed an implausible black screen-sized slit.
 	var linen: StandardMaterial3D = ART.mat(Color("554b44"),.98)
 	ART.box(root,Vector3(0,.002,.039),Vector3(.024,.992,.009),linen)
-	# The book is SUPPORTED by two leather-gloved hands and worn sleeves.
-	# Before this pass it floated unsupported in the middle of the camera.
-	var sleeve: StandardMaterial3D = ART.mat(Color("2e3431"),.97)
-	var glove: StandardMaterial3D = ART.mat(Color("4d443b"),.93)
-	var cuff: StandardMaterial3D = ART.mat(Color("383a35"),.96)
-	for side in [-1.0,1.0]:
-		var grip: float = side*.67
-		ART.bone(root,Vector3(grip+side*.085,-1.03,.25),
-			Vector3(grip,-.675,.12),.112,.095,sleeve,10)
-		ART.bone(root,Vector3(grip,-.69,.12),
-			Vector3(grip,-.61,.12),.113,.099,cuff,12)
-		ART.orb(root,Vector3(grip,-.562,.102),
-			Vector3(.107,.104,.077),glove,12)
-		# Finger ends curl around the lower leather cover and never obscure
-		# central Latin text. Slight spacing stops the hand looking mitten-flat.
-		for finger in range(3):
-			var xx: float = grip+side*(float(finger)-1.0)*.040
-			ART.bone(root,Vector3(xx,-.54,.135),
-				Vector3(xx-side*.012,-.469,.096),.023,.018,glove,8)
-		ART.bone(root,Vector3(grip-side*.10,-.62,.115),
-			Vector3(grip-side*.15,-.56,.143),.039,.028,glove,8)
+	# Four curved glove fingers and opposed thumbs grasp the lower binding.
+	GLOVE_ART.add_book_hands(root)
 	return root
 
 static func make_turning_leaf() -> Node3D:
