@@ -120,9 +120,14 @@ func _run() -> void:
 	if not player.begin_conversation(mara):
 		_fail("The physical NPC cannot receive typed Latin at conversational range")
 		return
-	await process_frame
+	for i in range(18): await process_frame
 	if mara.name_label == null or mara.name_label.visible:
 		_fail("The floating NPC billboard still occludes a live conversation")
+		return
+	var toward: Vector3=player.global_position-mara.global_position
+	toward.y=0.0
+	if (-mara.global_transform.basis.z).dot(toward.normalized()) < .7:
+		_fail("Mara does not turn toward the person actually speaking")
 		return
 	_say(player, "Ubi est silva?")
 	if not social.memory("mara")["topics"].has("forest") or player.conversation_listening or player.typing:
