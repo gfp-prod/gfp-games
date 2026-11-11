@@ -26,7 +26,7 @@ func _run() -> void:
 	for collision_name in ["PhysicalHarvestCart","PhysicalBakeOven",
 			"PhysicalBreadCounter","PhysicalCoalForge","PhysicalAnvil"]:
 		var shape=district.find_child(collision_name,true,false)
-		if shape==null or not (shape is StaticBody3D) or shape.collision_layer!=16:
+		if shape==null or not (shape is StaticBody3D) or shape.collision_layer!=16 or not shape.has_meta("workplace_kind"):
 			fail("Workplace has no real physical obstacle: "+collision_name)
 			return
 	# Clothing identity belongs to individual NPCs; a complete workplace
@@ -54,6 +54,12 @@ func _run() -> void:
 		if shown(slots[kind])!=0:
 			fail("Display invents "+kind+" when public stocks are empty")
 			return
+	if not district.inspect_workplace("bakery").contains("No work possible"):
+		fail("Player inspection claims baking possible while grain is depleted")
+		return
+	if not district.inspect_workplace("forge").contains("No work possible"):
+		fail("Player inspection claims forging possible without ore")
+		return
 	if district.production_lamps["baker"].visible:
 		fail("Baker oven burns without grain input")
 		return
@@ -69,6 +75,12 @@ func _run() -> void:
 	if shown(slots["grain"])!=3 or shown(slots["bread"])!=0:
 		fail("Cargo display does not match stock change")
 		return
+	if not district.inspect_workplace("bakery").contains("Ready to bake"):
+		fail("Player cannot inspect available work in the actual bakery")
+		return
+	if not district.inspect_workplace("forge").contains("Ready to forge"):
+		fail("Player cannot inspect actual forge inputs")
+		return
 	if not district.production_lamps["baker"].visible or not district.production_lamps["blacksmith"].visible:
 		fail("Working industries do not show active fires")
 		return
@@ -79,6 +91,9 @@ func _run() -> void:
 	district.refresh_from_economy(true)
 	if int(economy.stocks["grain"])!=7 or int(economy.stocks["bread"])!=2:
 		fail("Baking violates material resource accounting")
+		return
+	if not district.inspect_workplace("bakery").contains("Bread: 2"):
+		fail("Player inspection did not reflect produced bread")
 		return
 	if shown(slots["bread"])!=1:
 		fail("Bakery did not display its first real finished loaf")
