@@ -56,27 +56,38 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0 mesa-utils
       - name: Import all 3D models
-        run: godot --headless --path . --editor --import --quit
+        run: |
+          godot --headless --path . --editor --import --quit 2>&1 | tee godot-import.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:' godot-import.log; then
+            echo "::error::Godot reported a script compilation failure despite a zero exit code"
+            exit 1
+          fi
       - name: Render every animal in actual Godot 3D
         run: |
           mkdir -p visual-reports
           xvfb-run -a -s "-screen 0 1280x800x24" \
             godot --path . --rendering-method gl_compatibility \
-            --script res://tests/visual_gallery.gd
+            --script res://tests/visual_gallery.gd 2>&1 | tee visual-reports/animals.log
           test "$(find visual-reports -name '*.png' | wc -l)" -ge 15
       - name: Render actual first-person game view
         run: |
           xvfb-run -a -s "-screen 0 1280x800x24" \
             godot --path . --rendering-method gl_compatibility \
-            --script res://tests/world_gallery.gd
+            --script res://tests/world_gallery.gd 2>&1 | tee visual-reports/world.log
           test "$(find visual-reports -name 'world_spawn_*.png' | wc -l)" -eq 4
           test "$(find visual-reports -name 'world_moonlight_*.png' | wc -l)" -eq 2
       - name: Render actual physical Latin book pages
         run: |
           xvfb-run -a -s "-screen 0 1280x800x24" \
             godot --path . --rendering-method gl_compatibility \
-            --script res://tests/book_visual_gallery.gd
+            --script res://tests/book_visual_gallery.gd 2>&1 | tee visual-reports/book.log
           test "$(find visual-reports -name 'latin_book_*.png' | wc -l)" -eq 3
+      - name: Detect hidden Godot scene and script errors
+        run: |
+          if grep -EH 'SCRIPT ERROR:|ERROR: Failed to load script|Invalid call\.' visual-reports/*.log; then
+            echo "::error::Rendered screenshots contained Godot runtime errors"
+            exit 1
+          fi
       - name: Automatic screenshot coverage gate
         run: |
           python3 -m pip install --quiet --break-system-packages Pillow
