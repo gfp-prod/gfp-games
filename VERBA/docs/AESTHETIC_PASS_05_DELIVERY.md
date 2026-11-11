@@ -17,7 +17,7 @@ A severe QA blind spot was discovered during this pass: Godot may return exit co
 
 The post-fix Godot engine suite passed at run [42942273448](https://github.com/gfp-prod/gfp-games/actions/runs/42942273448). The stronger end-to-end check also passed at [42942873868](https://github.com/gfp-prod/gfp-games/actions/runs/42942873868). This stronger workflow now rejects hidden script errors at import and in every engine regression script via `tests/godot_guard.sh`. The visual workflow captures the renderer's output logs and rejects hidden Godot errors in actual screenshot runs.
 
-The first *genuine* post-compile screenshots exposed a physically floating second roof above the imported cottage. Lowered/narrowed the shingles and roof trim in `cottage_hero.gd`. Do not claim the revised roof is artistically approved until the new screenshots have been inspected.
+The first *genuine* post-compile screenshots exposed a physically floating second roof above the imported cottage. Lowered/narrowed the shingles and roof trim in `cottage_hero.gd`. The final lowered/narrowed roof was inspected in the **actual** screenshot run [42942770558](https://github.com/gfp-prod/gfp-games/actions/runs/42942770558), which completed successfully with the hidden-error gates active. The doubled, physically floating roof is no longer present from the front or woodland view, although the remaining cottage is still generic and needs a genuinely authored hero mesh.
 
 ## What real rendered reviews showed
 
