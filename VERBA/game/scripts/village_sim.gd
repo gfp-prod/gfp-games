@@ -30,6 +30,8 @@ var recent_action: Dictionary = {}
 # deterministic immediate-work semantics for long-run and replay tests.
 var spatial_work_enabled: bool = false
 var work_orders: Dictionary = {}
+# Mana-fed fertility is promised future harvest, not instantly available grain.
+var field_fertility: int = 0
 var seeded := false
 var restore_error: String = ""
 
@@ -42,6 +44,7 @@ func reset(seed_value: int) -> void:
 	events.clear()
 	recent_action.clear()
 	work_orders.clear()
+	field_fertility=0
 	last_scores.clear()
 	economy=ECONOMY.new()
 	tick_count = 0
@@ -198,6 +201,13 @@ func _finish_wage(p: Dictionary) -> void:
 	p["fatigue"] = minf(100.0,float(p["fatigue"])+12.0)
 	p["mood"] = minf(100.0,float(p["mood"])+float(p["crow"])*0.035)
 
+func bless_field(amount: int) -> int:
+	# Capped, persisted potential: only a farmer's delivered harvest
+	# converts Latin growth into goods. Never spawn items on spell cast.
+	var gained: int=mini(maxi(0,amount),6-field_fertility)
+	field_fertility+=gained
+	return gained
+
 func advance_work(id: String) -> bool:
 	# The farmer must finish field labor before leaving with a visible
 	# harvest. Grain enters storage only on a separate cart delivery.
@@ -215,6 +225,12 @@ func complete_work(id: String) -> bool:
 	if String(order.get("phase",""))!=needed or String(people[id]["role"])!=job_role: return false
 	work_orders.erase(id)
 	if not economy.work(id,job_role,people[id]): return false
+	if job_role=="farmer" and field_fertility>0:
+		var harvest_bonus: int=mini(2,mini(field_fertility,ECONOMY.CAP-int(economy.stocks["grain"])))
+		if harvest_bonus>0:
+			economy.stocks["grain"]=int(economy.stocks["grain"])+harvest_bonus
+			field_fertility-=harvest_bonus
+			economy._record("enchanted_harvest",id,"grain",harvest_bonus)
 	_finish_wage(people[id])
 	return true
 
@@ -274,13 +290,15 @@ func inspector(id: String) -> Dictionary:
 		"stocks":economy.stocks.duplicate(true),"treasury":economy.treasury,
 		"recent_transactions":economy.transactions.slice(maxi(0,economy.transactions.size()-8)),
 		"work_order":work_orders.get(id,{}).duplicate(true),
+		"field_fertility":field_fertility,
 		"tick":tick_count}
 
 func snapshot() -> Dictionary:
 	return {"version":VERSION,"tick":tick_count,"rng_state":str(rng.state),
 		"next_event_id":next_event_id,"people":people.duplicate(true),
 		"events":events.duplicate(true),"recent_action":recent_action.duplicate(true),
-		"work_orders":work_orders.duplicate(true),"economy":economy.snapshot()}
+		"work_orders":work_orders.duplicate(true),"field_fertility":field_fertility,
+		"economy":economy.snapshot()}
 
 func restore(record: Dictionary) -> bool:
 	restore_error = ""
@@ -323,6 +341,10 @@ func restore(record: Dictionary) -> bool:
 		if not next_economy.restore(saved_economy):
 			restore_error="invalid resource economy"
 			return false
+	var saved_field: int=int(record.get("field_fertility",0))
+	if saved_field<0 or saved_field>6:
+		restore_error="invalid field fertility"
+		return false
 	var saved_orders: Variant=record.get("work_orders",{})
 	if not (saved_orders is Dictionary):
 		restore_error="invalid work orders"
@@ -338,6 +360,7 @@ func restore(record: Dictionary) -> bool:
 			return false
 	economy=next_economy
 	work_orders=saved_orders.duplicate(true)
+	field_fertility=saved_field
 	people = stored.duplicate(true)
 	events.clear()
 	for entry in history:
