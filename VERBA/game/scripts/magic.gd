@@ -27,6 +27,17 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 	# Use the parser's attested normalized Latin, not the user's punctuation,
 	# when finding lexical magic. "pluvia!" must behave exactly as "pluvia".
 	word = String(parsed.get("surface",word))
+	# The same Latin fire used in the wilderness can kindle a real trade
+	# station. Charged worksite heat replaces one physical log, rather than
+	# spawning a hazardous loose fire on top of the public stone oven.
+	var work_target=target.get("entity",null)
+	if String(parsed.get("effect",""))=="kindle" and work_target!=null and work_target.has_meta("workplace_kind"):
+		var kind: String=String(work_target.get_meta("workplace_kind"))
+		if kind in ["bakery","forge"]:
+			var lit: Dictionary=world.player.professions.ignite(kind,world.player)
+			return {"ok":bool(lit.get("ok",false)),
+				"message":String(lit.get("message","")),"point":target.get("position",eye),
+				"word":word,"remember_word":String(parsed["command"]),"wild":""}
 	if String(parsed.get("form",""))=="composed imperative":
 		return cast_composed(parsed,eye,target)
 	# Crops are planted terrain meshes, not unrelated magical foliage. A
