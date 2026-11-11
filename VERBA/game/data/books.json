@@ -127,5 +127,38 @@
       17,
       -9
     ]
+  },
+  {
+    "id": "de_castello",
+    "title": "De Castello",
+    "subject": "architecture",
+    "difficulty": 2,
+    "level_hint": 2,
+    "author": "Custos Arcis",
+    "passage": "Arx in colle stat.\nMurus ex lapidibus factus est.\nPorta in muro est.",
+    "glossary": [
+      "arx = citadel",
+      "colle = hill (ablative)",
+      "murus = wall",
+      "ex lapidibus = from stones",
+      "factus est = was made",
+      "porta = gate"
+    ],
+    "question": "Quid in muro est?",
+    "options": [
+      "Porta",
+      "Lupus",
+      "Aqua"
+    ],
+    "answer": 0,
+    "explanation": "Porta in muro est. The gate is in the wall.",
+    "xp": 34,
+    "teaches": [
+      "move"
+    ],
+    "location": [
+      -51.4,
+      44
+    ]
   }
 ]
