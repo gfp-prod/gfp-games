@@ -802,6 +802,12 @@ func cast_latin(spoken: String, target: Dictionary) -> Dictionary:
 	var result: Dictionary = world.magic.cast(spoken,camera.global_position,target)
 	if bool(result.get("ok",false)):
 		world.scholar.pay_cast(spoken)
+		# Applied Latin is authentic practice: after some time without the
+		# manuscript, a due memory can be recalled through meaningful magic.
+		# Costs are settled BEFORE this can improve later spell efficiency.
+		if book!=null and not book.open and Time.get_ticks_msec()/1000.0-book.last_consult>30.0:
+			world.scholar.practice.acknowledge_world_use(String(parsed["command"]),
+				world.scholar.completed,world.world_calendar.day)
 	return result
 
 func finish_cast() -> void:
