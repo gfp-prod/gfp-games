@@ -22,8 +22,8 @@ static func parchment_material() -> StandardMaterial3D:
 	# correct face normals render the study pages charcoal-black.
 	var paper := material("res://assets/textures/authored/vellum_cream.png",Color("e8ddc7"),.98)
 	paper.emission_enabled = true
-	paper.emission = Color("b8a78e")
-	paper.emission_energy_multiplier = .32
+	paper.emission = Color("d8b18d")
+	paper.emission_energy_multiplier = .53
 	paper.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return paper
 
@@ -34,10 +34,10 @@ static func make_open_binding() -> Node3D:
 	var leather_edge: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("3a2523"),.93)
 	var vellum: StandardMaterial3D = parchment_material()
 	var page_edge: StandardMaterial3D = ART.mat(Color("948475"),1.0)
-	var bronze: StandardMaterial3D = ART.mat(Color("97805b"),.72)
-	bronze.metallic = .26
-	var bronze_dark: StandardMaterial3D = ART.mat(Color("594939"),.82)
-	bronze_dark.metallic = .18
+	var bronze: StandardMaterial3D = ART.mat(Color("75624b"),.83)
+	bronze.metallic = .14
+	var bronze_dark: StandardMaterial3D = ART.mat(Color("4e4439"),.90)
+	bronze_dark.metallic = .12
 
 	# Two modeled leather boards, with an actual gutter and rounded leather spine.
 	# The boards protrude beyond the pages so they read as a binding from all angles.
@@ -61,8 +61,8 @@ static func make_open_binding() -> Node3D:
 
 		# Eight restrained brass corner guards and small punched rivets.
 		for yy in [-.546,.559]:
-			ART.box(root,Vector3(side*.782,yy,-.011),Vector3(.13,.077,.032),bronze)
-			ART.box(root,Vector3(side*.818,yy-signf(yy)*.074,-.008),Vector3(.055,.17,.028),bronze)
+			ART.box(root,Vector3(side*.782,yy,-.011),Vector3(.076,.046,.026),bronze)
+			ART.box(root,Vector3(side*.810,yy-signf(yy)*.045,-.008),Vector3(.037,.094,.022),bronze)
 			ART.orb(root,Vector3(side*.779,yy,-.001),Vector3(.014,.014,.011),bronze_dark,8)
 
 		# Real curved vellum. The crease is lower, outer edge curls slightly up.
@@ -70,7 +70,7 @@ static func make_open_binding() -> Node3D:
 		# Fine ruling along outside margin: subtle visible page ornament.
 		ART.box(root,Vector3(side*.704,0,.046),Vector3(.007,.87,.0026),bronze_dark)
 		for yy in [-.472,.484]:
-			ART.box(root,Vector3(side*.399,yy,.044),Vector3(.55,.006,.003),bronze)
+			ART.box(root,Vector3(side*.399,yy,.044),Vector3(.44,.0035,.002),bronze_dark)
 
 	# A distinct binding spine, with stitched threads and raised ribs.
 	ART.bone(root,Vector3(0,-.578,-.132),Vector3(0,.592,-.132),
@@ -83,13 +83,13 @@ static func make_open_binding() -> Node3D:
 	ART.box(root,Vector3(0,.010,.018),Vector3(.032,.94,.030),leather_edge)
 	# A hand-stitched fabric hinge occupies the actual page gutter; without
 	# it the first-person camera showed an implausible black screen-sized slit.
-	var linen: StandardMaterial3D = ART.mat(Color("75675b"),.98)
-	ART.box(root,Vector3(0,.002,.056),Vector3(.038,.992,.020),linen)
+	var linen: StandardMaterial3D = ART.mat(Color("554b44"),.98)
+	ART.box(root,Vector3(0,.002,.039),Vector3(.024,.992,.009),linen)
 	# The book is SUPPORTED by two leather-gloved hands and worn sleeves.
 	# Before this pass it floated unsupported in the middle of the camera.
-	var sleeve: StandardMaterial3D = ART.mat(Color("373b39"),.97)
-	var glove: StandardMaterial3D = ART.mat(Color("6c5141"),.87)
-	var cuff: StandardMaterial3D = ART.mat(Color("504237"),.92)
+	var sleeve: StandardMaterial3D = ART.mat(Color("2e3431"),.97)
+	var glove: StandardMaterial3D = ART.mat(Color("4d443b"),.93)
+	var cuff: StandardMaterial3D = ART.mat(Color("383a35"),.96)
 	for side in [-1.0,1.0]:
 		var grip: float = side*.67
 		ART.bone(root,Vector3(grip+side*.085,-1.03,.25),
