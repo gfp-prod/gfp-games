@@ -3,9 +3,17 @@ const SCHOLAR = preload("res://scripts/scholar.gd")
 
 func _initialize() -> void:
 	var scholar = SCHOLAR.new()
-	if scholar.books.size() != 3:
-		_fail("Expected three distinct Latin books")
+	# The initial three-book prototype expanded into a five-subject library.
+	# Validate the durable authored books rather than freezing its old size.
+	var required: Array[String] = ["de_herbis", "de_animalibus",
+		"de_igne_et_aqua", "de_motu", "de_castello"]
+	if scholar.books.size() < required.size():
+		_fail("The existing five-subject Latin library has regressed")
 		return
+	for id in required:
+		if not scholar.books.has(id):
+			_fail("A previously shipped Latin manuscript is missing: " + id)
+			return
 	if scholar.has_book("de_herbis") or scholar.cost_for("crescite") <= scholar.cost_for("cresce"):
 		_fail("Unstudied magic should cost more")
 		return
