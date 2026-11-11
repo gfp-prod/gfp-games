@@ -351,7 +351,7 @@ func refresh_conversation() -> void:
 		conversation_panel.visible = false
 		return
 	var state: Dictionary = world.social.view(
-		conversation_actor.npc_id,world.scholar,inventory)
+		conversation_actor.npc_id,world.scholar,inventory,coins)
 	conversation_name.text = String(state.get("name","")) + "  /  " + String(state.get("role",""))
 	conversation_body.text = conversation_reply if not conversation_reply.is_empty() else String(state.get("spoken",""))
 	var choices: Array = state.get("options",[])
