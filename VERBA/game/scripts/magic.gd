@@ -26,6 +26,8 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 	# Use the parser's attested normalized Latin, not the user's punctuation,
 	# when finding lexical magic. "pluvia!" must behave exactly as "pluvia".
 	word = String(parsed.get("surface",word))
+	if String(parsed.get("form",""))=="composed imperative":
+		return cast_composed(parsed,eye,target)
 	if word.contains(" ") or String(parsed.get("number","singular")) == "plural":
 		var place: Vector3 = target.get("position",eye + Vector3.FORWARD * 5.0)
 		var actor: Node3D = target.get("entity",null)
@@ -131,6 +133,64 @@ func cast(word: String, eye: Vector3, target: Dictionary) -> Dictionary:
 	if rng.randf()<wildcard_rate:
 		surprise=wild_result(point)
 	return {"ok":effective,"message":message,"wild":surprise,"point":point,"word":word,"remember_word":word}
+
+func cast_composed(parsed: Dictionary, eye: Vector3, target: Dictionary) -> Dictionary:
+	var point: Vector3 = target.get("position",eye+Vector3.FORWARD*5.0)
+	var entity: Node3D = target.get("entity",null)
+	var word: String = String(parsed["surface"])
+	var command: String = String(parsed["command"])
+	var kind: String = String(parsed["kind"])
+	var strength: float = float(parsed.get("strength",1.0))
+	var effected: bool = false
+	var message: String = "Nothing here answers that combination."
+	if command=="crea":
+		match kind:
+			"light":
+				var result: Dictionary = cast("lux",eye,target)
+				result["word"]=word
+				result["remember_word"]=command
+				return result
+			"plant":
+				effected = world.spawn_growth_patch(point)!=null
+				message = "A new herb takes root." if effected else "The soil is too crowded."
+			"fire":
+				world.add_fire(point,null)
+				effected=true
+				message="A fire begins here."
+	elif command=="exstingue" and kind=="fire":
+		for flame in world.fires.duplicate():
+			if is_instance_valid(flame) and flame.global_position.distance_to(point)<4.0*strength:
+				world.fires.erase(flame)
+				flame.queue_free()
+				effected=true
+		for obj in world.sim_objects:
+			if is_instance_valid(obj) and obj.global_position.distance_to(point)<4.0*strength and obj.burning:
+				obj.apply_effect("cold",strength)
+				effected=true
+		message="Nearby flames go out." if effected else "There is no fire in reach."
+	elif entity!=null and is_instance_valid(entity) and entity.has_method("apply_effect"):
+		var real_kind: String = String(entity.kind)
+		var matches: bool = (kind=="stone" and real_kind=="stone") or (kind=="wood" and real_kind in ["wood","tree","dead_tree"]) or (kind=="plant" and real_kind in ["grass","fern"])
+		if matches:
+			match command:
+				"move":
+					effected=bool(entity.apply_effect("rise",strength))
+					message="The object rises." if effected else message
+				"accende":
+					if kind=="stone":
+						effected=bool(entity.apply_effect("heat",strength))
+						message="The stone warms, but does not burn."
+					elif not world.raining:
+						effected=bool(entity.apply_effect("ignite",strength))
+						if effected: world.add_fire(point,entity)
+						message="The material catches fire." if effected else "Wet fuel refuses the flame."
+					else:
+						message="Rain suppresses ignition."
+				"exstingue":
+					effected=bool(entity.apply_effect("water",strength))
+					message="The material is drenched." if effected else message
+	return {"ok":effected,"message":message,"point":point,"word":word,
+		"remember_word":command,"wild":""}
 
 func wild_result(point: Vector3) -> String:
 	match rng.randi_range(0,4):
