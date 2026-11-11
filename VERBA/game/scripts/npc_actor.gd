@@ -232,7 +232,10 @@ func _process(delta: float) -> void:
 	# World labels are discovery aids, not floating billboards visible across
 	# the entire valley. Spoken names remain in the dialogue when nearby.
 	if name_label != null and is_instance_valid(world) and world.player != null:
-		name_label.visible = global_position.distance_squared_to(
+		# While speaking, the character is already named in the dialogue.
+		# Do not superimpose the big floating title on their head.
+		var talking: bool = world.player.conversation_actor == self
+		name_label.visible = not talking and global_position.distance_squared_to(
 			world.player.global_position) <= 8.0*8.0
 	if left_arm==null or world==null or world.village_sim==null: return
 	motion_clock+=delta
