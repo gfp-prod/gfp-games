@@ -323,9 +323,9 @@ func height_at(x: float,z: float) -> float:
 	var raw: float = _raw_height_at(x,z)
 	# Two small intentionally levelled authored sites. The surrounding hills
 	# blend back over 4–5 metres; no hovering floors or invisible terrain seams.
-	var station_edge: float=maxf(absf(x+27.0)/9.0,absf(z-44.0)/7.0)
+	var station_edge: float=maxf(absf(x+33.0)/9.0,absf(z-44.0)/7.0)
 	if station_edge<1.48:
-		raw=lerpf(raw,_raw_height_at(-27.0,44.0),
+		raw=lerpf(raw,_raw_height_at(-33.0,44.0),
 			1.0-smoothstep(1.0,1.48,station_edge))
 	var castle_edge: float=maxf(absf(x+49.0)/10.0,absf(z-44.0)/10.0)
 	if castle_edge<1.45:
