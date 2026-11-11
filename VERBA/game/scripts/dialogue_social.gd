@@ -288,6 +288,12 @@ func restore(source: Dictionary) -> void:
 		for phrase in definitions[id].get("speech",[]):
 			if phrase is Dictionary:
 				legal_speech[String(phrase.get("topic",""))]=true
+		# The same portable utterances must survive save/load, but only
+		# for topics this specific person can meaningfully answer.
+		for common in SHARED_SPEECH:
+			var topic: String=String(common.get("topic",""))
+			if legal.has(topic):
+				legal_speech[topic]=true
 		var validated_speech: Array[String]=[]
 		var stored_speech: Variant=record.get("spoken_topics",[])
 		if stored_speech is Array:
