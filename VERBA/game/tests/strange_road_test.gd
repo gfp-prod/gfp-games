@@ -33,7 +33,7 @@ func _run() -> void:
 	var east: Vector2=Vector2(-11.0,32.22)
 	var west: Vector2=Vector2(-24.0,40.82)
 	var center: Vector2=east.lerp(west,0.5)
-	var height: float=lerpf(world.height_at(east.x,east.y),world.height_at(west.x,west.y),.5)+.15
+	var height: float=lerpf(world.height_at(east.x,east.y),world.height_at(west.x,west.y),.5)+.15+1.05
 	var bridge_query:=PhysicsRayQueryParameters3D.create(
 		Vector3(center.x,height+2.0,center.y),Vector3(center.x,height-6.0,center.y))
 	bridge_query.collision_mask=16
@@ -41,7 +41,14 @@ func _run() -> void:
 	if bridge_hit.is_empty() or bridge_hit.get("collider")!=deck:
 		_fail("North road deck ray: hit=%s at height=%.2f bank_y=(%.2f,%.2f) streambed=%.2f" % [str(bridge_hit.get("collider",null)),height,world.height_at(east.x,east.y),world.height_at(west.x,west.y),world.height_at(center.x,center.y)])
 		return
-	var station: Node3D=district.find_child("ValeFuelStation",true,false)
+	# Regression for the photographed problem: no deterministic flora spawn
+	# may occupy the shop or castle archive floor after the exclusion pass.
+	for point in [Vector2(-35,44),Vector2(-49,44)]:
+		var clear: Vector2=world.move_vegetation_outside_roadside(point.x,point.y)
+		if point.distance_to(clear)<2.0:
+			_fail("Built interiors still admit decorative vegetation")
+			return
+		var station: Node3D=district.find_child("ValeFuelStation",true,false)
 	var castle: Node3D=district.find_child("CastleOfTheSecondRoad",true,false)
 	var shop: Marker3D=station.find_child("StationWalkableInterior",true,false)
 	var shop_gate: Marker3D=station.find_child("StationOpenEntrance",true,false)
