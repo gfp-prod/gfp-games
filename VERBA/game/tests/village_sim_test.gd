@@ -59,11 +59,18 @@ func _run() -> void:
 	if not loaded.restore(JSON.parse_string(JSON.stringify(save))):
 		_fail("Could not restore JSON-round-tripped village: " + loaded.restore_error)
 		return
+	if JSON.stringify(a.snapshot()) != JSON.stringify(loaded.snapshot()):
+		_fail("Snapshot mismatch immediately after load: expected rng=%s got rng=%s" % [str(a.rng.state),str(loaded.rng.state)])
+		return
 	for i in range(70):
 		a.step()
 		loaded.step()
 	if JSON.stringify(a.snapshot())!=JSON.stringify(loaded.snapshot()):
-		_fail("Save/reload changed deterministic continuation")
+		var left: String = JSON.stringify(a.snapshot())
+		var right: String = JSON.stringify(loaded.snapshot())
+		var offset: int = 0
+		while offset < mini(left.length(),right.length()) and left[offset] == right[offset]: offset += 1
+		_fail("Replay mismatch byte=%d expected=%s got=%s" % [offset,left.substr(maxi(0,offset-80),160),right.substr(maxi(0,offset-80),160)])
 		return
 	var broken: Dictionary = loaded.snapshot()
 	broken["people"]["ida"]["spouse"] = "titus"
