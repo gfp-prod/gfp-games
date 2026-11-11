@@ -797,7 +797,11 @@ func _recover_from_defeat(source: String) -> void:
 	health = 60.0
 	stamina = 65.0
 	damage_immunity = 5.0
-	say_world("You survived %s, but something was lost." % source,
+	# The wizard survives, but the world does not stop for him. This is
+	# the authoritative calendar's real day transition: village jobs,
+	# commissions and finite resources continue to evolve.
+	world.skip_days(1)
+	say_world("You awaken one dawn later. Lost to %s; the vale has changed." % source,
 		position+Vector3.UP*1.7,Color("e0bd9f"))
 
 func _record_field_observation(spoken: String, outcome: Dictionary, target: Dictionary, cause: String) -> void:
