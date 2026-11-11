@@ -12,10 +12,11 @@ static func build(cabin: Node3D, world: Node3D) -> void:
 	var plaster := _paint("res://assets/textures/real/cottage_plaster_diffuse.jpg",Color("ddc9a9"))
 	var wood := _paint("res://assets/textures/real/cottage_wood_diffuse.jpg",Color("9b7b60"))
 	var soot := ART.mat(Color("463b35"),.97)
-	var damp_stone := _paint("res://assets/textures/real/stone_diffuse.jpg",Color("a09a86"))
+	var damp_stone := _paint("res://assets/textures/real/stone_diffuse.jpg",Color("bbb49e"))
 	var metal := ART.mat(Color("897758"),.67)
 	metal.metallic = .21
-	var roof_mat := _paint("res://assets/textures/real/cottage_roof_diffuse.jpg",Color("c7c5b1"))
+	# Pure authored slate colors; the photographic tile atlas produced ugly high-frequency white scratches.
+	var roof_mat := ART.mat(Color("d8d6c7"),1.0)
 	roof_mat.vertex_color_use_as_albedo = true
 	roof_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	roof_mat.roughness = 1.0
@@ -325,6 +326,20 @@ static func _add_turret(house: Node3D,world: Node3D,cabin: Node3D,
 		var z: float = sin(theta)
 		ART.bone(tower,Vector3(x*1.05,.30,z*1.05),
 			Vector3(x*.99,3.72,z*.99),.064,.052,wood,7)
+	# An inset scholar's window makes this a real attached room, not a cone
+	# arbitrarily stuck to a dark cylinder. Small aperture, heavy wood surround.
+	var window := ART.mat(Color("50716d"),.28)
+	window.metallic = .12
+	ART.box(tower,Vector3(0,2.36,1.13),Vector3(.39,.69,.065),window)
+	var lintel := ART.mat(Color("5d5043"),.97)
+	for xx in [-.245,.245]:
+		ART.bone(tower,Vector3(xx,1.96,1.19),
+			Vector3(xx,2.76,1.19),.07,.06,wood,8)
+	for yy in [1.96,2.76]:
+		ART.bone(tower,Vector3(-.26,yy,1.19),
+			Vector3(.26,yy,1.19),.07,.06,lintel,8)
+	ART.bone(tower,Vector3(0,1.99,1.21),
+		Vector3(0,2.73,1.21),.016,.016,wood,7)
 	# A small brass weather vane catches the eye without glowing artificially.
 	ART.bone(tower,Vector3(-.14,5.68,0),
 		Vector3(-.21,6.34,0),.038,.025,soot,8)
