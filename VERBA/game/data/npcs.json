@@ -3,6 +3,10 @@
     "id": "mara",
     "name": "Mara",
     "role": "Roadside scribe",
+    "speech": [
+      {"form": "Ubi est silva?", "topic": "forest", "min_stage": 1,
+       "early": "Mara gestures toward your herb book. 'Read the woodlands first.'"}
+    ],
     "position": [
       -2.8,
       20.8
@@ -63,6 +67,9 @@
     "id": "tomas",
     "name": "Tomas",
     "role": "Hermitage keeper",
+    "speech": [
+      {"form": "Da mihi librum.", "topic": "trade", "min_stage": 0}
+    ],
     "position": [
       23.1,
       15.2
@@ -126,6 +133,9 @@
     "id": "ida",
     "name": "Ida",
     "role": "Village baker",
+    "speech": [
+      {"form": "Frumentum tibi fero.", "topic": "baker_delivery", "min_stage": 0}
+    ],
     "position": [
       6,
       19
