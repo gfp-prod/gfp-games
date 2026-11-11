@@ -186,6 +186,10 @@ static func populate_grass(world) -> void:
 				elif String(group["name"])=="Amber Ridge Grasses":
 					x=rng.randf_range(18,65);z=rng.randf_range(-42,52)
 				if not (absf(x)<3.8 and z>-32 and z<32):break
+			# No decorative grass may render through the cottage floor.
+			var clear_spot: Vector2 = world.move_vegetation_outside_cottage(x,z)
+			x = clear_spot.x
+			z = clear_spot.y
 			var base:=Basis(Vector3.UP,rng.randf_range(0,TAU))
 			var s:=rng.randf_range(.58,1.20)
 			base=base.scaled(Vector3(s,rng.randf_range(.66,1.15),s))
@@ -230,6 +234,9 @@ static func populate_litter(world) -> void:
 		var radius: float = sqrt(rng.randf())*13.0
 		var x: float = stand.x + cos(angle)*radius
 		var z: float = stand.y + sin(angle)*radius
+		var clear_leaf: Vector2 = world.move_vegetation_outside_cottage(x,z)
+		x = clear_leaf.x
+		z = clear_leaf.y
 		var size: float = rng.randf_range(.24,.59)
 		var basis:=Basis(Vector3.UP,rng.randf_range(0,TAU)).scaled(Vector3.ONE*size)
 		mm.set_instance_transform(i,Transform3D(basis,Vector3(x,world.height_at(x,z)+.015,z)))
