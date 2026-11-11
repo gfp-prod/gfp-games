@@ -58,6 +58,7 @@ static func snapshot(world: Node3D) -> Dictionary:
 	var scholarship: Dictionary = world.scholar.snapshot() if world.scholar != null else {}
 	return {"schema":1,"saved_unix":Time.get_unix_time_from_system(),
 		"objects":objects,"animals":animals,"player":player,"scholar":scholarship,
+		"social":world.social.snapshot() if world.social != null else {},
 		"collected_pickups":world.collected_pickup_ids.duplicate(),
 		"dropped_pickups":dropped,"next_drop_serial":world.next_drop_serial,
 		"weather":{"raining":bool(world.raining),
@@ -145,6 +146,10 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 	# Restore scholarship before item visibility, so mastered books never respawn.
 	if world.scholar != null and data.get("scholar",null) is Dictionary:
 		world.scholar.restore(data["scholar"])
+	# Old schema-1 saves omit conversation data; restore an empty social
+	# memory rather than manufacturing talk history or duplicating trades.
+	if world.social != null:
+		world.social.restore(data.get("social",{}) if data.get("social",{}) is Dictionary else {})
 
 	# Rebuild pickups from immutable templates: works in a fresh instance AND
 	# when loading a save into an already-played world. No duplicates.
