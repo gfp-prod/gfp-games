@@ -26,5 +26,19 @@ func run_checks() -> void:
 		printerr("FAIL: Latin lexicon missing")
 		quit(4)
 		return
+	# Verify the actual instanced landmark, not only disconnected mesh factories.
+	var cottage: Node3D = game.find_child("HermitCottage",true,false) as Node3D
+	if cottage == null or cottage.find_child("CrookedHermitage",true,false) == null:
+		printerr("FAIL: storybook cottage missing from the actual world")
+		quit(5)
+		return
+	if cottage.find_child("CC0ImportedArt",true,false) != null:
+		printerr("FAIL: the old prefab cottage is still being rendered")
+		quit(6)
+		return
+	if cottage.find_child("ApothecaryTurretSolid",true,false) == null:
+		printerr("FAIL: visual turret lacks solid collision")
+		quit(7)
+		return
 	print("PASS: scene, world, player, grimoire, wildlife, and lexicon instantiated")
 	quit(0)
