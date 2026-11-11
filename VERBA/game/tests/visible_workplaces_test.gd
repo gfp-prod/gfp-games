@@ -86,7 +86,7 @@ func _run() -> void:
 		fail("Cannot restore village economy after state mutations")
 		return
 	district.refresh_from_economy(true)
-	if shown(slots["bread"])!=mini(6,ceili(float(economy.stocks["bread"])/3.0)):
+	if shown(slots["bread"])!=mini(6,ceili(float(world.village_sim.economy.stocks["bread"])/3.0)):
 		fail("A save restore did not restore visual stock")
 		return
 	print("PASS: farm bakery forge market visible; finite stock controls props; production changes real cargo; no item duplication or unbounded scene nodes")
