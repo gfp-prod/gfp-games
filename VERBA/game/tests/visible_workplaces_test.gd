@@ -29,6 +29,18 @@ func _run() -> void:
 		if shape==null or not (shape is StaticBody3D) or shape.collision_layer!=16:
 			fail("Workplace has no real physical obstacle: "+collision_name)
 			return
+	# Clothing identity belongs to individual NPCs; a complete workplace
+	# without recognizable workers is still just a prop display.
+	for pair in [["ida","VisibleBakerApron"],["orin","VisibleSmithHammer"],
+			["daro","VisibleFarmerHat"],["sela","VisibleMerchantPouch"]]:
+		var actor=null
+		for npc in world.npcs:
+			if npc.npc_id==pair[0]:
+				actor=npc
+				break
+		if actor==null or actor.find_child(pair[1],true,false)==null:
+			fail("Worker lacks recognizable physical role silhouette: "+str(pair[0]))
+			return
 	var economy=world.village_sim.economy
 	var slots: Dictionary=district.displays
 	for kind in ["grain","bread","tools"]:
