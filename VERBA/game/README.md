@@ -30,6 +30,8 @@ Find **De Herbis** on a labeled stone near spawn and press **E** to collect. G o
 
 This is a deliberately small playable milestone, not yet a complete survival game: there are no two-story tower construction controls, full village/station, NPC schedules, or diverse hostile mobs. Those remain in the master plan.
 
+**Record experiments:** Every Latin casting attempt, successful or not, leaves evidence in your world-saved grimoire. Open it with **G**, press **J** for *Liber Experimentorum*, use **A/D** to compare observations, and **J** or **Tab** to return. The journal tells you what actually happened to materials, creatures and spells without treating failed attempts as mastery or generating XP.
+
 ## Validation
 GitHub Actions runs the real Godot engine headlessly for startup, ecology, movement/navigation, Latin grammar, world state persistence and deterministic material exchange. A second workflow starts Godot in an OpenGL virtual display and produces *actual* world/animal screenshots and animation previews, with a pixel-based distortion gate.
 
