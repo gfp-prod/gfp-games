@@ -15,6 +15,7 @@ var last_sim_action: String = ""
 var replan_elapsed: float = 0.0
 var blocked_seconds: float = 0.0
 var mobile: bool = false
+var name_label: Label3D
 
 func setup(owner_world: Node3D, data: Dictionary) -> void:
 	world = owner_world
@@ -197,6 +198,14 @@ func _ready() -> void:
 	title.no_depth_test = false
 	title.position = Vector3(0,2.29,0)
 	add_child(title)
+	name_label=title
+
+func _process(_delta: float) -> void:
+	# World labels are discovery aids, not floating billboards visible across
+	# the entire valley. Spoken names remain in the dialogue when nearby.
+	if name_label != null and is_instance_valid(world) and world.player != null:
+		name_label.visible = global_position.distance_squared_to(
+			world.player.global_position) <= 8.0*8.0
 
 func _destination_for(action: String) -> Vector3:
 	var key: String = "home"
