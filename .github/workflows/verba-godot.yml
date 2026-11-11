@@ -41,3 +41,28 @@ jobs:
         run: godot --headless --path . --script res://tests/save_integrity_regression_test.gd
       - name: Ecology baseline
         run: godot --headless --path . --script res://tests/ecology_smoke_test.gd
+
+  visual-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Import assets
+        run: godot --headless --path . --editor --import --quit
+      - name: Capture actual rendered views through Xvfb
+        run: xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/visual_snapshots.gd
+      - name: Preserve screenshots as review artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verba-fixed-visual-qa
+          path: VERBA/game/tests/screenshots/*.png
+          if-no-files-found: warn
+          retention-days: 30
