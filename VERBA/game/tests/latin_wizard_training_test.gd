@@ -120,11 +120,25 @@ func _run() -> void:
 		fail("Memories rescheduled by opening/reloading the same world")
 		return
 	again.skip_days(1)
-	if again.scholar.practice.next_due(again.scholar.completed,again.world_calendar.day).get("id","")!="starter_cresce":
-		# Other overdue starter exercises can take priority, so inspect
-		# eligibility directly rather than depending on list ordering.
-		if not int(again.scholar.practice.progress["starter_cresce"]["due_day"])<=again.world_calendar.day:
-			fail("An elapsed in-world dawn did not open the delayed recollection")
-			return
-	print("PASS: diegetic wizard grimoire, contextual Latin morphology, typed retrieval, spaced dawns, corrective notes, true mastery and save-safe learning")
+	if int(again.scholar.practice.progress["starter_cresce"]["due_day"])>again.world_calendar.day:
+		fail("A new in-world dawn did not make the learned imperative due")
+		return
+	# A learned word recalled through consequential wizard action ALSO
+	# counts, but only after the player has stopped consulting the book.
+	again.player.book.last_consult=-99999.0
+	var field: Vector3=Vector3(18.0,again.height_at(18.0,27.0),27.0)
+	again.player.global_position=Vector3(18.0,again.height_at(18.0,25.0)+.15,25.0)
+	var real_cast: Dictionary=again.player.cast_latin("cresce",{"position":field})
+	if not real_cast.get("ok",false) or again.scholar.practice.mastery("cresce")!=2:
+		fail("Actually growing the village farm did not count as delayed Latin output")
+		return
+	var repeated: Dictionary=again.player.cast_latin("cresce",{"position":field})
+	if not repeated.get("ok",false) or again.scholar.practice.mastery("cresce")!=2:
+		fail("Spam casting within the same day fabricated language fluency")
+		return
+	var failed_spell: Dictionary=again.player.cast_latin("cresce",{"position":Vector3(2000.0,0.0,2000.0)})
+	if failed_spell.get("ok",true) or again.scholar.practice.mastery("cresce")!=2:
+		fail("Failed, out-of-reach magic incorrectly counted as Latin competence")
+		return
+	print("PASS: diegetic wizard grimoire, contextual Latin morphology, typed retrieval, applied magical output, spaced dawns, corrective notes, true mastery and save-safe learning")
 	quit(0)
