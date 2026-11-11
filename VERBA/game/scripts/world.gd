@@ -12,6 +12,7 @@ const PICKUP_SCRIPT = preload("res://scripts/pickup.gd")
 const MAGIC_SCRIPT = preload("res://scripts/magic.gd")
 const SCHOLAR = preload("res://scripts/scholar.gd")
 const SOCIAL = preload("res://scripts/dialogue_social.gd")
+const VILLAGE_SIM = preload("res://scripts/village_sim.gd")
 const NPC_ACTOR = preload("res://scripts/npc_actor.gd")
 const CONSTRUCTION = preload("res://scripts/tower_construction.gd")
 const SIM_OBJECT = preload("res://scripts/sim_object.gd")
@@ -32,6 +33,8 @@ var familiar_mode: String = "follow"
 var construction
 var harvest_counts: Dictionary = {}
 var social
+var village_sim
+var village_elapsed: float = 0.0
 var navigation_blockers: Array[Vector3] = []
 var navigation_region: NavigationRegion3D
 var sim_objects: Array = []
@@ -100,6 +103,7 @@ func _ready() -> void:
 	magic=MAGIC_SCRIPT.new(self)
 	scholar=SCHOLAR.new()
 	social=SOCIAL.new()
+	village_sim=VILLAGE_SIM.new(ground_seed)
 	populate_social_npcs()
 	construction=CONSTRUCTION.new(self)
 	player=PLAYER_SCRIPT.new()
@@ -1195,6 +1199,12 @@ func _process(delta: float) -> void:
 	night_visual_blend = move_toward(night_visual_blend,desired_night,delta*.57)
 	if absf(night_visual_blend-previous_night) > .0001:
 		_update_day_night_art(night_visual_blend)
+	# Cheap deterministic village simulation, independent of camera and player actions.
+	village_elapsed += delta
+	if village_elapsed >= 10.0 and village_sim != null:
+		var steps: int = mini(6,int(village_elapsed/10.0))
+		village_elapsed -= float(steps)*10.0
+		for i in range(steps): village_sim.step()
 	ecology_timer += delta
 	if ecology_timer >= .5:
 		var elapsed:float=ecology_timer
