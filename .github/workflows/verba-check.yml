@@ -39,7 +39,12 @@ jobs:
           python tests/validate_books.py
           python tests/validate_visual_assets.py
       - name: Import assets and parse scripts in Godot
-        run: godot --headless --path . --editor --import --quit
+        run: |
+          godot --headless --path . --editor --import --quit 2>&1 | tee godot-import.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:' godot-import.log; then
+            echo "::error::Godot reported a script compilation failure despite a zero exit code"
+            exit 1
+          fi
       - name: Runtime smoke test
         run: godot --headless --path . --script res://tests/smoke_test.gd
       - name: Independent ecology state
