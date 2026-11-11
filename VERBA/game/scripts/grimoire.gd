@@ -13,6 +13,9 @@ var page_index := 0
 var open := false
 var lift := 0.0
 var page_turn := 0.0
+var page_turn_direction: int = 1
+var pending_page_index: int = -1
+var turning_leaf: Node3D
 var last_consult := -9999.0
 var recall_streak := 0
 var total_casts := 0
@@ -43,6 +46,8 @@ func _ready() -> void:
 	open_visual=BOOK_VISUAL.make_open_binding()
 	open_visual.name="OpenedCoversAndPhysicalPages"
 	book.add_child(open_visual)
+	turning_leaf = BOOK_VISUAL.make_turning_leaf()
+	open_visual.add_child(turning_leaf)
 	# Native layered binding replaces the former flat imported book geometry.
 	# Ink labels occupy the surface of each physical page; no HTML overlay.
 	# Prefer ordinary OS-installed serif faces, avoiding font download hassles
@@ -128,11 +133,16 @@ func submit_answer(answer_index: int) -> Dictionary:
 	return outcome
 
 func turn_page(dir: int) -> void:
-	if not open: return
-	var pages_total: int = maxi(1, ceili(float(learned.size()) / 4.0))
-	page_index = posmod(page_index+dir,pages_total)
+	if not open or page_turn > 0.0 or book_cursor >= 0: return
+	var pages_total: int = maxi(1,ceili(float(learned.size())/4.0))
+	if pages_total <= 1 or dir == 0: return
+	page_turn_direction = 1 if dir > 0 else -1
+	pending_page_index = posmod(page_index+page_turn_direction,pages_total)
 	page_turn = 1.0
-	update_pages()
+	if turning_leaf != null:
+		turning_leaf.visible = true
+		turning_leaf.rotation.y = 0.0
+		turning_leaf.scale.x = float(page_turn_direction)
 
 func update_pages() -> void:
 	if page_labels.size()<2: return
@@ -220,6 +230,28 @@ func _process(delta: float) -> void:
 	# Ease both raising and lowering; no popping book on screen.
 	var ease=lift*lift*(3.0-2.0*lift)
 	apply_pose(ease)
-	page_turn=move_toward(page_turn,0,delta*3.0)
-	if page_turn>0.0 and book != null:
-		book.rotation.z += sin(page_turn*PI)*.02
+	if page_turn > 0.0:
+		var progress: float = 1.0-page_turn
+		if turning_leaf != null:
+			turning_leaf.visible = open
+			turning_leaf.rotation.y = float(page_turn_direction)*progress*PI
+		# The new text appears when the paper crosses the binding.
+		if pending_page_index >= 0 and progress >= .52:
+			page_index = pending_page_index
+			pending_page_index = -1
+			update_pages()
+		var ink_visible: bool = progress < .12 or progress > .88
+		for label in page_labels:
+			label.visible = open and lift > .87 and ink_visible
+		page_turn = move_toward(page_turn,0.0,delta*2.0)
+		if page_turn <= 0.0:
+			if pending_page_index >= 0:
+				page_index = pending_page_index
+				pending_page_index = -1
+				update_pages()
+			if turning_leaf != null:
+				turning_leaf.visible = false
+			for label in page_labels:
+				label.visible = open and lift > .87
+	elif turning_leaf != null:
+		turning_leaf.visible = false
