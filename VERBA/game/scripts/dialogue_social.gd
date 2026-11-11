@@ -47,6 +47,12 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 		menu.append({"index": idx, "label": label,
 			"available": blocked.is_empty(), "reason": blocked})
 	var spoken: String = String(introductions[mini(tier, introductions.size()-1)])
+	if id=="ida" and village_sim!=null:
+		var grain: int=int(village_sim.economy.stocks.get("grain",0))
+		if grain<2:
+			spoken += "\nThe grain stores are nearly empty. Without flour, the ovens will go cold."
+		else:
+			spoken += "\nThe ovens have grain enough for another batch."
 	if int(past.get("rapport", 0)) >= 2:
 		spoken += "\nYou are remembered here."
 	return {"id": id, "name": String(definition["name"]),
@@ -131,6 +137,9 @@ func choose(id: String, index: int, scholar, player) -> Dictionary:
 	var tier: int = stage(scholar)
 	var replies: Array = choice.get("reply", [])
 	var speech: String = String(replies[mini(tier, replies.size()-1)])
+	if id=="ida" and topic_id=="work" and village_sim!=null:
+		if int(village_sim.economy.stocks.get("grain",0))<2:
+			speech="There is not enough grain for the ovens. Ask Daro about the harvest."
 	if topic_id == "rumors":
 		var rumor: String = heard_report(id)
 		speech = rumor if not rumor.is_empty() else "I have heard nothing certain. Ask someone who saw it."
