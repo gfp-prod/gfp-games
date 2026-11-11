@@ -62,6 +62,8 @@ static func snapshot(world: Node3D) -> Dictionary:
 	return {"schema":1,"saved_unix":Time.get_unix_time_from_system(),
 		"objects":objects,"animals":animals,"player":player,"scholar":scholarship,
 		"social":world.social.snapshot() if world.social != null else {},
+		"village":world.village_sim.snapshot() if world.village_sim != null else {},
+		"village_elapsed":world.village_elapsed,
 		"familiar":{"id":String(world.familiar_id),"mode":String(world.familiar_mode)},
 		"construction":world.construction.snapshot() if world.construction != null else {},
 		"harvest_counts":world.harvest_counts.duplicate(),
@@ -180,6 +182,14 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 	# memory rather than manufacturing talk history or duplicating trades.
 	if world.social != null:
 		world.social.restore(data.get("social",{}) if data.get("social",{}) is Dictionary else {})
+
+	# Existing schema-1 saves lacked autonomous village state. Missing state
+	# retains the deterministic default without rejecting the older save.
+	if world.village_sim != null:
+		var stored_village: Variant = data.get("village",{})
+		if stored_village is Dictionary and not stored_village.is_empty():
+			if not world.village_sim.restore(stored_village): return false
+		world.village_elapsed = clampf(float(data.get("village_elapsed",0.0)),0.0,10.0)
 
 	# Rebuild pickups from immutable templates: works in a fresh instance AND
 	# when loading a save into an already-played world. No duplicates.
