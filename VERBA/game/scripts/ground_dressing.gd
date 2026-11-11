@@ -63,6 +63,9 @@ static func _add_pebbles(world: Node3D, root: Node3D) -> void:
 		var scale := Vector3(size*rng.randf_range(.9,1.5),
 			size*rng.randf_range(.13,.29),size*rng.randf_range(.72,1.34))
 		var basis := Basis(Vector3.UP,rng.randf_range(0.0,TAU)).scaled(scale)
+		var clear_stone: Vector2 = world.move_vegetation_outside_cottage(x,z)
+		x = clear_stone.x
+		z = clear_stone.y
 		var y: float = world.height_at(x,z) + scale.y*.2
 		mm.set_instance_transform(i,Transform3D(basis,Vector3(x,y,z)))
 		mm.set_instance_color(i,Color("92938a").lerp(Color("565d55"),rng.randf_range(.1,.7)))
