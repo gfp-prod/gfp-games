@@ -137,9 +137,9 @@ static func grass_mesh() -> ArrayMesh:
 		var base_right: Vector3 = base+lateral*width
 		var middle_left: Vector3 = lower-lateral*width*.53
 		var middle_right: Vector3 = lower+lateral*width*.53
-		var darker: Color = Color("536345")
-		var mid: Color = Color("78835d")
-		var tip_color: Color = Color("9ea87a")
+		var darker: Color = Color("83916b")
+		var mid: Color = Color("abb78a")
+		var tip_color: Color = Color("c3cba4")
 		for triangle in [
 			[base_left,darker,base_right,mid,middle_right,mid],
 			[base_left,darker,middle_right,mid,middle_left,mid],
@@ -160,8 +160,9 @@ static func populate_grass(world) -> void:
 	material.vertex_color_use_as_albedo=true
 	material.cull_mode=BaseMaterial3D.CULL_DISABLED
 	material.roughness=1.0
-	material.texture_filter=BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
-	material.albedo_texture=load("res://assets/textures/grass.png")
+	material.texture_filter=BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	# Avoid triple color multiplication that made grass appear almost black.
+	material.albedo_color=Color("c2c9ad")
 	var groups: Array[Dictionary]=[
 		{"name":"Meadow Tufts","n":13500,"tint":Color("929e79")},
 		{"name":"Cool Bank Grasses","n":3500,"tint":Color("809781")},
