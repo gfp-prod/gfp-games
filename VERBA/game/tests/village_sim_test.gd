@@ -30,6 +30,11 @@ func _check_invariants(sim) -> String:
 			if not sim.people.has(witness): return "Unknown event witness"
 	return ""
 
+func _canonical(snapshot_record: Dictionary) -> String:
+	# Godot JSON parses all numeric literals as float; 74 and 74.0 have
+	# identical meaning on disk but different pre-serialization text.
+	return JSON.stringify(JSON.parse_string(JSON.stringify(snapshot_record)))
+
 func _run() -> void:
 	var variety: Dictionary = {}
 	for seed_value in range(100):
@@ -51,7 +56,7 @@ func _run() -> void:
 	for i in range(160):
 		a.step()
 		b.step()
-	if JSON.stringify(a.snapshot())!=JSON.stringify(b.snapshot()):
+	if _canonical(a.snapshot())!=_canonical(b.snapshot()):
 		_fail("Same seed does not produce the same state")
 		return
 	var save: Dictionary = a.snapshot()
@@ -59,9 +64,9 @@ func _run() -> void:
 	if not loaded.restore(JSON.parse_string(JSON.stringify(save))):
 		_fail("Could not restore JSON-round-tripped village: " + loaded.restore_error)
 		return
-	if JSON.stringify(a.snapshot()) != JSON.stringify(loaded.snapshot()):
-		var before: String = JSON.stringify(a.snapshot())
-		var after: String = JSON.stringify(loaded.snapshot())
+	if _canonical(a.snapshot()) != _canonical(loaded.snapshot()):
+		var before: String = _canonical(a.snapshot())
+		var after: String = _canonical(loaded.snapshot())
 		var first: int = 0
 		while first < mini(before.length(),after.length()) and before[first]==after[first]: first += 1
 		_fail("Load differs byte=%d expected=%s actual=%s rng=%s/%s" % [first,before.substr(maxi(0,first-80),160),after.substr(maxi(0,first-80),160),str(a.rng.state),str(loaded.rng.state)])
@@ -69,9 +74,9 @@ func _run() -> void:
 	for i in range(70):
 		a.step()
 		loaded.step()
-	if JSON.stringify(a.snapshot())!=JSON.stringify(loaded.snapshot()):
-		var left: String = JSON.stringify(a.snapshot())
-		var right: String = JSON.stringify(loaded.snapshot())
+	if _canonical(a.snapshot())!=_canonical(loaded.snapshot()):
+		var left: String = _canonical(a.snapshot())
+		var right: String = _canonical(loaded.snapshot())
 		var offset: int = 0
 		while offset < mini(left.length(),right.length()) and left[offset] == right[offset]: offset += 1
 		_fail("Replay mismatch byte=%d expected=%s got=%s" % [offset,left.substr(maxi(0,offset-80),160),right.substr(maxi(0,offset-80),160)])
