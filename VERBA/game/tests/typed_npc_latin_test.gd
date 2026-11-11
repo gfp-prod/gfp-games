@@ -131,6 +131,22 @@ func _run() -> void:
 		_fail("Correctly typing model dialogue manufactured scholarship XP")
 		return
 	player.end_conversation()
+	# Integrate the two accepted systems: a genuine field spell belongs
+	# in the physical journal, while immortal defeat advances living time.
+	var found_field_trial: bool = false
+	for trial in scholar.experiments.entries:
+		if String(trial.get("latin",""))=="crescite herbae" and bool(trial.get("worked",false)):
+			found_field_trial = true
+			break
+	if not found_field_trial:
+		_fail("The real spoken field magic vanished from Liber Experimentorum")
+		return
+	var day_before: int = world.world_calendar.day
+	player.damage_immunity = 0.0
+	player.health = 8.0
+	if not player.take_damage(25.0,"wolf") or world.world_calendar.day != day_before+1:
+		_fail("Immortal recovery did not advance the authoritative world calendar")
+		return
 	# Every outcome must survive the existing unified world snapshot.
 	var saved: Dictionary = PERSIST.snapshot(world)
 	var previous_bread: int = int(world.village_sim.economy.stocks["bread"])
@@ -143,6 +159,9 @@ func _run() -> void:
 		return
 	if not scholar.has_book("de_igne_et_aqua") or int(world.village_sim.economy.stocks["bread"])!=previous_bread:
 		_fail("The material results of Latin interaction failed save/reload")
+		return
+	if world.world_calendar.day!=day_before+1 or scholar.experiments.entries.is_empty():
+		_fail("The journal or consequential immortal passage of time failed save/reload")
 		return
 	print("PASS: produced Latin cases and flexible word order drive real NPC speech, book trade, bread stocks, physical entry and persistent memories")
 	quit(0)
