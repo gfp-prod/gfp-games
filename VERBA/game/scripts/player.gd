@@ -396,7 +396,7 @@ func _input(event: InputEvent) -> void:
 		elif event.keycode==KEY_R:
 			build_face=posmod(build_face+1,4)
 		elif event.keycode >= KEY_1 and event.keycode <= KEY_9:
-			build_kind=world.construction.BUILD_ORDER[event.keycode-KEY_1]
+			build_kind=world.construction.get_build_choices()[event.keycode-KEY_1]
 		elif event.keycode==KEY_E:
 			interact()
 		get_viewport().set_input_as_handled()
