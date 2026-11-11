@@ -30,6 +30,7 @@ func _capture() -> void:
 		{"name":"village_farm","eye":Vector2(9,32),"look":Vector2(17,26)},
 		{"name":"village_bakery","eye":Vector2(12,11.5),"look":Vector2(8.9,16.2)},
 		{"name":"village_forge","eye":Vector2(17.5,13.5),"look":Vector2(21.7,18.7)},
+		{"name":"ferrous_outcrop","eye":Vector2(23.1,23.6),"look":Vector2(26.4,21.3)},
 		{"name":"north_road_bridge","eye":Vector2(-7.5,30.0),"look":Vector2(-19,38)},
 		{"name":"gas_station","eye":Vector2(-20.2,35.6),"look":Vector2(-33,44)},
 		{"name":"castle_gate","eye":Vector2(-32,33),"look":Vector2(-49,44)},
@@ -105,5 +106,5 @@ func _capture() -> void:
 	if correction_frame==null or correction_frame.save_png(directory+"/grimoire_correction.png")!=OK:
 		_fail("Could not save scholar's correction view")
 		return
-	print("PASS: fifteen real rendered 1280x720 views including wizard parchment retrieval and corrective feedback")
+	print("PASS: sixteen real rendered 1280x720 views including ferrous outcrop, wizard parchment retrieval and corrective feedback")
 	quit(0)
