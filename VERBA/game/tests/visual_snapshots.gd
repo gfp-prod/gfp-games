@@ -36,7 +36,9 @@ func _capture() -> void:
 		# Allow vegetation, environment textures, render buffers and draw list
 		# to catch up; never capture the initial loading frame.
 		for i in range(5): await process_frame
-		await RenderingServer.frame_post_draw
+		# Capture explicitly; awaiting frame_post_draw under a virtual display
+		# can deadlock when the rendering loop is throttled.
+		RenderingServer.force_draw()
 		var image: Image=root.get_texture().get_image()
 		if image==null or image.get_width()<640 or image.get_height()<360:
 			_fail("Missing real viewport rendering: "+String(view["name"]))
