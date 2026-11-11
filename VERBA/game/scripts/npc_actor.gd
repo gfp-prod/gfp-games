@@ -16,6 +16,14 @@ var replan_elapsed: float = 0.0
 var blocked_seconds: float = 0.0
 var mobile: bool = false
 var name_label: Label3D
+var left_arm: Node3D
+var right_arm: Node3D
+var left_leg: Node3D
+var right_leg: Node3D
+var harvest_sack: Node3D
+var motion_clock: float = 0.0
+var work_dwell: float = 0.0
+var active_work_token: String = ""
 
 func setup(owner_world: Node3D, data: Dictionary) -> void:
 	world = owner_world
@@ -60,9 +68,10 @@ func _ready() -> void:
 	var trim := ART.mat(Color(String(definition.get("trim","c0aa86"))),.95)
 	var skin := ART.mat(Color("aa8a70"),.93)
 	var leather := ART.mat(Color("463f37"),.99)
-	# Worn knee-length robe, slightly flared in the wind. It has a
-	# recognizable human scale from the path, not a billboard portrait.
-	ART.cone(figure,Vector3(0,.85,0),.47,1.28,cloth,.26,12)
+	# A separate torso, narrower tunic hem and jointed legs replace the
+	# one-piece walking cone. Props remain on their own worker identities.
+	ART.box(figure,Vector3(0,1.23,0),Vector3(.70,.73,.44),cloth)
+	ART.cone(figure,Vector3(0,.79,0),.36,.58,cloth,.265,12)
 	ART.bone(figure,Vector3(0,1.37,0),Vector3(0,1.64,0),
 		.23,.18,cloth,10)
 	ART.orb(figure,Vector3(0,1.77,0),
@@ -70,12 +79,24 @@ func _ready() -> void:
 	ART.orb(figure,Vector3(0,1.94,-.017),
 		Vector3(.235,.12,.23),leather,11)
 	for side in [-1.0,1.0]:
-		ART.bone(figure,Vector3(side*.28,1.47,0),
-			Vector3(side*.42,1.03,.09),.12,.075,cloth,9)
-		ART.orb(figure,Vector3(side*.42,1.00,.09),
-			Vector3(.091,.12,.083),skin,10)
-		ART.bone(figure,Vector3(side*.17,.31,0),
-			Vector3(side*.18,.10,.06),.105,.10,leather,8)
+		var arm:=Node3D.new()
+		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
+		arm.position=Vector3(side*.345,1.49,0)
+		figure.add_child(arm)
+		ART.bone(arm,Vector3.ZERO,Vector3(side*.075,-.42,-.045),.116,.084,cloth,9)
+		ART.orb(arm,Vector3(side*.075,-.46,-.045),Vector3(.093,.12,.088),skin,10)
+		var leg:=Node3D.new()
+		leg.name="AnimatedLeftLeg" if side<0.0 else "AnimatedRightLeg"
+		leg.position=Vector3(side*.17,.61,.015)
+		figure.add_child(leg)
+		ART.bone(leg,Vector3.ZERO,Vector3(0,-.46,0),.115,.10,leather,8)
+		ART.box(leg,Vector3(0,-.52,-.095),Vector3(.25,.13,.42),leather)
+		if side<0.0:
+			left_arm=arm
+			left_leg=leg
+		else:
+			right_arm=arm
+			right_leg=leg
 	# Cloth mantle and a small side bag distinguish scribe from keeper.
 	ART.bone(figure,Vector3(-.34,1.48,-.14),
 		Vector3(.30,1.46,-.13),.065,.062,trim,7)
@@ -112,8 +133,8 @@ func _ready() -> void:
 				Vector3(.61,.13,.18),leather)
 			var hammer:=Node3D.new()
 			hammer.name="VisibleSmithHammer"
-			hammer.position=Vector3(.46,1.05,-.16)
-			figure.add_child(hammer)
+			hammer.position=Vector3(.105,-.44,-.16)
+			right_arm.add_child(hammer)
 			ART.bone(hammer,Vector3(0,-.33,0),
 				Vector3(0,.31,0),.048,.036,leather,8)
 			ART.box(hammer,Vector3(0,.27,0),Vector3(.41,.17,.23),metal)
@@ -125,8 +146,8 @@ func _ready() -> void:
 			ART.cone(figure,Vector3(0,2.14,0),.29,.23,straw,.21,12)
 			var staff:=Node3D.new()
 			staff.name="VisibleFarmerRake"
-			staff.position=Vector3(-.54,.96,-.11)
-			figure.add_child(staff)
+			staff.position=Vector3(-.19,-.52,-.11)
+			left_arm.add_child(staff)
 			ART.bone(staff,Vector3(0,-.77,0),Vector3(0,1.03,0),
 				.039,.029,leather,8)
 			ART.box(staff,Vector3(0,1.02,0),Vector3(.47,.10,.09),trim)
@@ -151,6 +172,13 @@ func _ready() -> void:
 			shield.name="VisibleGuardShield"
 		_:
 			pass
+	# A real work-in-progress harvest sack belongs to the farmer, not to
+	# the village's available grain stock. It becomes available only at cart.
+	if npc_id=="daro":
+		harvest_sack=ART.orb(figure,Vector3(0,1.16,-.37),
+			Vector3(.30,.38,.29),ART.mat(Color("c6ad78"),.98),12)
+		harvest_sack.name="CarriedHarvestPendingDelivery"
+		harvest_sack.visible=false
 	# A petrol-station attendant looks like a twentieth-century worker,
 	# not a medieval pilgrim. A slim uniform, two separate legs and a
 	# peaked cap keep the silhouette readable without an external installer.
@@ -200,18 +228,58 @@ func _ready() -> void:
 	add_child(title)
 	name_label=title
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# World labels are discovery aids, not floating billboards visible across
 	# the entire valley. Spoken names remain in the dialogue when nearby.
 	if name_label != null and is_instance_valid(world) and world.player != null:
 		name_label.visible = global_position.distance_squared_to(
 			world.player.global_position) <= 8.0*8.0
+	if left_arm==null or world==null or world.village_sim==null: return
+	motion_clock+=delta
+	var order: Dictionary=world.village_sim.work_orders.get(npc_id,{})
+	var phase: String=String(order.get("phase",""))
+	var walking: bool=mobile and Vector2(velocity.x,velocity.z).length()>.20
+	var working: bool=not order.is_empty() and phase=="labor" and _near_work_goal()
+	var stride: float=sin(motion_clock*8.0)*.42 if walking else 0.0
+	left_leg.rotation.x=lerpf(left_leg.rotation.x,stride,minf(1.0,delta*9.0))
+	right_leg.rotation.x=lerpf(right_leg.rotation.x,-stride,minf(1.0,delta*9.0))
+	var reach: float=0.0
+	var offhand: float=0.0
+	if working:
+		var beat: float=sin(motion_clock*(8.5 if npc_id=="orin" else 4.4))
+		reach=-.65-.52*beat if npc_id=="orin" else -.48-.25*beat
+		offhand=-.34-.19*sin(motion_clock*4.4+1.2)
+	elif walking:
+		reach=-stride*.68
+		offhand=stride*.68
+	elif phase=="delivery" and npc_id=="daro":
+		reach=-.78
+		offhand=-.78
+	left_arm.rotation.x=lerpf(left_arm.rotation.x,offhand,minf(1.0,delta*8.0))
+	right_arm.rotation.x=lerpf(right_arm.rotation.x,reach,minf(1.0,delta*8.0))
+	if harvest_sack!=null:
+		harvest_sack.visible=phase=="delivery"
+
+func _near_work_goal() -> bool:
+	if world==null or npc_id.is_empty(): return false
+	var goal: Vector3=_destination_for("work")
+	return Vector2(global_position.x-goal.x,global_position.z-goal.z).length()<2.2
 
 func _destination_for(action: String) -> Vector3:
 	var key: String = "home"
 	match action:
 		"work": key = "work"
 		"socialize", "court", "investigate": key = "market"
+	# Work faces the actual crop plot, oven approach or anvil, not a generic
+	# point in the middle of the old market. Deliveries go to the grain cart.
+	if action=="work":
+		match npc_id:
+			"daro":
+				var job: Dictionary=world.village_sim.work_orders.get(npc_id,{})
+				var place: Vector2=Vector2(14.6,22.6) if String(job.get("phase",""))=="delivery" else Vector2(17.5,24.0)
+				return Vector3(place.x,world.height_at(place.x,place.y)+.1,place.y)
+			"ida": return Vector3(8.9,world.height_at(8.9,14.4)+.1,14.4)
+			"orin": return Vector3(20.4,world.height_at(20.4,16.2)+.1,16.2)
 	var spot: Array = definition.get(key,definition.get("position",[0.0,0.0]))
 	var x: float = float(spot[0])
 	var z: float = float(spot[1])
@@ -222,11 +290,18 @@ func _physics_process(delta: float) -> void:
 	var state: Dictionary = world.village_sim.people.get(npc_id,{})
 	if state.is_empty(): return
 	var action: String = String(state.get("last_action","rest"))
-	# Destinations are consequences of the simulation, not scripted time-of-day loops.
-	if last_sim_action != action:
-		last_sim_action = action
-		current_goal = _destination_for(action)
-		replan_elapsed = 0.0
+	# Replan when the farmer finishes cutting and starts carrying the real
+	# harvest. A pending delivery changes the goal without changing action.
+	var order: Dictionary=world.village_sim.work_orders.get(npc_id,{})
+	var token: String="%d:%s" % [int(order.get("tick",0)),String(order.get("phase",""))] if not order.is_empty() else ""
+	if token!=active_work_token:
+		active_work_token=token
+		work_dwell=0.0
+	var desired: Vector3=_destination_for(action)
+	if last_sim_action!=action or current_goal.distance_to(desired)>.55:
+		last_sim_action=action
+		current_goal=desired
+		replan_elapsed=0.0
 	replan_elapsed -= delta
 	if replan_elapsed <= 0.0:
 		route.target_position = current_goal
@@ -238,6 +313,10 @@ func _physics_process(delta: float) -> void:
 		move_dir.y = 0.0
 		if move_dir.length_squared() > 0.16: move_dir = move_dir.normalized()
 		else: move_dir = Vector3.ZERO
+	# Do not walk in tiny circles while working; physical presence is the
+	# gate for the work timer and the resource transaction.
+	if not order.is_empty() and Vector2(global_position.x-current_goal.x,global_position.z-current_goal.z).length()<1.75:
+		move_dir=Vector3.ZERO
 	if move_dir.length_squared() > 0.01:
 		var origin: Vector3 = global_position + Vector3.UP * 0.85
 		var obstacle: Dictionary = get_world_3d().direct_space_state.intersect_ray(
@@ -260,3 +339,17 @@ func _physics_process(delta: float) -> void:
 	if is_on_wall() or blocked_seconds>2.0:
 		replan_elapsed = 0.0
 		blocked_seconds = 0.0
+	# Travel -> genuine work animation -> stock production. Daro must walk
+	# from the field to the physical cart before the village gains grain.
+	if not order.is_empty():
+		var near_destination: bool=Vector2(global_position.x-current_goal.x,global_position.z-current_goal.z).length()<2.2
+		if near_destination and Vector2(velocity.x,velocity.z).length()<.3:
+			work_dwell+=delta
+		else:
+			work_dwell=0.0
+		if work_dwell>=3.0:
+			if npc_id=="daro" and String(order.get("phase",""))=="labor":
+				world.village_sim.advance_work(npc_id)
+			else:
+				world.village_sim.complete_work(npc_id)
+			work_dwell=0.0
