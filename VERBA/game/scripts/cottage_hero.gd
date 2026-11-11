@@ -23,13 +23,13 @@ static func decorate(cabin: Node3D) -> void:
 	root.add_child(roof)
 	# Strong ridge/eave silhouette.  Small uneven timber elements read better
 	# up close than another bright rectangular trim border.
-	ART.bone(root,Vector3(-.03,5.48,-2.98),Vector3(-.03,5.48,3.05),
+	ART.bone(root,Vector3(-.03,4.55,-2.86),Vector3(-.03,4.55,2.91),
 		.085,.077,dark_oak,8)
 	for side in [-1.0,1.0]:
-		ART.bone(root,Vector3(0,5.47,3.07),Vector3(side*3.19,3.64,3.07),
+		ART.bone(root,Vector3(0,4.54,2.94),Vector3(side*2.91,2.88,2.94),
 			.095,.075,aged_oak,9)
-		ART.bone(root,Vector3(side*3.22,3.64,-3.00),
-			Vector3(side*3.22,3.64,3.05),.095,.085,aged_oak,8)
+		ART.bone(root,Vector3(side*2.92,2.88,-2.86),
+			Vector3(side*2.92,2.88,2.91),.095,.085,aged_oak,8)
 	# A narrow step of hand-dressed fieldstone anchors the building to the
 	# ground, while leaving the actual front entrance unobstructed.
 	for i in range(8):
@@ -111,10 +111,10 @@ static func make_roof_shingles() -> ArrayMesh:
 	for side in [-1.0,1.0]:
 		for row in range(rows):
 			for col in range(columns):
-				var x0: float = .065+float(col)*3.10/float(columns)
-				var x1: float = .065+float(col+1)*3.10/float(columns)
-				var z0: float = -3.01+float(row)*6.06/float(rows)
-				var z1: float = -3.01+float(row+1)*6.06/float(rows)
+				var x0: float = .065+float(col)*2.80/float(columns)
+				var x1: float = .065+float(col+1)*2.80/float(columns)
+				var z0: float = -2.86+float(row)*5.77/float(rows)
+				var z1: float = -2.86+float(row+1)*5.77/float(rows)
 				var twist: float = rng.randf_range(-.012,.012)
 				var uplift: float = rng.randf_range(-.019,.028)
 				var c: Color = Color("a8a29b").lerp(
@@ -131,7 +131,7 @@ static func make_roof_shingles() -> ArrayMesh:
 	return st.commit()
 
 static func _roof_vertex(side: float,x: float,z: float,lift: float) -> Vector3:
-	return Vector3(side*x,5.47-x*.572+.052+lift,z)
+	return Vector3(side*x,4.54-x*.572+.046+lift,z)
 
 static func _tile_tri(st: SurfaceTool,a: Vector3,b: Vector3,c: Vector3,
 		tint: Color,ua: Vector2,ub: Vector2,uc: Vector2) -> void:
