@@ -64,6 +64,14 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 				"label":"Sell %s to %s for %d coins." % [buyer_item,String(definition["name"]),2 if id=="ida" else 4],
 				"available":village_sim.economy.treasury >= (2 if id=="ida" else 4),
 				"reason":"The village cannot pay."})
+	if id=="sela" and village_sim!=null:
+		var supply_prices: Dictionary={"grain":1,"wood":1,"ore":2}
+		for good in ["grain","wood","ore"]:
+			var cost: int=int(supply_prices[good])
+			menu.append({"index":lines.size()+["grain","wood","ore"].find(good),
+				"label":"Buy %s from Sela for %d coins." % [good,cost],
+				"available":int(village_sim.economy.stocks.get(good,0))>0 and inventory.size()<6,
+				"reason":"The market has no supply or room to hand it over."})
 	var spoken: String = String(introductions[mini(tier, introductions.size()-1)])
 	if id=="daro" and village_sim!=null:
 		spoken+="\n"+COMMISSIONS.describe(village_sim)
@@ -120,6 +128,9 @@ func choose(id: String, index: int, scholar, player) -> Dictionary:
 		if status=="ready" and index==4: return COMMISSIONS.receive_payment(village_sim,player)
 		return {"ok":false,"changed":false,"message":"Daro has no such offer at present."}
 	var options: Array = definition.get("choices", [])
+	if id=="sela" and village_sim!=null and index>=options.size() and index<options.size()+3:
+		var supplies: Array[String]=["grain","wood","ore"]
+		return player.professions.buy_from_market(player,supplies[index-options.size()])
 	if id in ["ida","orin"] and village_sim!=null and index==options.size() and player.professions.sale_available(id,player):
 		return player.professions.sell_to(id,player)
 	if index < 0 or index >= options.size():
