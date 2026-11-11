@@ -5,6 +5,7 @@ const HANDS = preload("res://scripts/glove_art.gd")
 const TREE = preload("res://scripts/landmark_tree.gd")
 
 func _initialize() -> void:
+	print("HERO_QA_STAGE cottage_start")
 	var cottage := Node3D.new()
 	root.add_child(cottage)
 	COTTAGE.decorate(cottage)
@@ -21,6 +22,7 @@ func _initialize() -> void:
 	if herb.multimesh == null or herb.multimesh.instance_count != 33:
 		_fail("Batched herb planter lost its actual instances")
 		return
+	print("HERO_QA_STAGE gloves_start")
 	var gloves := Node3D.new()
 	root.add_child(gloves)
 	HANDS.add_book_hands(gloves)
@@ -33,6 +35,7 @@ func _initialize() -> void:
 		if skin == null or skin.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() < 400:
 			_fail("Hand regressed to spheres or cylinder rods: "+name)
 			return
+	print("HERO_QA_STAGE tree_start")
 	var tree := Node3D.new()
 	root.add_child(tree)
 	TREE.decorate(tree)
@@ -40,6 +43,7 @@ func _initialize() -> void:
 	if fronds == null or fronds.mesh.get_aabb().size.y < 2.0 or fronds.mesh.get_aabb().size.x < 3.0:
 		_fail("Signature weeping-tree silhouette lost its spatial extent")
 		return
+	print("HERO_QA_STAGE completed")
 	print("PASS: batched roof/herbs, detailed bilateral gloves and authored willow silhouette")
 	quit(0)
 
