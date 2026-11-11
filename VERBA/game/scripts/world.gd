@@ -562,7 +562,14 @@ func build_forest() -> void:
 	# Its sim object and trunk collider are handled by spawn_tree as normal.
 	var willow_z: float = 7.0
 	var willow_x: float = stream_x(willow_z)-4.9
+	# A reserved authored UID preserves every pre-existing sim_object ID and
+	# RNG draw in old saves when this new landmark is introduced.
+	var old_next_id: int = next_sim_id
+	var old_rng_state: int = rng.state
+	next_sim_id = 700001
 	spawn_tree(Vector3(willow_x,height_at(willow_x,willow_z),willow_z),"willow",1.07)
+	next_sim_id = old_next_id
+	rng.state = old_rng_state
 
 
 func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
