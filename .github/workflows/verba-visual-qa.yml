@@ -6,6 +6,8 @@ on:
       - "VERBA/game/tests/visual_gallery.gd"
       - "VERBA/game/tests/world_gallery.gd"
       - "VERBA/game/tests/social_visual_gallery.gd"
+      - "VERBA/game/tests/construction_visual_gallery.gd"
+      - "VERBA/game/scripts/tower_construction.gd"
       - "VERBA/game/scripts/dialogue_social.gd"
       - "VERBA/game/scripts/npc_actor.gd"
       - "VERBA/game/data/npcs.json"
@@ -88,6 +90,12 @@ jobs:
             godot --path . --rendering-method gl_compatibility \
             --script res://tests/social_visual_gallery.gd 2>&1 | tee visual-reports/social.log
           test "$(find visual-reports -name 'npc_*_conversation.png' | wc -l)" -eq 2
+      - name: Render player-built tower in daytime and moonlight
+        run: |
+          xvfb-run -a -s "-screen 0 1280x800x24" \
+            godot --path . --rendering-method gl_compatibility \
+            --script res://tests/construction_visual_gallery.gd 2>&1 | tee visual-reports/construction.log
+          test "$(find visual-reports -name 'tower_*.png' | wc -l)" -eq 2
       - name: Render actual physical Latin book pages
         run: |
           xvfb-run -a -s "-screen 0 1280x800x24" \
