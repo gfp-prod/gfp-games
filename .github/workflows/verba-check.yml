@@ -48,6 +48,8 @@ jobs:
         run: godot --headless --path . --script res://tests/physics_navigation_test.gd
       - name: Physically blocked pickups cannot be looted through walls
         run: godot --headless --path . --script res://tests/pickup_line_of_sight_test.gd
+      - name: Real hinged vellum page turn and in-book ink transition
+        run: godot --headless --path . --script res://tests/grimoire_page_turn_test.gd
       - name: Latin books and scholar progression
         run: godot --headless --path . --script res://tests/scholar_progression_test.gd
       - name: Full in-world Latin book discovery and casting loop
