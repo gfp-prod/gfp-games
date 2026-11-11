@@ -15,7 +15,9 @@ static func build(cabin: Node3D, world: Node3D) -> void:
 	var damp_stone := _paint("res://assets/textures/real/stone_diffuse.jpg",Color("bbb49e"))
 	var metal := ART.mat(Color("897758"),.67)
 	metal.metallic = .21
-	# Reuse dark CC0 slate values on the authored geometry. The previous scratchy\n\t# seams are now masked by continuous underlayment; flat vertex color alone\n\t# blew out to white under direct sunlight.
+	# Reuse dark CC0 slate values on the authored geometry. The previous scratchy
+	# seams are now masked by continuous underlayment; flat vertex color alone
+	# blew out to white under direct sunlight.
 	var roof_mat := _paint("res://assets/textures/real/cottage_roof_diffuse.jpg",Color("b3bbae"))
 	roof_mat.vertex_color_use_as_albedo = true
 	roof_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
