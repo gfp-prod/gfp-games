@@ -60,7 +60,11 @@ func _run() -> void:
 		_fail("Could not restore JSON-round-tripped village: " + loaded.restore_error)
 		return
 	if JSON.stringify(a.snapshot()) != JSON.stringify(loaded.snapshot()):
-		_fail("Snapshot mismatch immediately after load: expected rng=%s got rng=%s" % [str(a.rng.state),str(loaded.rng.state)])
+		var before: String = JSON.stringify(a.snapshot())
+		var after: String = JSON.stringify(loaded.snapshot())
+		var first: int = 0
+		while first < mini(before.length(),after.length()) and before[first]==after[first]: first += 1
+		_fail("Load differs byte=%d expected=%s actual=%s rng=%s/%s" % [first,before.substr(maxi(0,first-80),160),after.substr(maxi(0,first-80),160),str(a.rng.state),str(loaded.rng.state)])
 		return
 	for i in range(70):
 		a.step()
