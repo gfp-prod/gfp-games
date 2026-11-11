@@ -18,6 +18,12 @@ The full project is committed directly to this GitHub branch. Download the `verb
 
 Find the physical book **De Herbis** on an inscribed stone near the starting clearing. Press **E** to take it. Read the Latin on the raised grimoire, press **N** to answer a Latin comprehension question using **1/2/3**. A first correct answer earns one-time scholar XP, increases mana on leveling, and teaches efficient botany magic. Two further books cover animals and fire/water. They are discoverable at separate locations. Review the [implemented book progression](game/docs/BOOKS_AND_SCHOLAR_PROGRESSION.md).
 
+## Current visual release: Starter Valley Art Pass 03
+
+The single-valley aesthetic has completed three authored alpha passes: CC0 photographic soil, soft biome transitions, curated vegetation and landmarks, cottage staging, ruin silhouette, weathered ground dressing, and a genuinely physical grimoire with a rotating parchment sheet. The final stage uses just two GPU-batched layers for 2,680 decorative pebbles and moss islands. See the [visual art-pass delivery and remaining debt](docs/AESTHETIC_PASS_03_DELIVERY.md).
+
+**Scope:** This is a documented, tested starter-area art iteration, not a completed commercial-quality open-world visual set. Animal animation, cottage interiors, larger architecture and additional biomes need continued authored art production.
+
 ## Verified development changes
 - Real 3D animal assets: deer/stag, wolf, fox, rabbit and crow; animated asset renders, motion previews and visual-size checks are produced by GitHub Actions
 - A continuous heightmap collider and physical first-person / animal bodies
