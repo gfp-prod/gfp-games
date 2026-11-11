@@ -21,6 +21,7 @@ on:
       - "VERBA/game/scripts/grimoire_visual.gd"
       - "VERBA/game/scripts/cottage_hero.gd"
       - "VERBA/game/scripts/storybook_house.gd"
+      - "VERBA/game/scripts/cottage_interior.gd"
       - "VERBA/game/scripts/glove_art.gd"
       - "VERBA/game/scripts/landmark_tree.gd"
       - "VERBA/game/scripts/art.gd"
