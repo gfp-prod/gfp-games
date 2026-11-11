@@ -89,6 +89,8 @@ jobs:
           grep -q "PASS: authoritative clock day/night" /tmp/verba-wizard-loop.log
       - name: Full physical book scholarship and mana regression
         run: godot --headless --path . --script res://tests/scholar_progression_test.gd
+      - name: Full first-person book pickup to magic and restoration
+        run: godot --headless --path . --script res://tests/book_world_loop_test.gd
       - name: Social trade regression
         run: godot --headless --path . --script res://tests/social_dialogue_test.gd
       - name: Produced Latin affects real NPCs, books and bakery stock
