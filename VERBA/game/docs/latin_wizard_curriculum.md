@@ -13,7 +13,13 @@ This document is **for developers, not an in-game screen**. In the player's worl
 
 Controls: open grimoire with **G**; **R** opens the next exercise; type normally; **Enter** inscribes the answer; **R** following feedback advances; **Tab** exits to the grimoire; **Escape** closes the book. The game intercepts character keys before global shortcuts, so Latin answers can contain G, B, R and H without closing the exercise.
 
-## Educational evidence (external to the fiction)
+### The field notebook: observation, not mastery
+
+Each typed spell attempt now makes a bounded, empirical entry in the wizard's existing physical grimoire. **G**, then **J** opens *Liber Experimentorum*; **A / D** turns between recent observations, and **J / Tab** returns to other readings. Each folio preserves the actual Latin attempted, where the player aimed, the current in-world day, whether the effect worked, and the world's truthful explanation of what happened. Correct spelling alone does not guarantee an effect: wet fuel, the wrong material, insufficient mana or a grammatical mismatch can resist an invocation.
+
+The journal records actual world outcomes only. It does **not** give vocabulary XP, certify a grammatical form, award magical power, or act as a disguised multiple-choice exercise. The existing authentic recall and manuscript system remains the sole source of language mastery. Identical trials on the same day are deduplicated, history is capped at 32, and old and malformed saves migrate without synthetic rewards. Its primary goal is to make reflection on physical causality fun and diegetic; the observation page is not itself proof of educational efficacy.
+
+# Educational evidence (external to the fiction)
 
 - Dunlosky, Rawson, Marsh, Nathan & Willingham (2013), *Improving Students' Learning With Effective Learning Techniques*, *Psychological Science in the Public Interest* 14(1). DOI: https://doi.org/10.1177/1529100612453266. A broad review rated practice testing and distributed practice as high-utility learning techniques. This supports typed recollection and return intervals rather than rereading alone.
 - Karpicke & Roediger (2008), *The Critical Importance of Retrieval for Learning*, *Science* 319:966–968. DOI: https://doi.org/10.1126/science.1152408. An experiment on foreign-language vocabulary showed that continued retrieval improved later recall even when additional restudy did not.
