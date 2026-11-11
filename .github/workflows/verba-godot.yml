@@ -63,6 +63,10 @@ jobs:
         run: |
           timeout 90s godot --headless --path . --script res://tests/latin_field_economy_test.gd 2>&1 | tee /tmp/verba-field-test.log
           grep -q "PASS: study-gated plural Latin" /tmp/verba-field-test.log
+      - name: Diegetic wizard training and retained Latin fluency
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/latin_wizard_training_test.gd 2>&1 | tee /tmp/verba-latin-training.log
+          grep -q "PASS: diegetic wizard grimoire" /tmp/verba-latin-training.log
       - name: Latin compositional spells
         run: godot --headless --path . --script res://tests/latin_composition_test.gd
       - name: Apprenticeship and real commissioned Latin harvest loop

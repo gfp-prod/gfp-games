@@ -73,5 +73,37 @@ func _capture() -> void:
 		if image.save_png(path)!=OK:
 			_fail("Cannot save "+path)
 			return
-	print("PASS: thirteen fixed-view 1280x720 screenshots captured including enchanted crops and calendar night")
+	# Take actual perspective captures of the wizard's leather book, not
+	# an invented mockup of study UI. The first image must WITHHOLD the
+	# answer; the second displays the master's corrective marginalia.
+	world.world_calendar.elapsed=90.0
+	world.night_visual_blend=0.0
+	world._update_day_night_art(0.0)
+	world.player.camera.current=true
+	world.player.book.toggle()
+	if not world.player.book.begin_practice():
+		_fail("Cannot open wizard memory exercise for visual QA")
+		return
+	for i in range(45): await process_frame
+	RenderingServer.force_draw()
+	var grimoire_frame: Image=root.get_texture().get_image()
+	if grimoire_frame==null or grimoire_frame.get_width()<640:
+		_fail("Physical book not rendered")
+		return
+	if grimoire_frame.save_png(directory+"/grimoire_recollection.png")!=OK:
+		_fail("Could not save parchment recall view")
+		return
+	for character in "crescit":
+		world.player.book.write_practice_character(character)
+	var corrected: Dictionary=world.player.book.submit_practice()
+	if not corrected.get("ok",false) or corrected.get("correct",true):
+		_fail("Cannot display authentic corrected singular imperative")
+		return
+	for i in range(12): await process_frame
+	RenderingServer.force_draw()
+	var correction_frame: Image=root.get_texture().get_image()
+	if correction_frame==null or correction_frame.save_png(directory+"/grimoire_correction.png")!=OK:
+		_fail("Could not save scholar's correction view")
+		return
+	print("PASS: fifteen real rendered 1280x720 views including wizard parchment retrieval and corrective feedback")
 	quit(0)

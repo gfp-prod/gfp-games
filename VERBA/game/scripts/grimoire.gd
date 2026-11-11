@@ -26,6 +26,12 @@ var scholar
 var book_cursor: int = -1  # -1 means the spell lexicon; 0+ means a collected physical book
 var quiz_open: bool = false
 var study_feedback: String = ""
+# These lessons are handwritten within the wizard's existing physical book.
+var practice_open: bool = false
+var practice_card: Dictionary = {}
+var practice_buffer: String = ""
+var practice_feedback: String = ""
+var practice_answered: bool = false
 
 func setup(p: CharacterBody3D, vocabulary: Dictionary) -> void:
 	player=p
@@ -86,6 +92,7 @@ func has_word(word: String) -> bool:
 
 func toggle() -> void:
 	open = not open
+	if not open: leave_practice()
 	if open:
 		last_consult = Time.get_ticks_msec() / 1000.0
 		recall_streak=0
@@ -93,6 +100,7 @@ func toggle() -> void:
 
 func open_book(book_id: String) -> void:
 	if scholar == null or not scholar.has_book(book_id): return
+	leave_practice()
 	book_cursor = scholar.owned.find(book_id)
 	quiz_open = false
 	study_feedback = ""
@@ -101,6 +109,7 @@ func open_book(book_id: String) -> void:
 	update_pages()
 
 func cycle_books() -> void:
+	leave_practice()
 	if scholar == null or scholar.owned.is_empty():
 		study_feedback = "No books found yet."
 		update_pages()
@@ -112,12 +121,72 @@ func cycle_books() -> void:
 	update_pages()
 
 func begin_study() -> bool:
+	leave_practice()
 	if scholar == null or book_cursor < 0 or book_cursor >= scholar.owned.size():
 		return false
 	quiz_open = true
 	study_feedback = ""
 	update_pages()
 	return true
+
+func leave_practice() -> void:
+	practice_open=false
+	practice_card={}
+	practice_buffer=""
+	practice_feedback=""
+	practice_answered=false
+
+func begin_practice() -> bool:
+	if scholar==null or player==null or player.world==null: return false
+	var day: int=player.world.world_calendar.day
+	var next_card: Dictionary=scholar.practice.next_due(scholar.completed,day)
+	if next_card.is_empty():
+		leave_practice()
+		study_feedback="The words rest in memory. Return after another dawn."
+		update_pages()
+		return false
+	book_cursor=-1
+	quiz_open=false
+	study_feedback=""
+	practice_card=next_card
+	practice_buffer=""
+	practice_feedback=""
+	practice_answered=false
+	practice_open=true
+	update_pages()
+	return true
+
+func write_practice_character(character: String) -> bool:
+	if not practice_open or practice_answered or character.length()!=1: return false
+	if practice_buffer.length()>=40: return false
+	var allowed: String="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZāēīōūȳĀĒĪŌŪȲ "
+	if not allowed.contains(character): return false
+	practice_buffer+=character.to_lower()
+	update_pages()
+	return true
+
+func erase_practice_character() -> bool:
+	if not practice_open or practice_answered or practice_buffer.is_empty(): return false
+	practice_buffer=practice_buffer.substr(0,practice_buffer.length()-1)
+	update_pages()
+	return true
+
+func submit_practice() -> Dictionary:
+	if not practice_open or practice_answered or scholar==null or player==null:
+		return {"ok":false,"message":"No memory exercise is open."}
+	var outcome: Dictionary=scholar.practice.submit(
+		String(practice_card.get("id","")),practice_buffer,
+		scholar.completed,player.world.world_calendar.day)
+	if bool(outcome.get("ok",false)):
+		practice_answered=true
+		practice_feedback=String(outcome.get("message",""))
+		# Both success and failure are remembered in the SAME world save.
+		if DisplayServer.get_name()!="headless":
+			player.world.save_world()
+	else:
+		practice_feedback=String(outcome.get("message",""))
+	update_pages()
+	return outcome
 
 func submit_answer(answer_index: int) -> Dictionary:
 	if not quiz_open or scholar == null or book_cursor < 0:
@@ -148,6 +217,19 @@ func turn_page(dir: int) -> void:
 
 func update_pages() -> void:
 	if page_labels.size()<2: return
+	if practice_open and not practice_card.is_empty():
+		for label in page_labels: label.font_size=30
+		page_labels[0].text=_ink_wrap("EXERCITIA MEMORIAE\n\n"+String(practice_card["prompt"])+
+			"\n\nRecall without\nturning the page.",24)
+		var notation: String=practice_buffer if not practice_buffer.is_empty() else "..."
+		var answer_text: String="Scribe Latine\n\n"+notation+"\n\n"
+		if practice_answered:
+			answer_text+=practice_feedback+"\n\nR: next exercise\nTab: readings"
+		else:
+			answer_text+="Enter: inscribe\nTab: readings"
+			if not practice_feedback.is_empty(): answer_text+="\n"+practice_feedback
+		page_labels[1].text=_ink_wrap(answer_text,24)
+		return
 	if scholar != null and book_cursor >= 0 and book_cursor < scholar.owned.size():
 		for label in page_labels: label.font_size = 34
 		var id: String = scholar.owned[book_cursor]
@@ -161,7 +243,7 @@ func update_pages() -> void:
 				"\n\n" + study_feedback
 		else:
 			var glosses: PackedStringArray = PackedStringArray(volume.get("glossary",[]))
-			var mastered: String = "STUDIED" if scholar.completed.has(id) else "UNREAD"
+			var mastered: String = "UNDERSTOOD" if scholar.completed.has(id) else "UNREAD"
 			page_labels[1].text = String(volume.get("subject","")).to_upper() + "  |  " + mastered + "\n" + \
 				"\n".join(glosses) + "\n\nN: comprehension\n" + \
 				"Scholar " + str(scholar.level) + " XP " + str(scholar.xp) + "/" + str(scholar.next_level_xp()) + "\nMana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana)) + \
@@ -188,7 +270,9 @@ func update_pages() -> void:
 			line += w.to_upper()+"\n"+_ink_wrap(String(def.get("meaning","?")),22)+"\n\n"
 		if side == 1:
 			line += "─────\n"+str(page_index+1)+" / "+str(maxi(1,ceili(float(learned.size())/4.0)))
-			line += "\nB: Books   S: Save\nL: Load"
+			line += "\nB: Books  R: Recollect\nS: Save  L: Load"
+			if scholar != null and player != null and player.world != null:
+				line += "\nRecollections " + str(scholar.practice.due_count(scholar.completed,player.world.world_calendar.day))
 			if scholar != null:
 				line += "\nScholar " + str(scholar.level) + " XP " + str(scholar.xp) + "/" + str(scholar.next_level_xp()) + "\nMana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana))
 		page_labels[side].text=_ink_wrap(line,22)
