@@ -30,7 +30,7 @@ func _run() -> void:
 			fail("No physical stocked display for "+kind)
 			return
 	var original: Dictionary=world.village_sim.snapshot()
-	for kind in ["grain","bread","tools"]: economy.stocks[kind]=0
+	for kind in ["grain","bread","tools","ore","wood"]: economy.stocks[kind]=0
 	district.refresh_from_economy(true)
 	for kind in ["grain","bread","tools"]:
 		if shown(slots[kind])!=0:
