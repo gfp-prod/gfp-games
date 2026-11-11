@@ -377,6 +377,16 @@ func move_vegetation_outside_cottage(x: float,z: float) -> Vector2:
 	return Vector2(29.0+c*local.x+s*local.y,
 		8.0-s*local.x+c*local.y)
 
+func move_vegetation_outside_roadside(x: float,z: float) -> Vector2:
+	# Keep offline foliage batches from poking through the station floors
+	# and castle archive. Move positions, never skip sim_object creation:
+	# saved ecological IDs must not be renumbered by the new district.
+	if x>=-58.5 and x<=-40.0 and z>=35.0 and z<=53.6:
+		return Vector2(x,34.4 if z<44.0 else 54.25)
+	if x>=-40.0 and x<=-21.8 and z>=37.5 and z<=50.5:
+		return Vector2(x,36.9 if z<44.0 else 51.05)
+	return Vector2(x,z)
+
 func build_terrain() -> void:
 	# One continuous, physically grounded terrain mesh. A WorldUV photographic
 	# atlas already combines genuine CC0 meadow, soil, leaves, creek and worn
@@ -926,6 +936,7 @@ func populate_reactive_grass() -> void:
 		if absf(x)<4 and z>-30 and z<28: continue
 		# Keep the same generated simulation IDs so saved plant states load.
 		var clear_grass: Vector2 = move_vegetation_outside_cottage(x,z)
+		clear_grass = move_vegetation_outside_roadside(clear_grass.x,clear_grass.y)
 		x = clear_grass.x
 		z = clear_grass.y
 		make_living_plant(Vector3(x,height_at(x,z)+.03,z),"grass",clump_mesh,material,r.randf_range(1.3,2.8))
