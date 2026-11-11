@@ -129,7 +129,7 @@ func familiar() -> Node3D:
 func bond_animal(creature: Node3D) -> Dictionary:
 	# The first familiar is one of the existing living, saved wild creatures.
 	# A hare trusts an offered herb; a crow accepts a shiny piece of amber.
-	if not is_instance_valid(creature) or creature.dead or creature.species not in ["hare","crow"]:
+	if not is_instance_valid(creature) or not creatures.has(creature) or creature.dead or creature.species not in ["hare","crow"]:
 		return {"ok":false,"message":"Only a living hare or crow can be befriended."}
 	if player == null or player.global_position.distance_to(creature.global_position) > 3.7:
 		return {"ok":false,"message":"Move closer before offering a gift."}
@@ -137,7 +137,7 @@ func bond_animal(creature: Node3D) -> Dictionary:
 		return {"ok":false,"message":"A familiar already travels with you."}
 	var offering: String = "herb" if creature.species == "hare" else "amber"
 	if not player.inventory.has(offering):
-		return {"ok":false,"message":"Offer an %s to the crow." % offering if offering == "amber" else "Offer a herb to the hare."}
+		return {"ok":false,"message":"Offer a piece of amber to the crow." if offering == "amber" else "Offer a herb to the hare."}
 	player.inventory.erase(offering)
 	player.selected_slot = clampi(player.selected_slot,0,maxi(0,player.inventory.size()-1))
 	player.refresh_held_model()
