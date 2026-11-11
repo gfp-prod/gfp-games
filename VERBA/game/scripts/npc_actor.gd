@@ -78,6 +78,19 @@ func _ready() -> void:
 		Vector3(.23,.28,.22),skin,12)
 	ART.orb(figure,Vector3(0,1.94,-.017),
 		Vector3(.235,.12,.23),leather,11)
+	# A small, deliberately stylized face gives real eye contact. The
+	# model's forward direction is -Z, matching the body's walking yaw.
+	var sclera:=ART.mat(Color("e4dbcb"),.85)
+	var iris:=ART.mat(Color("322d2d"),.64)
+	for side in [-1.0,1.0]:
+		ART.orb(figure,Vector3(side*.086,1.79,-.204),
+			Vector3(.051,.036,.023),sclera,8)
+		ART.orb(figure,Vector3(side*.086,1.79,-.224),
+			Vector3(.027,.030,.013),iris,8)
+	ART.orb(figure,Vector3(0,1.71,-.220),
+		Vector3(.040,.048,.033),skin,8)
+	ART.bone(figure,Vector3(-.060,1.635,-.196),
+		Vector3(.060,1.635,-.196),.011,.011,leather,7)
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
@@ -232,8 +245,18 @@ func _process(delta: float) -> void:
 	# World labels are discovery aids, not floating billboards visible across
 	# the entire valley. Spoken names remain in the dialogue when nearby.
 	if name_label != null and is_instance_valid(world) and world.player != null:
-		name_label.visible = global_position.distance_squared_to(
+		# While speaking, the character is already named in the dialogue.
+		# Do not superimpose the big floating title on their head.
+		var talking: bool = world.player.conversation_actor == self
+		name_label.visible = not talking and global_position.distance_squared_to(
 			world.player.global_position) <= 8.0*8.0
+	# Conversation interrupts a citizen's walk, without altering their
+	# job order or moving the player. They turn and address the listener.
+	if is_instance_valid(world) and world.player != null and world.player.conversation_actor == self:
+		var toward: Vector3=world.player.global_position-global_position
+		toward.y=0.0
+		if toward.length_squared()>.05:
+			rotation.y=lerp_angle(rotation.y,atan2(-toward.x,-toward.z),minf(1.0,delta*8.0))
 	if left_arm==null or world==null or world.village_sim==null: return
 	motion_clock+=delta
 	var order: Dictionary=world.village_sim.work_orders.get(npc_id,{})
@@ -287,6 +310,13 @@ func _destination_for(action: String) -> Vector3:
 
 func _physics_process(delta: float) -> void:
 	if not mobile or route == null or world == null or world.village_sim == null: return
+	if world.player != null and world.player.conversation_actor == self:
+		# An NPC cannot walk away in the middle of a live exchange.
+		velocity.x=0.0
+		velocity.z=0.0
+		velocity.y=-0.1 if is_on_floor() else velocity.y-16.0*delta
+		move_and_slide()
+		return
 	var state: Dictionary = world.village_sim.people.get(npc_id,{})
 	if state.is_empty(): return
 	var action: String = String(state.get("last_action","rest"))

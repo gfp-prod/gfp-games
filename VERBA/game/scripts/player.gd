@@ -47,6 +47,8 @@ var conversation_name: Label
 var conversation_body: Label
 var conversation_options: Label
 var conversation_reply: String = ""
+var conversation_listening: bool = false
+var conversation_buffer: String = ""
 var build_mode: bool = false
 var build_kind: String = "floor"
 var build_face: int = 0
@@ -279,10 +281,11 @@ func create_conversation_panel() -> void:
 	conversation_panel = PanelContainer.new()
 	conversation_panel.name = "LatinConversation"
 	conversation_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	conversation_panel.offset_left = -378
-	conversation_panel.offset_right = 378
-	conversation_panel.offset_top = -365
-	conversation_panel.offset_bottom = -20
+	conversation_panel.offset_left = -365
+	conversation_panel.offset_right = 365
+	# Shorter, anchored dialogue: preserve visibility of a speaking person's body.
+	conversation_panel.offset_top = -240
+	conversation_panel.offset_bottom = -24
 	var frame := StyleBoxFlat.new()
 	frame.bg_color = Color(.055,.066,.062,.94)
 	frame.border_color = Color(.55,.46,.32,.90)
@@ -333,6 +336,8 @@ func begin_conversation(actor: Node3D) -> bool:
 	if not _npc_in_conversation_reach(actor): return false
 	conversation_actor = actor
 	conversation_reply = ""
+	conversation_listening = false
+	conversation_buffer = ""
 	refresh_conversation()
 	return true
 
@@ -350,7 +355,10 @@ func refresh_conversation() -> void:
 		var suffix: String = "" if bool(choice.get("available",true)) else "   [unavailable]"
 		lines.append("%d. %s%s" % [int(choice.get("index",0))+1,
 			String(choice.get("label","")),suffix])
-	conversation_options.text = "\n".join(lines) + "\n\n1–6 respond     Esc / E leave"
+	if conversation_listening:
+		conversation_options.text = "\n".join(lines) + "\n\n> " + conversation_buffer + "▌\nEnter: speak    Esc: stop writing"
+	else:
+		conversation_options.text = "\n".join(lines) + "\n\nEnter: speak Latin    1–6 respond    Esc / E leave"
 	conversation_panel.visible = true
 
 func choose_conversation_option(index: int) -> Dictionary:
@@ -364,9 +372,26 @@ func choose_conversation_option(index: int) -> Dictionary:
 		world.save_world()
 	return result
 
+func submit_conversation_latin() -> Dictionary:
+	if conversation_actor == null or not is_instance_valid(conversation_actor):
+		return {"ok":false,"message":"No one is listening."}
+	var spoken: String = conversation_buffer.strip_edges()
+	if spoken.is_empty():
+		return {"ok":false,"message":"Say something to the listener."}
+	conversation_listening = false
+	conversation_buffer = ""
+	var reply: Dictionary = world.social.speak(conversation_actor.npc_id,spoken,world.scholar,self)
+	conversation_reply = String(reply.get("message",""))
+	refresh_conversation()
+	if bool(reply.get("changed",false)) and DisplayServer.get_name()!="headless":
+		world.save_world()
+	return reply
+
 func end_conversation() -> void:
 	conversation_actor = null
 	conversation_reply = ""
+	conversation_listening = false
+	conversation_buffer = ""
 	if is_instance_valid(conversation_panel): conversation_panel.visible = false
 
 func _input(event: InputEvent) -> void:
@@ -402,7 +427,25 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if conversation_actor != null:
-		if event.keycode == KEY_ESCAPE or event.keycode == KEY_E:
+		# Conversation has its own text entry: E and numbered keys are Latin
+		# characters while listening, never world interaction shortcuts.
+		if conversation_listening:
+			if event.keycode == KEY_ESCAPE:
+				conversation_listening = false
+				conversation_buffer = ""
+			elif event.keycode in [KEY_ENTER,KEY_KP_ENTER]:
+				submit_conversation_latin()
+			elif event.keycode == KEY_BACKSPACE:
+				if not conversation_buffer.is_empty():
+					conversation_buffer = conversation_buffer.substr(0,conversation_buffer.length()-1)
+			elif event.unicode >= 32 and event.unicode < 127 and conversation_buffer.length() < 72:
+				conversation_buffer += String.chr(event.unicode).to_lower()
+			refresh_conversation()
+		elif event.keycode in [KEY_ENTER,KEY_KP_ENTER]:
+			conversation_listening = true
+			conversation_buffer = ""
+			refresh_conversation()
+		elif event.keycode in [KEY_ESCAPE,KEY_E]:
 			end_conversation()
 		elif event.keycode >= KEY_1 and event.keycode <= KEY_6:
 			choose_conversation_option(event.keycode-KEY_1)

@@ -19,6 +19,12 @@ Each typed spell attempt now makes a bounded, empirical entry in the wizard's ex
 
 The journal records actual world outcomes only. It does **not** give vocabulary XP, certify a grammatical form, award magical power, or act as a disguised multiple-choice exercise. The existing authentic recall and manuscript system remains the sole source of language mastery. Identical trials on the same day are deduplicated, history is capped at 32, and old and malformed saves migrate without synthetic rewards. Its primary goal is to make reflection on physical causality fun and diegetic; the observation page is not itself proof of educational efficacy.
 
+## Meaningful speech to real villagers
+
+After the first demonstrated book comprehension, the player can press **Enter** during a physically reachable NPC conversation, write a Latin utterance, and press **Enter** to say it. A novice still has assisted English choices; mastered dialogue shifts meaningful transactions to productive Latin. Tomas requires a complete request *Da mihi librum* to exchange a real carried herb for the unique *De Igne et Aqua* volume. *Da* is the singular imperative of *do*; *mihi* is dative (to me); *librum* is accusative (the book as direct object). Word order can vary without changing case roles. *Da mihi liber* and *Da me librum* are rejected. Ida accepts *Frumentum tibi fero* (I bring you grain): *frumentum* accusative, *tibi* dative, *fero* first-person singular; the existing finite bakery ledger exchanges a real sack for a loaf. Mara understands *Ubi est silva?* only after the first understood manuscript and provides directions and persistent rapport.
+
+The NPCs model sentences in context and reduce hints as comprehension increases. Speech uses exact authored morphological patterns, **not** unrestricted language parsing. It does not grant XP, fake retrieval credit, or overwrite the existing social/economic save. These are first meaningful-output interactions; broader grammar, open questions, and later unprompted recall remain to be built.
+
 # Educational evidence (external to the fiction)
 
 - Dunlosky, Rawson, Marsh, Nathan & Willingham (2013), *Improving Students' Learning With Effective Learning Techniques*, *Psychological Science in the Public Interest* 14(1). DOI: https://doi.org/10.1177/1529100612453266. A broad review rated practice testing and distributed practice as high-utility learning techniques. This supports typed recollection and return intervals rather than rereading alone.

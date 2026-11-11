@@ -5,6 +5,12 @@ on:
     paths: ["VERBA/game/**", ".github/workflows/verba-godot.yml"]
   pull_request:
     paths: ["VERBA/game/**", ".github/workflows/verba-godot.yml"]
+concurrency:
+  # Push and PR events for the same branch share one run slot.
+  # Superseded expensive renders are cancelled when a newer commit arrives.
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -79,6 +85,10 @@ jobs:
           grep -q "PASS: authoritative clock day/night" /tmp/verba-wizard-loop.log
       - name: Social trade regression
         run: godot --headless --path . --script res://tests/social_dialogue_test.gd
+      - name: Produced Latin affects real NPCs, books and bakery stock
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/typed_npc_latin_test.gd 2>&1 | tee /tmp/verba-typed-conversations.log
+          grep -q "PASS: produced Latin cases" /tmp/verba-typed-conversations.log
       - name: Immortal return and persistent passing time
         run: |
           timeout 90s godot --headless --path . --script res://tests/survival_loop_test.gd 2>&1 | tee /tmp/verba-survival-test.log

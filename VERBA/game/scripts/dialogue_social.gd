@@ -4,6 +4,7 @@ extends RefCounted
 ## Topics reward relationship ONCE; revisiting is not a rapport exploit.
 const NPC_DATA = "res://data/npcs.json"
 const COMMISSIONS = preload("res://scripts/wizard_commissions.gd")
+const LATIN_SPEECH = preload("res://scripts/latin_conversation.gd")
 
 var definitions: Dictionary = {}
 var memories: Dictionary = {}
@@ -62,6 +63,10 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 		var confidence: float=float(village_sim.people["daro"]["trust"].get("wizard",0.0))
 		if confidence>15.0: spoken+=" Daro speaks to you warmly."
 		elif confidence < -8.0: spoken+=" His words have become guarded."
+	if id=="tomas" and tier==1 and not bool(past.get("traded",false)):
+		spoken += "\nTomas points to his book. 'Da mihi librum.' Give me the book: da, mihi, librum."
+	if id=="ida" and tier==1:
+		spoken += "\nIda hefts a sack. 'Frumentum tibi fero' means I bring you grain."
 	if id=="ida" and village_sim!=null:
 		var grain: int=int(village_sim.economy.stocks.get("grain",0))
 		if grain<2:
@@ -75,7 +80,7 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 		"spoken": spoken, "options": menu,
 		"rapport": int(past.get("rapport", 0)), "stage": tier}
 
-func _reason(choice: Dictionary, scholar, inventory: Array, past: Dictionary) -> String:
+func _reason(choice: Dictionary, scholar, inventory: Array, past: Dictionary, spoken_latin: bool = false) -> String:
 	var required_book: String = String(choice.get("requires_completed", ""))
 	if not required_book.is_empty() and (scholar == null or not scholar.completed.has(required_book)):
 		return String(choice.get("locked", "You have not studied that lesson."))
@@ -100,9 +105,29 @@ func _reason(choice: Dictionary, scholar, inventory: Array, past: Dictionary) ->
 		var offered: String=String(choice.get("market_take",""))
 		if int(village_sim.economy.stocks.get(offered,0))>=village_sim.economy.CAP:
 			return "The storehouse cannot accept more supplies."
+	# After the first understood manuscript, a real request replaces the
+	# corresponding prewritten trade choice. The beginner route stays open.
+	if stage(scholar)>=1 and not spoken_latin and String(choice.get("id","")) in ["trade","baker_delivery"]:
+		return "The trader awaits a request in Latin. Press Enter to speak."
 	return ""
 
-func choose(id: String, index: int, scholar, player) -> Dictionary:
+func speak(id: String, utterance: String, scholar, player) -> Dictionary:
+	var definition: Dictionary = npc(id)
+	if definition.is_empty():
+		return {"ok":false,"changed":false,"message":"Nobody answers."}
+	var heard: Dictionary = LATIN_SPEECH.understand(utterance,definition.get("speech",[]),stage(scholar))
+	if not bool(heard.get("ok",false)):
+		return {"ok":false,"changed":false,"message":String(heard.get("message","The words were not understood."))}
+	var topic: String = String(heard.get("topic",""))
+	var choices: Array = definition.get("choices",[])
+	for index in range(choices.size()):
+		if String(choices[index].get("id",""))==topic:
+			var response: Dictionary = choose(id,index,scholar,player,true)
+			response["latin_understood"] = bool(response.get("ok",false))
+			return response
+	return {"ok":false,"changed":false,"message":"The listener cannot act upon that request."}
+
+func choose(id: String, index: int, scholar, player, spoken_latin: bool = false) -> Dictionary:
 	var definition: Dictionary = npc(id)
 	if definition.is_empty(): return {"ok": false, "message": "There is nobody to speak with."}
 	if id=="daro" and village_sim!=null and index>=4:
@@ -116,7 +141,7 @@ func choose(id: String, index: int, scholar, player) -> Dictionary:
 		return {"ok": false, "message": "Choose a spoken response."}
 	var choice: Dictionary = options[index]
 	var previous: Dictionary = memory(id)
-	var blocked: String = _reason(choice, scholar, player.inventory, previous)
+	var blocked: String = _reason(choice, scholar, player.inventory, previous, spoken_latin)
 	if not blocked.is_empty():
 		return {"ok": false, "message": blocked, "changed": false}
 	var reward: String = String(choice.get("grants_book", ""))

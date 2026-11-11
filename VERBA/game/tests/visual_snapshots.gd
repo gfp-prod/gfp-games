@@ -120,5 +120,48 @@ func _capture() -> void:
 	if trial_frame==null or trial_frame.get_width()<640 or trial_frame.save_png(directory+"/grimoire_experiments.png")!=OK:
 		_fail("Could not save wizard field experiment view")
 		return
-	print("PASS: fifteen real rendered 1280x720 views including wizard parchment retrieval corrective feedback and empirical field notes")
+	# Review a first-person, actually rendered Latin NPC exchange. Capturing
+	# both the written request and the response catches clipped or invisible UI.
+	world.player.book.toggle()
+	var mara: Node3D
+	for actor in world.npcs:
+		if actor.npc_id=="mara":
+			mara=actor
+			break
+	if mara==null:
+		_fail("The roadside scribe is missing from the physical scene")
+		return
+	world.player.position=Vector3(mara.position.x,
+		world.height_at(mara.position.x,mara.position.z+2.0)+.22,
+		mara.position.z+2.0)
+	world.player.camera.current=true
+	await physics_frame
+	world.player.camera.look_at(mara.global_position+Vector3.UP*1.25,Vector3.UP)
+	await physics_frame
+	if not world.scholar.collect_book("de_herbis") or not bool(world.scholar.answer("de_herbis",0).get("first_time",false)):
+		_fail("Cannot stage learned Latin for an NPC visual inspection")
+		return
+	if not world.player.begin_conversation(mara):
+		_fail("Cannot visually inspect a world-reachable conversation")
+		return
+	world.player.conversation_listening=true
+	world.player.conversation_buffer="Ubi est silva?"
+	world.player.refresh_conversation()
+	for i in range(12): await process_frame
+	RenderingServer.force_draw()
+	var written: Image=root.get_texture().get_image()
+	if written==null or written.save_png(directory+"/conversation_latin_entry.png")!=OK:
+		_fail("Could not save the actually rendered Latin text-entry view")
+		return
+	var spoken: Dictionary=world.player.submit_conversation_latin()
+	if not bool(spoken.get("ok",false)) or not String(world.player.conversation_body.text).contains("Silva est trans rivum"):
+		_fail("The renderer could not produce a real Latin NPC reply")
+		return
+	for i in range(12): await process_frame
+	RenderingServer.force_draw()
+	var answered: Image=root.get_texture().get_image()
+	if answered==null or answered.save_png(directory+"/conversation_latin_reply.png")!=OK:
+		_fail("Could not save the actually rendered conversation result")
+		return
+	print("PASS: eighteen actual 1280x720 rendered views including field notebook and productive Latin conversation")
 	quit(0)
