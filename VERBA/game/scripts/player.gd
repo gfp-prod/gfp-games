@@ -281,10 +281,11 @@ func create_conversation_panel() -> void:
 	conversation_panel = PanelContainer.new()
 	conversation_panel.name = "LatinConversation"
 	conversation_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	conversation_panel.offset_left = -378
-	conversation_panel.offset_right = 378
-	conversation_panel.offset_top = -365
-	conversation_panel.offset_bottom = -20
+	conversation_panel.offset_left = -365
+	conversation_panel.offset_right = 365
+	# Shorter, anchored dialogue: preserve visibility of a speaking person's body.
+	conversation_panel.offset_top = -240
+	conversation_panel.offset_bottom = -24
 	var frame := StyleBoxFlat.new()
 	frame.bg_color = Color(.055,.066,.062,.94)
 	frame.border_color = Color(.55,.46,.32,.90)
@@ -357,7 +358,7 @@ func refresh_conversation() -> void:
 	if conversation_listening:
 		conversation_options.text = "\n".join(lines) + "\n\n> " + conversation_buffer + "▌\nEnter: speak    Esc: stop writing"
 	else:
-		conversation_options.text = "\n".join(lines) + "\n\nEnter: speak Latin    1–6 respond    Esc / E leave""
+		conversation_options.text = "\n".join(lines) + "\n\nEnter: speak Latin    1–6 respond    Esc / E leave"
 	conversation_panel.visible = true
 
 func choose_conversation_option(index: int) -> Dictionary:
