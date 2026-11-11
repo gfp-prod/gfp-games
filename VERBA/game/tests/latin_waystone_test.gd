@@ -30,8 +30,20 @@ func _run() -> void:
 	if bool(prior.get("ok",false)) or stone.revealed or stone.ember.visible:
 		_fail("Guessing an unstudied phrase revealed the ancient route")
 		return
+	# English assistance must remain useful to a beginner but cannot
+	# counterfeit actually producing Latin in the physical world.
+	var assisted: Dictionary=world.social.choose("mara",1,world.scholar,world.player)
+	stone.update_from_knowledge()
+	if not bool(assisted.get("ok",false)) or stone.revealed or world.social.memory("mara")["topics"].has("forest"):
+		_fail("English scaffold either stopped working or faked Latin knowledge")
+		return
 	if not world.scholar.collect_book("de_herbis") or not bool(world.scholar.answer("de_herbis",0).get("first_time",false)):
 		_fail("The real beginner manuscript cannot be understood")
+		return
+	var aided: Dictionary=world.social.choose("mara",1,world.scholar,world.player)
+	stone.update_from_knowledge()
+	if not bool(aided.get("ok",false)) or stone.revealed:
+		_fail("Menu directions after reading still bypassed Latin production")
 		return
 	var answer: Dictionary=world.social.speak("mara","Ubi silva est?",world.scholar,world.player)
 	if not bool(answer.get("ok",false)):
