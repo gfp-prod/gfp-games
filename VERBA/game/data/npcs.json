@@ -859,5 +859,88 @@
         ]
       }
     ]
+  },
+  {
+    "id": "juno",
+    "name": "Juno",
+    "role": "Roadside attendant",
+    "position": [
+      -30,
+      43.6
+    ],
+    "home": [
+      -30,
+      43.6
+    ],
+    "work": [
+      -28.9,
+      44.2
+    ],
+    "market": [
+      -23.5,
+      44
+    ],
+    "yaw": -1.57,
+    "robe": "52676a",
+    "trim": "ddd0a4",
+    "intro": [
+      "Salve! Welcome to Vale Fuel. No cars today.",
+      "Salve, viator. You are far from the village.",
+      "Salve, amice. Quid quaeris? (What are you looking for?)"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Hello.",
+          "Salve.",
+          "Salve, amice."
+        ],
+        "reply": [
+          "Hi there. Some roads lead nowhere.",
+          "Salve! The western road leads to the castle.",
+          "Salve, amice. The roads are strange today."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "What is this place?",
+          "Quid est hoc? (What is this?)",
+          "Quid hic vendis? (What do you sell here?)"
+        ],
+        "reply": [
+          "A gas station. We keep the lights on when there's nothing to sell.",
+          "Hoc est taberna. This is a shop, of sorts.",
+          "Lucem servo. I keep the light."
+        ]
+      },
+      {
+        "id": "directions",
+        "text": [
+          "Where is the castle?",
+          "Ubi est castellum?",
+          "Ubi est castellum antiquum?"
+        ],
+        "reply": [
+          "Follow the old road west. The castle is beside us.",
+          "Castellum ad occidentem est. The castle is west.",
+          "Castellum antiquum ad occidentem est. Follow the road."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything strange happened?",
+          "Quid novi?",
+          "Quid novi in via?"
+        ],
+        "reply": [
+          "There is a castle on our road and nobody remembers building it.",
+          "Quid novi? Ask someone who was there.",
+          "In via multa fiunt. The road is never quite the same."
+        ]
+      }
+    ]
   }
 ]
