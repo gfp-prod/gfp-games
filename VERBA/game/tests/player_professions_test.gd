@@ -139,7 +139,8 @@ func _run() -> void:
 		_fail("Corrupt saved professions were accepted")
 		return
 	# The 3D inventory item must remain a real dropped pickup.
-	fresh.player.inventory=["herb_bread"]
+	fresh.player.inventory.clear()
+	fresh.player.inventory.append("herb_bread")
 	fresh.player.selected_slot=0
 	fresh.player.refresh_held_model()
 	var count_before: int=fresh.items.size()
