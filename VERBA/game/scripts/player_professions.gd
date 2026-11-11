@@ -15,6 +15,7 @@ const RECIPES := {
 const WORKSITE := {"baker":Vector2(8.9,16.25),"blacksmith":Vector2(21.8,19.1)}
 const SALES := {"ida":{"item":"bread","stock":"bread","price":2},
 	"orin":{"item":"tools","stock":"tools","price":4}}
+const MARKET_PRICES := {"grain":1,"wood":1,"ore":2}
 var experience: Dictionary={"baker":0,"blacksmith":0}
 var charged_hearths: Dictionary={"baker":0,"blacksmith":0}
 
@@ -124,6 +125,32 @@ func sell_to(npc_id: String,player) -> Dictionary:
 	player.world.village_sim.witness_event("artisan_delivery",npc_id)
 	return {"ok":true,"changed":true,
 		"message":"A fair exchange: %d coins paid from the village treasury. The %s enters the real public stock; your work is remembered." % [price,stock_name]}
+
+func buy_from_market(player,item: String) -> Dictionary:
+	# Every raw-material purchase draws one real unit from the existing
+	# public stores and returns the player's coins to the same treasury.
+	# No second market inventory, no external restocking timer.
+	if not MARKET_PRICES.has(item):
+		return {"ok":false,"message":"The merchant does not carry that."}
+	var price: int=int(MARKET_PRICES[item])
+	if player.coins<price:
+		return {"ok":false,"message":"You lack the coins for that supply."}
+	if player.inventory.size()>=6:
+		return {"ok":false,"message":"Your hands are already full."}
+	var economy=player.world.village_sim.economy
+	if int(economy.stocks.get(item,0))<1:
+		return {"ok":false,"message":"The village has no %s to spare." % item}
+	if economy.treasury+price>100000:
+		return {"ok":false,"message":"The public ledger cannot take more coins."}
+	economy.stocks[item]=int(economy.stocks[item])-1
+	economy.treasury+=price
+	player.coins-=price
+	player.inventory.append(item)
+	player.selected_slot=player.inventory.size()-1
+	player.refresh_held_model()
+	economy._record("artisan_supply_purchase","sela",item,1)
+	return {"ok":true,"changed":true,
+		"message":"Sela hands you %s for %d coins. The village's stock falls by one." % [item,price]}
 
 func snapshot() -> Dictionary:
 	return {"version":1,"experience":experience.duplicate(true),
