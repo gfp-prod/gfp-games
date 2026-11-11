@@ -163,7 +163,7 @@ func _act(id: String, action: String) -> void:
 					var recovered: int = mini(1,int(people[suspect]["wealth"]))
 					if recovered>0:
 						people[suspect]["wealth"] -= recovered
-						people[String(entry["target"])]["wealth"] += recovered
+						people[String(entry["target"])]["wealth"] = mini(100,int(people[String(entry["target"])]["wealth"])+recovered)
 					_event("law_response",id,suspect,recovered)
 					break
 	p["last_action"] = action
