@@ -94,6 +94,8 @@ func _run() -> void:
 	if not sim.restore(JSON.parse_string(JSON.stringify(restored))):
 		fail("Completed jobs corrupted normal world save/load")
 		return
+	# Restore replaces the resource ledger object; discard the old pointer.
+	economy=sim.economy
 	var old=SIM.new(1).snapshot()
 	old.erase("work_orders")
 	var legacy=SIM.new(22)
