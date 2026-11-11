@@ -75,5 +75,16 @@ func _run() -> void:
 	if not stone.revealed or not stone.ember.visible:
 		_fail("The visible world forgot Mara's advice across save/load")
 		return
+	# Fresh launch, not just reusing the same live world instance.
+	var new_world=load("res://main.tscn").instantiate()
+	root.add_child(new_world)
+	await process_frame
+	if not PERSIST.apply_snapshot(new_world,JSON.parse_string(JSON.stringify(saved))):
+		_fail("A fresh world cannot load the Latin forest wayfinding record")
+		return
+	new_world.forest_waystone.update_from_knowledge()
+	if not new_world.forest_waystone.revealed or not new_world.forest_waystone.ember.visible:
+		_fail("The forest inscription does not illuminate after restarting")
+		return
 	print("PASS: understood Latin reveals collidable forest waystone, resists guessing and repetition, persists through unified social save")
 	quit(0)
