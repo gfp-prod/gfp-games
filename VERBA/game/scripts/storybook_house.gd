@@ -9,7 +9,10 @@ static func build(cabin: Node3D, world: Node3D) -> void:
 	var house := Node3D.new()
 	house.name = "CrookedHermitage"
 	cabin.add_child(house)
-	var plaster := _paint("res://assets/textures/real/cottage_plaster_diffuse.jpg",Color("ddc9a9"))
+	# The facade is an intentionally thin, authored shell. Its triangles must
+	# be visible from BOTH sides: default backface culling made the lower
+	# cottage walls disappear while their physics colliders stayed solid.
+	var plaster := make_opaque_plaster()
 	var wood := _paint("res://assets/textures/real/cottage_wood_diffuse.jpg",Color("9b7b60"))
 	var soot := ART.mat(Color("463b35"),.97)
 	var damp_stone := _paint("res://assets/textures/real/stone_diffuse.jpg",Color("bbb49e"))
@@ -93,6 +96,17 @@ static func build(cabin: Node3D, world: Node3D) -> void:
 	_add_planter(house,wood)
 	_add_chimney(house,damp_stone,soot,metal)
 	_add_turret(house,world,cabin,damp_stone,roof_mat,wood,soot)
+
+static func make_opaque_plaster() -> StandardMaterial3D:
+	var material := _paint("res://assets/textures/real/cottage_plaster_diffuse.jpg",
+		Color("ddc9a9"))
+	# Avoid the classic invisible-wall regression: this facade is a single
+	# mesh skin rather than a volume. Never depend on its triangle winding
+	# to decide whether the player sees a solid wall.
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+	material.albedo_color.a = 1.0
+	return material
 
 static func _paint(path: String, tint: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
