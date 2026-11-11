@@ -195,7 +195,22 @@ func _update_day_night_art(night_value: float) -> void:
 func stream_x(z: float) -> float:
 	return -20.0+4.4*sin(z*.075)+1.7*sin(z*.21)
 
+# The cabin is an actual built site, not furniture perched on raw grass.
+# The center is identical to its old elevation; only the footprint and a
+# smooth, short transition are flattened. All other valley heights match.
 func height_at(x: float,z: float) -> float:
+	var raw: float = _raw_height_at(x,z)
+	if absf(x-29.0) > 13.0 or absf(z-8.0) > 13.0:
+		return raw
+	var local: Vector2 = cottage_local_xz(x,z)
+	var edge: float = maxf(absf(local.x)/5.15,absf(local.y)/3.55)
+	if edge >= 1.72:
+		return raw
+	var blend: float = 1.0-smoothstep(1.0,1.72,edge)
+	return lerpf(raw,_raw_height_at(29.0,8.0),blend)
+
+
+func _raw_height_at(x: float,z: float) -> float:
 	var hills: float = terrain_noise.get_noise_2d(x,z)*4.5+sin(x*.052)*1.15+cos(z*.069)*.76
 	var ridge: float = 8.0*(1.0 - smoothstep(-56.0,-25.0,z)) + 3.0*smoothstep(28.0,53.0,x)
 	var center: float = stream_x(z)
@@ -203,6 +218,33 @@ func height_at(x: float,z: float) -> float:
 	# Open central walkable meadow; rougher relief around its perimeter.
 	var glade: float = 1.0 - .54*exp(-((x*x+(z-18.0)*(z-18.0))/340.0))
 	return (hills + ridge)*glade-trench + small_noise.get_noise_2d(x,z)*.19
+
+
+# Use the actual -0.28 radian cottage orientation for both the terrain site
+# and the vegetation exclusion. A circular world-space mask would miss the
+# turret and remove an unnecessary amount of garden.
+func cottage_local_xz(x: float,z: float) -> Vector2:
+	var dx: float = x-29.0
+	var dz: float = z-8.0
+	var c: float = cos(-.28)
+	var s: float = sin(-.28)
+	return Vector2(c*dx-s*dz,s*dx+c*dz)
+
+
+func is_inside_cottage_plot(x: float,z: float, margin: float=0.0) -> bool:
+	var p: Vector2 = cottage_local_xz(x,z)
+	return absf(p.x) < 5.15+margin and absf(p.y) < 3.55+margin
+
+
+func move_vegetation_outside_cottage(x: float,z: float) -> Vector2:
+	if not is_inside_cottage_plot(x,z,.12):
+		return Vector2(x,z)
+	var local: Vector2 = cottage_local_xz(x,z)
+	local.x = 5.65 if local.x >= 0.0 else -5.65
+	var c: float = cos(-.28)
+	var s: float = sin(-.28)
+	return Vector2(29.0+c*local.x+s*local.y,
+		8.0-s*local.x+c*local.y)
 
 func build_terrain() -> void:
 	# One continuous, physically grounded terrain mesh. A WorldUV photographic
