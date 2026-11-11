@@ -18,6 +18,31 @@ func _initialize() -> void:
 	if facades.size() < 30 or wall_bounds.size.y < 5.2:
 		_fail("Storybook cottage needs a modeled story-and-gable silhouette")
 		return
+	# These faces were reversed on the first render, leaving the entire roof
+	# artificially black despite a correct mesh silhouette.
+	var roof_normals: PackedVector3Array = roof.surface_get_arrays(0)[Mesh.ARRAY_NORMAL]
+	var wrong: int = 0
+	for n in roof_normals:
+		if n.y < .20:
+			wrong += 1
+	if wrong > int(float(roof_normals.size())*.03):
+		_fail("Roof normals face down: lighting will make the hero cottage black")
+		return
+	var hat: ArrayMesh = STORY._turret_hat()
+	var hat_normals: PackedVector3Array = hat.surface_get_arrays(0)[Mesh.ARRAY_NORMAL]
+	for n in hat_normals:
+		if n.y < .15:
+			_fail("Turret roof is backfacing the sky")
+			return
+	var turret: ArrayMesh = STORY._turret_body()
+	var turret_vertices: PackedVector3Array = turret.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var turret_normals: PackedVector3Array = turret.surface_get_arrays(0)[Mesh.ARRAY_NORMAL]
+	for idx in range(turret_vertices.size()):
+		var radial := Vector2(turret_vertices[idx].x,turret_vertices[idx].z).normalized()
+		var facing := Vector2(turret_normals[idx].x,turret_normals[idx].z)
+		if radial.dot(facing) < .2:
+			_fail("Turret masonry is inward-facing and invisible from the ground")
+			return
 	print("HERO_QA_STAGE gloves_start")
 	var gloves := Node3D.new()
 	root.add_child(gloves)
