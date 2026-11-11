@@ -20,6 +20,27 @@ func _run() -> void:
 		if district.find_child(name,true,false)==null:
 			_fail("Missing road landmark "+name)
 			return
+	# The northern track crosses the creek at z~36. Prove that a ray
+	# down from walking height hits real bridge collision, not the creek bed.
+	var bridge: Node3D=district.find_child("OldNorthRoadFootbridge",true,false)
+	if bridge==null:
+		_fail("The northern road lacks a physically traversable stream crossing")
+		return
+	var deck: StaticBody3D=bridge.find_child("WalkableNorthRoadBridgeDeck",true,false)
+	if deck==null or deck.collision_layer!=16:
+		_fail("North footbridge has no terrain-layer physics")
+		return
+	var east: Vector2=Vector2(-11.0,32.22)
+	var west: Vector2=Vector2(-24.0,40.82)
+	var center: Vector2=east.lerp(west,0.5)
+	var height: float=lerpf(world.height_at(east.x,east.y),world.height_at(west.x,west.y),.5)+.15
+	var bridge_query:=PhysicsRayQueryParameters3D.create(
+		Vector3(center.x,height+2.0,center.y),Vector3(center.x,height-6.0,center.y))
+	bridge_query.collision_mask=16
+	var bridge_hit: Dictionary=world.get_world_3d().direct_space_state.intersect_ray(bridge_query)
+	if bridge_hit.is_empty() or bridge_hit.get("collider")!=deck:
+		_fail("North road drops into creek instead of landing on walkable bridge deck")
+		return
 	var station: Node3D=district.find_child("ValeFuelStation",true,false)
 	var castle: Node3D=district.find_child("CastleOfTheSecondRoad",true,false)
 	var shop: Marker3D=station.find_child("StationWalkableInterior",true,false)
