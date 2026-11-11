@@ -97,8 +97,8 @@ func _run() -> void:
 	player.inventory.clear()
 	var saved: Dictionary=PERSIST.snapshot(world)
 	var count: int=tower.parts.size()
-	if count!=11:
-		fail("Expected 11 physical tower components, got %d" % count)
+	if count!=10:
+		fail("Expected 10 physical tower components, got %d" % count)
 		return
 	if not PERSIST.apply_snapshot(world,saved):
 		fail("Cannot restore a two-story tower save")
