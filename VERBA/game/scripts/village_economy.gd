@@ -79,6 +79,19 @@ func eat(id: String, person: Dictionary) -> bool:
 	_record("purchase",id,"bread",1)
 	return true
 
+func player_exchange(npc_id: String, take: String, give: String, inventory: Array) -> bool:
+	# The player's item is the input; the village's finite stock is the output.
+	# Grain deliveries go back into the same public resource ledger.
+	if not inventory.has(take) or not stocks.has(take) or not stocks.has(give): return false
+	if int(stocks[give])<=0 or int(stocks[take])>=CAP: return false
+	var slot: int=inventory.find(take)
+	inventory.remove_at(slot)
+	inventory.append(give)
+	stocks[take]=int(stocks[take])+1
+	stocks[give]=int(stocks[give])-1
+	_record("player_trade",npc_id,take,1)
+	return true
+
 func shortage(item: String, amount: int) -> int:
 	if not stocks.has(item): return 0
 	var removed: int=mini(int(stocks[item]),maxi(0,amount))

@@ -189,6 +189,25 @@
           "Quid novi? Each person has a different story.",
           "In oppido multa fiunt. Much happens in a village."
         ]
+      },
+      {
+        "id": "baker_delivery",
+        "text": [
+          "Deliver a sack of grain to Ida.",
+          "Frumentum tibi fero. (I bring you grain.)",
+          "Frumentum tibi fero."
+        ],
+        "reply": [
+          "The ovens can work again. Take this loaf.",
+          "Gratias! Panem accipe. Thank you; take bread.",
+          "Gratias! Panem accipe."
+        ],
+        "requires_item": "grain",
+        "market_take": "grain",
+        "market_give": "bread",
+        "market_stock": "bread",
+        "market_min": 1,
+        "locked": "Bring grain from Daro's harvest."
       }
     ]
   },
@@ -539,6 +558,25 @@
           "Quid novi? Each person has a different story.",
           "In oppido multa fiunt. Much happens in a village."
         ]
+      },
+      {
+        "id": "grain_exchange",
+        "text": [
+          "Trade one herb for a sack of grain.",
+          "Herbam pro frumento. (A herb for grain.)",
+          "Herbam pro frumento."
+        ],
+        "reply": [
+          "Here is a sack from the harvest.",
+          "Accipe frumentum. Take the grain.",
+          "Accipe frumentum."
+        ],
+        "requires_item": "herb",
+        "market_take": "herb",
+        "market_give": "grain",
+        "market_stock": "grain",
+        "market_min": 1,
+        "locked": "Bring a herb to exchange for grain."
       }
     ]
   },

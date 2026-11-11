@@ -178,6 +178,8 @@ func refresh_held_model() -> void:
 			l.position=Vector3(0,.56,0)
 			prop.add_child(l)
 		"wood": ART.box(prop,Vector3(0,.22,-.13),Vector3(.21,.18,.45),ART.mat(Color("81694f")))
+		"grain": ART.box(prop,Vector3(0,.17,-.13),Vector3(.25,.32,.22),ART.mat(Color("bb9c69")))
+		"bread": ART.orb(prop,Vector3(0,.17,-.13),Vector3(.25,.15,.21),ART.mat(Color("a76a3f")),12)
 		"stone": ART.stone(prop,Vector3(0,.12,-.13),Vector3(.19,.15,.22),ART.mat(Color("74766e")))
 		"herb":
 			ART.bone(prop,Vector3(0,-.1,0),Vector3(0,.5,-.02),.03,.01,ART.mat(Color("67795a")))
@@ -279,7 +281,7 @@ func create_conversation_panel() -> void:
 	conversation_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	conversation_panel.offset_left = -378
 	conversation_panel.offset_right = 378
-	conversation_panel.offset_top = -257
+	conversation_panel.offset_top = -302
 	conversation_panel.offset_bottom = -20
 	var frame := StyleBoxFlat.new()
 	frame.bg_color = Color(.055,.066,.062,.94)
@@ -348,7 +350,7 @@ func refresh_conversation() -> void:
 		var suffix: String = "" if bool(choice.get("available",true)) else "   [unavailable]"
 		lines.append("%d. %s%s" % [int(choice.get("index",0))+1,
 			String(choice.get("label","")),suffix])
-	conversation_options.text = "\n".join(lines) + "\n\n1–3 respond     Esc / E leave"
+	conversation_options.text = "\n".join(lines) + "\n\n1–4 respond     Esc / E leave"
 	conversation_panel.visible = true
 
 func choose_conversation_option(index: int) -> Dictionary:
@@ -402,7 +404,7 @@ func _input(event: InputEvent) -> void:
 	if conversation_actor != null:
 		if event.keycode == KEY_ESCAPE or event.keycode == KEY_E:
 			end_conversation()
-		elif event.keycode >= KEY_1 and event.keycode <= KEY_3:
+		elif event.keycode >= KEY_1 and event.keycode <= KEY_4:
 			choose_conversation_option(event.keycode-KEY_1)
 		get_viewport().set_input_as_handled()
 		return
@@ -676,6 +678,12 @@ func use_item() -> void:
 			health = minf(max_health,health+32.0)
 			say_world("The herb is crushed. Vita +%d" % int(healed),
 				point,Color("a4bc8a"))
+			inventory.remove_at(selected_slot)
+			selected_slot=0;refresh_held_model()
+		"bread":
+			var recovered: float=minf(max_stamina-stamina,45.0)
+			stamina=minf(max_stamina,stamina+45.0)
+			say_world("A warm loaf. Vigor +%d" % int(recovered),point,Color("d6b98b"))
 			inventory.remove_at(selected_slot)
 			selected_slot=0;refresh_held_model()
 		"stone":
