@@ -9,8 +9,8 @@ func _run() -> void:
 	var world = load("res://main.tscn").instantiate()
 	root.add_child(world)
 	await process_frame
-	if world.npcs.size()!=12 or world.village_sim.people.size()!=12:
-		_fail("Expected exactly twelve world actors and simulation identities")
+	if world.npcs.size()!=13 or world.village_sim.people.size()!=13:
+		_fail("Expected thirteen world actors and simulation identities")
 		return
 	var seen: Dictionary = {}
 	var ida = null
@@ -49,5 +49,5 @@ func _run() -> void:
 	if max_step > .45:
 		_fail("Baker teleported while moving: %.3fm/frame" % max_step)
 		return
-	print("PASS: 12 unique physical citizens with interaction colliders, navigation and visible utility-based travel")
+	print("PASS: 13 unique physical citizens with interaction colliders, navigation and visible utility-based travel")
 	quit(0)

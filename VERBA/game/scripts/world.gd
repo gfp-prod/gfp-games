@@ -22,6 +22,7 @@ const EXTERNAL_ART = preload("res://scripts/external_art.gd")
 const STORYBOOK_HOUSE = preload("res://scripts/storybook_house.gd")
 const LANDMARK_TREE = preload("res://scripts/landmark_tree.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
+const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
 var magic
@@ -88,6 +89,7 @@ func _ready() -> void:
 	build_terrain()
 	# The road is blended into the terrain atlas offline; no floating road mesh.
 	build_landmarks()
+	STRANGE_ROAD.build(self)
 	build_stone_ridges()
 	build_first_words_cairn()
 	build_plural_tablet()
@@ -319,6 +321,21 @@ func stream_x(z: float) -> float:
 # smooth, short transition are flattened. All other valley heights match.
 func height_at(x: float,z: float) -> float:
 	var raw: float = _raw_height_at(x,z)
+	# Two small intentionally levelled authored sites. The surrounding hills
+	# blend back over 4–5 metres; no hovering floors or invisible terrain seams.
+	# Non-overlapping graded pads: the original broad falloffs merged two
+	# different elevations and pushed a grassy ridge through the shop floor.
+	var castle_edge: float=maxf(absf(x+49.0)/7.9,absf(z-44.0)/8.1)
+	if castle_edge<1.17:
+		raw=lerpf(raw,_raw_height_at(-49.0,44.0),
+			1.0-smoothstep(1.0,1.17,castle_edge))
+	# Station forecourt extends farther toward the river than the shop does
+	# toward the castle. Asymmetric extents preserve both usable flat floors.
+	var station_x_edge: float=(absf(x+33.0)/6.4) if x < -33.0 else ((x+33.0)/10.0)
+	var station_edge: float=maxf(station_x_edge,absf(z-44.0)/5.0)
+	if station_edge<1.16:
+		raw=lerpf(raw,_raw_height_at(-33.0,44.0),
+			1.0-smoothstep(1.0,1.16,station_edge))
 	if absf(x-29.0) > 13.0 or absf(z-8.0) > 13.0:
 		return raw
 	var local: Vector2 = cottage_local_xz(x,z)
@@ -364,6 +381,16 @@ func move_vegetation_outside_cottage(x: float,z: float) -> Vector2:
 	var s: float = sin(-.28)
 	return Vector2(29.0+c*local.x+s*local.y,
 		8.0-s*local.x+c*local.y)
+
+func move_vegetation_outside_roadside(x: float,z: float) -> Vector2:
+	# Keep offline foliage batches from poking through the station floors
+	# and castle archive. Move positions, never skip sim_object creation:
+	# saved ecological IDs must not be renumbered by the new district.
+	if x>=-58.5 and x<=-40.0 and z>=35.0 and z<=53.6:
+		return Vector2(x,34.4 if z<44.0 else 54.25)
+	if x>=-40.0 and x<=-21.8 and z>=37.5 and z<=50.5:
+		return Vector2(x,36.9 if z<44.0 else 51.05)
+	return Vector2(x,z)
 
 func build_terrain() -> void:
 	# One continuous, physically grounded terrain mesh. A WorldUV photographic
@@ -914,6 +941,7 @@ func populate_reactive_grass() -> void:
 		if absf(x)<4 and z>-30 and z<28: continue
 		# Keep the same generated simulation IDs so saved plant states load.
 		var clear_grass: Vector2 = move_vegetation_outside_cottage(x,z)
+		clear_grass = move_vegetation_outside_roadside(clear_grass.x,clear_grass.y)
 		x = clear_grass.x
 		z = clear_grass.y
 		make_living_plant(Vector3(x,height_at(x,z)+.03,z),"grass",clump_mesh,material,r.randf_range(1.3,2.8))
@@ -1051,6 +1079,17 @@ func populate_collectibles() -> void:
 			inscription.position = Vector3(0,.55,.428)
 			book_plinth.add_child(inscription)
 			spawn_item("book",String(id),Vector3(x,height_at(x,z)+.94,z))
+		elif String(id)=="de_castello":
+			# The castle archive contains a real collectable architecture book,
+			# not a remotely delivered reward or a text-only map marker.
+			var table := Node3D.new()
+			table.name="CastleLatinManuscriptTable"
+			table.position=Vector3(x,height_at(x,z),z)
+			add_child(table)
+			ART.box(table,Vector3(0,.36,0),Vector3(.98,.12,.60),bark_mat)
+			for tx in [-.38,.38]:
+				ART.box(table,Vector3(tx,.17,0),Vector3(.12,.33,.50),bark_dark)
+			spawn_item("book",String(id),Vector3(x,height_at(x,z)+.47,z))
 		else:
 			spawn_item("book",String(id),Vector3(x,height_at(x,z),z))
 	for w in [

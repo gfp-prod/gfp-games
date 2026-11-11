@@ -31,6 +31,10 @@ jobs:
         run: godot --headless --path . --script res://tests/village_sim_test.gd
       - name: Resource economy and simulation inspector
         run: godot --headless --path . --script res://tests/village_economy_test.gd
+      - name: Strange road and castle district
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/strange_road_test.gd 2>&1 | tee /tmp/verba-road-test.log
+          grep -q "PASS: station and medieval castle share authored road" /tmp/verba-road-test.log
       - name: Two-story tower construction
         run: |
           timeout 90s godot --headless --path . --script res://tests/two_story_tower_test.gd 2>&1 | tee /tmp/verba-two-story-test.log

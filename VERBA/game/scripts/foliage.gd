@@ -113,6 +113,9 @@ static func populate_ferns(world) -> void:
 		if Vector2(x,z).distance_to(Vector2(0,20)) < 12.0:continue
 		if absf(x) < 5.0 and z > -35 and z < 26:continue
 		if x > 20.0 and z > -5.0:continue
+		var cleared: Vector2=world.move_vegetation_outside_roadside(x,z)
+		x=cleared.x
+		z=cleared.y
 		var plant=world.make_living_plant(Vector3(x,world.height_at(x,z)+.02,z),"fern",mesh,material,rng.randf_range(.65,1.65))
 		plant.rotation.y=rng.randf_range(0,TAU)
 
@@ -188,6 +191,7 @@ static func populate_grass(world) -> void:
 				if not (absf(x)<3.8 and z>-32 and z<32):break
 			# No decorative grass may render through the cottage floor.
 			var clear_spot: Vector2 = world.move_vegetation_outside_cottage(x,z)
+			clear_spot = world.move_vegetation_outside_roadside(clear_spot.x,clear_spot.y)
 			x = clear_spot.x
 			z = clear_spot.y
 			var base:=Basis(Vector3.UP,rng.randf_range(0,TAU))

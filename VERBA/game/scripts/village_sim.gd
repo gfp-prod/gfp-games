@@ -15,7 +15,8 @@ const ROLES := [
 	["nima","bard","cat",31,89,42],
 	["cass","priest","wolf",62,44,77],
 	["brin","builder","crow",88,35,39],
-	["sela","merchant","wolf",57,65,72]
+	["sela","merchant","wolf",57,65,72],
+	["juno","merchant","cat",66,77,25]
 ]
 var rng := RandomNumberGenerator.new()
 var economy = ECONOMY.new()
@@ -242,6 +243,11 @@ func restore(record: Dictionary) -> bool:
 		restore_error = "schema version"
 		return false
 	var stored: Variant = record.get("people",{})
+	# Existing 12-citizen saves predate the roadside attendant. Preserve
+	# the original agents and simulated history; add only the new identity.
+	if stored is Dictionary and stored.size()==ROLES.size()-1 and not stored.has("juno"):
+		stored=stored.duplicate(true)
+		stored["juno"]=people["juno"].duplicate(true)
 	if not (stored is Dictionary) or stored.size()!=ROLES.size():
 		restore_error = "population: %d" % stored.size()
 		return false
