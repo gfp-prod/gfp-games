@@ -1,0 +1,95 @@
+[
+  {
+    "id": "mara",
+    "name": "Mara",
+    "role": "Roadside scribe",
+    "position": [-2.8, 20.8],
+    "yaw": 0.4,
+    "robe": "6c686b",
+    "trim": "a49882",
+    "intro": [
+      "Salve, viator. I'm Mara. Some words here are older than the road.",
+      "Salve, viator. Herba in horto crescit. You are learning to see the vale.",
+      "Salve, viator. Verba movent mundum. You are learning what the words can do."
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": ["Salve. (Hello.)", "Salve, Mara.", "Salve, amica."],
+        "reply": [
+          "Salve! That is how we greet a traveler.",
+          "Salve, viator. A greeting is a beginning, not a spell.",
+          "Salve. The words sound more natural every time you use them."
+        ]
+      },
+      {
+        "id": "forest",
+        "text": ["Where does the forest begin?", "Ubi est silva? (Where is the forest?)", "Ubi est silva?"],
+        "reply": [
+          "The old trees grow past the western creek. Follow the water.",
+          "Silva est trans rivum. The forest is across the stream.",
+          "Silva est trans rivum. But not everything between its trees is a tree."
+        ]
+      },
+      {
+        "id": "botany",
+        "requires_completed": "de_herbis",
+        "text": ["Ask about the herb lesson.", "Quid herbam iuvat? (What helps the plant?)", "Quid herbam iuvat?"],
+        "reply": [
+          "Aqua herbam iuvat. Water helps the plant.",
+          "Aqua herbam iuvat. You understood the book.",
+          "Aqua herbam iuvat. The same knowledge nourishes magic."
+        ],
+        "locked": "Read De Herbis first. Then we can speak about what you learned."
+      }
+    ]
+  },
+  {
+    "id": "tomas",
+    "name": "Tomas",
+    "role": "Hermitage keeper",
+    "position": [23.1, 15.2],
+    "yaw": -0.65,
+    "robe": "655b4b",
+    "trim": "8a7560",
+    "intro": [
+      "Salve. I keep the books near the crooked cottage. A herb might be worth a lesson.",
+      "Salve. Liber in domo est. I keep the books in the house.",
+      "Salve, discipule. In libris scientia est. Knowledge lives in books."
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": ["Salve. (Hello.)", "Salve, magister.", "Salve, magister."],
+        "reply": [
+          "Salve. Don't be afraid of making a mistake in front of a book.",
+          "Salve, discipule. You have been reading.",
+          "Salve. Even a scholar must sometimes begin again."
+        ]
+      },
+      {
+        "id": "trade",
+        "text": ["Trade one herb for a Latin book.", "Herbam pro libro. (One herb for a book.)", "Herbam pro libro."],
+        "reply": [
+          "Take De Igne et Aqua. A book for the herb; a fair exchange.",
+          "Tene librum. Aqua ignem exstinguit. Water puts out fire.",
+          "Tene librum. Aqua ignem exstinguit."
+        ],
+        "requires_item": "herb",
+        "grants_book": "de_igne_et_aqua",
+        "locked": "Bring me one herb. I'll exchange it for De Igne et Aqua.",
+        "already_owned": "You already carry De Igne et Aqua. Read it before seeking more.",
+        "already_traded": "We made our exchange. The rest you must discover yourself."
+      },
+      {
+        "id": "tower",
+        "text": ["Can I build a place of my own?", "Ubi est turris? (Where is the tower?)", "Ubi est turris?"],
+        "reply": [
+          "The broken priory lies along the southern road. There is room enough in this vale.",
+          "Turris vetus prope ruinas est. An old tower stands near the ruins.",
+          "Turris vetus prope ruinas est. A new tower will take more than words."
+        ]
+      }
+    ]
+  }
+]
