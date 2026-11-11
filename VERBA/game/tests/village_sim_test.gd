@@ -10,7 +10,7 @@ func _fail(message: String) -> void:
 	quit(1)
 
 func _check_invariants(sim) -> String:
-	if sim.people.size()!=12: return "Wrong population"
+	if sim.people.size()!=13: return "Wrong population"
 	for id in sim.people:
 		var p: Dictionary = sim.people[id]
 		if String(p.get("id",""))!=id: return "Unstable NPC ID"
