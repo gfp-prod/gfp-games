@@ -14,7 +14,7 @@ const SCHOLAR = preload("res://scripts/scholar.gd")
 const SIM_OBJECT = preload("res://scripts/sim_object.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
-const COTTAGE_HERO = preload("res://scripts/cottage_hero.gd")
+const STORYBOOK_HOUSE = preload("res://scripts/storybook_house.gd")
 const LANDMARK_TREE = preload("res://scripts/landmark_tree.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
@@ -433,16 +433,11 @@ func build_landmarks() -> void:
 	cabin.position = Vector3(29, height_at(29, 8), 8)
 	cabin.rotation.y = -.28
 	add_child(cabin)
-	# Normalize visual architecture to cottage height. Authored meshes may use
-	# arbitrary author units; physics wall geometry is in metres.
-	if EXTERNAL_ART.attach_scaled(cabin, "res://assets/models/authored/Cottage_The_Hermit.glb", 5.7):
-		var cottage_model: Node3D = cabin.get_node("CC0ImportedArt") as Node3D
-		cottage_model.name = "TimberStoneCottage"
-		apply_cottage_photographic_materials(cottage_model)
-	else:
-		push_error("VERBA cottage asset failed to import")
-	# Finish the actual cabin parent: coordinates match the imported model and its colliders.
-	COTTAGE_HERO.decorate(cabin)
+	# Our authored silhouette replaces the generic imported cottage geometry.
+	# The old GLB stays archived in assets, but is not loaded into the world.
+	# Keeping the original wall/door collider positions protects player movement
+	# and previously saved game positions.
+	STORYBOOK_HOUSE.build(cabin,self)
 	# An independently solid cottage shell with doorway, floor, chimney and walls.
 	# The source GLB is visual artwork only and supplies NO physics by default.
 	add_solid_box(cabin, Vector3(-3.02, 1.8, 0), Vector3(.42, 3.5, 5.5), "WestCottageWall")
