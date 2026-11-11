@@ -27,6 +27,21 @@ func _check() -> void:
 			if world.is_inside_cottage_plot(displaced.x,displaced.y,.12):
 				_fail("Foliage relocation left grass under the cottage")
 				return
+	# Check the actual instanced vegetation batches, not only relocation math.
+	# This catches curated fern placements that bypass the general grass rules.
+	for name in ["Meadow Tufts","Cool Bank Grasses","Amber Ridge Grasses",
+		"FallenIndividualLeaves","WeatheredPebblesOneBatch",
+		"CuratedHermitageFernClusters"]:
+		var batch := world.find_child(name,true,false) as MultiMeshInstance3D
+		if batch == null or batch.multimesh == null:
+			_fail("Expected ecological art batch missing: "+name)
+			return
+		for i in range(batch.multimesh.instance_count):
+			var local_position: Vector3 = batch.multimesh.get_instance_transform(i).origin
+			var pos: Vector3 = batch.global_transform * local_position
+			if world.is_inside_cottage_plot(pos.x,pos.z,.12):
+				_fail("A decorative plant or pebble penetrates cottage floor: "+name)
+				return
 	if absf(world.height_at(-42.0,-36.0)-world._raw_height_at(-42.0,-36.0)) > .00001:
 		_fail("Remote valley terrain changed while flattening the cottage site")
 		return
