@@ -55,7 +55,7 @@ func _initialize() -> void:
 			right += 1
 		elif center.x < -2.55:
 			left += 1
-	if mini(front,rear,left,right) < 2:
+	if mini(mini(front,rear),mini(left,right)) < 2:
 		_fail("One or more of the four exterior walls is not fully modeled")
 		return
 	# These faces were reversed on the first render, leaving the entire roof
