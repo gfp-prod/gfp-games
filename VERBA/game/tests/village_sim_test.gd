@@ -57,7 +57,7 @@ func _run() -> void:
 	var save: Dictionary = a.snapshot()
 	var loaded = SIM.new(42)
 	if not loaded.restore(JSON.parse_string(JSON.stringify(save))):
-		_fail("Could not restore JSON-round-tripped village")
+		_fail("Could not restore JSON-round-tripped village: " + loaded.restore_error)
 		return
 	for i in range(70):
 		a.step()
