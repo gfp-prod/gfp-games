@@ -3,7 +3,7 @@ extends RefCounted
 ## All geometry is built from committed, offline-compatible art/texture helpers.
 ## Open entries, floors, walls and pumps have matching real physics.
 const ART=preload("res://scripts/art.gd")
-const STATION: Vector2=Vector2(-27.0,44.0)
+const STATION: Vector2=Vector2(-33.0,44.0)
 const CASTLE: Vector2=Vector2(-49.0,44.0)
 
 static func _at(world, xy: Vector2) -> Vector3:
@@ -49,8 +49,8 @@ static func _road(world,root: Node3D) -> void:
 	# Deliberate hand-curated road graph, rather than scattered random props.
 	# Splines are samples at terrain height; the heightmap remains the collider.
 	var tracks: Array=[
-		[Vector2(0,26),Vector2(-7,30),Vector2(-16,35),Vector2(-27,43)],
-		[Vector2(-27,43),Vector2(-35,43),Vector2(-42,44),Vector2(-49,44)],
+		[Vector2(0,26),Vector2(-7,30),Vector2(-11,32.22),Vector2(-24,40.82),Vector2(-27.8,44),Vector2(-31.55,44)],
+		[Vector2(-31.55,44),Vector2(-29,38.2),Vector2(-33,35),Vector2(-40,34.5),Vector2(-39.4,43.7),Vector2(-42,44)],
 		[Vector2(0,26),Vector2(6,19),Vector2(10,11),Vector2(7,-3),
 			Vector2(5,-19),Vector2(4,-35)]
 	]
