@@ -50,6 +50,8 @@ jobs:
         run: godot --headless --path . --script res://tests/pickup_line_of_sight_test.gd
       - name: Bound book geometry, page normals and ink contact
         run: godot --headless --path . --script res://tests/grimoire_geometry_test.gd
+      - name: Cottage, sculpted glove and riverbank hero-art regression
+        run: godot --headless --path . --script res://tests/hero_art_test.gd
       - name: Real hinged vellum page turn and in-book ink transition
         run: godot --headless --path . --script res://tests/grimoire_page_turn_test.gd
       - name: Latin books and scholar progression
