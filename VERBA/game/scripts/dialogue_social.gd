@@ -92,6 +92,8 @@ func choose(id: String, index: int, scholar, player) -> Dictionary:
 		player.selected_slot = clampi(player.selected_slot, 0,
 			maxi(0, player.inventory.size()-1))
 		player.refresh_held_model()
+		if player.world != null:
+			player.world.retire_book_pickup(reward)
 		if player.book != null:
 			player.book.book_cursor = scholar.owned.find(reward)
 			player.book.update_pages()
