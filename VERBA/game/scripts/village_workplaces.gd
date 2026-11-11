@@ -35,7 +35,7 @@ func _site(label: String, x: float, z: float) -> Node3D:
 func _ground(x: float,z: float,offset: float=0.0) -> Vector3:
 	return Vector3(x,world.height_at(x,z)+offset,z)
 
-func _sign(parent: Node3D, writing: String, at: Vector3, tone: Color) -> void:
+func _sign(parent: Node3D, writing: String, at: Vector3, tone: Color, yaw: float=0.0) -> void:
 	var text_node := Label3D.new()
 	text_node.name = "CarvedWorkplaceSign"
 	text_node.text = writing
@@ -45,6 +45,7 @@ func _sign(parent: Node3D, writing: String, at: Vector3, tone: Color) -> void:
 	text_node.outline_size = 0
 	text_node.no_depth_test = false
 	text_node.position = at
+	text_node.rotation.y=yaw
 	parent.add_child(text_node)
 
 func _slots(item: String, nodes: Array) -> void:
@@ -159,7 +160,7 @@ func _build_fields() -> void:
 
 func _build_bakery() -> void:
 	var bakery := _site("IdaStoneBakery",8.9,16.25)
-	var masonry := _material("res://assets/textures/real/stone_diffuse.jpg",Color("a5a08e"))
+	var masonry := _material("res://assets/textures/real/stone_diffuse.jpg",Color("d4c8b1"))
 	var wood := _material("res://assets/textures/real/cottage_wood_diffuse.jpg",Color("675346"))
 	var roof := ART.mat(Color("705343"),.97)
 	var soot := ART.mat(Color("241e1a"),1.0)
@@ -180,17 +181,34 @@ func _build_bakery() -> void:
 	bakery.add_child(dome)
 	ART.cone(bakery,Vector3(0,.68,.34),1.21,.22,masonry,1.16,18)
 	ART.orb(bakery,Vector3(0,.95,-.862),Vector3(.57,.42,.09),soot,16)
+	# The masonry arch follows the top half of the firebox aperture.
+	for index in range(10):
+		var a0: float=PI*float(index)/10.0
+		var a1: float=PI*float(index+1)/10.0
+		var p0:=Vector3(cos(a0)*.59,.95+sin(a0)*.45,-.958)
+		var p1:=Vector3(cos(a1)*.59,.95+sin(a1)*.45,-.958)
+		ART.bone(bakery,p0,p1,.073,.073,masonry,7)
 	var embers := ART.orb(bakery,Vector3(0,.67,-.966),
 		Vector3(.43,.11,.063),ART.mat(Color("ed9a58"),.55,Color("be5224")),12)
 	embers.name="BakerWorkingEmbers"
 	production_lamps["baker"]=embers
-	ART.bone(bakery,Vector3(.64,1.69,.83),Vector3(.69,3.42,.91),.24,.22,roof,11)
+	var kiln_light:=OmniLight3D.new()
+	kiln_light.name="BakerCoalLight"
+	kiln_light.light_color=Color("ffc483")
+	kiln_light.light_energy=.56
+	kiln_light.omni_range=3.1
+	kiln_light.shadow_enabled=false
+	kiln_light.position=Vector3(0,.91,-.85)
+	bakery.add_child(kiln_light)
+	production_lamps["baker_light"]=kiln_light
+	ART.bone(bakery,Vector3(.64,1.69,.83),Vector3(.69,2.91,.91),.24,.19,roof,11)
+	ART.cone(bakery,Vector3(.69,2.94,.91),.32,.18,roof,.22,11)
 	# Only a narrow wooden peel rack remains; the bulky porch roof blocked
 	# the oven when approaching from the village.
 	ART.bone(bakery,Vector3(-1.60,.08,-.25),Vector3(-1.60,1.67,-.25),.065,.055,wood,8)
 	for dy in [.43,1.08]:
 		ART.bone(bakery,Vector3(-1.60,dy,-.35),Vector3(-2.11,dy,-.35),.05,.044,wood,8)
-	_sign(bakery,"PANIS",Vector3(.85,1.30,-.81),wheat.albedo_color)
+	_sign(bakery,"PANIS",Vector3(.85,1.30,-.92),wheat.albedo_color,PI)
 	# Display food is *not* decorative infinite loot: visibility reads the
 	# finite bakery stock each frame, but no new physical pickups are minted.
 	var stand := _site("IdaBreadCounter",6.7,13.7)
@@ -223,12 +241,33 @@ func _build_forge() -> void:
 	var forge_body=world.add_solid_box(forge,Vector3(0,.92,.47),Vector3(2.19,1.75,1.25),"PhysicalCoalForge")
 	forge_body.set_meta("workplace_kind","forge")
 	world.navigation_blockers.append(forge.global_position)
-	ART.box(forge,Vector3(.0,1.17,.54),Vector3(2.32,.48,.75),stone)
-	var coal := ART.box(forge,Vector3(0,.86,-.23),
-		Vector3(1.35,.14,.44),glow)
+	# Tapered furnace hood and arched charcoal mouth replace the
+	# monolithic cuboid that read as a generic stone pedestal.
+	var facing_stone:=_material("res://assets/textures/real/stone_diffuse.jpg",Color("b9ab91"))
+	ART.cone(forge,Vector3(0,1.45,.54),1.14,.98,facing_stone,.51,14)
+	var soot:=ART.mat(Color("302520"),.98)
+	ART.orb(forge,Vector3(0,.85,-.20),Vector3(.69,.33,.15),soot,15)
+	var coal := ART.box(forge,Vector3(0,.75,-.31),
+		Vector3(1.20,.14,.42),glow)
 	coal.name="ForgeWorkingCoals"
 	production_lamps["blacksmith"]=coal
-	ART.bone(forge,Vector3(1.12,.92,.73),Vector3(1.12,2.92,.73),.22,.17,stone,10)
+	for i in range(8):
+		var a0: float=PI*float(i)/8.0
+		var a1: float=PI*float(i+1)/8.0
+		ART.bone(forge,Vector3(cos(a0)*.70,.88+sin(a0)*.34,-.38),
+			Vector3(cos(a1)*.70,.88+sin(a1)*.34,-.38),
+			.062,.062,facing_stone,7)
+	ART.bone(forge,Vector3(.60,1.80,.82),Vector3(.60,2.95,.82),.23,.18,stone,11)
+	ART.cone(forge,Vector3(.60,3.00,.82),.32,.20,stone,.21,11)
+	var forge_light:=OmniLight3D.new()
+	forge_light.name="SmithCoalLight"
+	forge_light.light_color=Color("ffc78a")
+	forge_light.light_energy=.64
+	forge_light.omni_range=3.3
+	forge_light.shadow_enabled=false
+	forge_light.position=Vector3(0,.93,-.26)
+	forge.add_child(forge_light)
+	production_lamps["blacksmith_light"]=forge_light
 	var anvil := _site("OrinAnvilAndToolRack",19.8,16.45)
 	ART.bone(anvil,Vector3(0,.08,0),Vector3(0,.78,0),.24,.20,timber,10)
 	ART.box(anvil,Vector3(0,.9,0),Vector3(1.33,.25,.61),iron)
@@ -307,8 +346,12 @@ func refresh_from_economy(force: bool=false) -> void:
 		for i in range(nodes.size()):
 			var node: Node3D=nodes[i]
 			node.visible = i<shown
-	production_lamps["baker"].visible=economy.can_work("baker")
-	production_lamps["blacksmith"].visible=economy.can_work("blacksmith")
+	var baking: bool=economy.can_work("baker")
+	var smithing: bool=economy.can_work("blacksmith")
+	production_lamps["baker"].visible=baking
+	production_lamps["baker_light"].visible=baking
+	production_lamps["blacksmith"].visible=smithing
+	production_lamps["blacksmith_light"].visible=smithing
 
 func _process(delta: float) -> void:
 	refresh_elapsed+=delta
