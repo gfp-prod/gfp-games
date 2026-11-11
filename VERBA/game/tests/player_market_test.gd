@@ -6,6 +6,7 @@ func fail(message: String) -> void:
 	push_error("Player market chain: "+message)
 	quit(1)
 func _run() -> void:
+	print("MARKET CHECK: begin")
 	var sim=SIM.new(2026)
 	var social=SOCIAL.new()
 	social.village_sim=sim
@@ -17,6 +18,7 @@ func _run() -> void:
 	player.inventory=inventory
 	var before_grain: int=sim.economy.stocks["grain"]
 	var before_herb: int=sim.economy.stocks["herb"]
+	print("MARKET CHECK: trade farmer")
 	var first: Dictionary=social.choose("daro",3,null,player)
 	if not first.get("ok",false) or not player.inventory.has("grain") or player.inventory.has("herb"):
 		fail("Daro did not exchange physical herb for grain")
@@ -25,6 +27,7 @@ func _run() -> void:
 		fail("Daro's market exchange fabricated resources")
 		return
 	var bread_before: int=sim.economy.stocks["bread"]
+	print("MARKET CHECK: trade baker")
 	var second: Dictionary=social.choose("ida",3,null,player)
 	if not second.get("ok",false) or not player.inventory.has("bread") or player.inventory.has("grain"):
 		fail("Ida did not exchange grain for bread")
