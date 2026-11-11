@@ -395,8 +395,8 @@ func _input(event: InputEvent) -> void:
 			toggle_build_mode()
 		elif event.keycode==KEY_R:
 			build_face=posmod(build_face+1,4)
-		elif event.keycode in [KEY_1,KEY_2,KEY_3]:
-			build_kind=["floor","wall","shelf"][event.keycode-KEY_1]
+		elif event.keycode >= KEY_1 and event.keycode <= KEY_9:
+			build_kind=world.construction.BUILD_ORDER[event.keycode-KEY_1]
 		elif event.keycode==KEY_E:
 			interact()
 		get_viewport().set_input_as_handled()
@@ -606,7 +606,7 @@ func look_hit(distance: float=18.0) -> Dictionary:
 	var body=hit.get("collider",null)
 	var entity:Node3D=null
 	if body !=null:
-		for meta_key in ["creature_ref","flora_ref","pickup_ref","npc_ref","harvest_ref"]:
+		for meta_key in ["creature_ref","flora_ref","pickup_ref","npc_ref","harvest_ref","tower_ref"]:
 			if body.has_meta(meta_key): entity=body.get_meta(meta_key);break
 	return {"position":hit["position"],"entity":entity}
 
@@ -623,6 +623,16 @@ func interact() -> void:
 				nearest_dist = distance_to_item
 				n = candidate
 	if n==null or not is_instance_valid(n): return
+	if n.has_meta("tower_door_key"):
+		if global_position.distance_to(n.global_position)>3.5: return
+		var door: Dictionary=world.construction.toggle_door(String(n.get_meta("tower_door_key")))
+		say_world(String(door.get("message","")),camera.global_position-camera.global_transform.basis.z*2.4,Color("d9cda9"))
+		return
+	if n.has_meta("tower_shelf_key"):
+		if global_position.distance_to(n.global_position)>3.5: return
+		var shelved: Dictionary=world.construction.shelve_book(String(n.get_meta("tower_shelf_key")),world.scholar)
+		say_world(String(shelved.get("message","")),camera.global_position-camera.global_transform.basis.z*2.4,Color("d9cda9"))
+		return
 	if n.has_method("is_talkable"):
 		begin_conversation(n)
 		return
