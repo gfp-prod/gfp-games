@@ -120,7 +120,7 @@ func _build_fields() -> void:
 		# Continuous furrows blend into the ground and follow every height
 		# sample. They read as cultivated soil, not scattered rubber disks.
 		var ridge:=MeshInstance3D.new()
-		ridge.name="ContinuousCultivatedEarth"
+		ridge.name="ContinuousCultivatedEarth_%d" % row
 		ridge.mesh=_furrow_mesh(plot.global_position,z)
 		ridge.material_override=soil
 		plot.add_child(ridge)
