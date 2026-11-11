@@ -43,6 +43,10 @@ jobs:
         run: |
           timeout 90s godot --headless --path . --script res://tests/living_herb_test.gd 2>&1 | tee /tmp/verba-herb-test.log
           grep -q "PASS: spell-grown plant harvests real herb" /tmp/verba-herb-test.log
+      - name: Player baker and blacksmith careers with finite transactions
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/player_professions_test.gd 2>&1 | tee /tmp/verba-player-professions.log
+          grep -q "PASS: two playable artisan professions" /tmp/verba-player-professions.log
       - name: Player-driven farm to bakery trade
         run: |
           timeout 90s godot --headless --path . --script res://tests/player_market_test.gd 2>&1 | tee /tmp/verba-market-test.log
