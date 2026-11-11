@@ -136,9 +136,17 @@ func _run() -> void:
 	if not repeated.get("ok",false) or again.scholar.practice.mastery("cresce")!=2:
 		fail("Spam casting within the same day fabricated language fluency")
 		return
-	var failed_spell: Dictionary=again.player.cast_latin("cresce",{"position":Vector3(2000.0,0.0,2000.0)})
+	# A fully enchanted field is an actual failed world action. Advance
+	# until a recall is DUE, then verify that failure grants no progress.
+	again.skip_days(3)
+	again.village_sim.bless_field(20)
+	var vigor_before: float=again.scholar.mana
+	var failed_spell: Dictionary=again.player.cast_latin("cresce",{"position":field})
 	if failed_spell.get("ok",true) or again.scholar.practice.mastery("cresce")!=2:
-		fail("Failed, out-of-reach magic incorrectly counted as Latin competence")
+		fail("A failed real-world spell incorrectly counted as Latin competence")
+		return
+	if absf(again.scholar.mana-vigor_before)>.01:
+		fail("A failed Latin spell incorrectly took mana")
 		return
 	print("PASS: diegetic wizard grimoire, contextual Latin morphology, typed retrieval, applied magical output, spaced dawns, corrective notes, true mastery and save-safe learning")
 	quit(0)
