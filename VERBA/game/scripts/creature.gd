@@ -213,6 +213,18 @@ func choose_direction() -> void:
 	var angle := rng.randf_range(0,TAU)
 	intent = Vector3(sin(angle),0,cos(angle))
 
+func _player_exposed_to_attack() -> bool:
+	if world == null or world.player == null: return false
+	var mouth: Vector3 = global_position + Vector3.UP*.78
+	var target: Vector3 = world.player.global_position + Vector3.UP*.97
+	var ray := PhysicsRayQueryParameters3D.create(mouth,target)
+	# Real stone walls, tree trunks and the cottage block the bite.
+	# Actors themselves do not obstruct the ray, avoiding false positives
+	# from the wolf's own spell-target proximity sphere.
+	ray.collision_mask = 16
+	ray.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_ray(ray).is_empty()
+
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(world): return
 	if familiar_tag != null:
@@ -280,7 +292,17 @@ func _physics_process(delta: float) -> void:
 			if wolf != null and (predator == null or global_position.distance_to(wolf.global_position)<global_position.distance_to(predator.global_position)):predator=wolf
 		if predator != null and predator != self:threatened = true
 		if species == "wisp": threatened = false
-		if threatened and asleep <= 0:
+		# Wolves are the first genuine survival threat. A living wolf notices
+		# the player and pursues, but CANNOT injure through an actual wall.
+		if species == "wolf" and player_distance < 9.0 and asleep <= 0.0 and stop_time <= 0.0:
+			state = "hunt"
+			panic = 0.0
+			intent = (world.player.global_position-global_position).normalized()
+			if player_distance < 1.75 and attack_cooldown <= 0.0 and _player_exposed_to_attack():
+				if world.player.take_damage(19.0,"wolf"):
+					attack_cooldown = 2.4
+					hunger = maxf(0.0,hunger-.08)
+		elif threatened and asleep <= 0:
 			panic = 3.0
 			state = "flee"
 			intent = (position - predator.position).normalized() if predator != null else (position - world.player.position).normalized()
