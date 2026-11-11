@@ -4,8 +4,14 @@ on:
   push:
     branches: [verba-godot]
     paths:
-      - "VERBA/game/export_presets.cfg"
+      - "VERBA/game/**"
       - ".github/workflows/verba-windows-playable.yml"
+
+# Only the latest merged playable build needs an export. Keep manual
+# workflow_dispatch available to reproduce an earlier tagged source.
+concurrency:
+  group: verba-windows-alpha-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -61,20 +67,27 @@ jobs:
 
           W A S D: walk    Mouse: look     Shift: sprint     Space: jump
           E: interact, talk, befriend, gather
-          G: grimoire     B: cycle found books     N: Latin reading quiz
-          1-3: answer book questions or conversational choices
-          Enter: type Latin spell, Enter again to cast
+          G: grimoire     B: cycle found books     N: Latin reading
+          G then R: typed memory exercise     G then J: experiment journal
+          1-3: answer book questions; 1-6: spoken conversation choices
+          Enter (in world): type Latin spell, Enter again to cast
+          Enter (talking to NPC): type Latin sentence, Enter again to speak
+          Escape cancels writing; E / Escape leaves conversation
           F: use held item    Q: drop item    C: familiar order
           V: construction mode
           In construction mode: 1=foundation, 2=wall, 3=shelf, R=rotate,
           mouse aim=position, left-click=build, V/Esc=exit
           G then S: save, G then L: load. Gameplay also autosaves.
 
+          Study books and ask villagers real Latin questions; the world
+          can change through correctly spoken Latin, magic and trade.
           This is an alpha, not a completed game. Expansion, content and
           production-quality art are still under development.
           EOF
+          git rev-parse HEAD > dist/BUILD_SHA.txt
+          printf "\nSource commit: %s\n" "$(cat dist/BUILD_SHA.txt)" >> dist/README.txt
           cd dist
-          zip -q -9 VERBA-Windows-Alpha.zip VERBA.exe VERBA.pck README.txt
+          zip -q -9 VERBA-Windows-Alpha.zip VERBA.exe VERBA.pck README.txt BUILD_SHA.txt
           ls -lh VERBA.exe VERBA.pck VERBA-Windows-Alpha.zip
       - uses: actions/upload-artifact@v4
         with:
