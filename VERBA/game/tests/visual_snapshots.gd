@@ -27,6 +27,9 @@ func _capture() -> void:
 		{"name":"spawn_meadow","eye":Vector2(0,26),"look":Vector2(8,14)},
 		{"name":"cottage_facade","eye":Vector2(34,18),"look":Vector2(29,8)},
 		{"name":"village_market","eye":Vector2(4,24),"look":Vector2(12,15)},
+		{"name":"village_farm","eye":Vector2(9,32),"look":Vector2(17,26)},
+		{"name":"village_bakery","eye":Vector2(12,11.5),"look":Vector2(8.9,16.2)},
+		{"name":"village_forge","eye":Vector2(17.5,13.5),"look":Vector2(21.7,18.7)},
 		{"name":"north_road_bridge","eye":Vector2(-7.5,30.0),"look":Vector2(-19,38)},
 		{"name":"gas_station","eye":Vector2(-20.2,35.6),"look":Vector2(-33,44)},
 		{"name":"castle_gate","eye":Vector2(-32,33),"look":Vector2(-49,44)},
@@ -61,5 +64,5 @@ func _capture() -> void:
 		if image.save_png(path)!=OK:
 			_fail("Cannot save "+path)
 			return
-	print("PASS: eight fixed-view 1280x720 screenshots captured with nontrivial rendered content")
+	print("PASS: eleven fixed-view 1280x720 screenshots captured with nontrivial rendered content")
 	quit(0)

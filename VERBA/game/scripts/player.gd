@@ -567,8 +567,11 @@ func _process(delta: float) -> void:
 					interaction_hint.text="E  ·  Befriend "+n.species+"  /  Enter cast"
 				else:
 					interaction_hint.text=n.species.capitalize()+"  ·  Enter to cast"
+			elif n.has_meta("workplace_kind"): interaction_hint.text="E  ·  Inspect workshop"
 			elif n.has_meta("resource_deposit"): interaction_hint.text="E  ·  Salvage wood"
 			elif n.has_method("apply_effect") and String(n.kind)=="stone": interaction_hint.text="E  ·  Gather stone"
+			elif n.has_method("apply_effect") and String(n.kind) in ["grass","fern"]:
+				interaction_hint.text="E  ·  Harvest herb" if not n.dead and not n.burning and n.food>=.65 else n.get_state_report()
 			elif n.has_method("get_state_report"): interaction_hint.text=n.get_state_report()
 			elif n.has_method("setup") and n.item_type=="leaf": interaction_hint.text="E  ·  Study manuscript leaf"
 			elif n.has_method("setup") and n.item_type=="book": interaction_hint.text="E  ·  Read Latin volume"
@@ -608,6 +611,7 @@ func look_hit(distance: float=18.0) -> Dictionary:
 	if body !=null:
 		for meta_key in ["creature_ref","flora_ref","pickup_ref","npc_ref","harvest_ref","tower_ref"]:
 			if body.has_meta(meta_key): entity=body.get_meta(meta_key);break
+		if entity==null and body.has_meta("workplace_kind"): entity=body
 	return {"position":hit["position"],"entity":entity}
 
 func interact() -> void:
@@ -635,6 +639,10 @@ func interact() -> void:
 		return
 	if n.has_method("is_talkable"):
 		begin_conversation(n)
+		return
+	if n.has_meta("workplace_kind"):
+		say_world(world.workplaces.inspect_workplace(String(n.get_meta("workplace_kind"))),
+			camera.global_position-camera.global_transform.basis.z*2.4,Color("d9c4a2"))
 		return
 	if n.has_meta("resource_deposit") or (n.has_method("apply_effect") and String(n.kind) in ["stone","grass","fern"]):
 		var gathered: Dictionary = world.harvest_resource(n)

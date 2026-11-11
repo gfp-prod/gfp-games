@@ -13,6 +13,7 @@ const MAGIC_SCRIPT = preload("res://scripts/magic.gd")
 const SCHOLAR = preload("res://scripts/scholar.gd")
 const SOCIAL = preload("res://scripts/dialogue_social.gd")
 const VILLAGE_SIM = preload("res://scripts/village_sim.gd")
+const VILLAGE_WORKPLACES = preload("res://scripts/village_workplaces.gd")
 const SIM_LAB = preload("res://scripts/simulation_lab.gd")
 const NPC_ACTOR = preload("res://scripts/npc_actor.gd")
 const CONSTRUCTION = preload("res://scripts/tower_construction.gd")
@@ -36,6 +37,7 @@ var construction
 var harvest_counts: Dictionary = {}
 var social
 var village_sim
+var workplaces
 var simulation_lab
 var village_elapsed: float = 0.0
 var navigation_blockers: Array[Vector3] = []
@@ -109,6 +111,9 @@ func _ready() -> void:
 	social=SOCIAL.new()
 	village_sim=VILLAGE_SIM.new(ground_seed)
 	social.village_sim=village_sim
+	workplaces=VILLAGE_WORKPLACES.new()
+	workplaces.setup(self)
+	add_child(workplaces)
 	populate_social_npcs()
 	# Debug HUD is opt-in; it does not alter ordinary game input or saves.
 	simulation_lab=SIM_LAB.new()
