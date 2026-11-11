@@ -9,6 +9,15 @@ func _initialize() -> void:
 	var roof: ArrayMesh = STORY.make_roof()
 	var underlay: ArrayMesh = STORY.make_roof_underlay()
 	var walls: ArrayMesh = STORY.make_wall_shell()
+	# A one-sided plaster skin disappears from the player's front or flank
+	# even though collision blocks movement. Test the actual material flags.
+	var plaster: StandardMaterial3D = STORY.make_opaque_plaster()
+	if plaster.cull_mode != BaseMaterial3D.CULL_DISABLED:
+		_fail("Cottage walls vanish from one side because of backface culling")
+		return
+	if plaster.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or plaster.albedo_color.a < .999:
+		_fail("Cottage plaster must remain fully opaque in every lighting state")
+		return
 	var roofs: PackedVector3Array = roof.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	var facades: PackedVector3Array = walls.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 	var roof_bounds: AABB = roof.get_aabb()
@@ -25,6 +34,29 @@ func _initialize() -> void:
 		return
 	if facades.size() < 30 or wall_bounds.size.y < 5.2:
 		_fail("Storybook cottage needs a modeled story-and-gable silhouette")
+		return
+	# The six facade panels must cover all four directions, not merely
+	# decorate the edges of a missing building.
+	var panel_triangles: int = int(facades.size()/3)
+	if panel_triangles < 10:
+		_fail("Facade has missing exterior wall or gable triangles")
+		return
+	var front: int = 0
+	var rear: int = 0
+	var left: int = 0
+	var right: int = 0
+	for i in range(0,facades.size(),3):
+		var center: Vector3 = (facades[i]+facades[i+1]+facades[i+2])/3.0
+		if center.z > 2.49:
+			front += 1
+		elif center.z < -2.49:
+			rear += 1
+		if center.x > 2.55:
+			right += 1
+		elif center.x < -2.55:
+			left += 1
+	if mini(front,rear,left,right) < 2:
+		_fail("One or more of the four exterior walls is not fully modeled")
 		return
 	# These faces were reversed on the first render, leaving the entire roof
 	# artificially black despite a correct mesh silhouette.
