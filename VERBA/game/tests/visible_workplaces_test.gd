@@ -23,6 +23,12 @@ func _run() -> void:
 		if district.find_child(label,true,false)==null:
 			fail("Missing workplace in level: "+label)
 			return
+	for collision_name in ["PhysicalHarvestCart","PhysicalBakeOven",
+			"PhysicalBreadCounter","PhysicalCoalForge","PhysicalAnvil"]:
+		var shape=district.find_child(collision_name,true,false)
+		if shape==null or not (shape is StaticBody3D) or shape.collision_layer!=16:
+			fail("Workplace has no real physical obstacle: "+collision_name)
+			return
 	var economy=world.village_sim.economy
 	var slots: Dictionary=district.displays
 	for kind in ["grain","bread","tools"]:
