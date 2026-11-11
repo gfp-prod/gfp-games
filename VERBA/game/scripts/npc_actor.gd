@@ -347,7 +347,8 @@ func _physics_process(delta: float) -> void:
 			work_dwell+=delta
 		else:
 			work_dwell=0.0
-		if work_dwell>=3.0:
+		var task_seconds: float=1.8 if npc_id=="daro" and String(order.get("phase",""))=="labor" and world.village_sim.field_fertility>0 else 3.0
+		if work_dwell>=task_seconds:
 			if npc_id=="daro" and String(order.get("phase",""))=="labor":
 				world.village_sim.advance_work(npc_id)
 			else:

@@ -9,6 +9,7 @@ var displays: Dictionary = {}
 var production_lamps: Dictionary = {}
 var refresh_elapsed: float = 0.0
 var prior_signature: String = ""
+var growing_stalks: Array[Node3D] = []
 
 func setup(owner_world: Node3D) -> void:
 	world = owner_world
@@ -128,13 +129,16 @@ func _build_fields() -> void:
 			var x: float=14.3+float(plant)*.71
 			var base: Vector3=_ground(x,z,.06)-plot.global_position
 			var sway: float=sin(float(row)*1.7+float(plant)*2.18)*.11
-			ART.bone(plot,base,base+Vector3(sway,.85+float((row+plant)%3)*.075,0),
+			var stem:=Node3D.new()
+			stem.name="ResponsiveGrain_%d_%d" % [row,plant]
+			stem.position=base
+			plot.add_child(stem)
+			growing_stalks.append(stem)
+			ART.bone(stem,Vector3.ZERO,Vector3(sway,.85+float((row+plant)%3)*.075,0),
 				.024,.012,stalk,7)
-			ART.orb(plot,base+Vector3(sway,.77,.02),
-				Vector3(.090,.14,.06),harvest,9)
+			ART.orb(stem,Vector3(sway,.77,.02),Vector3(.090,.14,.06),harvest,9)
 			for side in [-1.0,1.0]:
-				ART.bone(plot,base+Vector3(0,.21,0),
-					base+Vector3(side*.21,.45,.07),.036,.008,leaf,6)
+				ART.bone(stem,Vector3(0,.21,0),Vector3(side*.21,.45,.07),.036,.008,leaf,6)
 	# Seed cart and real sacks are outside the 4m-by-7m field.
 	var cart := _site("DaroGrainCart",13.0,23.0)
 	ART.box(cart,Vector3(0,.53,0),Vector3(2.0,.22,1.2),dark_wood)
@@ -306,6 +310,13 @@ func _build_market() -> void:
 	ART.box(stall,Vector3(0,.98,0),Vector3(2.55,.16,1.35),timber)
 	_sign(stall,"MERCATUS",Vector3(0,2.06,-.82),pale.albedo_color)
 
+func is_field_target(point: Vector3) -> bool:
+	# The spell must actually touch Daro's cultivated ground, not a
+	# faraway boulder, an unrelated fern, or the distant village stockpile.
+	if world==null: return false
+	var horizontal: float=Vector2(point.x-18.0,point.z-27.0).length()
+	return horizontal<5.0 and absf(point.y-world.height_at(point.x,point.z))<2.5
+
 func inspect_workplace(kind: String) -> String:
 	# Diegetic E-inspection uses the same authority as trade, work and
 	# restoration. No decorative stock estimate, random numbers or UI cache.
@@ -317,7 +328,7 @@ func inspect_workplace(kind: String) -> String:
 	var wood: int=int(ledger.stocks.get("wood",0))
 	var tools: int=int(ledger.stocks.get("tools",0))
 	match kind:
-		"grain": return "FRUMENTUM — Grain in the village store: %d." % grain
+		"grain": return "FRUMENTUM — Grain: %d in store; %d growth promised by the field." % [grain,world.village_sim.field_fertility]
 		"bread": return "PANIS — Bread in the village store: %d." % bread
 		"bakery":
 			return "FURNUS — Grain: %d · Bread: %d · %s." % [
@@ -334,9 +345,14 @@ func refresh_from_economy(force: bool=false) -> void:
 	var sig: String="%d:%d:%d:%d:%d" % [
 		int(economy.stocks["grain"]),int(economy.stocks["bread"]),
 		int(economy.stocks["tools"]),int(economy.stocks["ore"]),
-		int(economy.stocks["wood"])]
+		int(economy.stocks["wood"])] + ":%d" % int(world.village_sim.field_fertility)
 	if not force and sig==prior_signature: return
 	prior_signature=sig
+	# Scale actual planted stalks, not a disconnected glow decal.
+	# A bounded bonus never adds scene nodes on repeated incantations.
+	var extra: float=float(world.village_sim.field_fertility)*.068
+	for stalk in growing_stalks:
+		stalk.scale.y=1.0+extra
 	for kind in displays:
 		var nodes: Array=displays[kind]
 		var available: int=int(economy.stocks.get(kind,0))
