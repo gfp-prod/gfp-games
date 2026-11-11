@@ -14,7 +14,7 @@ func _check_invariants(sim) -> String:
 	for id in sim.people:
 		var p: Dictionary = sim.people[id]
 		if String(p.get("id",""))!=id: return "Unstable NPC ID"
-		if int(p["wealth"])<0 or int(p["wealth"])>100: return "Invalid wealth"
+		if int(p["wealth"])<0 or int(p["wealth"])>100: return "Invalid wealth for %s: %s (last=%s)" % [id,str(p["wealth"]),str(p["last_action"])]
 		for metric in ["hunger","fatigue","loneliness","mood"]:
 			if float(p[metric])<0.0 or float(p[metric])>100.0:
 				return "Out of bounds " + metric
