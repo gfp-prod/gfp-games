@@ -58,7 +58,7 @@ func _ready() -> void:
 func update_from_knowledge() -> void:
 	if world==null or world.social==null or inscription==null:
 		return
-	var topics: Array=world.social.memory("mara").get("topics",[])
+	var topics: Array=world.social.memory("mara").get("spoken_topics",[])
 	var should_reveal: bool=topics.has("forest")
 	revealed=should_reveal
 	# The existing stone changes; no game UI marker is spawned in the sky.
