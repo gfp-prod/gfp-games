@@ -42,6 +42,7 @@ func _capture_world() -> void:
 		{"name":"cottage_woodland","at":Vector2(38.0,14.5),"look":Vector2(29.0,8.0),"target_y":2.5},
 		{"name":"cottage_rear","at":Vector2(31.0,-0.2),"look":Vector2(29.0,8.0),"target_y":2.7},
 		{"name":"cottage_interior","at":Vector2(29.0,8.0),"look":Vector2(27.3,11.1),"target_y":2.0},
+		{"name":"cottage_interior_study","at":Vector2(29.0,8.0),"look":Vector2(29.2,5.5),"target_y":1.5},
 		{"name":"priory_approach","at":Vector2(3.5,-22.0),"look":Vector2(4.0,-35.0),"target_y":2.6},
 		{"name":"creek_bank","at":Vector2(-13.0,9.0),"look":Vector2(-19.0,10.0),"target_y":0.7},
 		{"name":"willow_bank","at":Vector2(-11.8,16.5),"look":Vector2(-21.0,7.0),"target_y":3.1}
