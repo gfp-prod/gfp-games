@@ -1063,6 +1063,17 @@ func populate_collectibles() -> void:
 			inscription.position = Vector3(0,.55,.428)
 			book_plinth.add_child(inscription)
 			spawn_item("book",String(id),Vector3(x,height_at(x,z)+.94,z))
+		elif String(id)=="de_castello":
+			# The castle archive contains a real collectable architecture book,
+			# not a remotely delivered reward or a text-only map marker.
+			var table := Node3D.new()
+			table.name="CastleLatinManuscriptTable"
+			table.position=Vector3(x,height_at(x,z),z)
+			add_child(table)
+			ART.box(table,Vector3(0,.36,0),Vector3(.98,.12,.60),bark_mat)
+			for tx in [-.38,.38]:
+				ART.box(table,Vector3(tx,.17,0),Vector3(.12,.33,.50),bark_dark)
+			spawn_item("book",String(id),Vector3(x,height_at(x,z)+.47,z))
 		else:
 			spawn_item("book",String(id),Vector3(x,height_at(x,z),z))
 	for w in [
