@@ -39,7 +39,7 @@ func _run() -> void:
 	bridge_query.collision_mask=16
 	var bridge_hit: Dictionary=world.get_world_3d().direct_space_state.intersect_ray(bridge_query)
 	if bridge_hit.is_empty() or bridge_hit.get("collider")!=deck:
-		_fail("North road deck ray: hit=%s at height=%.2f bank_y=(%.2f,%.2f) streambed=%.2f" % [String(bridge_hit.get("collider",null)),height,world.height_at(east.x,east.y),world.height_at(west.x,west.y),world.height_at(center.x,center.y)])
+		_fail("North road deck ray: hit=%s at height=%.2f bank_y=(%.2f,%.2f) streambed=%.2f" % [str(bridge_hit.get("collider",null)),height,world.height_at(east.x,east.y),world.height_at(west.x,west.y),world.height_at(center.x,center.y)])
 		return
 	var station: Node3D=district.find_child("ValeFuelStation",true,false)
 	var castle: Node3D=district.find_child("CastleOfTheSecondRoad",true,false)
