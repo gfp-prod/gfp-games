@@ -29,7 +29,7 @@ func _capture() -> void:
 		{"name":"village_market","eye":Vector2(4,24),"look":Vector2(12,15)},
 		{"name":"north_road_bridge","eye":Vector2(-7.5,30.0),"look":Vector2(-19,38)},
 		{"name":"gas_station","eye":Vector2(-20.2,35.6),"look":Vector2(-33,44)},
-		{"name":"castle_gate","eye":Vector2(-35,30),"look":Vector2(-49,44)},
+		{"name":"castle_gate","eye":Vector2(-32,33),"look":Vector2(-49,44)},
 		{"name":"station_shop","eye":Vector2(-30.8,44),"look":Vector2(-36.4,44)},
 		{"name":"castle_archive","eye":Vector2(-47,44),"look":Vector2(-51.6,44)}
 	]
