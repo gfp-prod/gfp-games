@@ -323,14 +323,19 @@ func height_at(x: float,z: float) -> float:
 	var raw: float = _raw_height_at(x,z)
 	# Two small intentionally levelled authored sites. The surrounding hills
 	# blend back over 4–5 metres; no hovering floors or invisible terrain seams.
-	var station_edge: float=maxf(absf(x+33.0)/9.0,absf(z-44.0)/7.0)
-	if station_edge<1.48:
-		raw=lerpf(raw,_raw_height_at(-33.0,44.0),
-			1.0-smoothstep(1.0,1.48,station_edge))
-	var castle_edge: float=maxf(absf(x+49.0)/10.0,absf(z-44.0)/10.0)
-	if castle_edge<1.45:
+	# Non-overlapping graded pads: the original broad falloffs merged two
+	# different elevations and pushed a grassy ridge through the shop floor.
+	var castle_edge: float=maxf(absf(x+49.0)/7.9,absf(z-44.0)/8.1)
+	if castle_edge<1.17:
 		raw=lerpf(raw,_raw_height_at(-49.0,44.0),
-			1.0-smoothstep(1.0,1.45,castle_edge))
+			1.0-smoothstep(1.0,1.17,castle_edge))
+	# Station forecourt extends farther toward the river than the shop does
+	# toward the castle. Asymmetric extents preserve both usable flat floors.
+	var station_x_edge: float=(absf(x+33.0)/6.4) if x < -33.0 else ((x+33.0)/10.0)
+	var station_edge: float=maxf(station_x_edge,absf(z-44.0)/5.0)
+	if station_edge<1.16:
+		raw=lerpf(raw,_raw_height_at(-33.0,44.0),
+			1.0-smoothstep(1.0,1.16,station_edge))
 	if absf(x-29.0) > 13.0 or absf(z-8.0) > 13.0:
 		return raw
 	var local: Vector2 = cottage_local_xz(x,z)
