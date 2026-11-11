@@ -47,6 +47,9 @@ var conversation_name: Label
 var conversation_body: Label
 var conversation_options: Label
 var conversation_reply: String = ""
+var build_mode: bool = false
+var build_kind: String = "floor"
+var build_face: int = 0
 
 
 func _ready() -> void:
@@ -174,6 +177,7 @@ func refresh_held_model() -> void:
 			l.omni_range=4.5
 			l.position=Vector3(0,.56,0)
 			prop.add_child(l)
+		"wood": ART.box(prop,Vector3(0,.22,-.13),Vector3(.21,.18,.45),ART.mat(Color("81694f")))
 		"stone": ART.stone(prop,Vector3(0,.12,-.13),Vector3(.19,.15,.22),ART.mat(Color("74766e")))
 		"herb":
 			ART.bone(prop,Vector3(0,-.1,0),Vector3(0,.5,-.02),.03,.01,ART.mat(Color("67795a")))
@@ -239,12 +243,29 @@ func create_first_steps() -> void:
 	head.add_theme_color_override("font_color", Color("f0d9ad"))
 	v.add_child(head)
 	var sub := Label.new()
-	sub.text = "WASD move · Mouse look · E interact\nG grimoire · B books · N study\n1-3 answers/dialogue · Enter cast\nC familiar orders · H help"
+	sub.text = "WASD move · Mouse look · E interact\nG grimoire · B books · N study\n1-3 answers/dialogue · Enter cast\nC familiar orders · V build · H help"
 	sub.add_theme_font_size_override("font_size", 14)
 	sub.add_theme_color_override("font_color", Color("ded6bf"))
 	v.add_child(sub)
 	guide_clock = 0.0
 	guide_panel.visible = false
+
+func toggle_build_mode() -> void:
+	if typing or book.open or conversation_actor != null: return
+	build_mode = not build_mode
+	if not build_mode and world.construction != null:
+		world.construction.hide_preview()
+
+func place_tower_piece() -> Dictionary:
+	if not build_mode or world.construction == null:
+		return {"ok":false,"message":"Enter build mode with V."}
+	var hit: Dictionary = look_hit(15.0)
+	var point: Vector3 = hit.get("position",global_position)
+	var placed: Dictionary = world.construction.build(build_kind,point,build_face,self)
+	say_world(String(placed.get("message","")),
+		camera.global_position-camera.global_transform.basis.z*2.4,
+		Color("d5d2a2") if bool(placed.get("ok",false)) else Color("d18f84"))
+	return placed
 
 func create_conversation_panel() -> void:
 	# Appears ONLY while speaking to a person in the world, unlike a
@@ -348,6 +369,10 @@ func end_conversation() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
+		if event.button_index==MOUSE_BUTTON_LEFT and event.pressed and build_mode and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
+			place_tower_piece()
+			get_viewport().set_input_as_handled()
+			return
 		if event.button_index==MOUSE_BUTTON_LEFT and event.pressed and Input.mouse_mode!=Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 			get_viewport().set_input_as_handled()
@@ -363,6 +388,17 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if not (event is InputEventKey) or not event.pressed or event.echo: return
+	if build_mode:
+		if event.keycode in [KEY_ESCAPE,KEY_V]:
+			toggle_build_mode()
+		elif event.keycode==KEY_R:
+			build_face=posmod(build_face+1,4)
+		elif event.keycode in [KEY_1,KEY_2,KEY_3]:
+			build_kind=["floor","wall","shelf"][event.keycode-KEY_1]
+		elif event.keycode==KEY_E:
+			interact()
+		get_viewport().set_input_as_handled()
+		return
 	if conversation_actor != null:
 		if event.keycode == KEY_ESCAPE or event.keycode == KEY_E:
 			end_conversation()
@@ -434,6 +470,9 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.keycode==KEY_E:
 		interact()
+		get_viewport().set_input_as_handled()
+	elif event.keycode==KEY_V:
+		toggle_build_mode()
 		get_viewport().set_input_as_handled()
 	elif event.keycode==KEY_C:
 		var order: Dictionary = world.cycle_familiar_order()
@@ -509,7 +548,12 @@ func create_diagnostics() -> void:
 func _process(delta: float) -> void:
 	if not is_instance_valid(world): return
 	if world.scholar != null: world.scholar.regenerate(delta)
-	if not typing and not book.open and conversation_actor == null:
+	if build_mode:
+		var spot: Vector3 = look_hit(15.0)["position"]
+		var assessment: Dictionary = world.construction.show_preview(build_kind,spot,build_face,inventory)
+		interaction_hint.text = "BUILD %s  ·  %s  ·  Click place / 1-3 part / R rotate / V exit" % [
+			build_kind,String(assessment.get("message",""))]
+	elif not typing and not book.open and conversation_actor == null:
 		var nearest:Dictionary=look_hit(3.8)
 		if nearest.has("entity") and nearest["entity"]!=null:
 			var n=nearest["entity"]
@@ -521,6 +565,8 @@ func _process(delta: float) -> void:
 					interaction_hint.text="E  ·  Befriend "+n.species+"  /  Enter cast"
 				else:
 					interaction_hint.text=n.species.capitalize()+"  ·  Enter to cast"
+			elif n.has_meta("resource_deposit"): interaction_hint.text="E  ·  Salvage wood"
+			elif n.has_method("apply_effect") and String(n.kind)=="stone": interaction_hint.text="E  ·  Gather stone"
 			elif n.has_method("get_state_report"): interaction_hint.text=n.get_state_report()
 			elif n.has_method("setup") and n.item_type=="leaf": interaction_hint.text="E  ·  Study manuscript leaf"
 			elif n.has_method("setup") and n.item_type=="book": interaction_hint.text="E  ·  Read Latin volume"
@@ -558,7 +604,7 @@ func look_hit(distance: float=18.0) -> Dictionary:
 	var body=hit.get("collider",null)
 	var entity:Node3D=null
 	if body !=null:
-		for meta_key in ["creature_ref","flora_ref","pickup_ref","npc_ref"]:
+		for meta_key in ["creature_ref","flora_ref","pickup_ref","npc_ref","harvest_ref"]:
 			if body.has_meta(meta_key): entity=body.get_meta(meta_key);break
 	return {"position":hit["position"],"entity":entity}
 
@@ -577,6 +623,12 @@ func interact() -> void:
 	if n==null or not is_instance_valid(n): return
 	if n.has_method("is_talkable"):
 		begin_conversation(n)
+		return
+	if n.has_meta("resource_deposit") or (n.has_method("apply_effect") and String(n.kind)=="stone"):
+		var gathered: Dictionary = world.harvest_resource(n)
+		say_world(String(gathered.get("message","")),
+			camera.global_position-camera.global_transform.basis.z*2.2,
+			Color("b8cd9d") if bool(gathered.get("ok",false)) else Color("c5a08b"))
 		return
 	if n.has_method("afflict"):
 		var bond: Dictionary = world.bond_animal(n)
