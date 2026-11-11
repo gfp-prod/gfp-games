@@ -34,6 +34,7 @@ var animation_player: AnimationPlayer
 var active_clip: String = ""
 var using_library_mesh: bool = false
 var replan_after: float = 0.0
+var familiar_tag: Label3D
 
 func setup(w: Node3D, kind: String, pos3: Vector3, seed_value: int) -> void:
 	world = w
@@ -81,6 +82,18 @@ func _ready() -> void:
 	c.position.y = 0.23 if species in ["hare","crow"] else (0.40 if species=="fox" else 0.70)
 	proximity.add_child(c)
 	update_physical_dimensions()
+	familiar_tag = Label3D.new()
+	familiar_tag.name = "BondedCreatureIdentity"
+	familiar_tag.text = "FAMILIAR"
+	familiar_tag.pixel_size = .003
+	familiar_tag.font_size = 36
+	familiar_tag.modulate = Color("e0d3a3")
+	familiar_tag.outline_size = 7
+	familiar_tag.outline_modulate = Color("2a3228")
+	familiar_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	familiar_tag.position = Vector3(0,1.12,0)
+	familiar_tag.visible = false
+	add_child(familiar_tag)
 	choose_direction()
 
 func update_physical_dimensions() -> void:
@@ -202,6 +215,8 @@ func choose_direction() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(world): return
+	if familiar_tag != null:
+		familiar_tag.visible = world.familiar_id == persistent_id and not dead
 	phase += delta * (2.0 + speed)
 	wetness = minf(1.0, wetness + delta * 0.23) if world.raining else maxf(0.0, wetness - delta * .06)
 	# Needs and injury are individual to this animal; they persist after spells.
