@@ -289,6 +289,7 @@ func _npc_in_conversation_reach(actor: Node3D) -> bool:
 func begin_conversation(actor: Node3D) -> bool:
 	if typing or book.open or conversation_actor != null:
 		return false
+	if not is_instance_valid(actor): return false
 	if not actor.has_method("is_talkable") or not actor.is_talkable():
 		return false
 	if not _npc_in_conversation_reach(actor): return false
@@ -306,7 +307,7 @@ func refresh_conversation() -> void:
 	conversation_name.text = String(state.get("name","")) + "  /  " + String(state.get("role",""))
 	conversation_body.text = conversation_reply if not conversation_reply.is_empty() else String(state.get("spoken",""))
 	var choices: Array = state.get("options",[])
-	var lines: Array[String] = []
+	var lines: PackedStringArray = PackedStringArray()
 	for choice in choices:
 		var suffix: String = "" if bool(choice.get("available",true)) else "   [unavailable]"
 		lines.append("%d. %s%s" % [int(choice.get("index",0))+1,
