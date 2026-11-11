@@ -40,5 +40,16 @@ func run_checks() -> void:
 		printerr("FAIL: visual turret lacks solid collision")
 		quit(7)
 		return
+	var wall_instance: MeshInstance3D = cottage.find_child(
+		"OnePieceTaperedLimePlasterWalls",true,false) as MeshInstance3D
+	if wall_instance == null or not (wall_instance.material_override is StandardMaterial3D):
+		printerr("FAIL: visible cottage plaster shell is missing")
+		quit(8)
+		return
+	var plaster: StandardMaterial3D = wall_instance.material_override as StandardMaterial3D
+	if plaster.cull_mode != BaseMaterial3D.CULL_DISABLED or plaster.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
+		printerr("FAIL: actual cottage facade is backface-culled or transparent")
+		quit(9)
+		return
 	print("PASS: scene, world, player, grimoire, wildlife, and lexicon instantiated")
 	quit(0)
