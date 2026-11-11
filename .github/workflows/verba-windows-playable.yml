@@ -1,0 +1,84 @@
+name: VERBA Windows playable alpha
+on:
+  workflow_dispatch:
+  push:
+    branches: [verba-godot]
+    paths:
+      - "VERBA/game/export_presets.cfg"
+      - ".github/workflows/verba-windows-playable.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export-windows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+          include-templates: true
+      - name: Import project assets and reject hidden script failures
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --editor --import --quit 2>&1 | tee godot-import.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:' godot-import.log; then
+            echo "::error::Godot importer found a broken script"
+            exit 1
+          fi
+      - name: Export the actual x64 Windows Godot game
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          godot --headless --path . --export-release "Windows Desktop" dist/VERBA.exe 2>&1 | tee dist/export.log
+          if grep -E 'ERROR:|SCRIPT ERROR:|Export failed|Cannot export' dist/export.log; then
+            echo "::error::Export reported a failure"
+            exit 1
+          fi
+          test -s dist/VERBA.exe
+          test -s dist/VERBA.pck
+          file dist/VERBA.exe | tee dist/file-validation.txt
+          grep -q 'PE32+' dist/file-validation.txt
+      - name: Package portable playable alpha
+        shell: bash
+        run: |
+          cat > dist/README.txt <<'EOF'
+          VERBA - The Hollow Vale | Windows Alpha
+          Godot 4.5.2 | 64-bit Windows 10/11
+
+          Extract both VERBA.exe and VERBA.pck into the SAME folder, then run VERBA.exe.
+          The executable is not code-signed. Keep Windows security protections enabled.
+          Only open software you trust and verify the publisher/source at:
+          https://github.com/gfp-prod/gfp-games/tree/verba-godot/VERBA
+
+          W A S D: walk    Mouse: look     Shift: sprint     Space: jump
+          E: interact, talk, befriend, gather
+          G: grimoire     B: cycle found books     N: Latin reading quiz
+          1-3: answer book questions or conversational choices
+          Enter: type Latin spell, Enter again to cast
+          F: use held item    Q: drop item    C: familiar order
+          V: construction mode
+          In construction mode: 1=foundation, 2=wall, 3=shelf, R=rotate,
+          mouse aim=position, left-click=build, V/Esc=exit
+          G then S: save, G then L: load. Gameplay also autosaves.
+
+          This is an alpha, not a completed game. Expansion, content and
+          production-quality art are still under development.
+          EOF
+          cd dist
+          zip -q -9 VERBA-Windows-Alpha.zip VERBA.exe VERBA.pck README.txt
+          ls -lh VERBA.exe VERBA.pck VERBA-Windows-Alpha.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VERBA-Windows-Playable
+          path: VERBA/game/dist/VERBA-Windows-Alpha.zip
+          if-no-files-found: error
+          retention-days: 14
