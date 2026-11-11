@@ -16,6 +16,16 @@ Find **De Herbis** on a labeled stone near spawn and press **E** to collect. G o
 - Physical inscribed Latin tablet beside the starting cairn encourages discovery.
 - Forests are grouped into curated stands around roads, structures and a visible clearing.
 
+## Play the next sandbox systems
+
+**Talk to people:** Mara, the roadside scribe, stands by the starting path near the first Latin tablet. Tomas, the hermitage keeper, waits farther along the road near the cottage. Walk up, aim at a person and press **E**. Choose **1 / 2 / 3**, and use **E** or **Escape** to leave. Dialogue starts with English assistance, then contains progressively more Latin as you successfully study books. Familiar topics are remembered; repeating lines does not farm rapport. Carry a **herb** to trade with Tomas for the real *De Igne et Aqua* volume.
+
+**Choose a familiar:** Take a **herb** to a wild hare or **amber** to a wild crow. Approach, aim and press **E** to offer it. You may have one familiar at a time. The animal is the actual existing creature, not a spawned duplicate. Press **C** to cycle follow / stay / rest. You may also address it with correct Latin (for example `veni corve`, `siste corve`, `dormi corve`) while aiming; successful spells update its persistent behavior. The gift, species, bond and command survive world saves.
+
+**Survive:** Sprinting and jumping spend stamina, which recovers while walking or resting. The wolf in the distant wilderness now pursues and injures a player who comes within range, but cannot bite through physical walls. **F** while holding a herb restores vitality. Being defeated returns you to the starting cairn with partial health and drops one carried item at the defeat location; your books, spell knowledge and scholarship are retained. Actual health, stamina and defeats are saved.
+
+This is a deliberately small playable milestone, not yet a complete survival game: there are no two-story tower construction controls, full village/station, NPC schedules, or diverse hostile mobs. Those remain in the master plan.
+
 ## Validation
 GitHub Actions runs the real Godot engine headlessly for startup, ecology, movement/navigation, Latin grammar, world state persistence and deterministic material exchange. A second workflow starts Godot in an OpenGL virtual display and produces *actual* world/animal screenshots and animation previews, with a pixel-based distortion gate.
 
