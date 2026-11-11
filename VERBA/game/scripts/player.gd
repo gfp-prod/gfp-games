@@ -626,7 +626,7 @@ func interact() -> void:
 	if n.has_method("is_talkable"):
 		begin_conversation(n)
 		return
-	if n.has_meta("resource_deposit") or (n.has_method("apply_effect") and String(n.kind)=="stone"):
+	if n.has_meta("resource_deposit") or (n.has_method("apply_effect") and String(n.kind) in ["stone","grass","fern"]):
 		var gathered: Dictionary = world.harvest_resource(n)
 		say_world(String(gathered.get("message","")),
 			camera.global_position-camera.global_transform.basis.z*2.2,
