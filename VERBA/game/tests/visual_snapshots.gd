@@ -171,7 +171,7 @@ func _capture() -> void:
 		return
 	camera.current=true
 	var marker: Vector3=world.forest_waystone.global_position
-	camera.global_position=marker+Vector3(1.1,1.55,3.0)
+	camera.global_position=marker+Vector3(1.1,1.55,-3.0)
 	camera.look_at(marker+Vector3.UP*.85,Vector3.UP)
 	for i in range(14): await process_frame
 	RenderingServer.force_draw()
