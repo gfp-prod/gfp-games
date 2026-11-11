@@ -47,7 +47,7 @@ static func decorate(tree: Node3D) -> void:
 	var curtain := MeshInstance3D.new()
 	curtain.name = "TwentyHangingBranchesOfLeaves"
 	curtain.mesh = make_curtain_leaves(ends)
-	var leaves := ART.mat(Color("b4b69a"),1.0)
+	var leaves := ART.mat(Color("9da995"),1.0)
 	leaves.vertex_color_use_as_albedo = true
 	leaves.cull_mode = BaseMaterial3D.CULL_DISABLED
 	curtain.material_override = leaves
@@ -60,30 +60,30 @@ static func make_curtain_leaves(ends: Array[Vector3]) -> ArrayMesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for branch in range(ends.size()):
 		var tip: Vector3 = ends[branch]
-		for tassel in range(6):
+		for tassel in range(9):
 			var shift := Vector3(rng.randf_range(-.33,.33),0,
 				rng.randf_range(-.33,.33))
 			var origin: Vector3 = tip+shift
-			var fall: float = rng.randf_range(1.00,2.35)
-			for leaf_id in range(11):
-				var t: float = float(leaf_id)/11.0
+			var fall: float = rng.randf_range(1.22,2.38)
+			for leaf_id in range(15):
+				var t: float = float(leaf_id)/15.0
 				var center: Vector3 = origin+Vector3(
 					sin(t*PI)*(.12+.08*float(tassel%2)),
 					-t*fall,
 					cos(t*PI*1.3)*.085)
 				var lean: Vector3 = Vector3(
-					rng.randf_range(-.17,.17),-.19,
-					rng.randf_range(-.17,.17))
+					rng.randf_range(-.095,.095),-.118,
+					rng.randf_range(-.095,.095))
 				var across := Vector3(-lean.z,0,lean.x).normalized()
 				if across.length_squared() < .001:
 					across=Vector3.RIGHT
-				var width: float = rng.randf_range(.058,.102)
+				var width: float = rng.randf_range(.022,.046)
 				var tip_leaf: Vector3 = center+lean
 				var mid: Vector3 = center+lean*.54+Vector3.UP*.018
-				var color: Color = Color("879b72").lerp(
-					Color("b1a27a"),rng.randf_range(.03,.42))
+				var color: Color = Color("788c6f").lerp(
+					Color("a99c7e"),rng.randf_range(.03,.42))
 				if branch%5==0:
-					color = color.lerp(Color("b3ad8c"),.35)
+					color = color.lerp(Color("9b9978"),.25)
 				_tri(st,center,mid+across*width,tip_leaf,color)
 				_tri(st,center,tip_leaf,mid-across*width,color.darkened(.075))
 	st.generate_normals()
