@@ -2,6 +2,7 @@ extends RefCounted
 ## Deterministic social simulation. No scene nodes, UI, or omniscient world knowledge.
 ## Each fixed tick evaluates circumstances; actions emit causal, witnessed events.
 const VERSION := 1
+const ECONOMY = preload("res://scripts/village_economy.gd")
 const ROLES := [
 	["mara","scribe","crow",82,53,24],
 	["tomas","keeper","crow",75,36,30],
@@ -17,6 +18,8 @@ const ROLES := [
 	["sela","merchant","wolf",57,65,72]
 ]
 var rng := RandomNumberGenerator.new()
+var economy = ECONOMY.new()
+var last_scores: Dictionary = {}
 var people: Dictionary = {}
 var events: Array[Dictionary] = []
 var tick_count := 0
@@ -33,6 +36,8 @@ func reset(seed_value: int) -> void:
 	people.clear()
 	events.clear()
 	recent_action.clear()
+	last_scores.clear()
+	economy=ECONOMY.new()
 	tick_count = 0
 	next_event_id = 1
 	for row in ROLES:
@@ -57,9 +62,9 @@ func _score(p: Dictionary, action: String) -> float:
 	var cat: float = float(p["cat"])/100.0
 	var wolf: float = float(p["wolf"])/100.0
 	match action:
-		"eat": return float(p["hunger"])*1.45 if int(p["wealth"]) > 0 else -1.0
+		"eat": return float(p["hunger"])*1.45 if int(p["wealth"]) > 0 and int(economy.stocks["bread"])>0 else -1.0
 		"rest": return float(p["fatigue"])*1.45
-		"work": return 15.0 + crow*32.0 + (8.0 if int(p["wealth"]) < 4 else 0.0) - float(p["fatigue"])*0.30
+		"work": return (15.0 + crow*32.0 + (8.0 if int(p["wealth"]) < 4 else 0.0) - float(p["fatigue"])*0.30) if economy.can_work(String(p["role"])) else -1.0
 		"socialize": return float(p["loneliness"])*0.80 + cat*22.0 - float(p["fatigue"])*0.12
 		"court": return float(p["loneliness"])*0.58 + cat*25.0 + wolf*8.0 - (22.0 if not String(p["spouse"]).is_empty() else 0.0)
 		"steal": return (46.0 if int(p["wealth"]) < 3 else -25.0) + wolf*28.0 - crow*14.0
@@ -79,6 +84,7 @@ func _select(p: Dictionary) -> String:
 		scores[action] = _score(p,action) + rng.randf_range(-3.0,3.0)
 		if String(recent_action.get(p["id"],"")) == action:
 			scores[action] -= 7.0
+	last_scores[String(p["id"])] = scores.duplicate(true)
 	var best: String = "rest"
 	for action in scores:
 		if float(scores[action]) > float(scores.get(best,-INF)): best = action
@@ -125,15 +131,13 @@ func _act(id: String, action: String) -> void:
 	var p: Dictionary = people[id]
 	match action:
 		"eat":
-			if int(p["wealth"])>0:
-				p["wealth"] -= 1
-				p["hunger"] = maxf(0.0,float(p["hunger"])-48.0)
+			economy.eat(id,p)
 		"rest":
 			p["fatigue"] = maxf(0.0,float(p["fatigue"])-55.0)
 		"work":
-			p["wealth"] = mini(100,int(p["wealth"])+2)
-			p["fatigue"] = minf(100.0,float(p["fatigue"])+12.0)
-			p["mood"] = minf(100.0,float(p["mood"])+float(p["crow"])*0.035)
+			if economy.work(id,String(p["role"]),p):
+				p["fatigue"] = minf(100.0,float(p["fatigue"])+12.0)
+				p["mood"] = minf(100.0,float(p["mood"])+float(p["crow"])*0.035)
 		"socialize":
 			var other: String = _candidate(id)
 			if not other.is_empty():
@@ -178,12 +182,14 @@ func step() -> void:
 	tick_count += 1
 	# Local scarcity changes the incentives without dictating a plot. It is
 	# possible to earn money, lose customers, or become desperate later.
+	economy.tick=tick_count
 	if tick_count % 19 == 0:
+		var lost: int=economy.shortage("grain",rng.randi_range(2,5))
 		var affected: String = _candidate("")
 		if not affected.is_empty():
 			people[affected]["wealth"] = maxi(0,int(people[affected]["wealth"])-rng.randi_range(5,11))
 			people[affected]["mood"] = maxf(0.0,float(people[affected]["mood"])-12.0)
-			_event("shortage",affected)
+			_event("shortage",affected,"",lost)
 	var ordered: Array = people.keys()
 	ordered.sort()
 	for id in ordered:
@@ -200,10 +206,23 @@ func witness_event(kind: String, actor: String, target: String = "") -> bool:
 	_event(kind,actor,target)
 	return true
 
+func inspector(id: String) -> Dictionary:
+	if not people.has(id): return {}
+	var p: Dictionary=people[id]
+	var ranked: Array[Dictionary]=[]
+	for action in ["eat","rest","work","socialize","court","steal","investigate"]:
+		ranked.append({"action":action,"score":_score(p,action)})
+	ranked.sort_custom(func(a,b): return float(a["score"])>float(b["score"]))
+	return {"id":id,"person":p.duplicate(true),"ranked_actions":ranked,
+		"stocks":economy.stocks.duplicate(true),"treasury":economy.treasury,
+		"recent_transactions":economy.transactions.slice(maxi(0,economy.transactions.size()-8)),
+		"tick":tick_count}
+
 func snapshot() -> Dictionary:
 	return {"version":VERSION,"tick":tick_count,"rng_state":str(rng.state),
 		"next_event_id":next_event_id,"people":people.duplicate(true),
-		"events":events.duplicate(true),"recent_action":recent_action.duplicate(true)}
+		"events":events.duplicate(true),"recent_action":recent_action.duplicate(true),
+		"economy":economy.snapshot()}
 
 func restore(record: Dictionary) -> bool:
 	restore_error = ""
@@ -234,6 +253,14 @@ func restore(record: Dictionary) -> bool:
 		if not (entry is Dictionary) or not stored.has(String(entry.get("actor",""))):
 			restore_error = "invalid event actor"
 			return false
+	# Schema-1 saves created before the resource economy receive default stocks.
+	var next_economy=ECONOMY.new()
+	var saved_economy: Variant=record.get("economy",{})
+	if saved_economy is Dictionary and not saved_economy.is_empty():
+		if not next_economy.restore(saved_economy):
+			restore_error="invalid resource economy"
+			return false
+	economy=next_economy
 	people = stored.duplicate(true)
 	events.clear()
 	for entry in history:
