@@ -5,6 +5,7 @@
     "role": "Roadside scribe",
     "speech": [
       {"form": "Ubi est silva?", "topic": "forest", "min_stage": 1,
+       "hint": "Mara draws a path in the dirt. 'Ubi' asks where; 'silva' names the forest.",
        "early": "Mara gestures toward your herb book. 'Read the woodlands first.'"}
     ],
     "position": [
@@ -68,7 +69,8 @@
     "name": "Tomas",
     "role": "Hermitage keeper",
     "speech": [
-      {"form": "Da mihi librum.", "topic": "trade", "min_stage": 0}
+      {"form": "Da mihi librum.", "topic": "trade", "min_stage": 0,
+       "hint": "Tomas taps the volume. 'Mihi' means to me. 'Librum' is the book you ask to receive."}
     ],
     "position": [
       23.1,
@@ -134,7 +136,8 @@
     "name": "Ida",
     "role": "Village baker",
     "speech": [
-      {"form": "Frumentum tibi fero.", "topic": "baker_delivery", "min_stage": 0}
+      {"form": "Frumentum tibi fero.", "topic": "baker_delivery", "min_stage": 0,
+       "hint": "Ida raises her sack. 'Frumentum' is what you carry; 'tibi' marks to whom."}
     ],
     "position": [
       6,
