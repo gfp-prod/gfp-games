@@ -87,6 +87,12 @@ func apply_effect(effect: String, strength: float=1.0) -> bool:
 			growth = minf(1.95,growth + 0.15*strength)
 			food = minf(1.0,food + 0.1*strength)
 			health = minf(1.0,health + .07*strength)
+		"harvest":
+			# Separate from grazing: a human harvest requires a mature patch.
+			# No hidden per-object counter; saved food is the authority.
+			if kind not in ["fern","grass"] or dead or burning or food < 0.65: return false
+			food=maxf(0.0,food-0.55)
+			health=maxf(0.05,health-0.08)
 		"eat":
 			if kind not in ["fern","grass"] or dead or food < 0.05: return false
 			food = maxf(0.0,food - .30*strength)
