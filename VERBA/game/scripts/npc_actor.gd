@@ -1,7 +1,7 @@
-extends Node3D
+extends CharacterBody3D
 ## A physical inhabitant, targetable with the player's normal world ray.
-## These first two NPCs are stationary until the schedule/AI milestone;
-## neither is a fake menu accessed from anywhere on the map.
+## Existing authored characters retain their landmarks; village citizens
+## physically navigate based on independent simulated economic/social actions.
 const ART = preload("res://scripts/art.gd")
 
 var npc_id: String = ""
@@ -9,6 +9,12 @@ var display_name: String = ""
 var role: String = ""
 var world
 var definition: Dictionary = {}
+var route: NavigationAgent3D
+var current_goal: Vector3 = Vector3.ZERO
+var last_sim_action: String = ""
+var replan_elapsed: float = 0.0
+var blocked_seconds: float = 0.0
+var mobile: bool = false
 
 func setup(owner_world: Node3D, data: Dictionary) -> void:
 	world = owner_world
@@ -16,6 +22,7 @@ func setup(owner_world: Node3D, data: Dictionary) -> void:
 	npc_id = String(data.get("id", ""))
 	display_name = String(data.get("name", "Traveler"))
 	role = String(data.get("role", "Wanderer"))
+	mobile = data.has("home") and data.has("work")
 	var spot: Array = data.get("position", [0.0, 0.0])
 	var x: float = float(spot[0])
 	var z: float = float(spot[1])
@@ -27,6 +34,24 @@ func is_talkable() -> bool:
 	return not npc_id.is_empty()
 
 func _ready() -> void:
+	if mobile:
+		collision_layer = 32
+		collision_mask = 16
+		floor_snap_length = 0.35
+		var physical := CollisionShape3D.new()
+		physical.name = "PhysicalCitizenCollider"
+		var profile := CapsuleShape3D.new()
+		profile.radius = 0.34
+		profile.height = 1.75
+		physical.shape = profile
+		physical.position.y = 0.90
+		add_child(physical)
+		route = NavigationAgent3D.new()
+		route.name = "CitizenNavigation"
+		route.path_desired_distance = 0.75
+		route.target_desired_distance = 1.1
+		route.avoidance_enabled = false
+		add_child(route)
 	var figure := Node3D.new()
 	figure.name = "VisibleInhabitant"
 	add_child(figure)
@@ -66,7 +91,7 @@ func _ready() -> void:
 			Vector3(.50,.99,.17),.052,.045,trim,7)
 	var collider := StaticBody3D.new()
 	collider.name = "LivingNPCConversationCollider"
-	collider.collision_layer = 4 | 16
+	collider.collision_layer = 4 if mobile else (4 | 16)
 	collider.collision_mask = 0
 	collider.set_meta("npc_ref",self)
 	add_child(collider)
@@ -89,3 +114,57 @@ func _ready() -> void:
 	title.no_depth_test = false
 	title.position = Vector3(0,2.29,0)
 	add_child(title)
+
+func _destination_for(action: String) -> Vector3:
+	var key: String = "home"
+	match action:
+		"work": key = "work"
+		"socialize", "court", "investigate": key = "market"
+	var spot: Array = definition.get(key,definition.get("position",[0.0,0.0]))
+	var x: float = float(spot[0])
+	var z: float = float(spot[1])
+	return Vector3(x,world.height_at(x,z)+0.1,z)
+
+func _physics_process(delta: float) -> void:
+	if not mobile or route == null or world == null or world.village_sim == null: return
+	var state: Dictionary = world.village_sim.people.get(npc_id,{})
+	if state.is_empty(): return
+	var action: String = String(state.get("last_action","rest"))
+	# Destinations are consequences of the simulation, not scripted time-of-day loops.
+	if last_sim_action != action:
+		last_sim_action = action
+		current_goal = _destination_for(action)
+		replan_elapsed = 0.0
+	replan_elapsed -= delta
+	if replan_elapsed <= 0.0:
+		route.target_position = current_goal
+		replan_elapsed = 2.0
+	var move_dir := Vector3.ZERO
+	if NavigationServer3D.map_get_iteration_id(route.get_navigation_map()) > 0 and not route.is_navigation_finished():
+		var next_point: Vector3 = route.get_next_path_position()
+		move_dir = next_point - global_position
+		move_dir.y = 0.0
+		if move_dir.length_squared() > 0.16: move_dir = move_dir.normalized()
+		else: move_dir = Vector3.ZERO
+	if move_dir.length_squared() > 0.01:
+		var origin: Vector3 = global_position + Vector3.UP * 0.85
+		var obstacle: Dictionary = get_world_3d().direct_space_state.intersect_ray(
+			PhysicsRayQueryParameters3D.create(origin,origin+move_dir*1.4,16,[get_rid()]))
+		if not obstacle.is_empty():
+			var normal: Vector3 = obstacle["normal"]
+			var along: Vector3 = Vector3(-normal.z,0.0,normal.x)
+			if along.dot(move_dir)<0.0: along = -along
+			move_dir = along.normalized()
+	velocity.x = move_dir.x * 1.55
+	velocity.z = move_dir.z * 1.55
+	if is_on_floor(): velocity.y = -0.1
+	else: velocity.y -= 16.0*delta
+	move_and_slide()
+	if move_dir.length_squared() > 0.01:
+		rotation.y = lerp_angle(rotation.y,atan2(-move_dir.x,-move_dir.z),minf(1.0,delta*5.0))
+		blocked_seconds = blocked_seconds+delta if Vector2(velocity.x,velocity.z).length()<0.05 else 0.0
+	else:
+		blocked_seconds = 0.0
+	if is_on_wall() or blocked_seconds>2.0:
+		replan_elapsed = 0.0
+		blocked_seconds = 0.0
