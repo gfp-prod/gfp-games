@@ -3,7 +3,10 @@
     "id": "mara",
     "name": "Mara",
     "role": "Roadside scribe",
-    "position": [-2.8, 20.8],
+    "position": [
+      -2.8,
+      20.8
+    ],
     "yaw": 0.4,
     "robe": "6c686b",
     "trim": "a49882",
@@ -15,7 +18,11 @@
     "choices": [
       {
         "id": "greeting",
-        "text": ["Salve. (Hello.)", "Salve, Mara.", "Salve, amica."],
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, Mara.",
+          "Salve, amica."
+        ],
         "reply": [
           "Salve! That is how we greet a traveler.",
           "Salve, viator. A greeting is a beginning, not a spell.",
@@ -24,7 +31,11 @@
       },
       {
         "id": "forest",
-        "text": ["Where does the forest begin?", "Ubi est silva? (Where is the forest?)", "Ubi est silva?"],
+        "text": [
+          "Where does the forest begin?",
+          "Ubi est silva? (Where is the forest?)",
+          "Ubi est silva?"
+        ],
         "reply": [
           "The old trees grow past the western creek. Follow the water.",
           "Silva est trans rivum. The forest is across the stream.",
@@ -34,7 +45,11 @@
       {
         "id": "botany",
         "requires_completed": "de_herbis",
-        "text": ["Ask about the herb lesson.", "Quid herbam iuvat? (What helps the plant?)", "Quid herbam iuvat?"],
+        "text": [
+          "Ask about the herb lesson.",
+          "Quid herbam iuvat? (What helps the plant?)",
+          "Quid herbam iuvat?"
+        ],
         "reply": [
           "Aqua herbam iuvat. Water helps the plant.",
           "Aqua herbam iuvat. You understood the book.",
@@ -48,7 +63,10 @@
     "id": "tomas",
     "name": "Tomas",
     "role": "Hermitage keeper",
-    "position": [23.1, 15.2],
+    "position": [
+      23.1,
+      15.2
+    ],
     "yaw": -0.65,
     "robe": "655b4b",
     "trim": "8a7560",
@@ -60,7 +78,11 @@
     "choices": [
       {
         "id": "greeting",
-        "text": ["Salve. (Hello.)", "Salve, magister.", "Salve, magister."],
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, magister.",
+          "Salve, magister."
+        ],
         "reply": [
           "Salve. Don't be afraid of making a mistake in front of a book.",
           "Salve, discipule. You have been reading.",
@@ -69,7 +91,11 @@
       },
       {
         "id": "trade",
-        "text": ["Trade one herb for a Latin book.", "Herbam pro libro. (One herb for a book.)", "Herbam pro libro."],
+        "text": [
+          "Trade one herb for a Latin book.",
+          "Herbam pro libro. (One herb for a book.)",
+          "Herbam pro libro."
+        ],
         "reply": [
           "Take De Igne et Aqua. A book for the herb; a fair exchange.",
           "Tene librum. Aqua ignem exstinguit. Water puts out fire.",
@@ -83,11 +109,715 @@
       },
       {
         "id": "tower",
-        "text": ["Can I build a place of my own?", "Ubi est turris? (Where is the tower?)", "Ubi est turris?"],
+        "text": [
+          "Can I build a place of my own?",
+          "Ubi est turris? (Where is the tower?)",
+          "Ubi est turris?"
+        ],
         "reply": [
           "The broken priory lies along the southern road. There is room enough in this vale.",
           "Turris vetus prope ruinas est. An old tower stands near the ruins.",
           "Turris vetus prope ruinas est. A new tower will take more than words."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ida",
+    "name": "Ida",
+    "role": "Village baker",
+    "position": [
+      6,
+      19
+    ],
+    "home": [
+      6,
+      19
+    ],
+    "work": [
+      9,
+      14
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "966a4f",
+    "trim": "dfbc7a",
+    "intro": [
+      "Salve. I'm Ida, the village baker.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Ida.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village baker. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "orin",
+    "name": "Orin",
+    "role": "Village blacksmith",
+    "position": [
+      15,
+      17
+    ],
+    "home": [
+      15,
+      17
+    ],
+    "work": [
+      20,
+      18
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "454f58",
+    "trim": "ad956c",
+    "intro": [
+      "Salve. I'm Orin, the village blacksmith.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Orin.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village blacksmith. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ves",
+    "name": "Ves",
+    "role": "Village mayor",
+    "position": [
+      12,
+      9
+    ],
+    "home": [
+      12,
+      9
+    ],
+    "work": [
+      11,
+      19
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "494361",
+    "trim": "b5a682",
+    "intro": [
+      "Salve. I'm Ves, the village mayor.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Ves.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village mayor. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "titus",
+    "name": "Titus",
+    "role": "Village guard",
+    "position": [
+      1,
+      12
+    ],
+    "home": [
+      1,
+      12
+    ],
+    "work": [
+      17,
+      9
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "49575c",
+    "trim": "a3ad9a",
+    "intro": [
+      "Salve. I'm Titus, the village guard.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Titus.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village guard. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "lena",
+    "name": "Lena",
+    "role": "Village painter",
+    "position": [
+      5,
+      6
+    ],
+    "home": [
+      5,
+      6
+    ],
+    "work": [
+      10,
+      10
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "59646e",
+    "trim": "bf91a8",
+    "intro": [
+      "Salve. I'm Lena, the village painter.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Lena.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village painter. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "daro",
+    "name": "Daro",
+    "role": "Village farmer",
+    "position": [
+      18,
+      7
+    ],
+    "home": [
+      18,
+      7
+    ],
+    "work": [
+      15,
+      21
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "737350",
+    "trim": "c2aa6e",
+    "intro": [
+      "Salve. I'm Daro, the village farmer.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Daro.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village farmer. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "nima",
+    "name": "Nima",
+    "role": "Village bard",
+    "position": [
+      9,
+      23
+    ],
+    "home": [
+      9,
+      23
+    ],
+    "work": [
+      5,
+      14
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "676077",
+    "trim": "bcaa89",
+    "intro": [
+      "Salve. I'm Nima, the village bard.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Nima.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village bard. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cass",
+    "name": "Cass",
+    "role": "Village priest",
+    "position": [
+      16,
+      -1
+    ],
+    "home": [
+      16,
+      -1
+    ],
+    "work": [
+      14,
+      6
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "50434d",
+    "trim": "afaa92",
+    "intro": [
+      "Salve. I'm Cass, the village priest.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Cass.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village priest. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "brin",
+    "name": "Brin",
+    "role": "Village builder",
+    "position": [
+      20,
+      22
+    ],
+    "home": [
+      20,
+      22
+    ],
+    "work": [
+      22,
+      11
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "5e6252",
+    "trim": "b5a88a",
+    "intro": [
+      "Salve. I'm Brin, the village builder.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Brin.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village builder. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sela",
+    "name": "Sela",
+    "role": "Village merchant",
+    "position": [
+      13,
+      25
+    ],
+    "home": [
+      13,
+      25
+    ],
+    "work": [
+      7,
+      21
+    ],
+    "market": [
+      11,
+      13
+    ],
+    "yaw": 0,
+    "robe": "595264",
+    "trim": "bea270",
+    "intro": [
+      "Salve. I'm Sela, the village merchant.",
+      "Salve, viator. My work is here in the village.",
+      "Salve, amice. Quid agis?"
+    ],
+    "choices": [
+      {
+        "id": "greeting",
+        "text": [
+          "Salve. (Hello.)",
+          "Salve, amice.",
+          "Salve, amice. Quid agis?"
+        ],
+        "reply": [
+          "Salve! I am Sela.",
+          "Salve, viator. It is a fine day to practice.",
+          "Bene valeas. You speak with greater confidence."
+        ]
+      },
+      {
+        "id": "work",
+        "text": [
+          "Tell me about your work.",
+          "Quid facis? (What do you do?)",
+          "Quid facis hodie?"
+        ],
+        "reply": [
+          "I am the village merchant. This village depends on our daily work.",
+          "Laboro hic. The village is built by many hands.",
+          "Hodie laboro. Tomorrow brings other tasks."
+        ]
+      },
+      {
+        "id": "rumors",
+        "text": [
+          "Has anything happened here?",
+          "Quid novi? (What's new?)",
+          "Quid novi in oppido?"
+        ],
+        "reply": [
+          "Ask around. Everyone sees something different.",
+          "Quid novi? Each person has a different story.",
+          "In oppido multa fiunt. Much happens in a village."
         ]
       }
     ]
