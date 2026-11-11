@@ -1,0 +1,37 @@
+name: VERBA independent Godot CI
+on:
+  push:
+    branches: [verba-godot, "verba/**"]
+    paths: ["VERBA/game/**", ".github/workflows/verba-godot.yml"]
+  pull_request:
+    paths: ["VERBA/game/**", ".github/workflows/verba-godot.yml"]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Static validation
+        run: python tests/check_project.py
+      - name: Import and compile project
+        run: godot --headless --path . --editor --import --quit
+      - name: World smoke
+        run: godot --headless --path . --script res://tests/smoke_test.gd
+      - name: Village seeded adversarial regression
+        run: godot --headless --path . --script res://tests/village_sim_test.gd
+      - name: Social trade regression
+        run: godot --headless --path . --script res://tests/social_dialogue_test.gd
+      - name: Save integrity regression
+        run: godot --headless --path . --script res://tests/save_integrity_regression_test.gd
+      - name: Ecology baseline
+        run: godot --headless --path . --script res://tests/ecology_smoke_test.gd
