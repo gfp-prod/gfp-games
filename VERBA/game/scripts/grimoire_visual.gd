@@ -16,17 +16,28 @@ static func material(texture_path: String, tint: Color, rough: float, metallic: 
 		result.albedo_texture = tex
 	return result
 
+static func parchment_material() -> StandardMaterial3D:
+	# The held volume faces away from the open-world sun. Real vellum still
+	# has reflected, diffuse ambient light; without a soft lighting floor,
+	# correct face normals render the study pages charcoal-black.
+	var paper := material("res://assets/textures/authored/vellum_cream.png",Color("e8ddc7"),.98)
+	paper.emission_enabled = true
+	paper.emission = Color("b8a78e")
+	paper.emission_energy_multiplier = .32
+	paper.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return paper
+
 static func make_open_binding() -> Node3D:
 	var root := Node3D.new()
 	root.name = "LayeredLeatherGrimoire"
 	var cover: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("6d5045"),.82)
 	var leather_edge: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("3a2523"),.93)
-	var vellum: StandardMaterial3D = material("res://assets/textures/authored/vellum_cream.png",Color("988e7f"),.96)
+	var vellum: StandardMaterial3D = parchment_material()
 	var page_edge: StandardMaterial3D = ART.mat(Color("948475"),1.0)
-	var bronze: StandardMaterial3D = ART.mat(Color("a68b59"),.34)
-	bronze.metallic = .63
-	var bronze_dark: StandardMaterial3D = ART.mat(Color("654c35"),.52)
-	bronze_dark.metallic = .49
+	var bronze: StandardMaterial3D = ART.mat(Color("97805b"),.72)
+	bronze.metallic = .26
+	var bronze_dark: StandardMaterial3D = ART.mat(Color("594939"),.82)
+	bronze_dark.metallic = .18
 
 	# Two modeled leather boards, with an actual gutter and rounded leather spine.
 	# The boards protrude beyond the pages so they read as a binding from all angles.
@@ -109,8 +120,7 @@ static func make_turning_leaf() -> Node3D:
 	var leaf := MeshInstance3D.new()
 	leaf.name = "PageTurningVellumSheet"
 	leaf.mesh = _build_turning_leaf_mesh()
-	var vellum := material("res://assets/textures/authored/vellum_cream.png",Color("a99d8b"),.98)
-	vellum.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var vellum := parchment_material()
 	leaf.material_override = vellum
 	hinge.add_child(leaf)
 	hinge.visible = false
