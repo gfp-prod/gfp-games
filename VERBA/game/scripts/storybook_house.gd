@@ -15,7 +15,7 @@ static func build(cabin: Node3D, world: Node3D) -> void:
 	var damp_stone := _paint("res://assets/textures/real/stone_diffuse.jpg",Color("a09a86"))
 	var metal := ART.mat(Color("897758"),.67)
 	metal.metallic = .21
-	var roof_mat := _paint("res://assets/textures/real/cottage_roof_diffuse.jpg",Color("9bada2"))
+	var roof_mat := _paint("res://assets/textures/real/cottage_roof_diffuse.jpg",Color("c7c5b1"))
 	roof_mat.vertex_color_use_as_albedo = true
 	roof_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	roof_mat.roughness = 1.0
@@ -138,18 +138,26 @@ static func make_roof() -> ArrayMesh:
 				var ridge_b: Vector3 = _roof_point(side,u1,z0,offset)
 				var eve_a: Vector3 = _roof_point(side,u0,z1,offset)
 				var eve_b: Vector3 = _roof_point(side,u1,z1,offset+.008)
-				var color: Color = Color("b0b5a3").lerp(Color("697d73"),
+				var color: Color = Color("c6cdb8").lerp(Color("87988a"),
 					rng.randf_range(.08,.55))
 				if (ix*3+iz)%13 == 0:
 					color = color.lerp(Color("a39480"),.21)
 				if side < 0.0:
-					_tri(st,ridge_a,eve_a,ridge_b,color)
-					_tri(st,ridge_b,eve_a,eve_b,color)
+					_roof_tri(st,ridge_a,ridge_b,eve_a,color)
+					_roof_tri(st,ridge_b,eve_b,eve_a,color)
 				else:
-					_tri(st,ridge_a,ridge_b,eve_a,color)
-					_tri(st,ridge_b,eve_b,eve_a,color)
+					_roof_tri(st,ridge_a,eve_a,ridge_b,color)
+					_roof_tri(st,ridge_b,eve_a,eve_b,color)
 	st.generate_normals()
 	return st.commit()
+
+# Tile UVs follow the eaves-to-ridge and front-to-back axes. Previously the
+# UVs mixed Y and Z, giving ugly white diagonal striping in the gable view.
+static func _roof_tri(st: SurfaceTool,a: Vector3,b: Vector3,c: Vector3,tint: Color) -> void:
+	for v in [a,b,c]:
+		st.set_color(tint)
+		st.set_uv(Vector2(v.x*.30,v.z*.42))
+		st.add_vertex(v)
 
 static func _roof_point(side: float,u: float,z: float,shift: float) -> Vector3:
 	var x: float = lerpf(-.21,side*3.32,u)
@@ -298,7 +306,7 @@ static func _add_turret(house: Node3D,world: Node3D,cabin: Node3D,
 		stone: Material,slate: Material,wood: Material,soot: Material) -> void:
 	var tower := Node3D.new()
 	tower.name = "HearthsideApothecaryTurret"
-	tower.position = Vector3(-3.44,0,-1.33)
+	tower.position = Vector3(3.48,0,1.16)
 	house.add_child(tower)
 	var body := MeshInstance3D.new()
 	body.name = "SevenSidedStoneTurret"
@@ -315,16 +323,16 @@ static func _add_turret(house: Node3D,world: Node3D,cabin: Node3D,
 		var x: float = cos(theta)
 		var z: float = sin(theta)
 		ART.bone(tower,Vector3(x*1.05,.30,z*1.05),
-			Vector3(x*.99,3.10,z*.99),.064,.052,wood,7)
+			Vector3(x*.99,3.72,z*.99),.064,.052,wood,7)
 	# A small brass weather vane catches the eye without glowing artificially.
-	ART.bone(tower,Vector3(-.14,4.48,0),
-		Vector3(-.21,5.15,0),.038,.025,soot,8)
-	ART.bone(tower,Vector3(-.53,4.93,0),
-		Vector3(.15,4.93,0),.043,.030,wood,7)
+	ART.bone(tower,Vector3(-.14,5.68,0),
+		Vector3(-.21,6.34,0),.038,.025,soot,8)
+	ART.bone(tower,Vector3(-.53,6.11,0),
+		Vector3(.15,6.11,0),.043,.030,wood,7)
 	# The turret is physical rather than an illusory decoration. Keep its
 	# collider separate so future spells may target the annex independently.
-	world.add_solid_box(cabin,Vector3(-3.44,1.56,-1.33),
-		Vector3(2.18,3.12,2.14),"ApothecaryTurretSolid")
+	world.add_solid_box(cabin,Vector3(3.48,1.87,1.16),
+		Vector3(2.18,3.74,2.14),"ApothecaryTurretSolid")
 
 static func _turret_body() -> ArrayMesh:
 	var st := SurfaceTool.new()
@@ -334,10 +342,10 @@ static func _turret_body() -> ArrayMesh:
 		var b: float = TAU*float(i+1)/7.0
 		var p0 := Vector3(cos(a)*1.13,.13,sin(a)*1.13)
 		var q0 := Vector3(cos(b)*1.13,.13,sin(b)*1.13)
-		var p1 := Vector3(cos(a)*1.03,3.13,sin(a)*1.03)
-		var q1 := Vector3(cos(b)*1.03,3.13,sin(b)*1.03)
-		_tri(st,p0,q0,p1,Color.WHITE)
-		_tri(st,q0,q1,p1,Color.WHITE)
+		var p1 := Vector3(cos(a)*1.03,3.74,sin(a)*1.03)
+		var q1 := Vector3(cos(b)*1.03,3.74,sin(b)*1.03)
+		_tri(st,p0,p1,q0,Color.WHITE)
+		_tri(st,q0,p1,q1,Color.WHITE)
 	st.generate_normals()
 	return st.commit()
 
@@ -347,12 +355,12 @@ static func _turret_hat() -> ArrayMesh:
 	for i in range(12):
 		var a: float = TAU*float(i)/12.0
 		var b: float = TAU*float(i+1)/12.0
-		var p := Vector3(cos(a)*1.50,3.04,sin(a)*1.50)
-		var q := Vector3(cos(b)*1.50,3.04,sin(b)*1.50)
-		var top := Vector3(-.14,4.57,.05)
+		var p := Vector3(cos(a)*1.50,3.70,sin(a)*1.50)
+		var q := Vector3(cos(b)*1.50,3.70,sin(b)*1.50)
+		var top := Vector3(-.14,5.77,.05)
 		var tint: Color = Color("9aa891").lerp(Color("7b8677"),
 			float(i%3)*.17)
-		_tri(st,p,q,top,tint)
+		_tri(st,p,top,q,tint)
 	st.generate_normals()
 	return st.commit()
 
