@@ -117,7 +117,29 @@ func _run() -> void:
 	if not bool(advanced.get("ok",false)) or not player.inventory.has("herb_bread"):
 		_fail("Higher-rank baking failed to craft the genuine restorative loaf")
 		return
+	# Verify the ordinary player control path, not merely the crafting API.
+	# The actual kiln collider must be selectable with the first-person ray.
 	var save: Dictionary=PERSIST.snapshot(world)
+	player.inventory.clear()
+	player.inventory.append_array(["grain","wood"])
+	player.selected_slot=0
+	player.refresh_held_model()
+	_move_near(world,player,8.9,13.7)
+	player.camera.look_at(Vector3(8.9,world.height_at(8.9,16.25)+1.15,16.2),Vector3.UP)
+	await physics_frame
+	var pointed: Dictionary=player.look_hit(4.5)
+	var physical_oven=pointed.get("entity",null)
+	if physical_oven==null or not physical_oven.has_meta("workplace_kind") or String(physical_oven.get_meta("workplace_kind"))!="bakery":
+		_fail("The actual kiln cannot be targeted from an ordinary standing player")
+		return
+	var prior_work: int=int(artisans.experience["baker"])
+	var key=InputEventKey.new()
+	key.pressed=true
+	key.keycode=KEY_F
+	player._input(key)
+	if int(artisans.experience["baker"])!=prior_work+1 or not player.inventory.has("bread"):
+		_fail("Pressing F at the physical kiln cannot complete real baking")
+		return
 	var fresh=load("res://main.tscn").instantiate()
 	root.add_child(fresh)
 	await process_frame
