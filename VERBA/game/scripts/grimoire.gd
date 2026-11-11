@@ -224,9 +224,9 @@ func update_pages() -> void:
 		var notation: String=practice_buffer if not practice_buffer.is_empty() else "..."
 		var answer_text: String="Scribe Latine\n\n"+notation+"\n\n"
 		if practice_answered:
-			answer_text+=practice_feedback+"\n\nR: next exercise\nB: other books"
+			answer_text+=practice_feedback+"\n\nR: next exercise\nTab: readings"
 		else:
-			answer_text+="Enter: commit\nB: other books"
+			answer_text+="Enter: inscribe\nTab: readings"
 			if not practice_feedback.is_empty(): answer_text+="\n"+practice_feedback
 		page_labels[1].text=_ink_wrap(answer_text,24)
 		return
@@ -271,6 +271,8 @@ func update_pages() -> void:
 		if side == 1:
 			line += "─────\n"+str(page_index+1)+" / "+str(maxi(1,ceili(float(learned.size())/4.0)))
 			line += "\nB: Books  R: Recollect\nS: Save  L: Load"
+			if scholar != null and player != null and player.world != null:
+				line += "\nRecollections " + str(scholar.practice.due_count(scholar.completed,player.world.world_calendar.day))
 			if scholar != null:
 				line += "\nScholar " + str(scholar.level) + " XP " + str(scholar.xp) + "/" + str(scholar.next_level_xp()) + "\nMana " + str(int(scholar.mana)) + "/" + str(int(scholar.max_mana))
 		page_labels[side].text=_ink_wrap(line,22)
