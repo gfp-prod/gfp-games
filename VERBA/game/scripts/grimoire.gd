@@ -240,9 +240,12 @@ func _process(delta: float) -> void:
 			page_index = pending_page_index
 			pending_page_index = -1
 			update_pages()
-		var ink_visible: bool = progress < .12 or progress > .88
-		for label in page_labels:
-			label.visible = open and lift > .87 and ink_visible
+		# Keep the stationary page legible while the other leaf swings.
+		# Hiding BOTH pages made the book flash blank during animation.
+		var turning_side: int = 1 if page_turn_direction > 0 else 0
+		for i in range(page_labels.size()):
+			var moving_ink: bool = progress < .12 or progress > .88
+			page_labels[i].visible = open and lift > .87 and (i != turning_side or moving_ink)
 		page_turn = move_toward(page_turn,0.0,delta*2.0)
 		if page_turn <= 0.0:
 			if pending_page_index >= 0:
