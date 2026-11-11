@@ -45,6 +45,12 @@ func _run() -> void:
 	if fields==null or fields.find_children("ContinuousCultivatedEarth*","MeshInstance3D",true,false).size()!=4:
 		fail("Field regressed to disconnected soil disks instead of four terrain-hugging beds")
 		return
+	# Distant labels must no longer flood meadow and village screenshots.
+	for npc in world.npcs:
+		npc._process(0.016)
+		if npc.global_position.distance_to(world.player.global_position)>8.0 and npc.name_label.visible:
+			fail("Distant citizen has an intrusive always-on floating name")
+			return
 	var economy=world.village_sim.economy
 	var slots: Dictionary=district.displays
 	for kind in ["grain","bread","tools"]:
