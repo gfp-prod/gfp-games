@@ -45,6 +45,17 @@ func _capture() -> void:
 		_fail("Study could not yield a reward")
 		return
 	await _save_frame("latin_book_reward")
+	# The real moving vellum is an actual 3D object and should be inspected
+	# mid-flight from the same in-game camera, not an editor mockup.
+	pages.book_cursor = -1
+	pages.update_pages()
+	pages.turn_page(1)
+	pages._process(.22)
+	pages._process(.14)
+	if pages.turning_leaf == null or not pages.turning_leaf.visible:
+		_fail("Physical page-turn mesh was not rendered during page change")
+		return
+	await _save_frame("grimoire_page_turn")
 	print("VERBA_BOOK_VISUAL_QA_COMPLETE")
 	quit(0)
 
