@@ -220,7 +220,7 @@ func update_pages() -> void:
 	if practice_open and not practice_card.is_empty():
 		for label in page_labels: label.font_size=30
 		page_labels[0].text=_ink_wrap("EXERCITIA MEMORIAE\n\n"+String(practice_card["prompt"])+
-			"\n\nRemember before\nconsulting the text.",24)
+			"\n\nRecall without\nturning the page.",24)
 		var notation: String=practice_buffer if not practice_buffer.is_empty() else "..."
 		var answer_text: String="Scribe Latine\n\n"+notation+"\n\n"
 		if practice_answered:
