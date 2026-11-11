@@ -793,6 +793,10 @@ func populate_reactive_grass() -> void:
 		var x:=r.randf_range(-52,52)
 		var z:=r.randf_range(-56,56)
 		if absf(x)<4 and z>-30 and z<28: continue
+		# Keep the same generated simulation IDs so saved plant states load.
+		var clear_grass: Vector2 = move_vegetation_outside_cottage(x,z)
+		x = clear_grass.x
+		z = clear_grass.y
 		make_living_plant(Vector3(x,height_at(x,z)+.03,z),"grass",clump_mesh,material,r.randf_range(1.3,2.8))
 
 func spawn_growth_patch(point: Vector3) -> Node3D:
