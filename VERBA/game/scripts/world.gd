@@ -13,6 +13,7 @@ const MAGIC_SCRIPT = preload("res://scripts/magic.gd")
 const SCHOLAR = preload("res://scripts/scholar.gd")
 const SOCIAL = preload("res://scripts/dialogue_social.gd")
 const NPC_ACTOR = preload("res://scripts/npc_actor.gd")
+const CONSTRUCTION = preload("res://scripts/tower_construction.gd")
 const SIM_OBJECT = preload("res://scripts/sim_object.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
@@ -28,6 +29,8 @@ var npcs: Array = []
 # Adoption selects an existing persistent wild animal: no second pet entity.
 var familiar_id: String = ""
 var familiar_mode: String = "follow"
+var construction
+var harvest_counts: Dictionary = {}
 var social
 var navigation_blockers: Array[Vector3] = []
 var navigation_region: NavigationRegion3D
@@ -98,6 +101,7 @@ func _ready() -> void:
 	scholar=SCHOLAR.new()
 	social=SOCIAL.new()
 	populate_social_npcs()
+	construction=CONSTRUCTION.new(self)
 	player=PLAYER_SCRIPT.new()
 	player.name="Player"
 	player.world=self
@@ -118,6 +122,38 @@ func populate_social_npcs() -> void:
 		actor.setup(self,social.npc(String(key)))
 		add_child(actor)
 		npcs.append(actor)
+
+func harvest_resource(source: Node3D) -> Dictionary:
+	# A small sustainable starter loop: salvage existing cut logs and
+	# loosen exposed stones from the valley. No mining through a wall.
+	if not is_instance_valid(source) or player == null:
+		return {"ok":false,"message":"There is nothing to gather."}
+	if player.global_position.distance_to(source.global_position) > 3.8:
+		return {"ok":false,"message":"That material is beyond your reach."}
+	if player.inventory.size()>=6:
+		return {"ok":false,"message":"Your hands are full."}
+	var material: String = ""
+	var key: String = ""
+	var limit: int = 0
+	if source.has_meta("resource_deposit"):
+		material = String(source.get_meta("resource_deposit"))
+		key = String(source.get_meta("harvest_id",""))
+		limit = 12
+	elif source.has_method("apply_effect") and String(source.kind)=="stone":
+		material = "stone"
+		key = "sim:%d" % int(source.uid)
+		limit = 3
+	if material not in ["wood","stone"] or key.is_empty():
+		return {"ok":false,"message":"Nothing useful can be taken."}
+	var used: int = maxi(0,int(harvest_counts.get(key,0)))
+	if used>=limit:
+		return {"ok":false,"message":"That deposit has been exhausted."}
+	harvest_counts[key]=used+1
+	player.add_item(material)
+	if DisplayServer.get_name()!="headless":
+		save_world()
+	return {"ok":true,"message":"Gathered %s (%d remain)." %
+		[material,limit-used-1],"material":material}
 
 func familiar() -> Node3D:
 	if familiar_id.is_empty(): return null
