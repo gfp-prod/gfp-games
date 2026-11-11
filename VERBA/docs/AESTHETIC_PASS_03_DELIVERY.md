@@ -17,6 +17,7 @@
 - The non-turning page remains readable while the opposite page swings. Previously the animation sometimes showed two completely blank parchment panels.
 - Added a dedicated Godot `grimoire_page_turn.png` first-person camera capture and a scene regression `tests/grimoire_page_turn_test.gd` verifying that pages turn, their text switches at the midpoint, and the turning leaf disappears correctly after settling.
 - Maintained the same working Latin reading, book quizzes, mana and scholarly progression.
+- Actual mid-turn screenshots revealed overlong Latin glosses spilling past the leaf edge; reflowed lexicon definitions to 22-character ink columns, reduced the reference-page type size, kept longer manuscript type readable, and added a scene regression rejecting over-wide physical page text.
 
 ### Scope and code quality
 - Reused the existing physical book, existing CC0 materials and Godot native MultiMesh/QuadMesh. No extra external plugin, installer, or dependency was required.
