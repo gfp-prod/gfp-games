@@ -110,6 +110,9 @@ func _ready() -> void:
 	scholar=SCHOLAR.new()
 	social=SOCIAL.new()
 	village_sim=VILLAGE_SIM.new(ground_seed)
+	# Playable world jobs require someone to reach and work at the location.
+	# Standalone headless simulation keeps its fast deterministic work model.
+	village_sim.spatial_work_enabled=true
 	social.village_sim=village_sim
 	workplaces=VILLAGE_WORKPLACES.new()
 	workplaces.setup(self)
