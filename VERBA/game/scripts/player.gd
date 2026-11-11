@@ -178,6 +178,8 @@ func refresh_held_model() -> void:
 			l.position=Vector3(0,.56,0)
 			prop.add_child(l)
 		"wood": ART.box(prop,Vector3(0,.22,-.13),Vector3(.21,.18,.45),ART.mat(Color("81694f")))
+		"grain": ART.box(prop,Vector3(0,.17,-.13),Vector3(.25,.32,.22),ART.mat(Color("bb9c69")))
+		"bread": ART.orb(prop,Vector3(0,.17,-.13),Vector3(.25,.15,.21),ART.mat(Color("a76a3f")),12)
 		"stone": ART.stone(prop,Vector3(0,.12,-.13),Vector3(.19,.15,.22),ART.mat(Color("74766e")))
 		"herb":
 			ART.bone(prop,Vector3(0,-.1,0),Vector3(0,.5,-.02),.03,.01,ART.mat(Color("67795a")))
