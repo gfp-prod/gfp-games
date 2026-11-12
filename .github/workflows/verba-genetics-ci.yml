@@ -29,6 +29,10 @@ jobs:
         with:
           version: "4.5.2"
           use-dotnet: false
+      - name: Import Godot world assets required by physical growth integration
+        run: |
+          timeout 200s godot --headless --path . --editor --import --quit 2>&1 | tee /tmp/genetics-import.log
+          if grep -E "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:" /tmp/genetics-import.log; then exit 1; fi
       - name: Parse genetics and verify allele inheritance without heavy world asset import
         run: |
           timeout 55s godot --headless --path . --script res://tests/npc_genetics_test.gd 2>&1 | tee /tmp/npc-genetics.log
