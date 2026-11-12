@@ -7,6 +7,7 @@ on:
       - "VERBA/game/tools/art_foundry/**"
       - "VERBA/game/tests/foundry_review.gd"
       - "VERBA/game/tests/regional_foundry_review.gd"
+      - "VERBA/game/tests/village_visual_review.gd"
       - "VERBA/game/docs/ART_FOUNDRY.md"
   workflow_dispatch:
 
@@ -21,7 +22,7 @@ jobs:
   cottage:
     name: Blender model + Godot actual asset review
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
     defaults:
       run:
         working-directory: VERBA/game
@@ -43,6 +44,7 @@ jobs:
           python3 -m py_compile tools/art_foundry/forge_cottage.py
           python3 -m py_compile tools/art_foundry/validate_foundry.py
           python3 -m py_compile tools/art_foundry/forge_regions.py
+          python3 -m py_compile tools/art_foundry/check_village_comparisons.py
 
       - name: Build real textured cottage, glTF, editable blend and 4 renders
         run: |
@@ -119,6 +121,20 @@ jobs:
             exit 1
           fi
 
+      - name: Review original versus Blender village workplaces in six real Godot screenshots
+        run: |
+          set -o pipefail
+          timeout 1200s xvfb-run -a -s "-screen 0 1280x720x24" \
+            godot --rendering-driver opengl3 --rendering-method gl_compatibility \
+            --path . --script res://tests/village_visual_review.gd 2>&1 \
+            | tee /tmp/verba-village-visual-review.log
+          grep -q "PASS: three original village workplaces and three new GLBs rendered" /tmp/verba-village-visual-review.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:|VILLAGE VISUAL FAIL:' /tmp/verba-village-visual-review.log; then
+            echo "::error::Village screenshot QA failed"
+            exit 1
+          fi
+          python3 tools/art_foundry/check_village_comparisons.py
+
       - name: Preserve all generated editable art and real gameplay comparisons
         if: always()
         uses: actions/upload-artifact@v4
@@ -134,6 +150,8 @@ jobs:
             VERBA/regional_build/*.json
             VERBA/game/tests/foundry_frames/*.png
             VERBA/game/tests/regional_frames/*.png
+            VERBA/game/tests/village_frames/*.png
+            VERBA/game/tests/village_frames/*.json
           if-no-files-found: warn
           retention-days: 30
 
