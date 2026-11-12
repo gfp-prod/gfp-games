@@ -1,6 +1,6 @@
 extends RefCounted
-## Compact, fictional polygenic appearance model. Two alleles per trait are
-## persisted, one transmitted from each parent; no trait encodes ethnicity,
+## Compact, fictional polygenic appearance model. Two alleles per locus are
+## persisted, one transmitted from each parent; no locus encodes ethnicity,
 ## morality, intelligence, sex, social role or an individual's choices.
 const VERSION: int=1
 const TRAITS: Array[String]=[
@@ -26,43 +26,43 @@ static func _seeded(id: String, salt: int=1938) -> RandomNumberGenerator:
 static func founder(id: String, salt: int=1938) -> Dictionary:
 	var r:=_seeded(id,salt)
 	var alleles: Dictionary={}
-	for trait in TRAITS:
-		alleles[trait]=[r.randi_range(0,CAP),r.randi_range(0,CAP)]
+	for locus in TRAITS:
+		alleles[locus]=[r.randi_range(0,CAP),r.randi_range(0,CAP)]
 	return {"version":VERSION,"alleles":alleles}
 
 static func validate(g: Variant) -> bool:
 	if not (g is Dictionary) or int(g.get("version",0))!=VERSION: return false
 	var alleles: Variant=g.get("alleles",{})
 	if not (alleles is Dictionary) or alleles.size()!=TRAITS.size(): return false
-	for trait in TRAITS:
-		if not alleles.has(trait) or not (alleles[trait] is Array) or alleles[trait].size()!=2:
+	for locus in TRAITS:
+		if not alleles.has(locus) or not (alleles[locus] is Array) or alleles[locus].size()!=2:
 			return false
-		for value in alleles[trait]:
+		for value in alleles[locus]:
 			if not (value is int or value is float): return false
 			if value<0 or value>CAP or float(value)!=float(int(value)): return false
 	return true
 
-static func value(g: Dictionary, trait: String) -> float:
+static func value(g: Dictionary, locus: String) -> float:
 	# Per-vertex geometry evaluation calls this many times. Full schema
 	# validation runs once at the boundary, never for each face vertex.
-	if not g.has("alleles") or not g["alleles"].has(trait): return .5
-	var pair: Array=g["alleles"][trait]
+	if not g.has("alleles") or not g["alleles"].has(locus): return .5
+	var pair: Array=g["alleles"][locus]
 	return (float(pair[0])+float(pair[1]))/(2.0*CAP)
 
 static func child(a: Dictionary,b: Dictionary,child_id: String,salt: int=1938) -> Dictionary:
 	if not validate(a) or not validate(b): return {}
 	var rng:=_seeded(child_id,salt+71)
 	var next: Dictionary={}
-	for trait in TRAITS:
-		var one: Array=a["alleles"][trait]
-		var two: Array=b["alleles"][trait]
+	for locus in TRAITS:
+		var one: Array=a["alleles"][locus]
+		var two: Array=b["alleles"][locus]
 		# A rare minor mutation is enough for siblings to differ. Most
 		# differences simply arise from independently chosen parental alleles.
 		var paternal: int=int(one[rng.randi_range(0,1)])
 		var maternal: int=int(two[rng.randi_range(0,1)])
 		if rng.randf()<.035: paternal=clampi(paternal+rng.randi_range(-45,45),0,CAP)
 		if rng.randf()<.035: maternal=clampi(maternal+rng.randi_range(-45,45),0,CAP)
-		next[trait]=[paternal,maternal]
+		next[locus]=[paternal,maternal]
 	return {"version":VERSION,"alleles":next}
 
 static func founder_family(person_id: String,birthday: int=0) -> Dictionary:
