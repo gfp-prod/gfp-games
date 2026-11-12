@@ -176,6 +176,42 @@ func _check() -> void:
 		if house.get_node_or_null("HouseSolidStoneFoundation")==null or house.get_node_or_null("PhysicalOldSlateRoof")==null:
 			_fail("Village house doesn't have authentic collidable foundations and roof: "+house_name)
 			return
+	# The new homesteads must be settled into the ACTUAL physical terrain:
+	# photographed earth at the entrance, garden beds, soft edge vegetation,
+	# and no second set of world entities or invisible walls.
+	var yards: Node3D=homes.get_node_or_null("VillageHomesteadGrounds") as Node3D
+	if yards==null or not bool(yards.get_meta("decorative_only",false)):
+		_fail("Vernacular houses still float as isolated assets without lived-in grounds")
+		return
+	if int(yards.get_meta("environmental_stamps",0))<35 or int(yards.get_meta("small_vegetation_count",0))<120:
+		_fail("Dooryard approach and kitchen-herb composition is incomplete")
+		return
+	if int(yards.get_meta("garden_stone_count",0))<100 or int(yards.get_meta("new_simulation_entities",-1))!=0:
+		_fail("Dooryard stone edging absent or it minted extra simulation identities")
+		return
+	if yards.find_children("*","StaticBody3D",true,false).size()>0:
+		_fail("Non-interactive garden props now block villagers or player movement")
+		return
+	for garden_name in ["StonecutterDooryard","MillwardDooryard"]:
+		var garden: Node3D=yards.get_node_or_null(garden_name) as Node3D
+		if garden==null or int(garden.get_meta("stamped_wear_patches",0))<18:
+			_fail("Garden isn't visibly connected to the village access path: "+garden_name)
+			return
+		var earth: MeshInstance3D=garden.get_node_or_null("WornPhotographicEarthAtDoorsAndBeds") as MeshInstance3D
+		var herbs: MultiMeshInstance3D=garden.get_node_or_null("LowKitchenHerbsAndFoundationWeeds") as MultiMeshInstance3D
+		var stones: MultiMeshInstance3D=garden.get_node_or_null("IrregularSettledDryStoneGardenEdging") as MultiMeshInstance3D
+		if earth==null or earth.mesh==null or herbs==null or herbs.multimesh==null or stones==null or stones.multimesh==null:
+			_fail("Real terrain-grounded garden art missing: "+garden_name)
+			return
+		if herbs.multimesh.instance_count!=64 or stones.multimesh.instance_count!=55:
+			_fail("Ground-cover batching count unexpectedly changed: "+garden_name)
+			return
+		for sample in [0,11,29,48,63]:
+			var pose: Transform3D=herbs.multimesh.get_instance_transform(sample)
+			var p: Vector3=garden.global_transform*pose.origin
+			if absf(p.y-world.height_at(p.x,p.z))>.16:
+				_fail("Herb roots float or are buried against the true terrain in "+garden_name)
+				return
 	var castle: Node3D=world.get_node_or_null("StrangeRoadDistrict/CastleOfTheSecondRoad") as Node3D
 	if castle==null or castle.get_node_or_null("CastleOpenGate")==null:
 		_fail("Blender castle facade erased the physical open gate")
@@ -229,7 +265,9 @@ func _check() -> void:
 		{"name":"11_village_bakery_market","eye":Vector2(8,9),"look":Vector2(7,17)},
 		{"name":"12_village_forge","eye":Vector2(18,12),"look":Vector2(21.8,19.1)},
 		{"name":"13_stonecutter_house","eye":Vector2(-10,25.7),"look":Vector2(-7.5,34.0)},
-		{"name":"14_millward_house","eye":Vector2(27.3,26),"look":Vector2(30.0,33.5)}
+		{"name":"14_millward_house","eye":Vector2(27.3,26),"look":Vector2(30.0,33.5)},
+		{"name":"15_stonecutter_dooryard","eye":Vector2(-12.0,29.1),"look":Vector2(-12.4,34.0)},
+		{"name":"16_millward_dooryard","eye":Vector2(35.0,28.9),"look":Vector2(35.1,33.7)}
 	]
 	for shot in views:
 		var eye: Vector2=shot["eye"]
@@ -246,5 +284,5 @@ func _check() -> void:
 			_fail("Cannot save proof screenshot: "+String(shot["name"]))
 			return
 		print("REGIONAL_FOUNDRY_FRAME: "+String(shot["name"]))
-	print("PASS: fourteen editable Blender GLBs import, nine landmarks, three workplaces and two physical homes preserve gameplay, and seven actual-world screenshots render")
+	print("PASS: fourteen editable Blender GLBs import, nine landmarks, three workplaces and two physical homes preserve gameplay, and nine actual-world screenshots render")
 	quit(0)
