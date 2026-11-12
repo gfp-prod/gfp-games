@@ -756,7 +756,7 @@ def village_market_stall(g):
         frame.beam((x,.48,-.49),(x,.48,.49),.055)
     # Existing MERCATUS Label3D is kept; a believable wooden fascia now
     # actually carries it at the original position (z=-.96).
-    frame.box((0,2.13,-.92),(2.16,.46,.12),1.8)
+    frame.box((0,2.13,-.85),(2.16,.46,.11),1.8)
     for x in [-1.13,1.13]:
         rust.box((x,2.13,-1.0),(.045,.40,.025))
     # Worn split shelf, few repeated basket frames. Do not mint stock items.
