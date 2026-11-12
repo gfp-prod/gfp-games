@@ -176,6 +176,37 @@ func _check() -> void:
 		if house.get_node_or_null("HouseSolidStoneFoundation")==null or house.get_node_or_null("PhysicalOldSlateRoof")==null:
 			_fail("Village house doesn't have authentic collidable foundations and roof: "+house_name)
 			return
+		var room: Node3D=house.get_node_or_null("LivedInDomesticInterior") as Node3D
+		if room==null or int(room.get_meta("new_simulation_entities",-1))!=0:
+			_fail("Furnished home is missing or minted imaginary economic stock: "+house_name)
+			return
+		if int(room.get_meta("authored_storage_vessels",0))!=4:
+			_fail("Household storage is unfinished in "+house_name)
+			return
+		for model_name in ["TimberBedAndWoolBlanket","SootMarkedDomesticHearth",
+				"OccupiedWorkTableDetails","DomesticCeramicStorage"]:
+			if room.get_node_or_null(model_name)==null:
+				_fail("A physically authored domestic detail is missing: "+model_name)
+				return
+		for collider_name in ["PhysicalDomesticBed","PhysicalDomesticHearth"]:
+			if house.get_node_or_null(collider_name)==null:
+				_fail("New interior furniture is not tangible: "+collider_name)
+				return
+		var occupation: String="stonecutter" if house_name=="StonecutterHouse" else "miller"
+		if String(room.get_meta("occupation",""))!=occupation:
+			_fail("Unrelated home professions became identical")
+			return
+		var work_piece: String="StackedHewnPracticeStones" if occupation=="stonecutter" else "WickerSievesAndDryingRack"
+		if room.find_child(work_piece,true,false)==null:
+			_fail("A home has no truthful occupation-specific interior: "+house_name)
+			return
+		# A 1.4-metre central corridor remains free of the only two new
+		# furniture blockers; existing masonry owns the entrance.
+		for obstacle_name in ["PhysicalDomesticBed","PhysicalDomesticHearth"]:
+			var obstacle: Node3D=house.get_node(obstacle_name) as Node3D
+			if absf(obstacle.position.x)<.8 or obstacle.position.z<.5:
+				_fail("Furnishing intersects the house's open front aisle")
+				return
 	# The new homesteads must be settled into the ACTUAL physical terrain:
 	# photographed earth at the entrance, garden beds, soft edge vegetation,
 	# and no second set of world entities or invisible walls.
@@ -268,6 +299,9 @@ func _check() -> void:
 		{"name":"14_millward_house","eye":Vector2(27.3,26),"look":Vector2(30.0,33.5)},
 		{"name":"15_stonecutter_dooryard","eye":Vector2(-12.0,29.1),"look":Vector2(-12.4,34.0)},
 		{"name":"16_millward_dooryard","eye":Vector2(35.0,28.9),"look":Vector2(35.1,33.7)},
+		# Through-the-real-door camera proof that both buildings are lived in.
+		{"name":"19_stonecutter_interior","eye":Vector2(-7.5,32.35),"look":Vector2(-8.3,35.9)},
+		{"name":"20_millward_interior","eye":Vector2(30.0,31.80),"look":Vector2(29.4,35.8)},
 		{"name":"17_stonecutter_evening","eye":Vector2(-12.0,29.1),"look":Vector2(-12.4,34.0),"night":true},
 		{"name":"18_millward_evening","eye":Vector2(35.0,28.9),"look":Vector2(35.1,33.7),"night":true}
 	]
@@ -292,5 +326,5 @@ func _check() -> void:
 			_fail("Cannot save proof screenshot: "+String(shot["name"]))
 			return
 		print("REGIONAL_FOUNDRY_FRAME: "+String(shot["name"]))
-	print("PASS: fourteen editable Blender GLBs import, nine landmarks, three workplaces and two physical homes preserve gameplay, and eleven actual-world screenshots render, including two actual dusk views")
+	print("PASS: fourteen editable Blender GLBs import, nine landmarks, three workplaces and two physical homes preserve gameplay, and thirteen actual-world screenshots render, including occupation-specific room views and two dusk views")
 	quit(0)
