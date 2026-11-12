@@ -21,13 +21,13 @@ func _run() -> void:
 	var sibling: Dictionary=GENES.child(a,b,"born_0002",1938)
 	if not _check(GENES.validate(child) and GENES.validate(sibling) and child!=sibling,
 			"siblings are identical or uninhabitable"): return
-	for trait in GENES.TRAITS:
-		var alleles: Array=child["alleles"][trait]
+	for locus in GENES.TRAITS:
+		var alleles: Array=child["alleles"][locus]
 		var inheritance: bool=(
-			a["alleles"][trait].has(alleles[0]) or
-			abs(int(alleles[0])-int(a["alleles"][trait][0]))<=45 or
-			abs(int(alleles[0])-int(a["alleles"][trait][1]))<=45)
-		if not _check(inheritance,"inherited allele not traceable: "+String(trait)): return
+			a["alleles"][locus].has(alleles[0]) or
+			abs(int(alleles[0])-int(a["alleles"][locus][0]))<=45 or
+			abs(int(alleles[0])-int(a["alleles"][locus][1]))<=45)
+		if not _check(inheritance,"inherited allele not traceable: "+String(locus)): return
 	var sim=VILLAGE.new(1938)
 	var first: Dictionary=sim.create_child("ida","orin","Alma")
 	var second: Dictionary=sim.create_child("ida","orin","Milo")
