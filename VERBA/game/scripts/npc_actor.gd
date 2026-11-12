@@ -267,16 +267,20 @@ func _make_baker_apron(parent: Node3D, fabric: Material, tie: Material) -> void:
 	# A front-facing trapezoidal cloth panel follows shoulders, waist, hem.
 	# Its surface normal points toward the player (-Z); it does not add
 	# collision to a character whose collider already works.
+	# Three cross-sectional columns curve the cloth around a real torso,
+	# keeping the bottom hem from disappearing inside the flared tunic.
 	var vertices: Array[Vector3]=[
-		Vector3(-.20,1.41,-.31),Vector3(.20,1.41,-.31),
-		Vector3(-.23,1.04,-.351),Vector3(.23,1.04,-.351),
-		Vector3(-.285,.55,-.278),Vector3(.285,.55,-.278)]
+		Vector3(-.20,1.41,-.265),Vector3(0,1.41,-.34),Vector3(.20,1.41,-.265),
+		Vector3(-.24,1.04,-.285),Vector3(0,1.04,-.39),Vector3(.24,1.04,-.285),
+		Vector3(-.285,.55,-.248),Vector3(0,.55,-.415),Vector3(.285,.55,-.248)]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(fabric)
-	for ids in [[0,1,2],[1,3,2],[2,3,4],[3,5,4]]:
-		for i in ids:
-			surface.add_vertex(vertices[i])
+	for row in range(2):
+		for column in range(2):
+			var i: int=row*3+column
+			for j in [i,i+1,i+3,i+1,i+4,i+3]:
+				surface.add_vertex(vertices[j])
 	surface.generate_normals()
 	var apron:=MeshInstance3D.new()
 	apron.name="VisibleBakerApron"
@@ -284,11 +288,11 @@ func _make_baker_apron(parent: Node3D, fabric: Material, tie: Material) -> void:
 	parent.add_child(apron)
 	ART.bone(parent,Vector3(-.35,1.04,-.33),
 		Vector3(.35,1.04,-.33),.028,.028,tie,8)
-	var pocket:=ART.box(parent,Vector3(-.08,.75,-.299),
+	var pocket:=ART.box(parent,Vector3(-.08,.75,-.419),
 		Vector3(.17,.14,.022),fabric)
 	pocket.name="BakerWorkPocket"
-	ART.bone(parent,Vector3(-.17,.83,-.312),
-		Vector3(.01,.83,-.312),.009,.009,tie,7)
+	ART.bone(parent,Vector3(-.17,.83,-.424),
+		Vector3(.01,.83,-.424),.009,.009,tie,7)
 
 func _process(delta: float) -> void:
 	# World labels are discovery aids, not floating billboards visible across
