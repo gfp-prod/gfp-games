@@ -58,6 +58,27 @@ func _run() -> void:
 		if actor.find_child("AnimatedLeftArm",true,false)==null:
 			_fail("A new costume mesh accidentally removed the original moving rig")
 			return
+	# The previous faces were near-identical spheres with surface eyes.
+	# Regressions must retain recesses, realistic profile and role variants.
+	for citizen in [ida,orin]:
+		var portrait: Node3D=citizen.find_child(
+			"IndividualFaceConstruction",true,false) as Node3D
+		if portrait==null or not bool(portrait.get_meta("no_new_collision",false)):
+			_fail("The villager lost its distinctive non-physical facial rig")
+			return
+		for part in ["RecessedEyeSocket","NoseBridgeAndPlane",
+				"NaturalCheekPlane","NaturalHairline","ShapedJawAndChin"]:
+			if portrait.find_child(part,true,false)==null:
+				_fail("A low-poly facial feature was lost: "+part)
+				return
+		if portrait.find_children("*","StaticBody3D",true,false).size()>0:
+			_fail("An artistic face introduced unnecessary collision")
+			return
+	# Movement is driven by measured displacement, not a fixed walk cycle.
+	# The tested physics actor and its normal joints are retained.
+	if ida.get("visual_figure")==null or ida.get("distance_gait_phase")==null:
+		_fail("Visual rig no longer supports distance-driven gait")
+		return
 	var smith_head=orin.find_child("ModeledInhabitantHead",true,false) as MeshInstance3D
 	if smith_head==null or smith_head.material_override==null or face.material_override==null:
 		_fail("Different village workers do not have modeled, shaded faces")
@@ -66,5 +87,5 @@ func _run() -> void:
 		(face.material_override as StandardMaterial3D).albedo_color):
 		_fail("Every villager received an identical skin material")
 		return
-	print("PASS: fitted villager bodies, shaded facial proportions and four-panel baker apron preserve distinct worker appearance")
+	print("PASS: fitted villager bodies, individual face anatomy, distance-aware rigging and baker apron preserve distinct worker appearance")
 	quit(0)
