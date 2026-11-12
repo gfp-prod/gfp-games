@@ -297,12 +297,14 @@ func physical_witnesses_of(patient: Node3D) -> Array:
 func _refresh_neighbor_care() -> void:
 	if village_sim==null: return
 	village_sim.nearby_care.clear()
+	village_sim.care_contact.clear()
 	for person in npcs:
 		if not is_instance_valid(person): continue
 		var helper: String=String(person.npc_id)
 		if not village_sim.people.has(helper): continue
 		if not bool(village_sim.people[helper]["alive"]): continue
 		var visible: Array=[]
+		var reachable: Array=[]
 		for injured in npcs:
 			if not is_instance_valid(injured) or injured==person: continue
 			var target: String=String(injured.npc_id)
@@ -312,10 +314,17 @@ func _refresh_neighbor_care() -> void:
 			var body: Dictionary=village_sim.people[target]["anatomy"]
 			if not body["missing"].is_empty() or float(body["bleeding"])>.2:
 				visible.append(target)
+				# Observing injury is not the same as standing close
+				# enough to wrap a wound or fit a prosthetic.
+				if person.global_position.distance_to(injured.global_position)<=2.35:
+					reachable.append(target)
 				village_sim.observe_wound(target,[helper])
 		if not visible.is_empty():
 			visible.sort()
 			village_sim.nearby_care[helper]=visible
+		if not reachable.is_empty():
+			reachable.sort()
+			village_sim.care_contact[helper]=reachable
 
 func skip_days(count: int) -> void:
 	# Developer-only calendar acceleration uses the SAME daily transition as
