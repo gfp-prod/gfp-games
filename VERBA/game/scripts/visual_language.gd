@@ -26,6 +26,55 @@ static func frame(kind: String="dialogue") -> StyleBoxFlat:
 	style.shadow_size=5 if kind=="dialogue" else 3
 	return style
 
+# An authored, repeatable ash/dust grain on the inside of every panel:
+# subtle enough for Latin to stay readable. Created in-memory once and
+# shared, not loaded from a third-party UI texture pack.
+static var _grit: Texture2D
+
+static func _grit_texture() -> Texture2D:
+	if _grit!=null:
+		return _grit
+	var noise:=RandomNumberGenerator.new()
+	noise.seed=194612
+	var picture:=Image.create(128,128,false,Image.FORMAT_RGBA8)
+	for y in range(128):
+		for x in range(128):
+			var variation: float=noise.randf()
+			var line: bool=(x+y*3)%97==0 or (y==31 and x>22 and x<71)
+			var transparency: float=.022+variation*.035
+			if line: transparency+=.065
+			if noise.randf()<.003:
+				transparency+=.13
+			picture.set_pixel(x,y,Color(.65,.59,.48,transparency))
+	_grit=ImageTexture.create_from_image(picture)
+	return _grit
+
+static func _grained(panel: PanelContainer) -> void:
+	if panel.get_node_or_null("AuthoredIronAndVellumGrain")!=null:
+		return
+	# A PanelContainer lays out two children in the same inset region.
+	# The grain is first, behind its text; it never intercepts input.
+	var shade:=TextureRect.new()
+	shade.name="AuthoredIronAndVellumGrain"
+	shade.texture=_grit_texture()
+	shade.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
+	shade.stretch_mode=TextureRect.STRETCH_TILE
+	shade.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	shade.custom_minimum_size=Vector2.ZERO
+	panel.add_child(shade)
+	panel.move_child(shade,0)
+	panel.clip_contents=true
+
+static func rule() -> HSeparator:
+	var divider:=HSeparator.new()
+	divider.name="ThinBrassRule"
+	var style:=StyleBoxLine.new()
+	style.color=Color("95836b",.62)
+	style.thickness=1
+	divider.add_theme_stylebox_override("separator",style)
+	divider.custom_minimum_size.y=5
+	return divider
+
 static func label(node: Label, role: String="body") -> void:
 	var font_size: int=15
 	var pigment: Color=palette("chalk")
@@ -60,17 +109,21 @@ static func label(node: Label, role: String="body") -> void:
 static func dress_player(player) -> void:
 	if player.conversation_panel!=null:
 		player.conversation_panel.add_theme_stylebox_override("panel",frame("dialogue"))
+		_grained(player.conversation_panel)
 		label(player.conversation_name,"title")
 		label(player.conversation_body,"dialogue")
 		label(player.conversation_options,"options")
 		label(player.conversation_footer,"input")
 	if player.guide_panel!=null:
 		player.guide_panel.add_theme_stylebox_override("panel",frame("help"))
+		_grained(player.guide_panel)
 	if player.interaction_plate!=null:
 		player.interaction_plate.add_theme_stylebox_override("panel",frame("small"))
+		_grained(player.interaction_plate)
 		label(player.interaction_hint,"hint")
 	if player.survival_plate!=null:
 		player.survival_plate.add_theme_stylebox_override("panel",frame("small"))
+		_grained(player.survival_plate)
 		label(player.survival_label,"status")
 	if player.reticle!=null:
 		label(player.reticle,"quiet")
