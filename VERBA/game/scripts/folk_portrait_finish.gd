@@ -21,41 +21,43 @@ static func _face_depth(x: float, y: float) -> float:
 		-pow((y-1.663)/.019,2.0))
 	return shell+nose+cheek+eye+lip-.002
 
+# All people use one authored topology. Complexion stays material-local.
+# This avoids repeating thousands of SurfaceTool/exp/pow operations every time
+# the world instantiates its existing population or reloads a saved game.
+static var _shared_sculpt: ArrayMesh
+
 static func _make_integrated_face(root: Node3D, skin: Material) -> void:
-	var tool:=SurfaceTool.new()
-	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var base_color: Color=(skin as StandardMaterial3D).albedo_color
-	var columns: int=22
-	var rows: int=22
-	for yi in range(rows):
-		for xi in range(columns):
-			var x0: float=lerpf(-.183,.183,float(xi)/float(columns))
-			var x1: float=lerpf(-.183,.183,float(xi+1)/float(columns))
-			var y0: float=lerpf(1.575,1.931,float(yi)/float(rows))
-			var y1: float=lerpf(1.575,1.931,float(yi+1)/float(rows))
-			# The elliptical mesh fades inside the head along its outer
-			# rim. No separate cardboard rectangle around the portrait.
-			var pts: Array[Vector3]=[
-				Vector3(x0,y0,_face_depth(x0,y0)),
-				Vector3(x0,y1,_face_depth(x0,y1)),
-				Vector3(x1,y0,_face_depth(x1,y0)),
-				Vector3(x1,y1,_face_depth(x1,y1))
-			]
-			for j in [0,1,2,1,3,2]:
-				var p: Vector3=pts[j]
-				var cheek_light: float=clampf(.022+(p.y-1.575)*.07,0.0,.055)
-				var pigment: Color=base_color.lerp(Color.WHITE,cheek_light)
-				tool.set_color(pigment)
-				tool.set_uv(Vector2((p.x+.183)*2.73,(p.y-1.575)*2.82))
-				tool.add_vertex(p)
-	tool.generate_normals()
+	if _shared_sculpt==null:
+		var tool:=SurfaceTool.new()
+		tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var columns: int=14
+		var rows: int=16
+		for yi in range(rows):
+			for xi in range(columns):
+				var x0: float=lerpf(-.183,.183,float(xi)/float(columns))
+				var x1: float=lerpf(-.183,.183,float(xi+1)/float(columns))
+				var y0: float=lerpf(1.575,1.931,float(yi)/float(rows))
+				var y1: float=lerpf(1.575,1.931,float(yi+1)/float(rows))
+				var pts: Array[Vector3]=[
+					Vector3(x0,y0,_face_depth(x0,y0)),
+					Vector3(x0,y1,_face_depth(x0,y1)),
+					Vector3(x1,y0,_face_depth(x1,y0)),
+					Vector3(x1,y1,_face_depth(x1,y1))
+				]
+				for j in [0,1,2,1,3,2]:
+					var p: Vector3=pts[j]
+					var light_value: float=clampf(.016+(p.y-1.575)*.050,0.0,.045)
+					tool.set_color(Color.WHITE.lerp(Color("ded9d0"),light_value))
+					tool.set_uv(Vector2((p.x+.183)*2.73,(p.y-1.575)*2.82))
+					tool.add_vertex(p)
+		tool.generate_normals()
+		_shared_sculpt=tool.commit()
 	var material: StandardMaterial3D=(skin as StandardMaterial3D).duplicate()
-	material.albedo_color=Color.WHITE
 	material.vertex_color_use_as_albedo=true
 	material.roughness=.98
 	var face:=MeshInstance3D.new()
 	face.name="IndividualIntegratedFaceMesh"
-	face.mesh=tool.commit()
+	face.mesh=_shared_sculpt
 	face.material_override=material
 	root.add_child(face)
 
