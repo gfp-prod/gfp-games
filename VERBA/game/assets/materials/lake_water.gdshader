@@ -12,11 +12,11 @@ void fragment() {
 	float crosswave=sin(world_pos.z*1.24-world_pos.x*.72+TIME*.52);
 	float fine=sin(world_pos.x*3.27+world_pos.z*1.92-TIME*1.13);
 	float drift=.022*longwave+.011*crosswave+.004*fine;
-	vec3 peat=vec3(.087,.126,.134);
-	vec3 steel=vec3(.162,.192,.185);
+	vec3 peat=vec3(.059,.094,.097);
+	vec3 steel=vec3(.109,.143,.138);
 	ALBEDO=mix(peat,steel,.31+.18*longwave)+vec3(drift);
-	ROUGHNESS=.26;
+	ROUGHNESS=.57;
 	METALLIC=0.0;
-	SPECULAR=.50;
-	ALPHA=.83+.022*fine;
+	SPECULAR=.17;
+	ALPHA=.94+.011*fine;
 }
