@@ -30,6 +30,7 @@ const LATIN_WAYSTONE = preload("res://scripts/latin_waystone.gd")
 const WORLD_REGIONS = preload("res://scripts/world_regions.gd")
 const DISTANT_HORIZON = preload("res://scripts/distant_horizon.gd")
 const WORLD_EXPANSION = preload("res://scripts/world_expansion.gd")
+const HERMITAGE_LAKE_ART = preload("res://scripts/hermitage_lake_art.gd")
 const WORLD_ART_UPGRADE = preload("res://scripts/world_art_upgrade.gd")
 const WORLD_WEATHERING = preload("res://scripts/world_weathering.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
@@ -121,6 +122,8 @@ func _ready() -> void:
 	WORLD_EXPANSION.build(self)
 	# History belongs to the landscape, not to a floating decoration layer.
 	WORLD_WEATHERING.build(self)
+	# Close-range environmental composition, separate from saved flora entities.
+	HERMITAGE_LAKE_ART.build(self)
 	# Blender Foundry replaces only scenery visuals; old collision and saves survive.
 	WORLD_ART_UPGRADE.apply(self)
 	FOLIAGE.populate_grass(self)
