@@ -4,6 +4,8 @@ extends RefCounted
 ## interactions and scene coordinates remain untouched.
 const FOUNDRY = "res://assets/models/foundry/"
 const REPLACEMENTS: Array[Dictionary] = [
+	{"path":"StrangeRoadDistrict/CastleOfTheSecondRoad",
+	 "asset":"castle_gatehouse"},
 	# Only shop-level procedural meshes: preserve child ruins, labels, lights,
 	# the already-imported delivery truck, all physical shop and pump bodies.
 	{"path":"StrangeRoadDistrict/ValeFuelStation",
@@ -59,9 +61,16 @@ static func replace_visuals(target: Node3D, asset_name: String,
 			if child is MeshInstance3D or child is MultiMeshInstance3D:
 				(child as GeometryInstance3D).visible=false
 	else:
+		# The medieval castle has an independent luminous anomaly, whose
+		# physical light and hand-built orb must survive a masonry rebuild.
+		var old_magic: Node=target.get_node_or_null("QuietImpossibleLantern")
 		for old_mesh in target.find_children("*","MeshInstance3D",true,false):
+			if old_magic!=null and old_magic.is_ancestor_of(old_mesh):
+				continue
 			(old_mesh as MeshInstance3D).visible=false
 		for old_multimesh in target.find_children("*","MultiMeshInstance3D",true,false):
+			if old_magic!=null and old_magic.is_ancestor_of(old_multimesh):
+				continue
 			(old_multimesh as MultiMeshInstance3D).visible=false
 	target.add_child(candidate)
 	target.set_meta("foundry_model",asset_name)
