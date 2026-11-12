@@ -305,29 +305,29 @@ func setup_atmosphere() -> void:
 	e.background_mode=Environment.BG_SKY
 	var sky:=Sky.new()
 	var s:=ProceduralSkyMaterial.new()
-	s.sky_top_color=Color("729db4")
-	s.sky_horizon_color=Color("dfceb4")
-	s.ground_bottom_color=Color("476556")
-	s.ground_horizon_color=Color("9caf99")
+	s.sky_top_color=Color("82969b")
+	s.sky_horizon_color=Color("c9c0b0")
+	s.ground_bottom_color=Color("42574c")
+	s.ground_horizon_color=Color("9fa9a0")
 	s.use_debanding=true
 	sky.sky_material=s
 	e.sky=sky
 	e.ambient_light_source=Environment.AMBIENT_SOURCE_SKY
 	e.reflected_light_source=Environment.REFLECTION_SOURCE_BG
-	e.ambient_light_energy=.49
+	e.ambient_light_energy=.51
 	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
 	e.fog_enabled=true
-	e.fog_light_color=Color("bcc8bc")
-	e.fog_density=.0040
+	e.fog_light_color=Color("b6bcb2")
+	e.fog_density=.0048
 	e.fog_sky_affect=.16
 	ambient.environment=e
 	add_child(ambient)
 	light_node=DirectionalLight3D.new()
 	light_node.name="LowAutumnSun"
-	light_node.light_color=Color("f7e5c5")
-	light_node.light_energy=.94
+	light_node.light_color=Color("e8ddcc")
+	light_node.light_energy=.88
 	light_node.shadow_enabled=true
-	light_node.rotation_degrees=Vector3(-38,32,-10)
+	light_node.rotation_degrees=Vector3(-35,32,-10)
 	add_child(light_node)
 
 func _update_day_night_art(night_value: float) -> void:
@@ -335,15 +335,15 @@ func _update_day_night_art(night_value: float) -> void:
 	var env: Environment = ambient.environment
 	var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
 	if sky != null:
-		sky.sky_top_color = Color("729db4").lerp(Color("1c2d3d"),night_value)
-		sky.sky_horizon_color = Color("dfceb4").lerp(Color("3c4957"),night_value)
-		sky.ground_bottom_color = Color("476556").lerp(Color("172c30"),night_value)
-		sky.ground_horizon_color = Color("9caf99").lerp(Color("2c4548"),night_value)
-	env.ambient_light_energy = lerpf(.49,.15,night_value)
-	env.fog_light_color = Color("bcc8bc").lerp(Color("3a4c56"),night_value)
-	env.fog_density = lerpf(.0040,.0084,night_value)
-	light_node.light_color=Color("f7e5c5").lerp(Color("a4bcd2"),night_value)
-	light_node.light_energy=lerpf(.94,.20,night_value)
+		sky.sky_top_color = Color("82969b").lerp(Color("1c2d3d"),night_value)
+		sky.sky_horizon_color = Color("c9c0b0").lerp(Color("3c4957"),night_value)
+		sky.ground_bottom_color = Color("42574c").lerp(Color("172c30"),night_value)
+		sky.ground_horizon_color = Color("9fa9a0").lerp(Color("2c4548"),night_value)
+	env.ambient_light_energy = lerpf(.51,.15,night_value)
+	env.fog_light_color = Color("b6bcb2").lerp(Color("3a4c56"),night_value)
+	env.fog_density = lerpf(.0048,.0084,night_value)
+	light_node.light_color=Color("e8ddcc").lerp(Color("a4bcd2"),night_value)
+	light_node.light_energy=lerpf(.88,.20,night_value)
 
 func stream_x(z: float) -> float:
 	return -20.0+4.4*sin(z*.075)+1.7*sin(z*.21)
@@ -463,12 +463,12 @@ func build_terrain() -> void:
 	var material := ShaderMaterial.new()
 	material.shader = load("res://assets/materials/region_ground.gdshader")
 	var surfaces: Dictionary={
-		"meadow_tex":"res://assets/textures/meadow_ground.png",
-		"woodland_tex":"res://assets/textures/woodland_ground.png",
+		"meadow_tex":"res://assets/textures/real/meadow_ground_diffuse.jpg",
+		"woodland_tex":"res://assets/textures/real/woodland_ground_diffuse.jpg",
 		"dry_tex":"res://assets/textures/dry_grass.png",
-		"packed_tex":"res://assets/textures/earth_path.png",
-		"silt_tex":"res://assets/textures/river_silt.png",
-		"stone_tex":"res://assets/textures/stone.png"
+		"packed_tex":"res://assets/textures/real/earth_path_diffuse.jpg",
+		"silt_tex":"res://assets/textures/real/river_silt_diffuse.jpg",
+		"stone_tex":"res://assets/textures/real/stone_diffuse.jpg"
 	}
 	for parameter in surfaces.keys():
 		material.set_shader_parameter(parameter,load(surfaces[parameter]))
