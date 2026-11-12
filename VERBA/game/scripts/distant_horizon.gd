@@ -66,7 +66,16 @@ static func build(world: Node3D) -> void:
 	var ridge:=MeshInstance3D.new()
 	ridge.name="BeyondTheWalkableVale"
 	ridge.mesh=mesh.commit()
-	ridge.material_override=original.material_override
+	# A separate shader instance preserves the exact adjacent ground at the
+	# 128m seam while softly cooling only remote hills. Sharing the original
+	# material recolored the physical playfield and produced cream ridges.
+	var original_material: ShaderMaterial=original.material_override as ShaderMaterial
+	if original_material==null:
+		push_error("VERBA distant ridge requires the world-space soil shader")
+		return
+	var distant_material: ShaderMaterial=original_material.duplicate() as ShaderMaterial
+	distant_material.set_shader_parameter("distant_mode",true)
+	ridge.material_override=distant_material
 	ridge.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	scenery.add_child(ridge)
 	scenery.set_meta("visual_only",true)
