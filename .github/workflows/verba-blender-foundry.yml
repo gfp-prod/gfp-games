@@ -77,6 +77,11 @@ jobs:
             --path . --script res://tests/foundry_review.gd 2>&1 \
             | tee /tmp/foundry-godot-review.log
           grep -q "PASS: Blender cottage GLB imports" /tmp/foundry-godot-review.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:' /tmp/foundry-godot-review.log; then
+            echo "::error::Scene screenshot generation reported Godot errors"
+            exit 1
+          fi
+          python3 tools/art_foundry/check_game_comparisons.py
 
       - name: Preserve all generated editable art and real gameplay comparisons
         if: always()
