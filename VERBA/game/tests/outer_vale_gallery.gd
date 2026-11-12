@@ -63,7 +63,7 @@ func _capture() -> void:
 		var target: Vector2=view["look"]
 		director.global_position=Vector3(eye.x,world.height_at(eye.x,eye.y)+1.65,eye.y)
 		director.look_at(Vector3(target.x,world.height_at(target.x,target.y)+1.40,target.y),Vector3.UP)
-		for i in range(4): await process_frame
+		for i in range(2): await process_frame
 		if not _frame(directory,String(view["name"])):
 			return
 	# All screen-based screenshots use the actual player's camera and
