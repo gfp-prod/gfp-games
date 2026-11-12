@@ -65,6 +65,15 @@ func _run() -> void:
 	if road_skin==null or not road_skin.shader.resource_path.ends_with("aged_road.gdshader"):
 		_fail("Distant road reverted to a perfectly smooth gray plane")
 		return
+	var road_vertices: PackedVector3Array=old_road.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	if road_vertices.size()<600:
+		_fail("Road has reverted to six-vertex quads that cut through terrain")
+		return
+	for i in range(0,road_vertices.size(),maxi(1,road_vertices.size()/22)):
+		var vertex: Vector3=road_vertices[i]
+		if vertex.y-world.height_at(vertex.x,vertex.z)<.08:
+			_fail("Road triangle is buried inside actual walkable terrain")
+			return
 
 	var lake: Node3D=world.get_node_or_null("OuterValeRegionalLandmarks/StillwaterLake")
 	if lake==null:
@@ -89,6 +98,11 @@ func _run() -> void:
 		if not world.height_at(x,REGIONS.LAKE.y)>world.height_at(REGIONS.LAKE.x,REGIONS.LAKE.y)+.35:
 			_fail("There is no bank rising out of the physical lake")
 			return
+	var masonry: Node3D=world.get_node_or_null(
+		"OuterValeRegionalLandmarks/ColdCharcoalKiln/KilnCurvedBrickwork")
+	if masonry==null or masonry.get_child_count()<39:
+		_fail("The abandoned kiln is still one smooth cone instead of broken masonry")
+		return
 	for landmark in ["TumbledTollGate","ColdCharcoalKiln","OldHunterBlind",
 			"SevenWeatheredWitnessStones","WindbrokenOrchard",
 			"LastMeasuredMileStone","LongTrackToStillwater"]:
