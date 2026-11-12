@@ -1,0 +1,61 @@
+name: VERBA official CC0 material and asset scout
+
+on:
+  push:
+    branches: ["verba/blender-asset-foundry"]
+    paths:
+      - ".github/workflows/verba-cc0-scout.yml"
+      - "VERBA/game/tools/art_foundry/cc0_source_register.json"
+      - "VERBA/game/tools/art_foundry/scout_cc0_sources.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verba-cc0-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: License-verified model catalogue and 1K surface review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install isolated preview dependency
+        run: python -m pip install --quiet Pillow==11.3.0
+      - name: Verify source list and script syntax before making any request
+        run: |
+          python -m py_compile tools/art_foundry/scout_cc0_sources.py
+          python tools/art_foundry/scout_cc0_sources.py --out ../cc0_review --no-network
+      - name: Audit official free Kenney packs and Poly Haven materials
+        run: |
+          python tools/art_foundry/scout_cc0_sources.py --out ../cc0_review
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("../cc0_review/source_audit.json")
+          j=json.loads(p.read_text())
+          print("Licensed sources audited:",len(j["packs"])+len(j["materials"]))
+          print("Unreachable sources (recorded, not silently approved):",j["errors"])
+          assert all(x["license"]=="CC0-1.0" for x in j["packs"]+j["materials"])
+          PY
+      - name: Publish source checksums, candidate ZIPs and material contact sheet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verba-reviewed-free-cc0-source-library
+          path: |
+            VERBA/cc0_review/source_audit.json
+            VERBA/cc0_review/cc0_materials_and_pack_previews.jpg
+            VERBA/cc0_review/raw_packs/*.zip
+            VERBA/cc0_review/pbr_preview/**/*.png
+          if-no-files-found: warn
+          retention-days: 21
