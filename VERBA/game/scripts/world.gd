@@ -23,6 +23,7 @@ const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
 const STORYBOOK_HOUSE = preload("res://scripts/storybook_house.gd")
 const LANDMARK_TREE = preload("res://scripts/landmark_tree.gd")
+const TREE_PALETTE = preload("res://scripts/tree_palette.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
 const LATIN_WAYSTONE = preload("res://scripts/latin_waystone.gd")
@@ -848,35 +849,14 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 	else:
 		attached = EXTERNAL_ART.attach_scaled(node,path,target_height)
 	if attached and kind != "dead":
-		# Quaternius alpha foliage is excellent geometry but its raw neon
-		# yellow/salmon palette looked too toy-like in our actual Godot footage.
-		# Preserve UVs, bark and opacity while tinting leaf surfaces only.
-		var imported: Node3D = node.get_node_or_null("CC0ImportedArt") as Node3D
-		if imported != null:
-			var leaf_tint: Color = Color("647c69") if kind != "autumn" else Color("806b5a")
-			# Autumn is a varied amber/olive canopy, not the same salmon pink
-			# copied thirty times along the ridge. Preserve a few rust accents.
-			if kind == "autumn":
-				var variation: float = r.randf()
-				if variation < .30:
-					leaf_tint = Color("6c7d60")
-				elif variation < .61:
-					leaf_tint = Color("937455")
-				elif variation < .86:
-					leaf_tint = Color("866965")
-				else:
-					leaf_tint = Color("998266")
-			else:
-				leaf_tint = leaf_tint.lerp(Color("899b87"),r.randf_range(.0,.48))
-			for member in imported.find_children("*","MeshInstance3D",true,false):
-				var part: MeshInstance3D = member as MeshInstance3D
-				if part == null or part.mesh == null: continue
-				for surface_id in range(part.mesh.get_surface_count()):
-					var source_material: Material = part.mesh.surface_get_material(surface_id)
-					if source_material is StandardMaterial3D and (surface_id == 1 or String(source_material.resource_name).to_lower().contains("leav")):
-						var new_mat: StandardMaterial3D = source_material.duplicate() as StandardMaterial3D
-						new_mat.albedo_color = source_material.albedo_color * leaf_tint
-						part.set_surface_override_material(surface_id,new_mat)
+		# The library leaves have salmon/yellow pigment baked into the images.
+		# Old material tint multiplication could not remove it. Restore the
+		# original silhouette and alpha using a cached, luminance-preserving
+		# painterly recolor. Never touch geometry, collisions or flora IDs.
+		var imported: Node3D=node.get_node_or_null("CC0ImportedArt") as Node3D
+		if imported!=null:
+			var palette_variant: int=absi(int(p.x*13.7+p.z*9.31)) % (4 if kind=="autumn" else 3)
+			TREE_PALETTE.dress_tree(imported,kind,palette_variant)
 	if not attached:
 		# Keep a solid landmark rather than fake orange canopy blobs or
 		# thousands of loose rectangular procedural leaves.
