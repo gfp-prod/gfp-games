@@ -183,12 +183,24 @@ func _check() -> void:
 		if int(room.get_meta("authored_storage_vessels",0))!=4:
 			_fail("Household storage is unfinished in "+house_name)
 			return
-		for model_name in ["TimberBedAndWoolBlanket","SootMarkedDomesticHearth",
+		for model_name in ["SootMarkedDomesticHearth",
 				"OccupiedWorkTableDetails","DomesticCeramicStorage"]:
 			if room.get_node_or_null(model_name)==null:
 				_fail("A physically authored domestic detail is missing: "+model_name)
 				return
-		for collider_name in ["PhysicalDomesticBed","PhysicalDomesticHearth"]:
+		var licensed_bed: bool=bool(room.get_meta("uses_licensed_bed",false))
+		if licensed_bed:
+			var imported_bed: Node3D=world.get_node_or_null(
+				"LicensedCC0RetroPackArt/MillwardOldBed") as Node3D
+			if imported_bed==null or imported_bed.get_node_or_null("PhysicalImportedRetroProp")==null:
+				_fail("Millward's original licensed bed or its collision was lost")
+				return
+		elif room.get_node_or_null("TimberBedAndWoolBlanket")==null:
+			_fail("The house has neither a real licensed nor authored physical bed")
+			return
+		var furniture_colliders: Array[String]=["PhysicalDomesticHearth"]
+		if not licensed_bed: furniture_colliders.append("PhysicalDomesticBed")
+		for collider_name in furniture_colliders:
 			if house.get_node_or_null(collider_name)==null:
 				_fail("New interior furniture is not tangible: "+collider_name)
 				return
@@ -202,7 +214,7 @@ func _check() -> void:
 			return
 		# A 1.4-metre central corridor remains free of the only two new
 		# furniture blockers; existing masonry owns the entrance.
-		for obstacle_name in ["PhysicalDomesticBed","PhysicalDomesticHearth"]:
+		for obstacle_name in furniture_colliders:
 			var obstacle: StaticBody3D=house.get_node(obstacle_name) as StaticBody3D
 			var solid_shape: CollisionShape3D=obstacle.get_node_or_null(
 				"CollisionShape3D") as CollisionShape3D
