@@ -5,38 +5,53 @@ extends RefCounted
 ## collision, conversations and work roles remain exactly as before.
 const ART=preload("res://scripts/art.gd")
 const FABRIC=preload("res://scripts/npc_cloth_finish.gd")
+const BODY=preload("res://scripts/npc_body_morph.gd")
 
 static func dress(figure: Node3D,person: String,
-		tunic: Material,trim: Material,leather: Material) -> void:
+		tunic: Material,trim: Material,leather: Material,
+		genome: Dictionary={}) -> void:
 	var worn:=FABRIC.worn_linen(Color("514b42"))
-	# Overlapping fabric planes on a mannequin cause z-fighting. This 12-sided
-	# shaped silhouette sits outside the existing tunic and pinches at waist.
+	# The external work garment must follow the ACTUAL inherited waist,
+	# ribcage and hips. A fixed triangular cone previously hid all visible
+	# differences even though a detailed genetic torso existed underneath.
 	var hem:=SurfaceTool.new()
 	hem.begin(Mesh.PRIMITIVE_TRIANGLES)
 	hem.set_material(tunic)
-	for i in range(12):
-		var a: float=TAU*float(i)/12.0
-		var b: float=TAU*float(i+1)/12.0
-		var top_a:=Vector3(cos(a)*.295,1.23,sin(a)*.295)
-		var top_b:=Vector3(cos(b)*.295,1.23,sin(b)*.295)
-		var bottom_a:=Vector3(cos(a)*(.41+.017*sin(float(i)*2.2)),.48+.025*sin(float(i)*1.3),sin(a)*.40)
-		var bottom_b:=Vector3(cos(b)*(.41+.017*sin(float(i+1)*2.2)),.48+.025*sin(float(i+1)*1.3),sin(b)*.40)
-		for p in [top_a,bottom_a,top_b,top_b,bottom_a,bottom_b]:
-			hem.set_uv(Vector2(p.x*1.9,p.y*2.1))
-			hem.add_vertex(p)
+	var levels: Array[float]=[.49,.65,.83,.98,1.17,1.24]
+	for j in range(levels.size()-1):
+		var low: float=levels[j]
+		var high: float=levels[j+1]
+		for i in range(16):
+			var a: float=TAU*float(i)/16.0
+			var b: float=TAU*float(i+1)/16.0
+			var p0: Vector3=BODY._point(low,a,genome)
+			var p1: Vector3=BODY._point(high,a,genome)
+			var p2: Vector3=BODY._point(high,b,genome)
+			var p3: Vector3=BODY._point(low,b,genome)
+			for point in [p0,p1,p2,p0,p2,p3]:
+				var outward: Vector3=Vector3(point.x*1.042,point.y,
+					point.z*1.042)
+				hem.set_uv(Vector2(outward.x*1.9,outward.y*2.1))
+				hem.add_vertex(outward)
 	hem.generate_normals()
 	var outer:=MeshInstance3D.new()
 	outer.name="CutAndRepairedTunicPanels"
 	outer.mesh=hem.commit()
 	figure.add_child(outer)
-	# Leather belt segmented around the body at the actual waist.
-	for i in range(12):
-		var a: float=TAU*float(i)/12.0
-		var b: float=TAU*float(i+1)/12.0
-		var p:=Vector3(cos(a)*.332,1.055,sin(a)*.332)
-		var q:=Vector3(cos(b)*.332,1.055,sin(b)*.332)
-		ART.bone(figure,p,q,.064,.043,leather,6)
-	var buckle:=ART.box(figure,Vector3(0,1.05,-.352),
+	# Real waist measurement also determines the belt circumference and
+	# buckle position; neither floats around a differently sized citizen.
+	for i in range(16):
+		var a: float=TAU*float(i)/16.0
+		var b: float=TAU*float(i+1)/16.0
+		var p0: Vector3=BODY._point(1.054,a,genome)
+		var p1: Vector3=BODY._point(1.054,b,genome)
+		p0.x*=1.085
+		p0.z*=1.085
+		p1.x*=1.085
+		p1.z*=1.085
+		ART.bone(figure,p0,p1,.048,.035,leather,7)
+	var front: Vector3=BODY._point(1.054,-PI*.5,genome)
+	var buckle:=ART.box(figure,Vector3(0,1.05,front.z*1.09-.021),
 		Vector3(.10,.08,.025),trim)
 	buckle.name="SmallTarnishedBeltBuckle"
 	var pocket:=ART.box(figure,Vector3(.28,.91,-.20),
