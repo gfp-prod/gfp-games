@@ -49,5 +49,15 @@ func _run() -> void:
 	if not player.guide_panel.has_theme_stylebox_override("panel") or not player.conversation_panel.has_theme_stylebox_override("panel"):
 		_fail("Help and dialogue do not share material styling")
 		return
-	print("PASS: unified worn iron UI, responsive survival, diegetic grimoire, pinned Latin entry and minimal prompts")
+	var fascia=world.workplaces.find_child("MarketTimberNameFascia",true,false)
+	var market_sign=world.workplaces.find_child("CarvedWorkplaceSign",true,false)
+	if fascia==null or market_sign==null:
+		_fail("The village lost its physically backed iron-and-timber signs")
+		return
+	var signs: Array=world.workplaces.find_children("CarvedWorkplaceSign","Label3D",true,false)
+	for sign in signs:
+		if sign.font_size>36 or sign.pixel_size>.0027:
+			_fail("A shop name has regressed into floating billboard-sized lettering")
+			return
+	print("PASS: unified worn iron UI, real timber signs, responsive survival, diegetic grimoire, pinned Latin entry and minimal prompts")
 	quit(0)
