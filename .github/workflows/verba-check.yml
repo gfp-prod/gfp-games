@@ -75,6 +75,10 @@ jobs:
         run: bash tests/godot_guard.sh res://tests/scholar_progression_test.gd
       - name: Full in-world Latin book discovery and casting loop
         run: bash tests/godot_guard.sh res://tests/book_world_loop_test.gd
+      - name: Modular limbs, persistent wounds, relationships and resource-limited voluntary aid
+        run: |
+          timeout 120s godot --headless --path . --script res://tests/modular_anatomy_care_test.gd 2>&1 | tee /tmp/verba-anatomy-care.log
+          grep -q "PASS: four physical limb modules" /tmp/verba-anatomy-care.log
       - name: Physical NPC conversation, Latin progression, trade and persistence
         run: bash tests/godot_guard.sh res://tests/social_dialogue_test.gd
       - name: Living familiar choice, Latin commands and saved companion identity
