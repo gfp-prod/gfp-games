@@ -52,10 +52,23 @@ static func build(world: Node3D, district: Node3D) -> void:
 	district.add_child(root)
 	var rng:=RandomNumberGenerator.new()
 	rng.seed=SEED
-	var stone: StandardMaterial3D=world.textured(
-		"res://assets/textures/real/stone_diffuse.jpg",Color("a39b8e"))
+	# Poly Haven's source-audited CC0 photographic cobblestone map is
+	# integrated into *physical visual paving*, not merely downloaded.
+	# The existing image is the safe fallback for a clean checkout.
+	var cobble_texture: String="res://assets/textures/cc0/polyhaven/mossy_cobblestone_diffuse.png"
+	if not ResourceLoader.exists(cobble_texture):
+		cobble_texture="res://assets/textures/real/stone_diffuse.jpg"
+	var stone: StandardMaterial3D=world.textured(cobble_texture,Color("a39b8e"))
 	stone.vertex_color_use_as_albedo=true
 	stone.roughness=.98
+	var normal_texture: String="res://assets/textures/cc0/polyhaven/mossy_cobblestone_normal.png"
+	var rough_texture: String="res://assets/textures/cc0/polyhaven/mossy_cobblestone_rough.png"
+	if ResourceLoader.exists(normal_texture):
+		stone.normal_enabled=true
+		stone.normal_scale=.45
+		stone.normal_texture=load(normal_texture)
+	if ResourceLoader.exists(rough_texture):
+		stone.roughness_texture=load(rough_texture)
 	var earth: StandardMaterial3D=world.textured(
 		"res://assets/textures/real/earth_path_diffuse.jpg",Color("7a7467"))
 	earth.vertex_color_use_as_albedo=true
