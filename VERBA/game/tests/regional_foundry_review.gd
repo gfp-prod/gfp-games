@@ -4,9 +4,10 @@ extends SceneTree
 const MODELS: Array[String] = [
 	"old_creek_footbridge","old_fishing_jetty","witness_stone_circle",
 	"rusting_delivery_wreck","dead_ash_tree",
-	"ridge_arch","stone_prayer_shrine","cold_charcoal_kiln","roadside_station"
+	"ridge_arch","stone_prayer_shrine","cold_charcoal_kiln","roadside_station","castle_gatehouse"
 ]
 const TARGETS: Array[String] = [
+	"StrangeRoadDistrict/CastleOfTheSecondRoad",
 	"StrangeRoadDistrict/ValeFuelStation",
 	"ValleyScenicDetails/OldCreekFootbridge",
 	"OuterValeRegionalLandmarks/StillwaterLake/OldFishingJetty",
@@ -62,7 +63,8 @@ func _check() -> void:
 			"ridge_arch":Vector3(2.4,3.7,1.1),
 			"stone_prayer_shrine":Vector3(1.7,1.65,1.2),
 			"cold_charcoal_kiln":Vector3(2.1,1.5,2.1),
-			"roadside_station":Vector3(13.0,5.9,8.0)
+			"roadside_station":Vector3(13.0,5.9,8.0),
+			"castle_gatehouse":Vector3(14.2,5.8,14.2)
 		}
 		var found: bool=false
 		var bounds: AABB=AABB()
@@ -101,6 +103,16 @@ func _check() -> void:
 			return
 	if int(world.get_meta("foundry_replacements",0))!=TARGETS.size():
 		_fail("Not all new landmark models installed")
+		return
+	var castle: Node3D=world.get_node_or_null("StrangeRoadDistrict/CastleOfTheSecondRoad") as Node3D
+	if castle==null or castle.get_node_or_null("CastleOpenGate")==null:
+		_fail("Blender castle facade erased the physical open gate")
+		return
+	if castle.find_child("WalkableNorthRoadBridgeDeck",true,false)!=null:
+		_fail("Castle art unexpectedly changed independent road bridge ownership")
+		return
+	if castle.get_node_or_null("QuietImpossibleLantern")==null:
+		_fail("The original castle anomaly was lost with the visual swap")
 		return
 	var station: Node3D=world.get_node_or_null("StrangeRoadDistrict/ValeFuelStation") as Node3D
 	if station==null or station.get_node_or_null("StationOpenEntrance")==null:
@@ -143,7 +155,8 @@ func _check() -> void:
 		{"name":"06_ridge_arch","eye":Vector2(24,-18),"look":Vector2(33,-22)},
 		{"name":"07_prayer_shrine","eye":Vector2(-4,-4),"look":Vector2(-8,-7)},
 		{"name":"08_charcoal_kiln","eye":Vector2(44,-20),"look":Vector2(50,-21)},
-		{"name":"09_shop_and_canopy","eye":Vector2(-90,78),"look":Vector2(-102,77)}
+		{"name":"09_shop_and_canopy","eye":Vector2(-90,78),"look":Vector2(-102,77)},
+		{"name":"10_masonry_castle","eye":Vector2(-33,39),"look":Vector2(-49,44)}
 	]
 	for shot in views:
 		var eye: Vector2=shot["eye"]
@@ -160,5 +173,5 @@ func _check() -> void:
 			_fail("Cannot save proof screenshot: "+String(shot["name"]))
 			return
 		print("REGIONAL_FOUNDRY_FRAME: "+String(shot["name"]))
-	print("PASS: nine editable Blender GLBs import, eight landmark visuals replace live geometry without collision loss, and nine actual-world screenshots render")
+	print("PASS: ten editable Blender GLBs import, nine landmark visuals replace live geometry without collision loss, and ten actual-world screenshots render")
 	quit(0)
