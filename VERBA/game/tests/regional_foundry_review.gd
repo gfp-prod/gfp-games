@@ -50,6 +50,35 @@ func _check() -> void:
 				if material==null:
 					_fail("Untextured imported surface: "+id)
 					return
+		# Static PNG reviews cannot catch an axis-flipped model.
+		# Verify the *imported* Godot Y-up bounds, not Blender source dimensions.
+		var expected: Dictionary={
+			"old_creek_footbridge":Vector3(11.8,.84,1.70),
+			"old_fishing_jetty":Vector3(7.9,1.95,1.80),
+			"witness_stone_circle":Vector3(8.3,1.6,8.3),
+			"rusting_delivery_wreck":Vector3(2.4,.98,1.1),
+			"dead_ash_tree":Vector3(2.3,5.8,2.0),
+			"ridge_arch":Vector3(2.4,3.7,1.1),
+			"stone_prayer_shrine":Vector3(1.7,1.65,1.2),
+			"cold_charcoal_kiln":Vector3(2.1,1.5,2.1)
+		}
+		var found: bool=false
+		var bounds: AABB=AABB()
+		var inverse: Transform3D=imported.global_transform.affine_inverse()
+		for node in meshes:
+			var mesh_node: MeshInstance3D=node as MeshInstance3D
+			var mesh_box: AABB=mesh_node.mesh.get_aabb()
+			for xi in range(2):
+				for yi in range(2):
+					for zi in range(2):
+						var vertex: Vector3=mesh_box.position+mesh_box.size*Vector3(float(xi),float(yi),float(zi))
+						var local: Vector3=inverse*(mesh_node.global_transform*vertex)
+						bounds=AABB(local,Vector3.ZERO) if not found else bounds.expand(local)
+						found=true
+		var minimum: Vector3=expected[id]
+		if not found or bounds.size.x<minimum.x or bounds.size.y<minimum.y or bounds.size.z<minimum.z:
+			_fail("Model too small, sideways or wrongly aligned: "+id+" Godot bounds "+str(bounds.size))
+			return
 		if imported.find_children("*","StaticBody3D",true,false).size()>0:
 			_fail("A visual-only GLB imported unexpected collision bodies: "+id)
 			return
