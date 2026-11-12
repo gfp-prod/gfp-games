@@ -764,6 +764,164 @@ def village_market_stall(g):
         oak.box((x,.57,.47),(.63,.07,.39),1.2)
         rope.beam((x-.27,.52,.64),(x+.27,.52,.64),.029)
 
+
+def village_hearth_house(g):
+    """Walk-in 6m village dwelling, physically matching the game's open door.
+    A vernacular construction system, not a house-shaped box. Weathered CC0
+    fieldstone, timber and clay render with genuine sloped roof geometry.
+    The 1.4m south doorway is intentionally open, x±.72 and z=-3.07.
+    """
+    stone,lichen,oak=g["stone"],g["lichen"],g["oak"]
+    frame,slate,plaster=g["timber"],g["steel"],g["plaster"]
+    glass,rust,dark,brick=g["glass"],g["rust"],g["dark"],g["brick"]
+    # Foundations explain why the house stays level in the old valley.
+    stone.box((0,.19,0),(6.14,.39,6.38),2.6)
+    for side in [-1,1]:
+        stone.box((side*2.86,.34,0),(.37,.42,6.26),1.7)
+    for front in [-3.08,3.08]:
+        stone.box((0,.34,front),(5.90,.35,.39),1.7)
+    # Back and sides, a believable plaster shell bonded to dark sill beams.
+    plaster.box((0,1.98,3.08),(5.84,3.18,.32),2.4)
+    for sign in [-1,1]:
+        plaster.box((sign*2.89,1.98,0),(.31,3.18,6.08),3.0)
+        oak.beam((sign*2.87,.42,-3.13),(sign*2.87,.42,3.13),.18,.16)
+        frame.beam((sign*2.95,.40,-2.85),(sign*2.95,3.40,-2.85),.24,.21)
+        frame.beam((sign*2.95,.40,2.85),(sign*2.95,3.40,2.85),.25,.21)
+        for z in [-2.0,-.53,1.13,2.36]:
+            frame.beam((sign*3.01,.44,z),(sign*3.01,3.31,z),.105,.079)
+        for h in [1.05,3.30]:
+            frame.beam((sign*3.04,h,-3.09),(sign*3.04,h,3.10),.116,.094)
+        # Hand-repaired limewash has narrow weather-scoured strips under eaves.
+        for i in range(7):
+            if i in [1,4]:continue
+            z=-2.60+i*.82
+            lichen.box((sign*3.073,.48+R.random()*.42,z),
+                       (.019,R.uniform(.22,.65),.27),1.1)
+    # An actually open, narrow door with paired shuttered windows beside it.
+    # The old original code kept the entrance in a solid front wall, which
+    # meant the player could never visually believe it was a dwelling.
+    for sign in [-1,1]:
+        # Main piers frame the open doorway while flanking *real* windows.
+        plaster.box((sign*1.085,1.96,-3.07),(.75,3.13,.32),1.6)
+        plaster.box((sign*2.63,1.96,-3.07),(.52,3.13,.32),1.6)
+        plaster.box((sign*1.88,.84,-3.08),(.94,1.10,.34),1.3)
+        plaster.box((sign*1.88,2.92,-3.08),(.94,.99,.34),1.3)
+        glass.box((sign*1.87,1.86,-3.09),(.89,1.02,.055),1.0)
+        # Timber four-sided casements, central mullions, actual sill drainage.
+        for x in [sign*1.43,sign*2.32]:
+            frame.beam((x,1.34,-3.17),(x,2.40,-3.17),.104,.11)
+        for y in [1.31,2.46]:
+            oak.beam((sign*1.40,y,-3.18),(sign*2.35,y,-3.18),.12,.14)
+        frame.beam((sign*1.87,1.38,-3.21),
+                   (sign*1.87,2.44,-3.21),.056,.067)
+        stone.box((sign*1.87,1.27,-3.25),(1.13,.13,.40),1.3)
+        rust.box((sign*1.87,1.20,-3.25),(.93,.025,.22),1.0)
+        # Exterior half-shutter with diagonal repair strut.
+        frame.box((sign*2.48,1.87,-3.20),(.26,.98,.11),1.6)
+        oak.beam((sign*2.40,1.43,-3.28),
+                 (sign*2.52,2.31,-3.28),.042,.034)
+    plaster.box((0,2.88,-3.07),(1.42,.98,.35),1.3)
+    oak.beam((-.76,2.36,-3.25),(.76,2.36,-3.25),.26,.25)
+    for side in [-1,1]:
+        frame.beam((side*.76,.35,-3.24),
+                   (side*.76,2.50,-3.24),.16,.16)
+    stone.box((0,.18,-3.35),(1.62,.18,.76),1.0)
+    for i in range(3):
+        x=-.48+i*.48
+        stone.box((x,.095,-3.62),(.45,.10,.33),1.0)
+    # Packed clay gables behind the exposed roof frame: pitched, not flat.
+    for z in [-3.09,3.09]:
+        plaster.face([(-2.85,3.41,z),(2.85,3.41,z),(0,5.16,z)],2.8)
+        plaster.face([(0,5.16,z),(-2.85,3.41,z),(2.85,3.41,z)],2.8)
+        oak.beam((-3.02,3.39,z),(0,5.21,z),.19,.15)
+        oak.beam((0,5.21,z),(3.02,3.39,z),.19,.15)
+        frame.beam((-2.68,3.45,z),(2.68,3.45,z),.15,.13)
+        for x in [-1.36,1.36]:
+            y=3.41+(2.9-abs(x))/2.9*1.73
+            frame.beam((x,3.42,z),(x,y,z),.095,.079)
+    # True pitched roofing, 0.3m overhang, thick weathered underlay.
+    roof_half_width=3.45
+    ridge_height=5.28
+    eave_height=3.36
+    roof_half_length=3.58
+    for side in [-1,1]:
+        outer=side*roof_half_width
+        ridge=0.0
+        # Faces point outward; double-side the underlay so interior ceilings
+        # still look like roof boards from the front door and the fireplace.
+        corners=[(ridge,ridge_height,-roof_half_length),
+                 (outer,eave_height,-roof_half_length),
+                 (outer,eave_height,roof_half_length),
+                 (ridge,ridge_height,roof_half_length)]
+        dark.face(corners,3.6)
+        dark.face(list(reversed(corners)),3.6)
+        # Visible rafter tails and grain direction reveal the true roof load.
+        for z in [-3.38,-2.27,-.95,.42,1.64,2.93,3.38]:
+            frame.beam((0,5.18,z),(outer,3.32,z),.14,.13)
+        for row in range(12):
+            t0=row/12.0
+            t1=(row+1)/12.0+.010
+            t1=min(t1,1.0)
+            for col in range(15):
+                z0=-3.53+col*(7.06/15.0)
+                z1=z0+7.06/15.0-.016
+                if row%2==0:
+                    z0+=.031;z1+=.031
+                x0=side*roof_half_width*t0
+                x1=side*roof_half_width*t1
+                y0=ridge_height-(ridge_height-eave_height)*t0+.028
+                y1=ridge_height-(ridge_height-eave_height)*t1+.027
+                pigment=lichen if row in [5,8,10] and (col+row*3)%19==0 else slate
+                pigment.face([(x0,y0,z0),(x1,y1,z0),
+                              (x1,y1,z1),(x0,y0,z1)],1.1)
+        oak.beam((outer,eave_height,-3.66),
+                 (outer,eave_height,3.66),.16,.15)
+    rust.beam((0,5.33,-3.66),(0,5.33,3.66),.16,.17)
+    # A small entrance hood shields the doorstep; gabled overhangs are
+    # supported by posts placed OUTSIDE the original 1.4m doorway.
+    for x in [-1.13,1.13]:
+        frame.beam((x,.28,-3.88),(x,2.91,-3.88),.15,.15)
+        frame.beam((x,2.81,-3.86),(x,3.35,-3.24),.11)
+    for side in [-1,1]:
+        slate.face([(0,3.64,-4.16),
+                    (side*1.42,3.09,-4.16),
+                    (side*1.42,3.09,-3.12),
+                    (0,3.64,-3.12)],1.4)
+    frame.beam((0,3.66,-4.18),(0,3.66,-3.06),.11)
+    # The house is used: raised stone hearth, flue, chimney, hanging rack
+    # and wooden table visible behind its open doorway.
+    stone.box((1.66,.36,2.31),(1.23,.44,.74),1.4)
+    brick.box((1.66,.77,2.72),(1.16,.87,.25),1.3)
+    dark.box((1.64,.71,2.46),(.88,.42,.065),1.0)
+    for side in [-1,1]:
+        brick.box((1.66+side*.48,.75,2.43),(.18,.73,.25),1.0)
+    chimney_x=1.91; chimney_z=2.18
+    for y in [3.89,4.64,5.39]:
+        stone.box((chimney_x,y,chimney_z),(.63,.72,.64),1.5)
+    dark.box((chimney_x,5.79,chimney_z),(.49,.13,.52),1)
+    stone.box((chimney_x,5.87,chimney_z),(.79,.12,.79),1.1)
+    # Timber floors with clear grain and the occasional replaced plank.
+    for i in range(12):
+        x=-2.71+(i+.5)*(5.42/12.0)
+        oak.box((x,.386,0),(.445,.077,5.65),2.7)
+    for x in [-1.72,-.81]:
+        oak.beam((x,.43,.88),(x,.89,.88),.10)
+        oak.beam((x,.43,1.55),(x,.89,1.55),.10)
+    oak.box((-1.25,.96,1.20),(1.27,.14,.79),1.8)
+    oak.box((-1.25,1.42,2.58),(1.91,.12,.36),1.8)
+    for x in [-2.15,-.33]:
+        frame.beam((x,1.42,2.58),(x,2.10,2.58),.075,.07)
+    for z in [-1.83,.64]:
+        rust.box((-2.87,1.54,z),(.028,.055,.40),1.0)
+    # Repair and dirt accumulate at bases and rain traps, not randomly
+    # over the roof or as glittering glowing rune spam.
+    for i in range(27):
+        x=R.uniform(-2.73,2.73)
+        z=R.choice([-1,1])*R.uniform(2.90,3.40)
+        stone.rock((x,.12,z),
+                   (R.uniform(.13,.32),R.uniform(.07,.15),R.uniform(.14,.29)),
+                   10200+i)
+
 BUILDERS={
     "old_creek_footbridge":bridge,
     "old_fishing_jetty":jetty,
@@ -777,7 +935,8 @@ BUILDERS={
     "castle_gatehouse":castle_gatehouse,
     "village_bakery":village_bakery,
     "village_forge":village_forge,
-    "village_market_stall":village_market_stall
+    "village_market_stall":village_market_stall,
+    "village_hearth_house":village_hearth_house
 }
 
 def export_asset(out,name,builder):
