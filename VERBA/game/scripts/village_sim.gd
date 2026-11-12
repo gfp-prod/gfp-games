@@ -339,6 +339,17 @@ func observe_wound(victim_id: String, witnesses: Array) -> void:
 		var known: Array=people[id]["known_wounded"]
 		if not known.has(victim_id): known.append(victim_id)
 
+# An observer's reaction to harm depends on THEIR relationship to the
+# patient. A loving spouse is horrified; a bitter enemy may welcome the
+# blow. Only explicitly present witnesses change opinion.
+func _harm_witness_delta(observer_id: String, patient_id: String) -> float:
+	if not people.has(observer_id) or not people.has(patient_id): return 0.0
+	var observer: Dictionary=people[observer_id]
+	var affection: float=float(observer["trust"].get(patient_id,0.0))
+	var grievance: float=float(observer["grievance"].get(patient_id,0.0))
+	var spouse_bond: float=70.0 if String(observer["spouse"])==patient_id else 0.0
+	return clampf(-7.0-(affection+spouse_bond-grievance)*.24,-35.0,18.0)
+
 func injure_person(victim_id: String, part: String, force: float,
 		attacker: String, witnesses: Array=[]) -> Dictionary:
 	if not people.has(victim_id) or not bool(people[victim_id]["alive"]):
@@ -357,10 +368,18 @@ func injure_person(victim_id: String, part: String, force: float,
 			if not people.has(observer) or observer==victim_id: continue
 			var witness: Dictionary=people[observer]
 			witness["trust"]["wizard"]=clampf(
-				float(witness["trust"].get("wizard",0.0))-10.0,-100.0,100.0)
+				float(witness["trust"].get("wizard",0.0))+
+				_harm_witness_delta(observer,victim_id),-100.0,100.0)
 	elif people.has(attacker) and attacker!=victim_id:
 		victim["grievance"][attacker]=clampf(
 			float(victim["grievance"].get(attacker,0.0))+28.0,0.0,100.0)
+		for seen in witnesses:
+			var observer: String=String(seen)
+			if not people.has(observer) or observer in [attacker,victim_id]: continue
+			var witness: Dictionary=people[observer]
+			witness["trust"][attacker]=clampf(
+				float(witness["trust"].get(attacker,0.0))+
+				_harm_witness_delta(observer,victim_id),-100.0,100.0)
 	# The event has exact observed witnesses; random village witnesses
 	# cannot magically learn the particulars of a physical injury.
 	var observers: Array=[victim_id]
@@ -429,7 +448,8 @@ func _perform_neighbor_aid(helper_id: String, target_id: String) -> bool:
 	_event("neighbor_care",helper_id,target_id)
 	return true
 
-func player_help(target_id: String, inventory: Array) -> Dictionary:
+func player_help(target_id: String, inventory: Array,
+		witnesses: Array=[]) -> Dictionary:
 	if not people.has(target_id) or not bool(people[target_id]["alive"]):
 		return {"ok":false,"message":"There is nobody here to help."}
 	var target: Dictionary=people[target_id]
@@ -448,6 +468,18 @@ func player_help(target_id: String, inventory: Array) -> Dictionary:
 		return {"ok":false,"message":"That aid is not needed now."}
 	for item in consumed: inventory.erase(item)
 	target["trust"]["wizard"]=clampf(loyalty+19.0,-100.0,100.0)
+	# Only people who actually saw both patient and helper update their
+	# feelings about the player's actions; an uninvolved merchant on the
+	# opposite side of the valley does not magically know.
+	for seen in witnesses:
+		var observer_id: String=String(seen)
+		if observer_id==target_id or not people.has(observer_id): continue
+		var observer: Dictionary=people[observer_id]
+		var witnessed_good: float=clampf(
+			-_harm_witness_delta(observer_id,target_id)*.65,-12.0,22.0)
+		observer["trust"]["wizard"]=clampf(
+			float(observer["trust"].get("wizard",0.0))+witnessed_good,
+			-100.0,100.0)
 	_event("wizard_care",target_id)
 	return {"ok":true,"message":(
 		"The wound is dressed." if kind=="bandage" else
