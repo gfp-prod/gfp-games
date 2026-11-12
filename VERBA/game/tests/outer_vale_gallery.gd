@@ -49,8 +49,8 @@ func _capture() -> void:
 		{"name":"07_witness_stones","eye":Vector2(69,39),"look":Vector2(76,49)},
 		{"name":"08_old_orchard","eye":Vector2(92,-18),"look":Vector2(101,-5)},
 		{"name":"09_tollgate_path","eye":Vector2(44,-40),"look":Vector2(52,-47)},
-		{"name":"14_cracked_forecourt","eye":Vector2(-93.6,82.2),"look":Vector2(-99.4,77.0)},
-		{"name":"15_muddy_lake_bank","eye":Vector2(63,-69),"look":Vector2(75,-60)},
+		{"name":"14_cracked_forecourt","eye":Vector2(-90.4,86.9),"look":Vector2(-99.4,78.0)},
+		{"name":"15_muddy_lake_bank","eye":Vector2(60,-75),"look":Vector2(66,-66)},
 		{"name":"16_weathered_orchard","eye":Vector2(100,5),"look":Vector2(102,-4)},
 		{"name":"17_road_and_fence","eye":Vector2(-72,67),"look":Vector2(-84,71)}
 	]
