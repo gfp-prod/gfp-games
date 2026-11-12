@@ -27,7 +27,18 @@ static func founder(id: String, salt: int=1938) -> Dictionary:
 	var r:=_seeded(id,salt)
 	var alleles: Dictionary={}
 	for locus in TRAITS:
-		alleles[locus]=[r.randi_range(0,CAP),r.randi_range(0,CAP)]
+		# A founder is born with two related alleles, not two independent
+		# uniform draws. Uniform averaging previously concentrated nearly
+		# every face, complexion and physique around the same midpoint.
+		# A per-locus inherited baseline preserves a broad natural range,
+		# while individual alleles leave meaningful room for siblings to
+		# receive different combinations from the SAME parents.
+		var base: int=r.randi_range(70,930)
+		var variation: int=175 if locus in ["pigment","warmth",
+			"eye_pigment","hair_pigment","hair_curl"] else 205
+		alleles[locus]=[
+			clampi(base+r.randi_range(-variation,variation),0,CAP),
+			clampi(base+r.randi_range(-variation,variation),0,CAP)]
 	return {"version":VERSION,"alleles":alleles}
 
 static func validate(g: Variant) -> bool:
