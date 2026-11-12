@@ -7,6 +7,9 @@ const REPLACEMENTS: Array[Dictionary] = [
 	{"path":"ValleyScenicDetails/OldCreekFootbridge","asset":"old_creek_footbridge"},
 	{"path":"OuterValeRegionalLandmarks/StillwaterLake/OldFishingJetty","asset":"old_fishing_jetty"},
 	{"path":"OuterValeRegionalLandmarks/SevenWeatheredWitnessStones","asset":"witness_stone_circle"},
+	{"path":"RidgeArch","asset":"ridge_arch"},
+	{"path":"StonePrayerShrine","asset":"stone_prayer_shrine"},
+	{"path":"OuterValeRegionalLandmarks/ColdCharcoalKiln","asset":"cold_charcoal_kiln"},
 	{"path":"OuterValeRegionalLandmarks/StillwaterLake/TheHalfDrownedAltar","asset":"witness_stone_circle","enabled":false},
 	{"path":"StrangeRoadDistrict/ValeFuelStation/WeatheredForecourtHistory/RustingDeliveryWreck",
 	 "asset":"rusting_delivery_wreck"}
