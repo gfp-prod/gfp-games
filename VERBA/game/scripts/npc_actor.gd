@@ -5,6 +5,7 @@ extends CharacterBody3D
 const ART = preload("res://scripts/art.gd")
 const COSTUME = preload("res://scripts/folk_costume_finish.gd")
 const PORTRAIT = preload("res://scripts/folk_portrait_finish.gd")
+const FABRIC = preload("res://scripts/npc_cloth_finish.gd")
 const ANATOMY = preload("res://scripts/npc_anatomy.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 # Reuse existing villagers and the two physically enterable houses.
@@ -89,12 +90,9 @@ func _ready() -> void:
 	figure.name = "VisibleInhabitant"
 	add_child(figure)
 	visual_figure=figure
-	var cloth := ART.mat(Color(String(definition.get("robe","746c60"))),.98)
-	# Worn linen uses the same bundled fiber grain as the study vellum,
-	# tinted per profession rather than perfectly smooth plastic robes.
-	cloth.albedo_texture=load("res://assets/textures/authored/aged_vellum.png")
-	cloth.uv1_triplanar=true
-	cloth.uv1_scale=Vector3(2.0,2.0,2.0)
+	# Profession-specific dye on one coherent, coarse woven cloth. Do not
+	# use the aged parchment texture for clothing or a glossy material.
+	var cloth := FABRIC.worn_linen(Color(String(definition.get("robe","746c60"))))
 	var trim := ART.mat(Color(String(definition.get("trim","c0aa86"))),.95)
 	# A human should read as a particular person, not an identical tan
 	# mannequin re-dressed for each job.
@@ -154,9 +152,9 @@ func _ready() -> void:
 		else:
 			right_arm=arm
 			right_leg=leg
-	# Cloth mantle and a small side bag distinguish scribe from keeper.
-	ART.bone(figure,Vector3(-.34,1.48,-.14),
-		Vector3(.30,1.46,-.13),.065,.062,trim,7)
+	# No external collarbone placeholder: the old thick light-colored
+	# horizontal cylinder at chest height looked like an exposed skeletal
+	# control bone. The tunic and its neck already close this silhouette.
 	if npc_id == "mara":
 		ART.bone(figure,Vector3(-.54,.15,.12),
 			Vector3(-.48,2.43,.16),.048,.037,leather,8)
@@ -272,6 +270,14 @@ func _ready() -> void:
 			ART.orb(modern_arm,Vector3(side*.09,-.47,-.06),Vector3(.095,.105,.084),skin,10)
 			modular_limbs[side_name+"_arm"]=modern_arm
 			_install_limb_hitbox(modern_arm,side_name+"_arm")
+			# The real visible uniform limbs must receive gait and arm-swing,
+			# not the hidden medieval base rig underneath them.
+			if side<0.0:
+				left_arm=modern_arm
+				left_leg=modern_leg
+			else:
+				right_arm=modern_arm
+				right_leg=modern_leg
 		ART.orb(attendant,Vector3(0,1.76,0),Vector3(.23,.27,.21),skin,12)
 		ART.box(attendant,Vector3(0,2.04,-.03),Vector3(.51,.15,.45),denim)
 		ART.box(attendant,Vector3(0,2.01,-.26),Vector3(.40,.052,.27),denim)
