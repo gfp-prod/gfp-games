@@ -206,7 +206,7 @@ static func _mineral_shoulder(world: Node3D,root: Node3D) -> void:
 	var pebble:=SphereMesh.new()
 	pebble.radial_segments=7
 	pebble.rings=4
-	var material:=world.textured("res://assets/textures/real/stone_diffuse.jpg",Color("99958b"))
+	var material: StandardMaterial3D=world.textured("res://assets/textures/real/stone_diffuse.jpg",Color("99958b"))
 	material.vertex_color_use_as_albedo=true
 	var mm:=MultiMesh.new()
 	mm.transform_format=MultiMesh.TRANSFORM_3D
@@ -240,7 +240,7 @@ static func _mineral_shoulder(world: Node3D,root: Node3D) -> void:
 static func _pond_edge(world: Node3D,root: Node3D) -> void:
 	var rng:=RandomNumberGenerator.new()
 	rng.seed=225704
-	var moss:=world.textured("res://assets/textures/real/moss_diffuse.jpg",Color("6c806c"))
+	var moss: StandardMaterial3D=world.textured("res://assets/textures/real/moss_diffuse.jpg",Color("6c806c"))
 	moss.vertex_color_use_as_albedo=true
 	var mesh:=SphereMesh.new()
 	mesh.radial_segments=8
