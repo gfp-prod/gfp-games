@@ -50,7 +50,15 @@ def material(name, texture, tint, roughness=.94):
     graded = bpy.data.images.new(name + " graded albedo",
         width=source_image.size[0], height=source_image.size[1], alpha=True)
     graded.pixels.foreach_set(arr.reshape(-1))
-    graded.pack(as_png=True)
+    # Blender 5.x removed the as_png argument from Image.pack(). Save a
+    # real PNG to the runner's temp folder first, then pack that exact
+    # authored albedo into both the .blend source and glTF model.
+    tint_dir=Path(os.environ.get("RUNNER_TEMP", "/tmp"))/"verba_graded_materials"
+    tint_dir.mkdir(parents=True,exist_ok=True)
+    graded.filepath_raw=str(tint_dir/(name.replace(" ","_")+".png"))
+    graded.file_format="PNG"
+    graded.save()
+    graded.pack()
     node = m.node_tree.nodes.new("ShaderNodeTexImage")
     node.label = "graded CC0: " + source.name
     node.image = graded
