@@ -15,7 +15,7 @@ const ACTIVE: Array[String]=[
 const VIEWS: Array[Dictionary]=[
 	{"id":"01_medieval_threshold","eye":Vector2(-2.5,19.8),"look":Vector2(-1.8,26.1)},
 	{"id":"02_stonecutter_shutters","eye":Vector2(-12.0,26.7),"look":Vector2(-9.37,30.92)},
-	{"id":"03_miller_steps","eye":Vector2(28,24.1),"look":Vector2(30.0,30.0)}
+	{"id":"03_miller_steps","eye":Vector2(29.7,26.0),"look":Vector2(30.0,30.4)}
 ]
 func _initialize() -> void:
 	call_deferred("_run")
@@ -52,6 +52,15 @@ func _run() -> void:
 		if not bool(node.get_meta("decorative_visual_only",false)):
 			_fail("Quaternius modular facade unexpectedly owns gameplay physics")
 			return
+	# New wall remnants make the free arch a real roadside ruin, not a
+	# random rectangle whose legs stop in uninterrupted grass.
+	var old_arch: Node3D=world.get_node_or_null(
+		"FreeQuaterniusMedievalArt/VillageOldThresholdArch") as Node3D
+	var masonry: Node3D=old_arch.get_node_or_null(
+		"RuinedMasonryLinkedToOldRoadArch") as Node3D if old_arch!=null else null
+	if masonry==null or masonry.get_child_count()<20:
+		_fail("Imported free arch still lacks its surveyed boundary-wall history")
+		return
 	var house: Node3D=world.get_node_or_null("PhysicalVillageHomesteads/StonecutterHouse") as Node3D
 	if house==null or house.get_node_or_null("SolidFrontWallPier")==null:
 		# There are two actual front pier bodies named the same; the engine
