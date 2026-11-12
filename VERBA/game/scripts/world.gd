@@ -28,6 +28,7 @@ const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
 const LATIN_WAYSTONE = preload("res://scripts/latin_waystone.gd")
 const WORLD_REGIONS = preload("res://scripts/world_regions.gd")
+const DISTANT_HORIZON = preload("res://scripts/distant_horizon.gd")
 const WORLD_EXPANSION = preload("res://scripts/world_expansion.gd")
 const WORLD_ART_UPGRADE = preload("res://scripts/world_art_upgrade.gd")
 const WORLD_WEATHERING = preload("res://scripts/world_weathering.gd")
@@ -100,6 +101,9 @@ func _ready() -> void:
 	setup_materials()
 	setup_atmosphere()
 	build_terrain()
+	# Visual landscape continues past the 256m collision map without
+	# changing player boundaries, simulation seeds or saved world geography.
+	DISTANT_HORIZON.build(self)
 	# The road is blended into the terrain atlas offline; no floating road mesh.
 	build_landmarks()
 	STRANGE_ROAD.build(self)
