@@ -71,7 +71,8 @@ func _run() -> void:
 	if no_supply.get("ok",false):
 		_fail("Player fabricated dressing supplies from nothing")
 		return
-	world.player.inventory=["herb"]
+	world.player.inventory.clear()
+	world.player.inventory.append("herb")
 	world.player.refresh_held_model()
 	var conversation: Dictionary=world.social.view("ida",world.scholar,world.player.inventory)
 	var has_care: bool=false
