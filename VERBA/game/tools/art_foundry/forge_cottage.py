@@ -109,7 +109,12 @@ class Geometry:
         if not self.faces:
             return None
         mesh=bpy.data.meshes.new(self.name+"Mesh")
-        mesh.from_pydata(self.verts,[],self.faces)
+        # Godot's Y-up world authoring coordinates differ from Blender Z-up.
+        # Blender glTF exporter maps (x, by, bz) -> (x, bz, -by).
+        # Author in world XYZ with Y-up, then convert BEFORE mesh export.
+        # This also makes the source .blend stand upright in Blender.
+        blender_verts=[(x,-z,y) for x,y,z in self.verts]
+        mesh.from_pydata(blender_verts,[],self.faces)
         mesh.update()
         uv_layer=mesh.uv_layers.new(name="UVMap")
         for poly,texcoords in zip(mesh.polygons,self.uv):
@@ -285,8 +290,10 @@ def build_cottage():
     return created
 
 def setup_camera(scene,camera,eye,look_at):
-    camera.location=eye
-    direction=Vector(look_at)-camera.location
+    # All four cameras are specified in the same Y-up coordinates as Godot.
+    def to_blender(p): return Vector((p[0],-p[2],p[1]))
+    camera.location=to_blender(eye)
+    direction=to_blender(look_at)-camera.location
     camera.rotation_euler=direction.to_track_quat("-Z","Y").to_euler()
     scene.camera=camera
 
@@ -295,8 +302,8 @@ def stage_and_render(out,assets):
     stage=bpy.data.collections.new("STUDIO_REVIEW_ONLY")
     scene.collection.children.link(stage)
     ground=bpy.data.meshes.new("matteGroundMesh")
-    ground.from_pydata([(-12,-.075,-12),(12,-.075,-12),
-                       (12,-.075,12),(-12,-.075,12)],[],
+    ground.from_pydata([(-12,-12,-.075),(12,-12,-.075),
+                       (12,12,-.075),(-12,12,-.075)],[],
                       [(0,1,2),(0,2,3)])
     floor=bpy.data.objects.new("ReviewGroundNotInGLB",ground)
     stage.objects.link(floor)
@@ -319,7 +326,7 @@ def stage_and_render(out,assets):
         lamp=bpy.data.objects.new(name,datablock)
         stage.objects.link(lamp)
         lamp.location=position
-        lamp.rotation_euler=(Vector((0,2.5,0))-lamp.location).to_track_quat("-Z","Y").to_euler()
+        lamp.rotation_euler=(Vector((0,0,2.5))-lamp.location).to_track_quat("-Z","Y").to_euler()
     area("Soft Overcast Key",(1,-5,11),1400,9,(.90,.94,1.0))
     area("Late Day Warm Fill",(-7,4,7),800,8,(1.0,.84,.64))
     cam_data=bpy.data.cameras.new("Asset Quad Review Lens")
