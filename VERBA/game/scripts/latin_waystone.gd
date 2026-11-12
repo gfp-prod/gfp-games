@@ -44,6 +44,9 @@ func _ready() -> void:
 	inscription.outline_size=4
 	inscription.billboard=BaseMaterial3D.BILLBOARD_DISABLED
 	inscription.no_depth_test=false
+	# Godot Label3D's front surface normally faces +Z. This slab is read
+	# from the western path (-Z), so rotate the carving toward its reader.
+	inscription.rotation.y=PI
 	inscription.position=Vector3(0,.81,-.176)
 	add_child(inscription)
 	ember=OmniLight3D.new()

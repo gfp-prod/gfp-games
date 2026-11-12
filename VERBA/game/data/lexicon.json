@@ -190,5 +190,37 @@
     "lemma": "surgo, surgere",
     "effect": "rise",
     "note": "Plural imperative of surge. Can address several matching beings or objects."
+  },
+  {
+    "word": "crea",
+    "meaning": "create!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "creo, creare",
+    "effect": "create",
+    "note": "A compositional invocation; say Crea herbam to create a plant. herbam is accusative."
+  },
+  {
+    "word": "move",
+    "meaning": "move!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "moveo, movere",
+    "effect": "move",
+    "note": "A compositional invocation; say Move lapidem to move a stone. lapidem is accusative."
+  },
+  {
+    "word": "accende",
+    "meaning": "ignite!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "accendo, accendere",
+    "effect": "ignite",
+    "note": "A compositional invocation; say Accende lignum to light wood. lignum is accusative."
+  },
+  {
+    "word": "exstingue",
+    "meaning": "extinguish!",
+    "form": "present active imperative, 2nd-person singular",
+    "lemma": "exstinguo, exstinguere",
+    "effect": "extinguish",
+    "note": "A compositional invocation; say Exstingue ignem to extinguish fire. ignem is accusative."
   }
 ]

@@ -52,7 +52,7 @@ func _capture() -> void:
 		camera.look_at(Vector3(look.x,world.height_at(look.x,look.y)+1.3,look.y),Vector3.UP)
 		# Allow vegetation, environment textures, render buffers and draw list
 		# to catch up; never capture the initial loading frame.
-		for i in range(5): await process_frame
+		for i in range(2): await process_frame
 		# Capture explicitly; awaiting frame_post_draw under a virtual display
 		# can deadlock when the rendering loop is throttled.
 		RenderingServer.force_draw()
@@ -73,6 +73,7 @@ func _capture() -> void:
 		if image.save_png(path)!=OK:
 			_fail("Cannot save "+path)
 			return
+		print("VERBA_VISUAL_CAPTURE: "+String(view["name"]))
 	# Take actual perspective captures of the wizard's leather book, not
 	# an invented mockup of study UI. The first image must WITHHOLD the
 	# answer; the second displays the master's corrective marginalia.
@@ -99,7 +100,7 @@ func _capture() -> void:
 	if not corrected.get("ok",false) or corrected.get("correct",true):
 		_fail("Cannot display authentic corrected singular imperative")
 		return
-	for i in range(12): await process_frame
+	for i in range(8): await process_frame
 	RenderingServer.force_draw()
 	var correction_frame: Image=root.get_texture().get_image()
 	if correction_frame==null or correction_frame.save_png(directory+"/grimoire_correction.png")!=OK:
@@ -114,7 +115,7 @@ func _capture() -> void:
 	if not world.player.book.begin_journal():
 		_fail("Cannot open physical experiment folio for visual QA")
 		return
-	for i in range(12): await process_frame
+	for i in range(8): await process_frame
 	RenderingServer.force_draw()
 	var trial_frame: Image=root.get_texture().get_image()
 	if trial_frame==null or trial_frame.get_width()<640 or trial_frame.save_png(directory+"/grimoire_experiments.png")!=OK:
@@ -147,7 +148,7 @@ func _capture() -> void:
 	world.player.conversation_listening=true
 	world.player.conversation_buffer="Ubi est silva?"
 	world.player.refresh_conversation()
-	for i in range(12): await process_frame
+	for i in range(8): await process_frame
 	RenderingServer.force_draw()
 	var written: Image=root.get_texture().get_image()
 	if written==null or written.save_png(directory+"/conversation_latin_entry.png")!=OK:
@@ -157,7 +158,7 @@ func _capture() -> void:
 	if not bool(spoken.get("ok",false)) or not String(world.player.conversation_body.text).contains("Silva est trans rivum"):
 		_fail("The renderer could not produce a real Latin NPC reply")
 		return
-	for i in range(12): await process_frame
+	for i in range(8): await process_frame
 	RenderingServer.force_draw()
 	var answered: Image=root.get_texture().get_image()
 	if answered==null or answered.save_png(directory+"/conversation_latin_reply.png")!=OK:
@@ -165,6 +166,10 @@ func _capture() -> void:
 		return
 	# Correctly produced Latin also alters scenery, not just a menu.
 	world.player.end_conversation()
+	# The fixed-angle QA camera is not the player's active gaze. Relocate
+	# the player away from Mara so her live E-interaction prompt does not
+	# appear spuriously over the waystone screenshot.
+	world.player.position=Vector3(-12.5,world.height_at(-12.5,28.0)+.22,28.0)
 	world.forest_waystone.update_from_knowledge()
 	if not world.forest_waystone.revealed:
 		_fail("Mara's learned direction did not reveal the real forest stone")
@@ -173,7 +178,10 @@ func _capture() -> void:
 	var marker: Vector3=world.forest_waystone.global_position
 	camera.global_position=marker+Vector3(1.1,1.55,-3.0)
 	camera.look_at(marker+Vector3.UP*.85,Vector3.UP)
-	for i in range(14): await process_frame
+	for i in range(8): await process_frame
+	# The fixed QA camera isn't where the player is aiming. Suppress the
+	# unrelated interaction hint; keep the genuine 3D inscription visible.
+	world.player.interaction_hint.visible=false
 	RenderingServer.force_draw()
 	var guided: Image=root.get_texture().get_image()
 	if guided==null or guided.save_png(directory+"/latin_waystone_revealed.png")!=OK:

@@ -13,13 +13,21 @@ func _test() -> void:
 		_fail("Missing scholar or physical grimoire")
 		return
 	var book_pickup: Node3D = null
-	var count: int = 0
+	var placed: Dictionary = {}
 	for pickup in world.items:
-		if pickup.item_type == "book":
-			count += 1
-			if pickup.word == "de_herbis": book_pickup = pickup
-	if count != 3 or book_pickup == null:
-		_fail("Three physical Latin book objects were not placed in the world")
+		if pickup.item_type != "book":
+			continue
+		if placed.has(pickup.word):
+			_fail("The world duplicated physical Latin manuscripts: " + pickup.word)
+			return
+		placed[pickup.word] = true
+		if pickup.word == "de_herbis": book_pickup = pickup
+	for volume in ["de_herbis","de_animalibus","de_igne_et_aqua","de_motu","de_castello"]:
+		if not placed.has(volume):
+			_fail("A shipped physical Latin book is missing from the world: " + volume)
+			return
+	if book_pickup == null:
+		_fail("The first Latin manuscript cannot be physically collected")
 		return
 	if book_pickup.find_child("FoundLatinVolume",true,false) == null:
 		_fail("Book pickup has no real 3D cover model")

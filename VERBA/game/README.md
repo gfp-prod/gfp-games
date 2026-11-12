@@ -11,6 +11,7 @@ Find **De Herbis** on a labeled stone near spawn and press **E** to collect. G o
 - Enter → type → Enter casts Latin spells. The grimoire records recognized forms for later recall.
 - Singular/plural imperative grammar: `cresce/crescite`, `veni/venite`, `dormi/dormite`, `fuge/fugite`, `siste/sistite`, `muta/mutate`, `arde/ardete`, `surge/surgite`.
 - Optional vocative addressees: `cresce arbor`, `crescite arbores`, `veni lupe`, `venite lupi`. Incorrect number agreement is rejected.
+- Book-taught composed spells also require a real accusative object: `crea herbam` (create a plant), `move lapidem` (move a stone), `accende lignum` (light wood), `exstingue ignem` (put out fire). The four imperatives are now included in the grimoire lexicon; speaking the verb alone is not a complete spell.
 - Several nearby objects/creatures can respond to plural speech. Fire and water operate on the same object moisture/heat as weather.
 - Independent objects and animals persist via `user://verba_living_world_v1.json`. Automatic saving happens in the graphical game about every 45 seconds. Open the grimoire (G), then S save or L reload.
 - Physical inscribed Latin tablet beside the starting cairn encourages discovery.
