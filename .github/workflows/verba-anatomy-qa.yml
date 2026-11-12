@@ -1,0 +1,54 @@
+name: VERBA modular NPC anatomy and social-care proof
+on:
+  pull_request:
+    paths:
+      - "VERBA/game/scripts/npc_anatomy.gd"
+      - "VERBA/game/scripts/npc_actor.gd"
+      - "VERBA/game/scripts/village_sim.gd"
+      - "VERBA/game/scripts/world.gd"
+      - "VERBA/game/scripts/world_persistence.gd"
+      - "VERBA/game/scripts/dialogue_social.gd"
+      - "VERBA/game/scripts/player.gd"
+      - "VERBA/game/tests/modular_anatomy_care_test.gd"
+      - "VERBA/game/tests/modular_anatomy_gallery.gd"
+      - ".github/workflows/verba-anatomy-qa.yml"
+concurrency:
+  group: verba-modular-anatomy-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  physical-anatomy-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Import source and validate all attached modules
+        run: |
+          godot --headless --path . --editor --import --quit 2>&1 | tee /tmp/verba-anatomy-import.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:' /tmp/verba-anatomy-import.log; then exit 1; fi
+      - name: Uninjured village deterministic social and economy baseline
+        run: |
+          godot --headless --path . --script res://tests/village_sim_test.gd
+          godot --headless --path . --script res://tests/village_economy_test.gd
+      - name: Limb-hitbox injury witnesses saved amputations and elective aftercare
+        run: |
+          timeout 180s godot --headless --path . --script res://tests/modular_anatomy_care_test.gd 2>&1 | tee /tmp/verba-anatomy-test.log
+          grep -q "PASS: four physical limb modules" /tmp/verba-anatomy-test.log
+      - name: Render genuine before injury after injury dressing and pegged-leg screenshots
+        run: |
+          timeout 180s xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/modular_anatomy_gallery.gd 2>&1 | tee /tmp/verba-anatomy-gallery.log
+          grep -q "PASS: four genuine Godot limb/amputation/treatment/peg game photographs" /tmp/verba-anatomy-gallery.log
+      - name: Preserve ordinary PNG evidence files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verba-modular-injury-and-care-screenshots
+          path: VERBA/game/tests/anatomy_screens/*.png
+          if-no-files-found: warn
+          retention-days: 30
