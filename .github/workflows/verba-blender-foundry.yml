@@ -32,9 +32,10 @@ jobs:
       - name: Install free Blender, virtual display and image checking
         run: |
           sudo apt-get update -qq
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends blender xvfb
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends blender xvfb python3-numpy
           python3 -m pip install --quiet Pillow
           blender --version | head -n 2
+          blender -b --python-expr 'import numpy; print("Blender glTF exporter NumPy:",numpy.__version__)'
 
       - name: Compile and inspect reproducible authoring scripts
         run: |
