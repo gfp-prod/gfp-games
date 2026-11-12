@@ -37,8 +37,14 @@ func _run() -> void:
 	if player.survival_plate.anchor_top < .99:
 		_fail("Survival status is tied to a fixed pixel height, not viewport")
 		return
-	var folio_rules: Array=player.conversation_panel.find_children("ThinBrassRule","HSeparator",true,false)
-	if folio_rules.size()<2:
+	var folio_rules: int=0
+	# UI controls are instantiated from code at runtime, without a packed
+	# scene owner. Inspect the real VBox children instead of ownership-filtered
+	# scene traversal.
+	for child in player.conversation_name.get_parent().get_children():
+		if child is HSeparator and child.name=="ThinBrassRule":
+			folio_rules+=1
+	if folio_rules<2:
 		_fail("Dialogue has no visual hierarchy between speech, choices and writing")
 		return
 	if player.conversation_speech_scroll==null or player.conversation_footer==null:
