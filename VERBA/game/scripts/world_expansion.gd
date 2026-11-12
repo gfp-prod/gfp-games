@@ -209,8 +209,12 @@ static func _lake_road(world,root: Node3D) -> void:
 	var route: Array[Vector2]=[
 		Vector2(16,18),Vector2(27,3),Vector2(32,-16),Vector2(39,-32),
 		Vector2(48,-44),Vector2(57,-56),Vector2(58.5,-60)]
-	var gravel: Material=world.textured("res://assets/textures/real/earth_path_diffuse.jpg",
-		Color("625f54"))
+	var gravel:=ShaderMaterial.new()
+	gravel.shader=load("res://assets/materials/worn_lake_track.gdshader")
+	gravel.set_shader_parameter("path_photograph",
+		load("res://assets/textures/real/earth_path_diffuse.jpg"))
+	gravel.set_shader_parameter("river_silt",
+		load("res://assets/textures/real/river_silt_diffuse.jpg"))
 	var path:=Node3D.new()
 	path.name="LongTrackToStillwater"
 	root.add_child(path)
