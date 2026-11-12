@@ -5,6 +5,7 @@ extends CharacterBody3D
 const ART = preload("res://scripts/art.gd")
 const COSTUME = preload("res://scripts/folk_costume_finish.gd")
 const PORTRAIT = preload("res://scripts/folk_portrait_finish.gd")
+const BODY = preload("res://scripts/npc_body_morph.gd")
 const FABRIC = preload("res://scripts/npc_cloth_finish.gd")
 const ANATOMY = preload("res://scripts/npc_anatomy.gd")
 const GENES = preload("res://scripts/npc_genetics.gd")
@@ -285,8 +286,10 @@ func _ready() -> void:
 		ART.box(attendant,Vector3(0,2.04,-.03),Vector3(.51,.15,.45),denim)
 		ART.box(attendant,Vector3(0,2.01,-.26),Vector3(.40,.052,.27),denim)
 		COSTUME.dress_attendant(attendant)
+		BODY.finish(attendant,genome,shirt,true)
 	else:
 		COSTUME.dress(figure,npc_id,cloth,trim,leather)
+		BODY.finish(figure,genome,cloth)
 	# Mild-to-noticeable, inherited body dimensions. The faceted look is
 	# deliberate; we change proportions, not topology or collision IDs.
 	var shoulder: float=lerpf(.88,1.17,GENES.value(genome,"shoulder_width"))
@@ -407,9 +410,11 @@ func _process(delta: float) -> void:
 		var time_in_blink: float=fposmod(motion_clock+float(posmod(npc_id.hash(),11))*.33,4.25)
 		var blink: float=clampf(1.0-absf(time_in_blink-3.72)/.13,0,1)
 		if visual_attendant!=null:
-			PORTRAIT.expression(visual_attendant,feeling,blink)
+			PORTRAIT.expression(visual_attendant,feeling,blink,
+				world.player!=null and world.player.conversation_actor==self,motion_clock)
 		else:
-			PORTRAIT.expression(visual_figure,feeling,blink)
+			PORTRAIT.expression(visual_figure,feeling,blink,
+				world.player!=null and world.player.conversation_actor==self,motion_clock)
 	anatomy_visual_elapsed+=delta
 	if anatomy_visual_elapsed>=.30:
 		anatomy_visual_elapsed=0.0
