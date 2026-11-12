@@ -323,6 +323,7 @@ func create_conversation_panel() -> void:
 	conversation_name.add_theme_font_size_override("font_size",21)
 	conversation_name.add_theme_color_override("font_color",Color("ead3a7"))
 	stack.add_child(conversation_name)
+	stack.add_child(VISUAL_LANGUAGE.rule())
 	# A flexible text window contains the character's longer introductions.
 	# Options and the Latin writing cursor stay outside the scrolling region
 	# so typing controls can never be pushed below the actual display.
@@ -346,6 +347,7 @@ func create_conversation_panel() -> void:
 	conversation_options.add_theme_font_size_override("font_size",14)
 	conversation_options.add_theme_color_override("font_color",Color("cbbda4"))
 	stack.add_child(conversation_options)
+	stack.add_child(VISUAL_LANGUAGE.rule())
 	conversation_footer = Label.new()
 	conversation_footer.name = "LatinInputAndKeys"
 	conversation_footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
