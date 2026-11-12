@@ -48,7 +48,7 @@ void fragment() {
 			(1.0-smoothstep(60.0,87.0,abs(p.y)));
 	vec2 lake_axis = (p-vec2(79.0,-60.0))/vec2(20.0,15.0);
 	float lake_r = length(lake_axis) *
-			(1.0+0.044*sin(p.x*.37)+.031*cos(p.y*.29));
+			(1.0+.085*sin(p.x*.17+p.y*.05)+.052*cos(p.y*.31)+.028*sin(p.x*.61+p.y*.20));
 	float shore = 1.0-smoothstep(0.07,0.33,abs(lake_r-1.02));
 	float lake_silt = shore*.90;
 
