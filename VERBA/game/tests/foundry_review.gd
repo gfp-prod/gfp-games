@@ -25,8 +25,8 @@ func _frame(folder: String,name: String) -> bool:
 
 func _review() -> void:
 	root.size=Vector2i(1280,720)
-	if not ResourceLoader.exists(MODEL):
-		_fail("GLB must first be built by the free Blender Foundry workflow")
+	if not FileAccess.file_exists(MODEL):
+		_fail("GLB is missing from actual project assets after the Blender stage")
 		return
 	var packed: PackedScene=load(MODEL) as PackedScene
 	if packed==null:
