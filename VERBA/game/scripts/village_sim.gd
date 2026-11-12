@@ -337,7 +337,8 @@ func injure_person(victim_id: String, part: String, force: float,
 	var victim: Dictionary=people[victim_id]
 	var result: Dictionary=ANATOMY.strike(victim["anatomy"],part,force,tick_count)
 	if not bool(result.get("ok",false)): return result
-	work_orders.erase(victim_id) if bool(result["severed"]) else null
+	if bool(result["severed"]):
+		work_orders.erase(victim_id)
 	observe_wound(victim_id,witnesses)
 	if attacker=="wizard":
 		victim["trust"]["wizard"]=clampf(
