@@ -279,6 +279,29 @@ func _run() -> void:
 				_fail("Residential destination overwrote the real workplace: "+String(residence["id"]))
 				return
 
+	# Domestic lighting is a real day/night reaction, not permanent neon
+	# or an unsaved second time source. It must be reversible on the same
+	# in-game clock used by the sun and village simulation.
+	if ResourceLoader.exists("res://assets/models/foundry/village_hearth_house.glb"):
+		var homes_for_lighting: Node3D=world.get_node_or_null("PhysicalVillageHomesteads") as Node3D
+		if homes_for_lighting==null:
+			_fail("Real homes disappeared before atmosphere inspection")
+			return
+		world._update_day_night_art(.9)
+		for house_name in ["StonecutterHouse","MillwardHouse"]:
+			var lamp: OmniLight3D=homes_for_lighting.get_node_or_null(
+				house_name+"/WarmHearthWindowBounce") as OmniLight3D
+			if lamp==null or lamp.light_energy<.5 or lamp.omni_range<4.0:
+				_fail("Domestic hearth does not visibly warm after dusk: "+house_name)
+				return
+		world._update_day_night_art(0.0)
+		for house_name in ["StonecutterHouse","MillwardHouse"]:
+			var lamp: OmniLight3D=homes_for_lighting.get_node_or_null(
+				house_name+"/WarmHearthWindowBounce") as OmniLight3D
+			if lamp==null or lamp.light_energy>.01:
+				_fail("Domestic hearth remains glaringly lit at noon: "+house_name)
+				return
+
 	# Existing structures and academic simulation survive untouched.
 	if world.get_node_or_null("HermitCottage")==null or not world.scholar.books.has("de_herbis"):
 		_fail("Visual expansion destroyed the original learning loop")
