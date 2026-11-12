@@ -381,7 +381,7 @@ func refresh_conversation() -> void:
 	if conversation_listening:
 		conversation_footer.text = "> " + conversation_buffer + "▌\nEnter: speak    Esc: stop writing"
 	else:
-		conversation_footer.text = "Enter: speak Latin    1–6 respond    Esc / E leave"
+		conversation_footer.text = "Enter: Latin    1–6: respond    ↑↓: read    Esc / E: leave"
 	conversation_panel.visible = true
 
 func choose_conversation_option(index: int) -> Dictionary:
@@ -419,6 +419,13 @@ func end_conversation() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
+		# Wheel events still reach the focused dialogue while the FPS mouse
+		# cursor is captured. A long NPC utterance remains physically legible.
+		if event.pressed and conversation_actor != null and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]:
+			var direction: int=1 if event.button_index==MOUSE_BUTTON_WHEEL_DOWN else -1
+			conversation_speech_scroll.scroll_vertical=maxi(0,conversation_speech_scroll.scroll_vertical+direction*55)
+			get_viewport().set_input_as_handled()
+			return
 		if event.button_index==MOUSE_BUTTON_LEFT and event.pressed and build_mode and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
 			place_tower_piece()
 			get_viewport().set_input_as_handled()
@@ -450,6 +457,11 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if conversation_actor != null:
+		if event.keycode in [KEY_UP,KEY_DOWN]:
+			var direction: int=1 if event.keycode==KEY_DOWN else -1
+			conversation_speech_scroll.scroll_vertical=maxi(0,conversation_speech_scroll.scroll_vertical+direction*55)
+			get_viewport().set_input_as_handled()
+			return
 		# Conversation has its own text entry: E and numbered keys are Latin
 		# characters while listening, never world interaction shortcuts.
 		if conversation_listening:
