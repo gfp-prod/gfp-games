@@ -196,25 +196,33 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	lower_rig.name="ExpressionLowerLip"
 	mouth.add_child(lower_rig)
 	var fullness: float=lerpf(.006,.021,_v(g,"lip_fullness"))
+	# Lip curve is independent of inherited width and fullness. High
+	# alleles lift the neutral mouth corners and Cupid's bow; low alleles
+	# produce a flatter, downturned mouth. Expressions animate these
+	# inherited shapes rather than replacing them with generic lips.
+	var cupid_rise: float=lerpf(.003,.013,_v(g,"lip_curve"))
+	var corner_rise: float=lerpf(-.009,.007,_v(g,"lip_curve"))
+	mouth.set_meta("rest_cupid_rise",cupid_rise)
+	mouth.set_meta("rest_corner_rise",corner_rise)
 	# Upper and lower lip bands occupy separate volumes and articulate
 	# from their own corners. Very thin lips remain truly thin.
 	var left_lip:=ART.bone(left_corner,
-		Vector3(-mouth_width,.002,0),Vector3(0,.008,0),
+		Vector3(-mouth_width,corner_rise,0),Vector3(0,cupid_rise,0),
 		fullness,fullness*.75,lip_ink,9)
 	left_lip.name="SmallNaturalLipLine"
 	var left_lower:=ART.bone(lower_rig,
-		Vector3(-mouth_width,-.005,0),Vector3(0,-.010,0),
+		Vector3(-mouth_width,corner_rise-.007,0),Vector3(0,-.010,0),
 		fullness*.67,fullness*.85,lip_ink,9)
 	left_lower.name="ModeledLowerLipLeft"
 	var right_corner:=Node3D.new()
 	right_corner.name="ExpressionLipRight"
 	mouth.add_child(right_corner)
 	var right_lip:=ART.bone(right_corner,
-		Vector3(0,.008,0),Vector3(mouth_width,.002,0),
+		Vector3(0,cupid_rise,0),Vector3(mouth_width,corner_rise,0),
 		fullness*.75,fullness,lip_ink,9)
 	right_lip.name="NaturalLipCorner"
 	var right_lower:=ART.bone(lower_rig,
-		Vector3(0,-.010,0),Vector3(mouth_width,-.005,0),
+		Vector3(0,-.010,0),Vector3(mouth_width,corner_rise-.007,0),
 		fullness*.85,fullness*.67,lip_ink,9)
 	right_lower.name="ModeledLowerLipRight"
 	var open_mouth:=ART.orb(mouth,Vector3(0,-.005,-.002),
