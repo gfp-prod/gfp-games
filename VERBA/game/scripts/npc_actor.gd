@@ -66,31 +66,49 @@ func _ready() -> void:
 	add_child(figure)
 	var cloth := ART.mat(Color(String(definition.get("robe","746c60"))),.98)
 	var trim := ART.mat(Color(String(definition.get("trim","c0aa86"))),.95)
-	var skin := ART.mat(Color("aa8a70"),.93)
+	# A human should read as a particular person, not an identical tan
+	# mannequin re-dressed for each job.
+	var complexion: String="a98b72"
+	match npc_id:
+		"ida": complexion="b69b82"
+		"orin": complexion="8d6c57"
+		"daro": complexion="ad896b"
+		"titus": complexion="997b67"
+		"cass": complexion="c2a18a"
+		"sela": complexion="9c745e"
+		"nima": complexion="75564b"
+		"lena": complexion="bb957b"
+		"mara": complexion="b09a85"
+		_: pass
+	var skin := ART.mat(Color(complexion),.94)
 	var leather := ART.mat(Color("463f37"),.99)
 	# A separate torso, narrower tunic hem and jointed legs replace the
 	# one-piece walking cone. Props remain on their own worker identities.
-	ART.box(figure,Vector3(0,1.23,0),Vector3(.70,.73,.44),cloth)
+	# Twelve-sided fitted tunic with a broad shoulder and a shaped hem:
+	# these surfaces replace the previous square torso and floating eyes.
+	var tunic:=ART.cone(figure,Vector3(0,1.24,0),.32,.73,cloth,.275,12)
+	tunic.name="TaperedVillagerTunic"
 	ART.cone(figure,Vector3(0,.79,0),.36,.58,cloth,.265,12)
-	ART.bone(figure,Vector3(0,1.37,0),Vector3(0,1.64,0),
-		.23,.18,cloth,10)
-	ART.orb(figure,Vector3(0,1.77,0),
-		Vector3(.23,.28,.22),skin,12)
-	ART.orb(figure,Vector3(0,1.94,-.017),
-		Vector3(.235,.12,.23),leather,11)
-	# A small, deliberately stylized face gives real eye contact. The
-	# model's forward direction is -Z, matching the body's walking yaw.
-	var sclera:=ART.mat(Color("e4dbcb"),.85)
-	var iris:=ART.mat(Color("322d2d"),.64)
+	ART.bone(figure,Vector3(0,1.45,0),Vector3(0,1.63,0),
+		.19,.16,cloth,10)
+	var head:=ART.orb(figure,Vector3(0,1.77,0),
+		Vector3(.42,.49,.39),skin,13)
+	head.name="ModeledInhabitantHead"
+	# A small cap or hair crown stays close to the skull. Face features sit
+	# against the actual front surface at -Z, never suspended in space.
+	var hair:=ART.mat(Color("3e302a"),.96)
+	ART.orb(figure,Vector3(0,1.97,.045),
+		Vector3(.44,.13,.39),hair,12)
+	var brow:=ART.mat(Color("3a3029"),.95)
 	for side in [-1.0,1.0]:
-		ART.orb(figure,Vector3(side*.086,1.79,-.204),
-			Vector3(.051,.036,.023),sclera,8)
-		ART.orb(figure,Vector3(side*.086,1.79,-.224),
-			Vector3(.027,.030,.013),iris,8)
-	ART.orb(figure,Vector3(0,1.71,-.220),
-		Vector3(.040,.048,.033),skin,8)
-	ART.bone(figure,Vector3(-.060,1.635,-.196),
-		Vector3(.060,1.635,-.196),.011,.011,leather,7)
+		ART.orb(figure,Vector3(side*.083,1.79,-.191),
+			Vector3(.047,.040,.028),brow,9)
+		ART.bone(figure,Vector3(side*.047,1.841,-.189),
+			Vector3(side*.123,1.846,-.172),.012,.008,brow,7)
+	ART.orb(figure,Vector3(0,1.706,-.198),
+		Vector3(.084,.104,.075),skin,9)
+	ART.bone(figure,Vector3(-.051,1.643,-.180),
+		Vector3(.051,1.643,-.180),.009,.009,brow,7)
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
@@ -130,12 +148,16 @@ func _ready() -> void:
 	match npc_id:
 		"ida":
 			var flour:=ART.mat(Color("d2c4a1"),.98)
-			var apron:=ART.box(figure,Vector3(0,.94,-.33),
-				Vector3(.56,.95,.10),flour)
-			apron.name="VisibleBakerApron"
-			ART.cone(figure,Vector3(0,2.09,0),.27,.28,flour,.17,11)
-			ART.bone(figure,Vector3(-.22,1.37,-.34),
-				Vector3(.22,1.37,-.34),.03,.03,trim,7)
+			# A shaped cloth bib, a tied waist and a pocket replace the
+			# vertical white rectangle that used to obscure the whole body.
+			_make_baker_apron(figure,flour,trim)
+			var bonnet:=ART.orb(figure,Vector3(0,1.989,.025),
+				Vector3(.46,.24,.40),flour,12)
+			bonnet.name="VisibleBakerBonnet"
+			ART.bone(figure,Vector3(-.22,1.94,-.08),
+				Vector3(-.20,1.75,-.10),.037,.022,flour,8)
+			ART.bone(figure,Vector3(.22,1.94,-.08),
+				Vector3(.20,1.75,-.10),.037,.022,flour,8)
 		"orin":
 			var hide:=ART.mat(Color("775b42"),.99)
 			var metal:=ART.mat(Color("737e81"),.52)
@@ -240,6 +262,33 @@ func _ready() -> void:
 	title.position = Vector3(0,2.29,0)
 	add_child(title)
 	name_label=title
+
+func _make_baker_apron(parent: Node3D, fabric: Material, tie: Material) -> void:
+	# A front-facing trapezoidal cloth panel follows shoulders, waist, hem.
+	# Its surface normal points toward the player (-Z); it does not add
+	# collision to a character whose collider already works.
+	var vertices: Array[Vector3]=[
+		Vector3(-.20,1.41,-.31),Vector3(.20,1.41,-.31),
+		Vector3(-.23,1.04,-.351),Vector3(.23,1.04,-.351),
+		Vector3(-.285,.55,-.278),Vector3(.285,.55,-.278)]
+	var surface:=SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface.set_material(fabric)
+	for ids in [[0,1,2],[1,3,2],[2,3,4],[3,5,4]]:
+		for i in ids:
+			surface.add_vertex(vertices[i])
+	surface.generate_normals()
+	var apron:=MeshInstance3D.new()
+	apron.name="VisibleBakerApron"
+	apron.mesh=surface.commit()
+	parent.add_child(apron)
+	ART.bone(parent,Vector3(-.35,1.04,-.33),
+		Vector3(.35,1.04,-.33),.028,.028,tie,8)
+	var pocket:=ART.box(parent,Vector3(-.08,.75,-.299),
+		Vector3(.17,.14,.022),fabric)
+	pocket.name="BakerWorkPocket"
+	ART.bone(parent,Vector3(-.17,.83,-.312),
+		Vector3(.01,.83,-.312),.009,.009,tie,7)
 
 func _process(delta: float) -> void:
 	# World labels are discovery aids, not floating billboards visible across
