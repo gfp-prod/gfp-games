@@ -1,0 +1,109 @@
+name: VERBA free CC0 models and PBR integration
+
+on:
+  push:
+    branches: ["verba/blender-asset-foundry"]
+    paths:
+      - ".github/workflows/verba-cc0-game-import.yml"
+      - "VERBA/game/tools/art_foundry/import_verified_cc0.py"
+      - "VERBA/game/tools/art_foundry/check_cc0_game_comparisons.py"
+      - "VERBA/game/tests/cc0_pack_review.gd"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verba-cc0-game-import
+  cancel-in-progress: false
+
+jobs:
+  integrate:
+    name: Source-verified free game assets, four paired game-scene QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - name: Check out live Godot source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install isolated image decoder
+        run: |
+          python3 -m pip install --quiet Pillow==11.3.0
+          python3 -m py_compile tools/art_foundry/import_verified_cc0.py
+          python3 -m py_compile tools/art_foundry/check_cc0_game_comparisons.py
+      - name: Import pinned public-domain Kenney GLBs and official Poly Haven PBR
+        run: |
+          set -o pipefail
+          python3 tools/art_foundry/import_verified_cc0.py \
+            2>&1 | tee /tmp/verba-source-cc0-game-import.log
+          grep -q "CC0_IMPORT_SUCCESS" /tmp/verba-source-cc0-game-import.log
+          test -f assets/models/cc0/kenney/SOURCE_MANIFEST.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("assets/models/cc0/kenney/SOURCE_MANIFEST.json")
+          audit=json.loads(p.read_text())
+          models=[r for r in audit['data'] if r['kind']=='model']
+          pbr=[r for r in audit['data'] if r['kind']=='pbr']
+          assert len(models)==16 and len(pbr)==12,(len(models),len(pbr))
+          assert len({r['repo_revision'] for r in models})==1
+          assert all(r['git_blob_sha'] and r['sha256'] for r in models)
+          print('PASS: 16 verified source-pinned Kenney GLBs and 12 PBR channels from Poly Haven')
+          PY
+      - name: Install official Godot 4.5.2
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Import model materials and parse gameplay source
+        run: |
+          timeout 260s godot --headless --path . --editor --import --quit
+      - name: Capture four matched real in-game pre/post asset scenes
+        run: |
+          set -o pipefail
+          timeout 800s xvfb-run -a -s "-screen 0 1280x720x24" \
+            godot --rendering-driver opengl3 --rendering-method gl_compatibility \
+            --path . --script res://tests/cc0_pack_review.gd \
+            2>&1 | tee /tmp/verba-cc0-game-qa.log
+          grep -q "PASS: source-pinned free Kenney GLBs and official Poly Haven PBR textures active in Godot" /tmp/verba-cc0-game-qa.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:|CC0 LIVE IMPORT FAIL:' /tmp/verba-cc0-game-qa.log; then
+            echo "::error::CC0 integrated game review failed"
+            exit 1
+          fi
+          python3 tools/art_foundry/check_cc0_game_comparisons.py
+      - name: Preserve import evidence and real game screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verba-free-cc0-live-art-review
+          path: |
+            VERBA/game/assets/models/cc0/kenney/SOURCE_MANIFEST.json
+            VERBA/game/tests/cc0_pack_frames/*.png
+            VERBA/game/tests/cc0_pack_frames/*.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Commit ONLY verified CC0 game assets to the art branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/verba/blender-asset-foundry'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/models/cc0/kenney/ assets/textures/cc0/polyhaven/
+          if git diff --cached --quiet; then
+            echo "Source models and PBR channels are already bundled."
+          else
+            git commit -m "VERBA art: bundle 16 source-pinned CC0 retro models and 12 official Poly Haven PBR channels"
+            for attempt in 1 2 3 4 5; do
+              git pull --rebase origin verba/blender-asset-foundry
+              if git push origin HEAD:verba/blender-asset-foundry; then
+                echo "PASS: fully reviewed free game assets committed"
+                exit 0
+              fi
+              sleep $((attempt*2))
+            done
+            echo "::error::Could not push validated assets without losing other commits"
+            exit 1
+          fi
