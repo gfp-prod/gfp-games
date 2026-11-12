@@ -335,6 +335,30 @@ func _ready() -> void:
 	title.position = Vector3(0,2.29,0)
 	add_child(title)
 	name_label=title
+	# Conversation target and navigation hit volume must match the
+	# actual inherited growth stage, including newborn villagers.
+	_apply_genetic_growth()
+
+func _fit_growth_colliders(physical_scale: Vector3) -> void:
+	# Scale ONLY the capsule dimensions; nonuniform CollisionShape3D
+	# transforms produce unreliable physics in Godot. The original
+	# collider nodes, collision layers and hitbox identities survive.
+	var walker: CollisionShape3D=get_node_or_null(
+		"PhysicalCitizenCollider") as CollisionShape3D
+	if walker!=null and walker.shape is CapsuleShape3D:
+		var capsule: CapsuleShape3D=walker.shape as CapsuleShape3D
+		capsule.radius=clampf(.34*physical_scale.x,.23,.45)
+		capsule.height=maxf(1.75*physical_scale.y,2.0*capsule.radius+.05)
+		walker.position.y=.90*physical_scale.y
+	var conversation: CollisionShape3D=get_node_or_null(
+		"LivingNPCConversationCollider/CollisionShape3D") as CollisionShape3D
+	if conversation!=null and conversation.shape is CapsuleShape3D:
+		var target: CapsuleShape3D=conversation.shape as CapsuleShape3D
+		target.radius=clampf(.43*physical_scale.x,.24,.53)
+		target.height=maxf(1.95*physical_scale.y,2.0*target.radius+.05)
+		conversation.position.y=1.0*physical_scale.y
+	if name_label!=null:
+		name_label.position.y=2.29*physical_scale.y
 
 func _apply_genetic_growth() -> void:
 	# Juveniles physically grow toward their own inherited adult body
@@ -354,6 +378,7 @@ func _apply_genetic_growth() -> void:
 		visual_figure.scale=shape
 	if visual_attendant!=null:
 		visual_attendant.scale=shape
+	_fit_growth_colliders(shape)
 	last_body_age_day=world.village_sim.current_day
 
 func _make_baker_apron(parent: Node3D, fabric: Material, tie: Material) -> void:
