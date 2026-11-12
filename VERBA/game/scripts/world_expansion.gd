@@ -221,7 +221,21 @@ static func _distant_landmarks(world,root: Node3D) -> void:
 	kiln.name="ColdCharcoalKiln"
 	kiln.position=_place(world,Vector2(50.0,-21.0))
 	root.add_child(kiln)
-	ART.cone(kiln,Vector3(0,1.25,0),2.25,2.5,wet_stone,1.17,12)
+	# Courses of irregular dressed masonry, broken at the firebox.
+	# A single pristine cone looked like an impossible stone pyramid.
+	var kiln_rubble:=Node3D.new()
+	kiln_rubble.name="KilnCurvedBrickwork"
+	kiln.add_child(kiln_rubble)
+	for course in range(5):
+		var radius: float=1.55-.13*float(course)
+		for segment in range(10):
+			if course<3 and segment==1: continue
+			if course==4 and segment in [6,7]: continue
+			var a: float=TAU*(float(segment)+.5*float(course%2))/10.0
+			var yy: float=.24+float(course)*.43
+			ART.box(kiln_rubble,Vector3(cos(a)*radius,yy,sin(a)*radius),
+				Vector3(.95,.40,.48),wet_stone if segment%4!=0 else moss,
+				Vector3(0,-a,0))
 	_physical(world,kiln,Vector3(0,.45,0),Vector3(2.1,.9,2.1),
 		wet_stone,"KilnFootprint")
 	for j in range(6):
