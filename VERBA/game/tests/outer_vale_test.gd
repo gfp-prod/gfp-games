@@ -69,7 +69,7 @@ func _run() -> void:
 	if road_vertices.size()<600:
 		_fail("Road has reverted to six-vertex quads that cut through terrain")
 		return
-	for i in range(0,road_vertices.size(),maxi(1,road_vertices.size()/22)):
+	for i in range(0,road_vertices.size(),maxi(1,int(road_vertices.size()/22))):
 		var vertex: Vector3=road_vertices[i]
 		if vertex.y-world.height_at(vertex.x,vertex.z)<.08:
 			_fail("Road triangle is buried inside actual walkable terrain")
