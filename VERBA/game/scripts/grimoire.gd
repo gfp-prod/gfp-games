@@ -2,6 +2,7 @@ extends Node3D
 ## The book is geometry under the camera, not a CanvasLayer or menu.
 const ART = preload("res://scripts/art.gd")
 const BOOK_VISUAL = preload("res://scripts/grimoire_visual.gd")
+const VISUAL_LANGUAGE = preload("res://scripts/visual_language.gd")
 var player
 var book
 var left_cover: Node3D
@@ -80,6 +81,7 @@ func _ready() -> void:
 		l.double_sided=false
 		book.add_child(l)
 		page_labels.append(l)
+	VISUAL_LANGUAGE.dress_grimoire(self)
 	update_pages()
 	apply_pose(0.0)
 
