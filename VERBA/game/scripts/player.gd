@@ -45,7 +45,9 @@ var conversation_actor: Node3D
 var conversation_panel: PanelContainer
 var conversation_name: Label
 var conversation_body: Label
+var conversation_speech_scroll: ScrollContainer
 var conversation_options: Label
+var conversation_footer: Label
 var conversation_reply: String = ""
 var conversation_listening: bool = false
 var conversation_buffer: String = ""
@@ -284,8 +286,8 @@ func create_conversation_panel() -> void:
 	conversation_panel.offset_left = -365
 	conversation_panel.offset_right = 365
 	# Shorter, anchored dialogue: preserve visibility of a speaking person's body.
-	conversation_panel.offset_top = -240
-	conversation_panel.offset_bottom = -24
+	conversation_panel.offset_top = -326
+	conversation_panel.offset_bottom = -18
 	var frame := StyleBoxFlat.new()
 	frame.bg_color = Color(.055,.066,.062,.94)
 	frame.border_color = Color(.55,.46,.32,.90)
@@ -294,22 +296,41 @@ func create_conversation_panel() -> void:
 	conversation_panel.add_theme_stylebox_override("panel",frame)
 	layer.add_child(conversation_panel)
 	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation",9)
+	stack.add_theme_constant_override("separation",7)
 	conversation_panel.add_child(stack)
 	conversation_name = Label.new()
 	conversation_name.add_theme_font_size_override("font_size",21)
 	conversation_name.add_theme_color_override("font_color",Color("ead3a7"))
 	stack.add_child(conversation_name)
+	# A flexible text window contains the character's longer introductions.
+	# Options and the Latin writing cursor stay outside the scrolling region
+	# so typing controls can never be pushed below the actual display.
+	conversation_speech_scroll = ScrollContainer.new()
+	conversation_speech_scroll.name = "SpokenWordsScroll"
+	conversation_speech_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	conversation_speech_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	conversation_speech_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	conversation_speech_scroll.custom_minimum_size.y = 65.0
+	stack.add_child(conversation_speech_scroll)
 	conversation_body = Label.new()
+	conversation_body.name = "SpokenWords"
 	conversation_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	conversation_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	conversation_body.add_theme_font_size_override("font_size",16)
 	conversation_body.add_theme_color_override("font_color",Color("e2dac9"))
-	stack.add_child(conversation_body)
+	conversation_speech_scroll.add_child(conversation_body)
 	conversation_options = Label.new()
+	conversation_options.name = "NumberedChoices"
 	conversation_options.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	conversation_options.add_theme_font_size_override("font_size",15)
+	conversation_options.add_theme_font_size_override("font_size",14)
 	conversation_options.add_theme_color_override("font_color",Color("cbbda4"))
 	stack.add_child(conversation_options)
+	conversation_footer = Label.new()
+	conversation_footer.name = "LatinInputAndKeys"
+	conversation_footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	conversation_footer.add_theme_font_size_override("font_size",15)
+	conversation_footer.add_theme_color_override("font_color",Color("e9ce8b"))
+	stack.add_child(conversation_footer)
 	conversation_panel.visible = false
 
 func _npc_in_conversation_reach(actor: Node3D) -> bool:
@@ -338,6 +359,7 @@ func begin_conversation(actor: Node3D) -> bool:
 	conversation_reply = ""
 	conversation_listening = false
 	conversation_buffer = ""
+	conversation_speech_scroll.scroll_vertical = 0
 	refresh_conversation()
 	return true
 
@@ -355,10 +377,11 @@ func refresh_conversation() -> void:
 		var suffix: String = "" if bool(choice.get("available",true)) else "   [unavailable]"
 		lines.append("%d. %s%s" % [int(choice.get("index",0))+1,
 			String(choice.get("label","")),suffix])
+	conversation_options.text = "\n".join(lines)
 	if conversation_listening:
-		conversation_options.text = "\n".join(lines) + "\n\n> " + conversation_buffer + "▌\nEnter: speak    Esc: stop writing"
+		conversation_footer.text = "> " + conversation_buffer + "▌\nEnter: speak    Esc: stop writing"
 	else:
-		conversation_options.text = "\n".join(lines) + "\n\nEnter: speak Latin    1–6 respond    Esc / E leave"
+		conversation_footer.text = "Enter: speak Latin    1–6 respond    Esc / E leave"
 	conversation_panel.visible = true
 
 func choose_conversation_option(index: int) -> Dictionary:
