@@ -25,12 +25,14 @@ static func _section(y: float,g: Dictionary) -> Vector2:
 	elif y<1.34:
 		x=.353*chest+.024*muscles
 		z=.322*depth
-	elif y<1.51:
+	elif y<1.50:
 		x=.357*shoulders+.012*chest
 		z=.304*depth
 	else:
-		x=.225
-		z=.225
+		# Form a neckline fitted around a visible neck, rather than
+		# an enormous brown pipe reaching the bottom of the face.
+		x=.155
+		z=.162
 	return Vector2(x,z)
 
 static func _point(y: float,angle: float,g: Dictionary) -> Vector3:
