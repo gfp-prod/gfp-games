@@ -4,16 +4,14 @@ extends RefCounted
 ## Not a replacement skeleton: the tested AnimatedLeft/Right limbs and all
 ## collision, conversations and work roles remain exactly as before.
 const ART=preload("res://scripts/art.gd")
+const FABRIC=preload("res://scripts/npc_cloth_finish.gd")
 
 static func dress(figure: Node3D,person: String,
 		tunic: Material,trim: Material,leather: Material) -> void:
 	var variant: int=absi(person.hash())%4
 	var worn:=ART.mat(Color("514b42"),.99)
-	var cloth_dark: StandardMaterial3D=ART.mat(
-		Color("635c54") if variant%2==0 else Color("6c675b"),.98)
-	cloth_dark.albedo_texture=load("res://assets/textures/authored/aged_vellum.png")
-	cloth_dark.uv1_triplanar=true
-	cloth_dark.uv1_scale=Vector3(2.4,2.4,2.4)
+	var cloth_dark: StandardMaterial3D=FABRIC.worn_linen(
+		Color("635c54") if variant%2==0 else Color("6c675b"))
 	# Overlapping fabric planes on a mannequin cause z-fighting. This 12-sided
 	# shaped silhouette sits outside the existing tunic and pinches at waist.
 	var hem:=SurfaceTool.new()
@@ -47,12 +45,10 @@ static func dress(figure: Node3D,person: String,
 	var pocket:=ART.box(figure,Vector3(.28,.91,-.20),
 		Vector3(.135,.16,.045),leather,Vector3(0,-.22,0))
 	pocket.name="WornHipPouchSeam"
-	# Stitch-repaired collar and shaped shoulder pieces break the plain cone.
-	ART.bone(figure,Vector3(-.26,1.47,-.12),Vector3(.26,1.47,-.12),
-		.065,.046,cloth_dark,8)
+	# Removed three exposed shoulder/collar cylinders. Their helper-like
+	# ivory bars looked disconnected from the torso when the NPC turned.
+	# The tunic owns the shoulder silhouette; cuffs stay rig-attached.
 	for sign in [-1.0,1.0]:
-		ART.bone(figure,Vector3(sign*.18,1.49,-.12),
-			Vector3(sign*.34,1.39,.02),.075,.060,cloth_dark,8)
 		# Cuffs are parented to animated arms and change with each step.
 		var arm: Node3D=figure.get_node_or_null(
 			"AnimatedLeftArm" if sign<0.0 else "AnimatedRightArm") as Node3D
