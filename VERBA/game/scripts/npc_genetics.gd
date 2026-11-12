@@ -42,6 +42,16 @@ static func validate(g: Variant) -> bool:
 			if value<0 or value>CAP or float(value)!=float(int(value)): return false
 	return true
 
+static func normalize(g: Dictionary) -> Dictionary:
+	# JSON parses integer-looking values as numeric variants that may
+	# differ in type; canonize all alleles before simulation comparison.
+	if not validate(g): return {}
+	var canonical: Dictionary={"version":VERSION,"alleles":{}}
+	for locus in TRAITS:
+		var pair: Array=g["alleles"][locus]
+		canonical["alleles"][locus]=[int(pair[0]),int(pair[1])]
+	return canonical
+
 static func value(g: Dictionary, locus: String) -> float:
 	# Per-vertex geometry evaluation calls this many times. Full schema
 	# validation runs once at the boundary, never for each face vertex.
