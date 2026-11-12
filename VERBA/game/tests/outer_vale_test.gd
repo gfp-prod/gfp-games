@@ -173,6 +173,41 @@ func _run() -> void:
 		_fail("Visual horizon improperly introduced inaccessible collision")
 		return
 
+	# The cottage-to-lake art milestone is a complete passage, not
+	# a scattering of unrelated props. All features are visual or retain
+	# separately authored, tangible geometry without any new save ID.
+	var journey: Node3D=world.get_node_or_null("HermitageToStillwaterArtPass") as Node3D
+	if journey==null or not bool(journey.get_meta("decoration_only",false)):
+		_fail("The hermitage-to-lake composition was not built")
+		return
+	var woodline: Node3D=journey.get_node_or_null("VariedTreeEdgeAndSmallGroves") as Node3D
+	if woodline==null or int(woodline.get_meta("imported_tree_count",0))<12:
+		_fail("The lake road still has an empty forest edge")
+		return
+	for entry in [
+		{"name":"CottageFernEdge","minimum":400},
+		{"name":"ShadedForestUnderstory","minimum":650},
+		{"name":"LakeMarginTussocks","minimum":600},
+		{"name":"RuttedTrackPebbleAndGravelMargins","minimum":1200},
+		{"name":"UnevenWetMossAndSiltShore","minimum":400}
+	]:
+		var group: MultiMeshInstance3D=journey.find_child(
+			String(entry["name"]),true,false) as MultiMeshInstance3D
+		if group==null or group.multimesh==null or group.multimesh.instance_count<int(entry["minimum"]):
+			_fail("Missing authored ground-cover layer: "+String(entry["name"]))
+			return
+	var worn: MeshInstance3D=world.get_node_or_null(
+		"OuterValeRegionalLandmarks/LongTrackToStillwater/RuttedWalkableFootpath") as MeshInstance3D
+	if worn==null or not (worn.material_override is ShaderMaterial):
+		_fail("The lake path lost its photographed, softly blended track material")
+		return
+	if (worn.material_override as ShaderMaterial).shader.resource_path != "res://assets/materials/worn_lake_track.gdshader":
+		_fail("The lake path returned to flat, sharply edged brown")
+		return
+	if journey.find_child("BrokenHermitageFieldstoneGardenBoundary",true,false)==null:
+		_fail("Cottage landscaping is disconnected from its approach")
+		return
+
 	# Existing structures and academic simulation survive untouched.
 	if world.get_node_or_null("HermitCottage")==null or not world.scholar.books.has("de_herbis"):
 		_fail("Visual expansion destroyed the original learning loop")
