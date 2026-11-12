@@ -1,8 +1,63 @@
 extends RefCounted
-## Individual, physically modeled facial features for existing village people.
-## Low-poly surfaces use diffuse pigment, real depth and local face planes.
-## The original head, capsule, jobs, identities and conversations remain.
+## Distinctive, continuous low-poly face planes for the existing animated
+## citizens. Face anatomy is cut from one mesh rather than protruding spheres.
+## No change to gameplay, capsule dimensions, hair/occupation IDs or dialogue.
 const ART=preload("res://scripts/art.gd")
+
+static func _face_depth(x: float, y: float) -> float:
+	# Mathematically follow the original ellipsoidal head, then sculpt
+	# cheekbones, sockets and a central nose from continuous vertices.
+	# Center (0,1.77,0), radii (.21,.245,.195), facing negative local Z.
+	var nx: float=x/.215
+	var ny: float=(y-1.77)/.247
+	var shell: float=-.196*sqrt(maxf(.012,1.0-nx*nx-ny*ny))
+	var nose: float=-.061*exp(-pow(x/.043,2.0)
+		-pow((y-1.724)/.076,2.0))
+	var cheek: float=-.009*exp(-pow((absf(x)-.115)/.057,2.0)
+		-pow((y-1.711)/.060,2.0))
+	var eye: float=.008*exp(-pow((absf(x)-.086)/.044,2.0)
+		-pow((y-1.792)/.028,2.0))
+	var lip: float=-.006*exp(-pow(x/.076,2.0)
+		-pow((y-1.663)/.019,2.0))
+	return shell+nose+cheek+eye+lip-.002
+
+static func _make_integrated_face(root: Node3D, skin: Material) -> void:
+	var tool:=SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var base_color: Color=(skin as StandardMaterial3D).albedo_color
+	var columns: int=22
+	var rows: int=22
+	for yi in range(rows):
+		for xi in range(columns):
+			var x0: float=lerpf(-.183,.183,float(xi)/float(columns))
+			var x1: float=lerpf(-.183,.183,float(xi+1)/float(columns))
+			var y0: float=lerpf(1.575,1.931,float(yi)/float(rows))
+			var y1: float=lerpf(1.575,1.931,float(yi+1)/float(rows))
+			# The elliptical mesh fades inside the head along its outer
+			# rim. No separate cardboard rectangle around the portrait.
+			var pts: Array[Vector3]=[
+				Vector3(x0,y0,_face_depth(x0,y0)),
+				Vector3(x0,y1,_face_depth(x0,y1)),
+				Vector3(x1,y0,_face_depth(x1,y0)),
+				Vector3(x1,y1,_face_depth(x1,y1))
+			]
+			for j in [0,1,2,1,3,2]:
+				var p: Vector3=pts[j]
+				var cheek_light: float=clampf(.022+(p.y-1.575)*.07,0.0,.055)
+				var pigment: Color=base_color.lerp(Color.WHITE,cheek_light)
+				tool.set_color(pigment)
+				tool.set_uv(Vector2((p.x+.183)*2.73,(p.y-1.575)*2.82))
+				tool.add_vertex(p)
+	tool.generate_normals()
+	var material: StandardMaterial3D=(skin as StandardMaterial3D).duplicate()
+	material.albedo_color=Color.WHITE
+	material.vertex_color_use_as_albedo=true
+	material.roughness=.98
+	var face:=MeshInstance3D.new()
+	face.name="IndividualIntegratedFaceMesh"
+	face.mesh=tool.commit()
+	face.material_override=material
+	root.add_child(face)
 
 static func finish(figure: Node3D, person: String,
 		skin: Material, hair: Material, brow: Material) -> void:
@@ -11,87 +66,55 @@ static func finish(figure: Node3D, person: String,
 	var root:=Node3D.new()
 	root.name="IndividualFaceConstruction"
 	figure.add_child(root)
+	_make_integrated_face(root,skin)
 	var variation: int=absi(person.hash())%4
-	var shade: StandardMaterial3D=ART.mat(Color("54443a"),.99)
-	var lip: StandardMaterial3D=ART.mat(Color("6d5148"),.97)
-	var pupil: StandardMaterial3D=ART.mat(Color("302c27"),.88)
-	var cheek: StandardMaterial3D=ART.mat(Color("917562"),1.0)
-	# Ears and cheek facets sit on the curved scalp rather than levitating
-	# in front of an opaque spherical head.
+	var eye_ink:=ART.mat(Color("352d27"),1.0)
+	var lip_ink:=ART.mat(Color("6b5146"),.99)
+	# Ears are modest, attached to the skull, and never decorative rings.
+	# Both eyes are narrow, dark shapes tucked under modeled upper lids.
 	for sign in [-1.0,1.0]:
-		var ear:=ART.orb(root,Vector3(sign*.224,1.755,.012),
-			Vector3(.125,.184,.103),skin,10)
-		ear.name="ModeledEar"
-		ART.orb(root,Vector3(sign*.234,1.748,-.043),
-			Vector3(.036,.068,.021),cheek,8)
-		var cheek_point:=ART.orb(root,
-			Vector3(sign*.132,1.710,-.152),
-			Vector3(.092,.074,.048),skin,10)
-		cheek_point.name="NaturalCheekPlane"
-		# Narrow lids and dark socket recesses; no protruding glass marbles.
-		var eye:=ART.orb(root,Vector3(sign*.082,1.788,-.194),
-			Vector3(.062,.033,.022),shade,10)
-		eye.name="RecessedEyeSocket"
-		var glint:=ART.orb(root,Vector3(sign*.083,1.786,-.208),
-			Vector3(.030,.017,.009),pupil,9)
-		glint.name="SmallDarkEye"
-		var lid:=ART.bone(root,
-			Vector3(sign*.048,1.811,-.207),
-			Vector3(sign*.117,1.812,-.200),.012,.009,skin,9)
-		lid.name="UpperEyelid"
-		ART.bone(root,Vector3(sign*.052,1.840,-.189),
-			Vector3(sign*.127,1.833,-.177),.017,.011,brow,9)
-	# A proper bridge and tip cast a readable profile shadow. The curved
-	# eye-to-nose transition is more credible than the old bead nose.
-	var bridge:=ART.orb(root,Vector3(0,1.739,-.174),
-		Vector3(.081,.182,.112),skin,12)
-	bridge.name="NoseBridgeAndPlane"
-	ART.orb(root,Vector3(0,1.691,-.227),
-		Vector3(.095,.062,.081),skin,10)
-	ART.bone(root,Vector3(-.034,1.638,-.173),
-		Vector3(.036,1.637,-.174),.008,.008,lip,8)
-	var chin:=ART.orb(root,Vector3(0,1.595,-.121),
-		Vector3(.160,.061,.070),skin,11)
-	chin.name="ShapedJawAndChin"
-	# A close, varied head of hair; the existing occupation bonnet or
-	# farmer's hat remains the visible outer headwear where provided.
-	var scalp: MeshInstance3D=ART.orb(root,
-		Vector3(0,1.961,.034),Vector3(.448,.160,.386),hair,14)
+		var ear:=ART.orb(root,Vector3(sign*.208,1.762,.007),
+			Vector3(.071,.115,.076),skin,10)
+		ear.name="SubtleModeledEar"
+		var x: float=sign*.085
+		var eye_depth: float=_face_depth(x,1.791)
+		var pupil:=ART.box(root,Vector3(x,1.790,eye_depth-.009),
+			Vector3(.040,.013,.009),eye_ink)
+		pupil.name="SmallRecessedEye"
+		var eyelid:=ART.bone(root,Vector3(x-.027,1.804,eye_depth-.006),
+			Vector3(x+.027,1.806,eye_depth-.006),
+			.008,.008,skin,8)
+		eyelid.name="IndividualUpperEyelid"
+		var brow_depth: float=_face_depth(x,1.839)
+		ART.bone(root,Vector3(x-.032,1.835,brow_depth-.003),
+			Vector3(x+.032,1.834,brow_depth-.003),
+			.009,.009,brow,8)
+	var mouth:=ART.bone(root,Vector3(-.038,1.651,_face_depth(-.038,1.651)-.005),
+		Vector3(.038,1.651,_face_depth(.038,1.651)-.005),
+		.006,.006,lip_ink,8)
+	mouth.name="SmallNaturalLipLine"
+	var scalp:=ART.orb(root,Vector3(0,1.969,.035),
+		Vector3(.442,.146,.390),hair,13)
 	scalp.name="NaturalHairline"
 	if person in ["ida","daro"]:
-		scalp.scale.y=.102
-	else:
-		for i in range(7 if variation==0 else 10):
-			var a: float=TAU*float(i)/float(7 if variation==0 else 10)
-			var crown:=ART.orb(root,
-				Vector3(cos(a)*.174,2.000+.015*float(i%3),sin(a)*.143+.015),
-				Vector3(.140,.085,.118),hair,9)
-			crown.name="UnevenHairMass"
-	# Small individual details distinguish silhouettes by occupation
-	# without moving their physics body or rewriting social identity.
+		scalp.scale.y=.100
+	# Individual silhouette differences use close-fitting growth and
+	# restrained attached hair, never the old crown of spherical marbles.
 	match person:
 		"orin":
-			# Flattened sideburns and a short dark beard on the smith.
-			for sign in [-1.0,1.0]:
-				ART.bone(root,Vector3(sign*.172,1.724,-.128),
-					Vector3(sign*.126,1.619,-.114),.018,.022,hair,8)
-			ART.bone(root,Vector3(-.092,1.594,-.128),
-				Vector3(.092,1.594,-.128),.022,.019,hair,9)
+			ART.bone(root,Vector3(-.125,1.610,-.117),
+				Vector3(.125,1.610,-.117),.014,.014,hair,9)
 		"sela":
-			# Wrapped hair at the nape; this is a lived-in trader, not
-			# another identical crown worn by every profession.
-			var hair_binding:=ART.orb(root,Vector3(0,1.798,.205),
-				Vector3(.238,.258,.175),hair,12)
-			hair_binding.name="BoundHairAtNape"
-			ART.bone(root,Vector3(-.180,1.908,.072),
-				Vector3(.180,1.912,.072),.035,.036,hair,9)
+			var tie:=ART.orb(root,Vector3(0,1.798,.196),
+				Vector3(.145,.172,.139),hair,11)
+			tie.name="BoundHairAtNape"
 		"mara":
-			var temple_hair:=ART.orb(root,Vector3(-.208,1.750,.074),
-				Vector3(.113,.258,.101),hair,11)
-			temple_hair.name="ScribeHairAtTemple"
+			var swept:=ART.bone(root,Vector3(-.175,1.963,.015),
+				Vector3(-.181,1.757,.055),.036,.024,hair,8)
+			swept.name="ScribeHairAtTemple"
 		"brin":
-			ART.bone(root,Vector3(-.24,1.978,-.051),
-				Vector3(.19,1.984,-.056),.053,.040,hair,9)
+			ART.bone(root,Vector3(-.187,1.973,-.030),
+				Vector3(.135,1.981,-.018),.024,.017,hair,8)
 		_:
 			pass
 	root.set_meta("professionally_distinct_face",person)
