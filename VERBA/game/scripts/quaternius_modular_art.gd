@@ -3,6 +3,7 @@ extends RefCounted
 ## This is architectural trim *on* the existing physical homes and walk,
 ## not a new puzzle/loot item or another free-floating fake building.
 const RETRO=preload("res://scripts/cc0_pack_art.gd")
+const ART=preload("res://scripts/art.gd")
 const SOURCE="res://assets/models/cc0/quaternius/medieval-standard/"
 const SPECS: Array[Dictionary]=[
 	{"id":"StonecutterWorkingWindowShutters",
@@ -18,6 +19,38 @@ const SPECS: Array[Dictionary]=[
 	 "house":"","at":Vector2(-1.8,26.1),
 	 "height":3.04,"yaw":-.30,"tint":Color("85847d")}
 ]
+
+static func _build_old_threshold(world: Node3D,gate: Node3D) -> void:
+	var path: String="res://assets/textures/cc0/polyhaven/mossy_rock_diffuse.png"
+	if not ResourceLoader.exists(path):
+		path="res://assets/textures/real/stone_diffuse.jpg"
+	var masonry: Material=world.textured(path,Color("8c8b82"))
+	var midden: Material=world.textured(
+		"res://assets/textures/real/moss_diffuse.jpg",Color("576756"))
+	var fragments:=Node3D.new()
+	fragments.name="RuinedMasonryLinkedToOldRoadArch"
+	gate.add_child(fragments)
+	for sign in [-1.0,1.0]:
+		for index in range(5):
+			var relative_x: float=sign*(1.77+float(index)*.57)
+			var site: Vector3=gate.to_global(Vector3(relative_x,0,0))
+			var soil_offset: float=world.height_at(site.x,site.z)-gate.global_position.y
+			var courses: int=2 if index<3 else 1
+			for level in range(courses):
+				var y: float=soil_offset+.15+float(level)*.29
+				ART.stone(fragments,
+					Vector3(relative_x+sign*.015*float(level),y,0),
+					Vector3(.52,.25,.53),midden if index==2 and level==0 else masonry)
+		# Small corner footing: the road's masonry continues into the
+		# ground rather than stopping at perfectly cut portal edges.
+		for j in range(3):
+			var x: float=sign*(2.7+.40*float(j))
+			var site: Vector3=gate.to_global(Vector3(x,0,.4))
+			var ground: float=world.height_at(site.x,site.z)-gate.global_position.y
+			ART.stone(fragments,
+				Vector3(x,ground+.09,.4),
+				Vector3(.33,.16,.35),midden)
+	fragments.set_meta("visual_low_ruin_not_solid_wall",true)
 
 static func build(world: Node3D) -> void:
 	if world.get_node_or_null("FreeQuaterniusMedievalArt")!=null:
@@ -66,6 +99,10 @@ static func build(world: Node3D) -> void:
 			-bounds.position.y*factor,
 			-(bounds.position.z+bounds.size.z*.5)*factor)
 		RETRO._grade(model,spec["tint"])
+		# The old arch is a leftover road boundary, not a free-standing
+		# decorative gateway: both sides retain short ruined courses.
+		if String(spec["id"])=="VillageOldThresholdArch":
+			_build_old_threshold(world,node)
 		node.set_meta("source_license","Quaternius CC0 Standard")
 		node.set_meta("source_model",String(spec["file"]))
 		node.set_meta("decorative_visual_only",true)
