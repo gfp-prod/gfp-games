@@ -142,14 +142,18 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		Vector3(lerpf(.406,.462,volume),lerpf(.105,.205,volume),
 			lerpf(.366,.423,volume)),hair,12)
 	scalp.name="NaturalHairline"
+	# Keep genetic hair in the genome, but tuck it beneath a working
+	# bonnet or straw hat instead of letting black curls poke through.
+	if person in ["ida","daro"]:
+		scalp.visible=false
 	var curl: float=_v(g,"hair_curl")
-	if curl>.46:
+	if curl>.46 and person not in ["ida","daro"]:
 		for i in range(5):
 			var cx: float=(float(i)-2.0)*.080
 			var curl_piece:=ART.orb(root,Vector3(cx,2.011+volume*.09,-.121),
 				Vector3(.092,.092+curl*.09,.083),hair,9)
 			curl_piece.name="GeneticCurlCluster"
-	elif curl<.31:
+	elif curl<.31 and person not in ["ida","daro"]:
 		var part:=ART.bone(root,Vector3(-.15,1.975,-.14),
 			Vector3(.11,2.011,-.14),.014,.014,brow,8)
 		part.name="InheritedHairPart"
