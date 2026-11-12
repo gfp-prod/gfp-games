@@ -245,6 +245,40 @@ func _run() -> void:
 							str(center)+" at "+str(Vector2(dx,dz)))
 						return
 
+	# Three *existing* citizens now have a reason to use real homesteads.
+	# The village's already married farmer/merchant pair share one dwelling;
+	# the builder visits the stonecutter's. These are physical porch goals
+	# outside the blocking wall footprint, not new NPC IDs, jobs or saves.
+	if ResourceLoader.exists("res://assets/models/foundry/village_hearth_house.glb"):
+		var residences: Array[Dictionary]=[
+			{"id":"brin","house":"StonecutterHouse","side":1.25},
+			{"id":"daro","house":"MillwardHouse","side":-1.25},
+			{"id":"sela","house":"MillwardHouse","side":1.25}
+		]
+		for residence in residences:
+			var citizen: Node3D=null
+			for candidate in world.npcs:
+				if String(candidate.npc_id)==String(residence["id"]):
+					citizen=candidate as Node3D
+					break
+			var house: Node3D=world.get_node_or_null(
+				"PhysicalVillageHomesteads/"+String(residence["house"])) as Node3D
+			if citizen==null or house==null:
+				_fail("Existing citizen or real home was lost: "+String(residence["id"]))
+				return
+			var visit: Vector3=citizen.call("_destination_for","rest")
+			var entrance: Vector3=house.to_global(Vector3(float(residence["side"]),0,-4.35))
+			if Vector2(visit.x,visit.z).distance_to(Vector2(entrance.x,entrance.z))>.08:
+				_fail("Rest still sends "+String(residence["id"])+" to an empty map coordinate")
+				return
+			if not NAV.traversable(world,visit.x,visit.z):
+				_fail("Resident's porch lies inside blocked house/stream navigation: "+String(residence["id"]))
+				return
+			var workplace: Vector3=citizen.call("_destination_for","work")
+			if Vector2(visit.x,visit.z).distance_to(Vector2(workplace.x,workplace.z))<4.0:
+				_fail("Residential destination overwrote the real workplace: "+String(residence["id"]))
+				return
+
 	# Existing structures and academic simulation survive untouched.
 	if world.get_node_or_null("HermitCottage")==null or not world.scholar.books.has("de_herbis"):
 		_fail("Visual expansion destroyed the original learning loop")
