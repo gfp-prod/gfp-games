@@ -25,7 +25,11 @@ After the first demonstrated book comprehension, the player can press **Enter** 
 
 The NPCs model sentences in context and reduce hints as comprehension increases. Speech uses exact authored morphological patterns, **not** unrestricted language parsing. It does not grant XP, fake retrieval credit, or overwrite the existing social/economic save. These are first meaningful-output interactions; broader grammar, open questions, and later unprompted recall remain to be built.
 
-# Educational evidence (external to the fiction)
+## Transferring a question between people
+
+After the first understood manuscript, a player can use the same complete Latin question with multiple people: *Quid novi?* (What's new?), *Quid novi in oppido?* (What's new in town?), *Quid facis?* (What are you doing?), and *Quid facis hodie?* (What are you doing today?). *Quid novi?* uses a partitive genitive; *in oppido* uses the ablative of place where. A wrong ending such as *in oppidum* is not accepted as the same meaning. NPC responses use each citizen's actual profession and locally witnessed events. The same comprehension gate and one-time relationship credit apply. This is meaningful transfer between people within an authored grammar, not unrestricted Latin conversation.
+
+## Educational evidence (external to the fiction)
 
 - Dunlosky, Rawson, Marsh, Nathan & Willingham (2013), *Improving Students' Learning With Effective Learning Techniques*, *Psychological Science in the Public Interest* 14(1). DOI: https://doi.org/10.1177/1529100612453266. A broad review rated practice testing and distributed practice as high-utility learning techniques. This supports typed recollection and return intervals rather than rereading alone.
 - Karpicke & Roediger (2008), *The Critical Importance of Retrieval for Learning*, *Science* 319:966–968. DOI: https://doi.org/10.1126/science.1152408. An experiment on foreign-language vocabulary showed that continued retrieval improved later recall even when additional restudy did not.

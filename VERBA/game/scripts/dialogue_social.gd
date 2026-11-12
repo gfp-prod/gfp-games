@@ -5,6 +5,19 @@ extends RefCounted
 const NPC_DATA = "res://data/npcs.json"
 const COMMISSIONS = preload("res://scripts/wizard_commissions.gd")
 const LATIN_SPEECH = preload("res://scripts/latin_conversation.gd")
+# These small attested questions transfer between people and places.
+# Unlike a word-to-quest lookup, the SAME utterance addresses the listener's
+# existing role or knowledge. Dialogue is still bounded, not free-form Latin.
+const SHARED_SPEECH: Array[Dictionary] = [
+	{"form":"Quid novi?", "topic":"rumors", "min_stage":1,
+		"hint":"The listener repeats: 'Quid novi?' — What is new?"},
+	{"form":"Quid novi in oppido?", "topic":"rumors", "min_stage":1,
+		"hint":"They ask: 'In oppido?' — In the town?"},
+	{"form":"Quid facis?", "topic":"work", "min_stage":1,
+		"hint":"The listener repeats: 'Quid facis?' — What are you doing?"},
+	{"form":"Quid facis hodie?", "topic":"work", "min_stage":1,
+		"hint":"They ask: 'Hodie?' — Today?"}
+]
 
 var definitions: Dictionary = {}
 var memories: Dictionary = {}
@@ -67,6 +80,12 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 		spoken += "\nTomas points to his book. 'Da mihi librum.' Give me the book: da, mihi, librum."
 	if id=="ida" and tier==1:
 		spoken += "\nIda hefts a sack. 'Frumentum tibi fero' means I bring you grain."
+	# Observe the same natural question before producing it with others:
+	# contextual input fades after demonstrated, persistent productive use.
+	if tier>=1 and id=="ida" and not past.get("spoken_topics",[]).has("rumors"):
+		spoken += "\nIda calls to a customer: 'Quid novi?' — what news?"
+	if tier>=1 and id=="daro" and not past.get("spoken_topics",[]).has("work"):
+		spoken += "\nDaro asks a farmhand, 'Quid facis hodie?' — what are you doing today?"
 	if id=="ida" and village_sim!=null:
 		var grain: int=int(village_sim.economy.stocks.get("grain",0))
 		if grain<2:
@@ -115,7 +134,17 @@ func speak(id: String, utterance: String, scholar, player) -> Dictionary:
 	var definition: Dictionary = npc(id)
 	if definition.is_empty():
 		return {"ok":false,"changed":false,"message":"Nobody answers."}
-	var heard: Dictionary = LATIN_SPEECH.understand(utterance,definition.get("speech",[]),stage(scholar))
+	# Only an actual authored topic may answer a shared question. For
+	# instance, a silent forest hermit cannot invent a village trade.
+	var supported: Dictionary={}
+	for choice in definition.get("choices",[]):
+		if choice is Dictionary:
+			supported[String(choice.get("id",""))]=true
+	var patterns: Array=definition.get("speech",[]).duplicate(true)
+	for phrase in SHARED_SPEECH:
+		if supported.has(String(phrase.get("topic",""))):
+			patterns.append(phrase)
+	var heard: Dictionary = LATIN_SPEECH.understand(utterance,patterns,stage(scholar))
 	if not bool(heard.get("ok",false)):
 		return {"ok":false,"changed":false,"message":String(heard.get("message","The words were not understood."))}
 	var topic: String = String(heard.get("topic",""))
@@ -265,6 +294,12 @@ func restore(source: Dictionary) -> void:
 		for phrase in definitions[id].get("speech",[]):
 			if phrase is Dictionary:
 				legal_speech[String(phrase.get("topic",""))]=true
+		# The same portable utterances must survive save/load, but only
+		# for topics this specific person can meaningfully answer.
+		for common in SHARED_SPEECH:
+			var topic: String=String(common.get("topic",""))
+			if legal.has(topic):
+				legal_speech[topic]=true
 		var validated_speech: Array[String]=[]
 		var stored_speech: Variant=record.get("spoken_topics",[])
 		if stored_speech is Array:

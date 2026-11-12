@@ -7,7 +7,7 @@ Version: 2026-11-11 (reconciled to live Godot repository) | Engine: Godot 4.5.x 
 
 **Merged since the initial play slice:** PRs #21–#23 are now part of `verba-godot`: the empirical spell journal, one-day immortal recovery, and productive Latin NPC interactions. PR #25 repaired four compositional-verb lexicon references and added the missing validation gates.
 
-**Still in review, not shipped:** PR #20's artisan professions remain a draft. PR #24's physical Latin-revealed forest waystone is undergoing visual acceptance. PR #26 tests transferable Latin questions, but is stacked behind PR #24 and is not merged.
+**Live branch status:** PR #24's physical Latin-revealed waystone is merged after visual and full native acceptance. PR #27 enables reproducible automatic Windows playable builds. PRs #28–29 reconciled and enforced the complete five-book Godot regression suite. **In review:** PR #20 (artisan careers) and PR #26 (transferable Latin questions) are not yet merged.
 
 **Still incomplete:** No complete streaming open world, generational inheritance/aging, comprehensive material simulation, multiple polished enemy families, fully emergent NPC dialogue, broad Latin morphology, or finished character/creature animation and environmental art. The playable base still mostly uses authored conversation choices. The playable branch includes a few **bounded, authored** typed Latin requests with correct morphology and flexible word order; it does not implement free-form Latin dialogue or a broad parser. A passing Godot build or a generated screenshot is not itself artistic sign-off.
 
