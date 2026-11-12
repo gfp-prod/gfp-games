@@ -115,6 +115,10 @@ jobs:
           grep -q "PASS: learned reusable Latin questions report only witnessed news" /tmp/verba-latin-questions.log
       - name: Shaped faces, tapered villager clothes and baker work silhouette
         run: godot --headless --path . --script res://tests/folk_character_art_test.gd
+      - name: Modular limbs, persistent wounds, relationships and resource-limited voluntary aid
+        run: |
+          timeout 120s godot --headless --path . --script res://tests/modular_anatomy_care_test.gd 2>&1 | tee /tmp/verba-anatomy-care.log
+          grep -q "PASS: four physical limb modules" /tmp/verba-anatomy-care.log
       - name: NPC-initiated Latin reply drives finite bakery transaction
         run: |
           timeout 90s godot --headless --path . --script res://tests/latin_baker_reply_test.gd 2>&1 | tee /tmp/verba-baker-dialogue.log
