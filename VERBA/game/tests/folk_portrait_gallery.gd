@@ -45,7 +45,14 @@ func _capture() -> void:
 		# Freeze only the photo subject; actual game work and navigation
 		# remain unchanged. Capture from its current genuine world position.
 		actor.set_physics_process(false)
-		var eye: Vector3=actor.to_global(Vector3(0,1.53,-float(spec["distance"])))
+		# The scribe stands beside a massive solid landmark. The initial
+		# frontal inspection camera ended up INSIDE that geometry and only
+		# photographed its black wall. Shift to a documented side approach.
+		var eye_local:=Vector3(0,1.53,-float(spec["distance"]))
+		if String(spec["id"])=="mara":
+			eye_local=Vector3(-float(spec["distance"])*.76,1.53,
+				-float(spec["distance"])*.78)
+		var eye: Vector3=actor.to_global(eye_local)
 		var target: Vector3=actor.to_global(Vector3(0,float(spec["focus"]),0))
 		camera.global_position=eye
 		camera.look_at(target,Vector3.UP)
