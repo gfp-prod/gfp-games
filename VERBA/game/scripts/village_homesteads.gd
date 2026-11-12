@@ -68,6 +68,23 @@ static func build(world: Node3D) -> void:
 		# One central worktable leaves a navigable ~1.2m doorway and aisle.
 		world.add_solid_box(house,Vector3(-1.25,.62,1.22),
 			Vector3(1.23,1.04,.66),"PhysicalHomesteadWorktable")
+		# A small carved Latin house inscription is a real world object,
+		# not a tutorial HUD or a lesson that breaks the fourth wall.
+		# It is fixed above the physically open doorway.
+		var plaque: MeshInstance3D=ART.box(house,Vector3(0,2.58,-3.36),
+			Vector3(1.79,.31,.10),timber)
+		plaque.name="HandCarvedHouseNameBoard"
+		var inscription:=Label3D.new()
+		inscription.name="DiegeticLatinHouseInscription"
+		inscription.text="DOMUS LAPIDARII" if String(definition["kind"])=="stonecutter" else "DOMUS MOLITORIS"
+		inscription.font_size=30
+		inscription.pixel_size=.0023
+		inscription.modulate=Color("c2ad85")
+		inscription.no_depth_test=false
+		inscription.outline_size=0
+		inscription.position=Vector3(0,2.58,-3.428)
+		inscription.rotation.y=PI
+		house.add_child(inscription)
 		# Small practical yards say which profession lived here. Each uses
 		# completely deterministic static details, not harvested stock.
 		var yard:=Node3D.new()
