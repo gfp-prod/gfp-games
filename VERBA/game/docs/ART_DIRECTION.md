@@ -4,6 +4,20 @@
 
 **A believable retro RPG, not a bright mobile low-poly pack.** Make the player feel small in an old, inhabitable world. The world should have history before the player enters it.
 
+### The Outer Vale visual identity (second pass)
+
+Six world-coordinate-blended terrain surfaces, using existing committed images: meadow ground, shaded woodland humus, desiccated grass, packed/eroded earth, stream/lake silt, and broken stone. Transitions are soft and include tonal mineral variation. Keep all assets near the same low-contrast, worn natural palette; no cartoon neon, universal bright-green plane, or free-floating biome squares.
+
+The lake is a depression in the **actual terrain collider**, not a decorative disk. Water is dark peat and cold slate, with an irregular shore, reed beds, rocky silt, a walkable wooden jetty and a half-drowned stone. Roads use the terrain as physics and follow the heightfield. The modern forecourt and distant castle are separated by roughly 60 m and connected by a legible worn route; this surrealism has travel distance and environmental history.
+
+UI and the grimoire use the same low-key material language: oxidized iron (#171b1b), charcoal (#242727), bone chalk (#dbd0bb), dirty parchment (#c6b79f), old brass (#ad9270), bruised rust (#a96e67). Continuous floating status bars and bright generic dialogue windows are prohibited. Latin input must remain legible while longer NPC speech scrolls.
+
+### Terrain aging and authored damage
+
+The environment is not completed by assigning a different ground color. Every landform receives evidence of use: dirt rut intersections, dropped stones at road shoulders, chipped timber and concrete, plant growth through damaged surfaces, and distinct near-water sediments. Decorative props must align with world.height_at and must not block live social routes. The art pipeline is still early-PS2/PC fantasy; avoid a glossy photoreal automobile amid untextured primitive homes.
+
+Public and owned textures already shipped with the project are preferred over fetching new assets. Subtle daylight and fog changes must preserve legible paths, visible NPCs and the original sunrise/night cycle. Scenic meshes must be batched or limited and must not create simulation or save-state work.
+
 ### Shape and hierarchy
 
 1. **Primary:** chapel walls, a distant split arch, major dead tree, ridge, old cottage. Distinct silhouettes visible at walking distance.

@@ -2,10 +2,15 @@ extends RefCounted
 ## Explicit procedural navigation mesh matching the playable terrain.
 ## Avoids costly runtime baking of every decorative grass blade and mesh.
 ## Only the character center can use the mesh: block radius includes clearance.
-const HALF_EXTENT: float = 58.0
-const STEP: float = 2.9
+const REGIONS=preload("res://scripts/world_regions.gd")
+const HALF_EXTENT: float = 118.0
+const STEP: float = 3.1
 
 static func traversable(world, x: float, z: float) -> bool:
+	# The lake is intentionally deep water, not a visual floor that an NPC
+	# or wolf might cross while trying to reach an opposite shore.
+	if REGIONS.is_lake_water(x,z):
+		return false
 	if absf(x - world.stream_x(z)) < 5.0:
 		return false
 	if Vector2(x, z).distance_to(Vector2(29.0, 8.0)) < 6.9:

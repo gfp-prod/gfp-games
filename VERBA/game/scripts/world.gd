@@ -26,6 +26,9 @@ const LANDMARK_TREE = preload("res://scripts/landmark_tree.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
 const LATIN_WAYSTONE = preload("res://scripts/latin_waystone.gd")
+const WORLD_REGIONS = preload("res://scripts/world_regions.gd")
+const WORLD_EXPANSION = preload("res://scripts/world_expansion.gd")
+const WORLD_WEATHERING = preload("res://scripts/world_weathering.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
 var magic
@@ -80,6 +83,7 @@ var leaf_green: Array[Material] = []
 var leaf_rust: Array[Material] = []
 var leaf_blue: Array[Material] = []
 var ground_seed := 1938
+var lake_water_level: float = 0.0
 const CC0_DIR: String = "res://assets/textures/real/"
 
 func _ready() -> void:
@@ -90,6 +94,7 @@ func _ready() -> void:
 	terrain_noise.fractal_octaves=4
 	small_noise.seed=77421
 	small_noise.frequency=.13
+	lake_water_level=_raw_height_at(WORLD_REGIONS.LAKE.x,WORLD_REGIONS.LAKE.y)-.38
 	setup_materials()
 	setup_atmosphere()
 	build_terrain()
@@ -105,6 +110,11 @@ func _ready() -> void:
 	HOME_DRESSING.populate(self)
 	SCENIC_DETAILS.populate(self)
 	build_water()
+	# Physical lake, remote routes and landmarks: scenery with no ecological
+	# UID allocations, preserving older save and simulation indices.
+	WORLD_EXPANSION.build(self)
+	# History belongs to the landscape, not to a floating decoration layer.
+	WORLD_WEATHERING.build(self)
 	FOLIAGE.populate_grass(self)
 	FOLIAGE.populate_ferns(self)
 	FOLIAGE.populate_litter(self)
@@ -298,29 +308,29 @@ func setup_atmosphere() -> void:
 	e.background_mode=Environment.BG_SKY
 	var sky:=Sky.new()
 	var s:=ProceduralSkyMaterial.new()
-	s.sky_top_color=Color("729db4")
-	s.sky_horizon_color=Color("dfceb4")
-	s.ground_bottom_color=Color("476556")
-	s.ground_horizon_color=Color("9caf99")
+	s.sky_top_color=Color("82969b")
+	s.sky_horizon_color=Color("c9c0b0")
+	s.ground_bottom_color=Color("42574c")
+	s.ground_horizon_color=Color("9fa9a0")
 	s.use_debanding=true
 	sky.sky_material=s
 	e.sky=sky
 	e.ambient_light_source=Environment.AMBIENT_SOURCE_SKY
 	e.reflected_light_source=Environment.REFLECTION_SOURCE_BG
-	e.ambient_light_energy=.49
+	e.ambient_light_energy=.51
 	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
 	e.fog_enabled=true
-	e.fog_light_color=Color("bcc8bc")
-	e.fog_density=.0040
+	e.fog_light_color=Color("b6bcb2")
+	e.fog_density=.0048
 	e.fog_sky_affect=.16
 	ambient.environment=e
 	add_child(ambient)
 	light_node=DirectionalLight3D.new()
 	light_node.name="LowAutumnSun"
-	light_node.light_color=Color("f7e5c5")
-	light_node.light_energy=.94
+	light_node.light_color=Color("e8ddcc")
+	light_node.light_energy=.88
 	light_node.shadow_enabled=true
-	light_node.rotation_degrees=Vector3(-38,32,-10)
+	light_node.rotation_degrees=Vector3(-35,32,-10)
 	add_child(light_node)
 
 func _update_day_night_art(night_value: float) -> void:
@@ -328,15 +338,15 @@ func _update_day_night_art(night_value: float) -> void:
 	var env: Environment = ambient.environment
 	var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
 	if sky != null:
-		sky.sky_top_color = Color("729db4").lerp(Color("1c2d3d"),night_value)
-		sky.sky_horizon_color = Color("dfceb4").lerp(Color("3c4957"),night_value)
-		sky.ground_bottom_color = Color("476556").lerp(Color("172c30"),night_value)
-		sky.ground_horizon_color = Color("9caf99").lerp(Color("2c4548"),night_value)
-	env.ambient_light_energy = lerpf(.49,.15,night_value)
-	env.fog_light_color = Color("bcc8bc").lerp(Color("3a4c56"),night_value)
-	env.fog_density = lerpf(.0040,.0084,night_value)
-	light_node.light_color=Color("f7e5c5").lerp(Color("a4bcd2"),night_value)
-	light_node.light_energy=lerpf(.94,.20,night_value)
+		sky.sky_top_color = Color("82969b").lerp(Color("1c2d3d"),night_value)
+		sky.sky_horizon_color = Color("c9c0b0").lerp(Color("3c4957"),night_value)
+		sky.ground_bottom_color = Color("42574c").lerp(Color("172c30"),night_value)
+		sky.ground_horizon_color = Color("9fa9a0").lerp(Color("2c4548"),night_value)
+	env.ambient_light_energy = lerpf(.51,.15,night_value)
+	env.fog_light_color = Color("b6bcb2").lerp(Color("3a4c56"),night_value)
+	env.fog_density = lerpf(.0048,.0084,night_value)
+	light_node.light_color=Color("e8ddcc").lerp(Color("a4bcd2"),night_value)
+	light_node.light_energy=lerpf(.88,.20,night_value)
 
 func stream_x(z: float) -> float:
 	return -20.0+4.4*sin(z*.075)+1.7*sin(z*.21)
@@ -346,6 +356,7 @@ func stream_x(z: float) -> float:
 # smooth, short transition are flattened. All other valley heights match.
 func height_at(x: float,z: float) -> float:
 	var raw: float = _raw_height_at(x,z)
+	raw = WORLD_REGIONS.lake_height(self,x,z,raw)
 	# Two small intentionally levelled authored sites. The surrounding hills
 	# blend back over 4–5 metres; no hovering floors or invisible terrain seams.
 	# Non-overlapping graded pads: the original broad falloffs merged two
@@ -356,11 +367,12 @@ func height_at(x: float,z: float) -> float:
 			1.0-smoothstep(1.0,1.17,castle_edge))
 	# Station forecourt extends farther toward the river than the shop does
 	# toward the castle. Asymmetric extents preserve both usable flat floors.
-	var station_x_edge: float=(absf(x+33.0)/6.4) if x < -33.0 else ((x+33.0)/10.0)
-	var station_edge: float=maxf(station_x_edge,absf(z-44.0)/5.0)
-	if station_edge<1.16:
-		raw=lerpf(raw,_raw_height_at(-33.0,44.0),
-			1.0-smoothstep(1.0,1.16,station_edge))
+	var station_delta: Vector2=Vector2(x,z)-WORLD_REGIONS.STATION
+	var station_x_edge: float=absf(station_delta.x)/6.4 if station_delta.x<0.0 else station_delta.x/10.0
+	var station_edge: float=maxf(station_x_edge,absf(station_delta.y)/5.0)
+	if station_edge<1.64:
+		raw=lerpf(raw,_raw_height_at(WORLD_REGIONS.STATION.x,WORLD_REGIONS.STATION.y),
+			1.0-smoothstep(1.0,1.64,station_edge))
 	if absf(x-29.0) > 13.0 or absf(z-8.0) > 13.0:
 		return raw
 	var local: Vector2 = cottage_local_xz(x,z)
@@ -413,20 +425,20 @@ func move_vegetation_outside_roadside(x: float,z: float) -> Vector2:
 	# saved ecological IDs must not be renumbered by the new district.
 	if x>=-58.5 and x<=-40.0 and z>=35.0 and z<=53.6:
 		return Vector2(x,34.4 if z<44.0 else 54.25)
-	if x>=-40.0 and x<=-21.8 and z>=37.5 and z<=50.5:
-		return Vector2(x,36.9 if z<44.0 else 51.05)
+	var station: Vector2=WORLD_REGIONS.STATION
+	if x>=station.x-8.0 and x<=station.x+11.0 and z>=station.y-7.0 and z<=station.y+7.0:
+		return Vector2(x,station.y-7.7 if z<station.y else station.y+7.7)
 	return Vector2(x,z)
 
 func build_terrain() -> void:
-	# One continuous, physically grounded terrain mesh. A WorldUV photographic
-	# atlas already combines genuine CC0 meadow, soil, leaves, creek and worn
-	# path with smooth ecotones. No sharp per-triangle biome boundaries.
-	# All blending is baked offline via tools/bake_vale_terrain.py, so it runs
-	# identically on Godot's GL Compatibility renderer and works without web.
+	# One continuous, physically grounded terrain mesh. A single six-surface
+	# world-space shader now blends meadow, forest, dry grass, village earth,
+	# stone and river/lake silt; no more stretching one old green atlas
+	# over the outer 256m valley. Everything ships in the offline game.
 	var visual_tool := SurfaceTool.new()
 	visual_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var grid_size: int = 126
-	var extent: float = 144.0
+	var grid_size: int = 154
+	var extent: float = WORLD_REGIONS.HALF_EXTENT*2.0
 	for zi in range(grid_size-1):
 		for xi in range(grid_size-1):
 			var x0: float = (float(xi)/float(grid_size-1)-.5)*extent
@@ -449,17 +461,20 @@ func build_terrain() -> void:
 	var ground := MeshInstance3D.new()
 	ground.name = "OpenMeadow"
 	ground.mesh = visual_tool.commit()
-	var material := StandardMaterial3D.new()
-	var atlas: String = "res://assets/textures/real/vale_terrain_blend.jpg"
-	if not ResourceLoader.exists(atlas):
-		push_error("Missing baked CC0 terrain atlas; run the source/bake workflow")
-		material.albedo_texture = load(photo_or_fallback("res://assets/textures/meadow_ground.png"))
-	else:
-		material.albedo_texture = load(atlas)
-	material.roughness = .98
-	material.metallic = 0.0
-	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	# One draw call; six continuously blended, shipped soil textures.
+	# Vertex-world coordinates keep their grain size stable after expansion.
+	var material := ShaderMaterial.new()
+	material.shader = load("res://assets/materials/region_ground.gdshader")
+	var surfaces: Dictionary={
+		"meadow_tex":"res://assets/textures/real/meadow_ground_diffuse.jpg",
+		"woodland_tex":"res://assets/textures/real/woodland_ground_diffuse.jpg",
+		"dry_tex":"res://assets/textures/dry_grass.png",
+		"packed_tex":"res://assets/textures/real/earth_path_diffuse.jpg",
+		"silt_tex":"res://assets/textures/real/river_silt_diffuse.jpg",
+		"stone_tex":"res://assets/textures/real/stone_diffuse.jpg"
+	}
+	for parameter in surfaces.keys():
+		material.set_shader_parameter(parameter,load(surfaces[parameter]))
 	ground.material_override = material
 	ground_root.add_child(ground)
 	# Physics remains a single, untouched HeightMapShape3D: no visual-material
@@ -500,7 +515,13 @@ func build_stone_ridges() -> void:
 			var offset_x:float=sin(float(j)*2.3+p.x)*1.5
 			var offset_z:float=cos(float(j)*1.8+p.z)*1.1
 			var tall:float=3.4+float(j)*1.9
-			ART.cone(spire,Vector3(offset_x,tall*.43,offset_z),1.8+float(j)*.38,tall,ridge_stone,.35,7)
+			# Layered angular bedrock replaces the uniform pointed cones.
+			# Leaning, uneven geology should be distinct from conical roofs.
+			ART.stone(spire,Vector3(offset_x,tall*.38,offset_z),
+				Vector3(3.1+float(j)*.52,tall*.80,2.55+float(j)*.35),
+				ridge_stone)
+			ART.stone(spire,Vector3(offset_x+.45,tall*.78,offset_z-.36),
+				Vector3(1.45+float(j)*.17,tall*.33,1.28),ridge_stone)
 			add_solid_box(spire, Vector3(offset_x,tall*.44,offset_z), Vector3(2.5+float(j)*.5, tall*.85, 2.5+float(j)*.5), "RockOutcropSolid")
 	# One very large dead tree, deliberately isolated on a hill.
 	var px:float=-37.0

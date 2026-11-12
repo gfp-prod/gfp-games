@@ -44,7 +44,15 @@ jobs:
       - name: Strange road and castle district
         run: |
           timeout 90s godot --headless --path . --script res://tests/strange_road_test.gd 2>&1 | tee /tmp/verba-road-test.log
-          grep -q "PASS: station and medieval castle share authored road" /tmp/verba-road-test.log
+          grep -q "PASS: distant station and castle share a walkable old road" /tmp/verba-road-test.log
+      - name: Expanded terrain, lake, shoreline and new road regions
+        run: |
+          timeout 120s godot --headless --path . --script res://tests/outer_vale_test.gd 2>&1 | tee /tmp/verba-outer-vale.log
+          grep -q "PASS: 256m varied-material map" /tmp/verba-outer-vale.log
+      - name: Grounded field UI, readable manuscript and responsive HUD
+        run: |
+          timeout 120s godot --headless --path . --script res://tests/visual_language_test.gd 2>&1 | tee /tmp/verba-grounded-ui.log
+          grep -q "PASS: unified worn iron UI" /tmp/verba-grounded-ui.log
       - name: Two-story tower construction
         run: |
           timeout 90s godot --headless --path . --script res://tests/two_story_tower_test.gd 2>&1 | tee /tmp/verba-two-story-test.log
