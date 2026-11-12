@@ -614,11 +614,15 @@ func restore(record: Dictionary) -> bool:
 				-365*(21+posmod(String(stored_id).hash(),28)))
 		if not old_person.has("life_stage"):
 			old_person["life_stage"]="adult"
-		if not GENES.validate(old_person["genome"]) or not GENES.validate_family(
+		# Preserve original v1 parental alleles while introducing
+		# independently heritable facial and body proportions.
+		var migrated_genome: Dictionary=GENES.upgrade(
+			old_person["genome"],String(stored_id),restore_gene_seed)
+		if not GENES.validate(migrated_genome) or not GENES.validate_family(
 				old_person["family"],String(stored_id),stored):
 			restore_error="invalid genome or bloodline: "+String(stored_id)
 			return false
-		old_person["genome"]=GENES.normalize(old_person["genome"])
+		old_person["genome"]=migrated_genome
 		if old_person.get("life_stage","") not in ["adult","child"]:
 			restore_error="invalid stage"
 			return false
