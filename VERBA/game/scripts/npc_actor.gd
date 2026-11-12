@@ -472,7 +472,7 @@ func strike_limb(part: String, force: float, attacker: String="wizard") -> Dicti
 		return {"ok":false,"severed":false}
 	var observers: Array=[]
 	if world.has_method("physical_witnesses_of"):
-		observers=world.physical_witnesses_of(self)
+		observers=world.physical_witnesses_of(self,attacker)
 	var result: Dictionary=world.village_sim.injure_person(
 		npc_id,part,force,attacker,observers)
 	if not bool(result.get("ok",false)): return result
