@@ -4,6 +4,14 @@ extends CharacterBody3D
 ## physically navigate based on independent simulated economic/social actions.
 const ART = preload("res://scripts/art.gd")
 const COSTUME = preload("res://scripts/folk_costume_finish.gd")
+# Reuse existing villagers and the two physically enterable houses.
+# This has no effect on save IDs, simulated spouses or work locations.
+# Residents approach off-center so they do not block the front doorway.
+const PHYSICAL_HOME_APPROACHES := {
+	"brin": {"house":"StonecutterHouse","x":1.25},
+	"daro": {"house":"MillwardHouse","x":-1.25},
+	"sela": {"house":"MillwardHouse","x":1.25}
+}
 
 var npc_id: String = ""
 var display_name: String = ""
@@ -357,6 +365,17 @@ func _destination_for(action: String) -> Vector3:
 	match action:
 		"work": key = "work"
 		"socialize", "court", "investigate": key = "market"
+	# Only after the Blender house is present can a resident's home be
+	# the real, navigable porch. Without the optional asset use the original
+	# authored home coordinates; never create an invisible goal in bare builds.
+	if key=="home" and PHYSICAL_HOME_APPROACHES.has(npc_id):
+		var residence: Dictionary=PHYSICAL_HOME_APPROACHES[npc_id]
+		var building: Node3D=world.get_node_or_null(
+			"PhysicalVillageHomesteads/"+String(residence["house"])) as Node3D
+		if building!=null and building.get_node_or_null("BlenderAuthoredVernacularHouse")!=null:
+			var threshold: Vector3=building.to_global(
+				Vector3(float(residence["x"]),0.0,-4.35))
+			return Vector3(threshold.x,world.height_at(threshold.x,threshold.z)+.1,threshold.z)
 	# Work faces the actual crop plot, oven approach or anvil, not a generic
 	# point in the middle of the old market. Deliveries go to the grain cart.
 	if action=="work":
