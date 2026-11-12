@@ -373,6 +373,15 @@ func _update_day_night_art(night_value: float) -> void:
 	env.fog_light_color = Color("8a9b95").lerp(Color("3a4c56"),night_value)
 	env.fog_density = lerpf(.0032,.0086,night_value)
 	light_node.light_color=Color("e9dac2").lerp(Color("a4bcd2"),night_value)
+	# Two genuine homes glow at dusk, using the same sky/night state.
+	# No separate clock, light controller, save field or runtime asset fetch.
+	var homes: Node3D=get_node_or_null("PhysicalVillageHomesteads") as Node3D
+	if homes!=null:
+		for house in homes.get_children():
+			var hearth: OmniLight3D=house.get_node_or_null(
+				"WarmHearthWindowBounce") as OmniLight3D
+			if hearth!=null:
+				hearth.light_energy=lerpf(0.0,.78,night_value)
 	light_node.light_energy=lerpf(.82,.20,night_value)
 
 func stream_x(z: float) -> float:
