@@ -105,12 +105,12 @@ func _review() -> void:
 		camera.look_at(cottage.global_position+Vector3.UP*2.9,Vector3.UP)
 		prototype.visible=false
 		shell.visible=true
-		for i in range(7): await process_frame
+		for i in range(2): await process_frame
 		if not _frame(folder,String(view["prefix"])+"_old_cottage"):
 			return
 		shell.visible=false
 		prototype.visible=true
-		for i in range(7): await process_frame
+		for i in range(2): await process_frame
 		if not _frame(folder,String(view["prefix"])+"_new_blender"):
 			return
 	shell.visible=true
