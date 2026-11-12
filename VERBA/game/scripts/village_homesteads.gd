@@ -125,6 +125,17 @@ static func build(world: Node3D) -> void:
 			for x in [-.30,.30]:
 				ART.bone(yard,Vector3(x,.44,.28),
 					Vector3(x,.78,1.02),.052,.043,timber,7)
+		# Low-cost interior hearth bounce: a mundane sign that someone lives
+		# here, visible through the truly open door and glazed windows.
+		# Night strength is driven by the world's authoritative clock.
+		var hearth_glow:=OmniLight3D.new()
+		hearth_glow.name="WarmHearthWindowBounce"
+		hearth_glow.position=Vector3(1.55,1.61,1.75)
+		hearth_glow.light_color=Color("f0b379")
+		hearth_glow.light_energy=0.0
+		hearth_glow.omni_range=5.25
+		hearth_glow.shadow_enabled=false
+		house.add_child(hearth_glow)
 		house.set_meta("visual_art_family","village_hearth_house")
 		house.set_meta("site_profession",definition["kind"])
 		house.set_meta("save_or_economy_id","none")
