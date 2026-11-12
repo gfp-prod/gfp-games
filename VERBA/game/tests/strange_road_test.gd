@@ -1,8 +1,9 @@
 extends SceneTree
 ## M5 world gate: two enterable authored interiors, physical road and
-## castle beside gas station, a clerk who speaks graded Latin, and old saves.
+## remote modern fuel stop, an older distant castle, graded Latin, and old saves.
 const SIM=preload("res://scripts/village_sim.gd")
 const PERSIST=preload("res://scripts/world_persistence.gd")
+const REGIONS=preload("res://scripts/world_regions.gd")
 func _initialize() -> void: call_deferred("_run")
 func _fail(reason: String) -> void:
 	push_error("Road district: "+reason)
@@ -43,21 +44,25 @@ func _run() -> void:
 		return
 	# Regression for the photographed problem: no deterministic flora spawn
 	# may occupy the shop or castle archive floor after the exclusion pass.
-	for point in [Vector2(-35,44),Vector2(-49,44)]:
+	for point in [REGIONS.STATION+Vector2(-2,0),REGIONS.CASTLE]:
 		var clear: Vector2=world.move_vegetation_outside_roadside(point.x,point.y)
 		if point.distance_to(clear)<2.0:
 			_fail("Built interiors still admit decorative vegetation")
 			return
 	# Floor grade follows the station after relocation; a misplaced terrain
 	# flattening mask once sent an entire grassy hill through the shop.
-	var shop_ground: float=world.height_at(-33.0,44.0)
-	for x in [-36.0,-33.0,-30.0]:
-		for z in [41.0,44.0,47.0]:
-			if absf(world.height_at(x,z)-shop_ground)>.05:
+	var shop_ground: float=world.height_at(REGIONS.STATION.x,REGIONS.STATION.y)
+	for dx in [-3.0,0.0,3.0]:
+		for dz in [-3.0,0.0,3.0]:
+			if absf(world.height_at(REGIONS.STATION.x+dx,REGIONS.STATION.y+dz)-shop_ground)>.05:
 				_fail("Station floor still intersects ungraded terrain")
 				return
 	var station: Node3D=district.find_child("ValeFuelStation",true,false)
 	var castle: Node3D=district.find_child("CastleOfTheSecondRoad",true,false)
+	if Vector2(station.global_position.x,station.global_position.z).distance_to(
+			Vector2(castle.global_position.x,castle.global_position.z))<50.0:
+		_fail("Modern station still crowds the medieval castle")
+		return
 	var shop: Marker3D=station.find_child("StationWalkableInterior",true,false)
 	var shop_gate: Marker3D=station.find_child("StationOpenEntrance",true,false)
 	var archive: Marker3D=castle.find_child("CastleWalkableArchive",true,false)
@@ -117,5 +122,5 @@ func _run() -> void:
 	if not PERSIST.apply_snapshot(world,before):
 		_fail("Road district broke living world load/save")
 		return
-	print("PASS: station and medieval castle share authored road, two physical walk-in interiors, thirteen social actors, graded roadside attendant, castle Latin book and backward-compatible saves")
+	print("PASS: distant station and castle share a walkable old road, two real interiors, thirteen citizens, Latin book and backward-compatible saves")
 	quit(0)
