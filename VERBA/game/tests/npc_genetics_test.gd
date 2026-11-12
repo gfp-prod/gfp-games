@@ -45,12 +45,13 @@ func _run() -> void:
 			"genome did not survive JSON save/load"): return
 	if not _check(loaded.bloodline("orin")["children"].has(first["id"]),
 			"bloodline was forgotten on reload"): return
-	var legacy: Dictionary=sim.snapshot()
+	# Historical saves cannot contain born_* descendants; prove
+	# migration against an actual original-population record.
+	var legacy: Dictionary=VILLAGE.new(1938).snapshot()
 	for id in legacy["people"]:
-		if not String(id).begins_with("born_"):
-			legacy["people"][id].erase("genome")
-			legacy["people"][id].erase("family")
-			legacy["people"][id].erase("life_stage")
+		legacy["people"][id].erase("genome")
+		legacy["people"][id].erase("family")
+		legacy["people"][id].erase("life_stage")
 	legacy.erase("gene_seed")
 	if not _check(loaded.restore(legacy),"older save without genes no longer loads"): return
 	if not _check(GENES.validate(loaded.people["ida"]["genome"]),
