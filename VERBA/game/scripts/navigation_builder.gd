@@ -19,6 +19,14 @@ static func traversable(world, x: float, z: float) -> bool:
 		return false
 	if Vector2(x, z).distance_to(Vector2(-8.0, -7.0)) < 2.4:
 		return false
+	# The two new physical houses have walls and working player entrances,
+	# but NPC navigation must never cut straight through their masonry.
+	# Check that the house art is really installed: a bare game checkout
+	# with no Blender exports must not create invisible navigation holes.
+	if world.get_node_or_null("PhysicalVillageHomesteads")!=null:
+		for home in [Vector2(-7.5,34.0),Vector2(30.0,33.5)]:
+			if absf(x-home.x)<3.65 and absf(z-home.y)<3.80:
+				return false
 	for blocker in world.navigation_blockers:
 		if Vector2(x, z).distance_squared_to(Vector2(blocker.x, blocker.z)) < 1.8 * 1.8:
 			return false
