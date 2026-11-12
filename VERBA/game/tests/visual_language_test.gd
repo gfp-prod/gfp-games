@@ -23,6 +23,10 @@ func _run() -> void:
 		if style==null or style.border_width_left<1:
 			_fail("A user interface surface lost its aged-iron frame")
 			return
+		var grit: TextureRect=node.get_node_or_null("AuthoredIronAndVellumGrain")
+		if grit==null or grit.texture==null or grit.mouse_filter!=Control.MOUSE_FILTER_IGNORE:
+			_fail("A panel is still an untextured flat debug rectangle")
+			return
 	var dialogue_style: StyleBoxFlat=player.conversation_panel.get_theme_stylebox("panel") as StyleBoxFlat
 	if dialogue_style.bg_color.a < .89 or dialogue_style.border_color.r<.25:
 		_fail("The dialogue reverted to a translucent flat game HUD")
@@ -32,6 +36,10 @@ func _run() -> void:
 		return
 	if player.survival_plate.anchor_top < .99:
 		_fail("Survival status is tied to a fixed pixel height, not viewport")
+		return
+	var folio_rules: Array=player.conversation_panel.find_children("ThinBrassRule","HSeparator",true,false)
+	if folio_rules.size()<2:
+		_fail("Dialogue has no visual hierarchy between speech, choices and writing")
 		return
 	if player.conversation_speech_scroll==null or player.conversation_footer==null:
 		_fail("Long NPC speech no longer has independently readable text and Latin entry")
