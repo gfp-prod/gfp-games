@@ -6,6 +6,7 @@ on:
       - ".github/workflows/verba-blender-foundry.yml"
       - "VERBA/game/tools/art_foundry/**"
       - "VERBA/game/tests/foundry_review.gd"
+      - "VERBA/game/tests/regional_foundry_review.gd"
       - "VERBA/game/docs/ART_FOUNDRY.md"
   workflow_dispatch:
 
