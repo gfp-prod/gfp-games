@@ -155,6 +155,24 @@ func _run() -> void:
 		_fail("Navigation was not expanded with the terrain")
 		return
 
+	# Distant photographic ridge landscape must conceal the former square
+	# world's sky void, but must never extend the game collision/save map.
+	var horizon: Node3D=world.get_node_or_null("DistantVisualHorizon") as Node3D
+	if horizon==null or not bool(horizon.get_meta("visual_only",false)):
+		_fail("The far horizon returned to blank sky beyond the terrain square")
+		return
+	var far_ground: MeshInstance3D=horizon.get_node_or_null("BeyondTheWalkableVale") as MeshInstance3D
+	if far_ground==null or far_ground.mesh==null:
+		_fail("The seamless visual-only ridge does not exist")
+		return
+	var far_bounds: AABB=far_ground.mesh.get_aabb()
+	if far_bounds.size.x<800.0 or far_bounds.size.z<800.0:
+		_fail("The distant horizon doesn't cover the visible map edges")
+		return
+	if horizon.find_children("*","StaticBody3D",true,false).size()>0:
+		_fail("Visual horizon improperly introduced inaccessible collision")
+		return
+
 	# Existing structures and academic simulation survive untouched.
 	if world.get_node_or_null("HermitCottage")==null or not world.scholar.books.has("de_herbis"):
 		_fail("Visual expansion destroyed the original learning loop")
