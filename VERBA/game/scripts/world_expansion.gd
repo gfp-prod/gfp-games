@@ -155,8 +155,8 @@ static func _lake_road(world,root: Node3D) -> void:
 	var route: Array[Vector2]=[
 		Vector2(16,18),Vector2(27,3),Vector2(32,-16),Vector2(39,-32),
 		Vector2(48,-44),Vector2(57,-56),Vector2(58.5,-60)]
-	var gravel: Material=world.textured("res://assets/textures/earth_path.png",
-		Color("8f8470"))
+	var gravel: Material=world.textured("res://assets/textures/real/earth_path_diffuse.jpg",
+		Color("625f54"))
 	var path:=Node3D.new()
 	path.name="LongTrackToStillwater"
 	root.add_child(path)
@@ -181,16 +181,24 @@ static func _path(world,parent: Node3D,points: Array[Vector2],
 			var hi: Vector2=start.lerp(stop,b)
 			var uv0: float=(progress+distance*a)*.24
 			var uv1: float=(progress+distance*b)*.24
-			var p0: Vector2=lo-normal*half_width
-			var p1: Vector2=lo+normal*half_width
-			var p2: Vector2=hi-normal*half_width
-			var p3: Vector2=hi+normal*half_width
-			for pair in [
-				[p0,Vector2(0,uv0)],[p2,Vector2(0,uv1)],[p1,Vector2(1,uv0)],
-				[p1,Vector2(1,uv0)],[p2,Vector2(0,uv1)],[p3,Vector2(1,uv1)]]:
-				var p: Vector2=pair[0]
-				mesh.set_uv(pair[1])
-				mesh.add_vertex(Vector3(p.x,world.height_at(p.x,p.y)+.055,p.y))
+			# Follow the actual terrain height through the center and both
+			# shoulders. A single 2.6 m quad undercut the heightfield and
+			# produced enormous triangular holes in close-up views.
+			for band in range(4):
+				var u0: float=float(band)/4.0
+				var u1: float=float(band+1)/4.0
+				var side0: float=lerpf(-half_width,half_width,u0)
+				var side1: float=lerpf(-half_width,half_width,u1)
+				var p0: Vector2=lo+normal*side0
+				var p1: Vector2=lo+normal*side1
+				var p2: Vector2=hi+normal*side0
+				var p3: Vector2=hi+normal*side1
+				for pair in [
+					[p0,Vector2(u0,uv0)],[p2,Vector2(u0,uv1)],[p1,Vector2(u1,uv0)],
+					[p1,Vector2(u1,uv0)],[p2,Vector2(u0,uv1)],[p3,Vector2(u1,uv1)]]:
+					var p: Vector2=pair[0]
+					mesh.set_uv(pair[1])
+					mesh.add_vertex(Vector3(p.x,world.height_at(p.x,p.y)+.116,p.y))
 		progress+=distance
 	mesh.generate_normals()
 	var road:=MeshInstance3D.new()
