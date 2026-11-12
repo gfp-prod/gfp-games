@@ -11,6 +11,7 @@ on:
       - "VERBA/game/tests/npc_genetics_test.gd"
       - "VERBA/game/scripts/npc_body_morph.gd"
       - "VERBA/game/tests/npc_morphology_test.gd"
+      - "VERBA/game/tests/npc_growth_collision_test.gd"
       - ".github/workflows/verba-genetics-ci.yml"
 concurrency:
   group: verba-inheritance-${{ github.head_ref || github.ref }}
@@ -36,3 +37,7 @@ jobs:
         run: |
           timeout 60s godot --headless --path . --script res://tests/npc_morphology_test.gd 2>&1 | tee /tmp/npc-morphology.log
           grep -q "PASS: inherited chest/bust/waist/hips" /tmp/npc-morphology.log
+      - name: Validate growing descendants have real child-sized physics and dialogue targets
+        run: |
+          timeout 120s godot --headless --path . --script res://tests/npc_growth_collision_test.gd 2>&1 | tee /tmp/npc-growth-collisions.log
+          grep -q "PASS: inherited child growth" /tmp/npc-growth-collisions.log
