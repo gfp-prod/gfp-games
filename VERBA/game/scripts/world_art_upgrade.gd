@@ -36,7 +36,7 @@ static func apply(world: Node3D) -> void:
 	world.set_meta("foundry_replacements",applied)
 
 static func replace_visuals(target: Node3D, asset_name: String,
-		direct_only: bool=false) -> bool:
+		direct_only: bool=false, preserve_meshes: Array[String]=[]) -> bool:
 	var path: String = FOUNDRY+asset_name+".glb"
 	if not ResourceLoader.exists(path):
 		# A fresh checkout remains playable until the Actions build
@@ -57,7 +57,12 @@ static func replace_visuals(target: Node3D, asset_name: String,
 	candidate.name="BlenderAuthored_"+asset_name
 	# Hide only geometry, NEVER physics bodies or collision/navigation.
 	if direct_only:
+		# Village workplaces need their live coal/ember display to remain
+		# visible. Keep named working surfaces and every gameplay collider,
+		# Label3D, light, stock and simulation-owned node untouched.
 		for child in target.get_children():
+			if child.name in preserve_meshes:
+				continue
 			if child is MeshInstance3D or child is MultiMeshInstance3D:
 				(child as GeometryInstance3D).visible=false
 	else:
