@@ -40,6 +40,8 @@ var current_day: int = 0
 var commissions: Dictionary = {}
 # Transient physical reach is supplied by the scene, not serialized as omniscience.
 var nearby_care: Dictionary = {}
+# Sight alone never grants the ability to administer treatment.
+var care_contact: Dictionary = {}
 
 func _init(seed_value: int = 1938) -> void:
 	reset(seed_value)
@@ -55,6 +57,7 @@ func reset(seed_value: int) -> void:
 	commissions.clear()
 	last_scores.clear()
 	nearby_care.clear()
+	care_contact.clear()
 	economy=ECONOMY.new()
 	tick_count = 0
 	next_event_id = 1
@@ -380,19 +383,37 @@ func _care_target(helper_id: String) -> String:
 	if not people.has(helper_id): return ""
 	var helper: Dictionary=people[helper_id]
 	var seen: Array=nearby_care.get(helper_id,[])
+	var chosen: String=""
+	var top: float=-INF
 	for other in seen:
 		var target_id: String=String(other)
 		if target_id==helper_id or not people.has(target_id): continue
 		if not helper["known_wounded"].has(target_id): continue
 		if not bool(people[target_id]["alive"]): continue
-		if not ANATOMY.aid_kind(people[target_id]["anatomy"],economy.stocks).is_empty():
-			return target_id
-	return ""
+		var body: Dictionary=people[target_id]["anatomy"]
+		if ANATOMY.aid_kind(body,economy.stocks).is_empty(): continue
+		# Each helper prioritizes patients according to that individual
+		# relationship, resentment and observed urgency rather than
+		# magically treating everyone in a fixed alphabetical queue.
+		var tie: float=55.0 if String(helper["spouse"])==target_id else 0.0
+		var affection: float=float(helper["trust"].get(target_id,0.0))*.8
+		var hostility: float=float(helper["grievance"].get(target_id,0.0))*1.1
+		var urgency: float=float(body["bleeding"])*4.0
+		if body["support"]=="none" and ANATOMY.needs_support(body):
+			urgency+=6.0
+		var score: float=tie+affection-hostility+urgency
+		if score>top or (is_equal_approx(score,top) and (chosen.is_empty() or target_id<chosen)):
+			top=score
+			chosen=target_id
+	return chosen
 
 func _perform_neighbor_aid(helper_id: String, target_id: String) -> bool:
 	if target_id.is_empty() or not people.has(target_id) or not people.has(helper_id):
 		return false
 	if not nearby_care.get(helper_id,[]).has(target_id): return false
+	# Helper must physically reach the patient. Knowledge, compassion and
+	# finite supplies alone cannot provide instantaneous remote aid.
+	if not care_contact.get(helper_id,[]).has(target_id): return false
 	var kind: String=ANATOMY.aid_kind(people[target_id]["anatomy"],economy.stocks)
 	if kind.is_empty(): return false
 	var recipe: Dictionary={"herb":1} if kind=="bandage" else (
@@ -558,6 +579,7 @@ func restore(record: Dictionary) -> bool:
 	commissions=saved_jobs.duplicate(true)
 	people = stored.duplicate(true)
 	nearby_care.clear()
+	care_contact.clear()
 	events.clear()
 	for entry in history:
 		events.append(entry.duplicate(true))
