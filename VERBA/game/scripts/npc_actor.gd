@@ -418,6 +418,12 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	var apron:=MeshInstance3D.new()
 	apron.name="VisibleBakerApron"
 	apron.mesh=surface.commit()
+	# A single-sided facing can disappear at oblique close-up camera angles.
+	# Protect the apron on both sides; the cream fabric itself carries its
+	# visible color rather than borrowing the dark undergarment material.
+	if fabric is StandardMaterial3D:
+		(fabric as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
+	apron.material_override=fabric
 	apron.set_meta("drapes_over_inherited_torso",true)
 	parent.add_child(apron)
 	var waist_front: float=BODY._point(1.04,-PI*.5,genome).z-.07
