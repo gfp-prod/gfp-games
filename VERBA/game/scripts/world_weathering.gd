@@ -326,7 +326,7 @@ static func _forgotten_ruins(world,root: Node3D) -> void:
 	if landmarks==null: return
 	var stone:=_stone_mat(world,Color("928d7b"))
 	var charcoal:=ART.mat(Color("333431"),.99)
-	var lichen:=world.textured("res://assets/textures/real/moss_diffuse.jpg",Color("69715a"))
+	var lichen: StandardMaterial3D=world.textured("res://assets/textures/real/moss_diffuse.jpg",Color("69715a"))
 	var oak:=_wood_mat(world,Color("615645"))
 	var toll: Node3D=landmarks.get_node_or_null("TumbledTollGate")
 	if toll!=null:
