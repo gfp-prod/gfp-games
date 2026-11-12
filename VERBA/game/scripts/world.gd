@@ -17,6 +17,7 @@ const WORLD_CALENDAR = preload("res://scripts/world_calendar.gd")
 const VILLAGE_WORKPLACES = preload("res://scripts/village_workplaces.gd")
 const VILLAGE_HOMESTEADS = preload("res://scripts/village_homesteads.gd")
 const CC0_PACK_ART = preload("res://scripts/cc0_pack_art.gd")
+const QUATERNIUS_STANDARD_ART = preload("res://scripts/quaternius_standard_art.gd")
 const QUATERNIUS_STANDARD = preload("res://scripts/quaternius_modular_art.gd")
 const SIM_LAB = preload("res://scripts/simulation_lab.gd")
 const NPC_ACTOR = preload("res://scripts/npc_actor.gd")
@@ -135,6 +136,9 @@ func _ready() -> void:
 	# Source-verified small retro props; geometry-only additions, made before
 	# navigation and never linked to NPC inventory or spell/save IDs.
 	CC0_PACK_ART.build(self)
+	# Public-domain Medieval Village Standard modules are optional; the
+	# original gameplay world remains intact until their proven import exists.
+	QUATERNIUS_STANDARD_ART.build(self)
 	# Real free Quaternius Standard modules: door-adjacent shutters, stairs,
 	# and old stone village threshold. Missing assets simply leave original art.
 	QUATERNIUS_STANDARD.build(self)
