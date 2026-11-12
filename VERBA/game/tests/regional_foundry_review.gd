@@ -1,10 +1,11 @@
 extends SceneTree
-## End-to-end proof: five imported Blender GLBs replace live game visuals.
+## End-to-end proof: thirteen Blender GLBs appear in the actual playable world.
 ## Existing physics/navigation and save-sensitive world coordinates remain intact.
 const MODELS: Array[String] = [
 	"old_creek_footbridge","old_fishing_jetty","witness_stone_circle",
 	"rusting_delivery_wreck","dead_ash_tree",
-	"ridge_arch","stone_prayer_shrine","cold_charcoal_kiln","roadside_station","castle_gatehouse"
+	"ridge_arch","stone_prayer_shrine","cold_charcoal_kiln","roadside_station","castle_gatehouse",
+	"village_bakery","village_forge","village_market_stall"
 ]
 const TARGETS: Array[String] = [
 	"StrangeRoadDistrict/CastleOfTheSecondRoad",
@@ -15,6 +16,12 @@ const TARGETS: Array[String] = [
 	"StrangeRoadDistrict/ValeFuelStation/WeatheredForecourtHistory/RustingDeliveryWreck",
 	"RidgeArch","StonePrayerShrine","OuterValeRegionalLandmarks/ColdCharcoalKiln"
 ]
+const WORKSHOP_TARGETS: Array[String]=[
+	"VillageWorkingDistrict/IdaStoneBakery",
+	"VillageWorkingDistrict/OrinBlacksmithForge",
+	"VillageWorkingDistrict/VillagePublicMarket"
+]
+
 
 func _initialize() -> void:
 	call_deferred("_check")
@@ -64,7 +71,10 @@ func _check() -> void:
 			"stone_prayer_shrine":Vector3(1.7,1.65,1.2),
 			"cold_charcoal_kiln":Vector3(2.1,1.5,2.1),
 			"roadside_station":Vector3(13.0,5.9,8.0),
-			"castle_gatehouse":Vector3(14.2,5.8,14.2)
+			"castle_gatehouse":Vector3(14.2,5.8,14.2),
+			"village_bakery":Vector3(2.3,2.7,2.2),
+			"village_forge":Vector3(2.1,2.9,1.9),
+			"village_market_stall":Vector3(2.7,2.7,2.0)
 		}
 		var found: bool=false
 		var bounds: AABB=AABB()
@@ -104,6 +114,41 @@ func _check() -> void:
 	if int(world.get_meta("foundry_replacements",0))!=TARGETS.size():
 		_fail("Not all new landmark models installed")
 		return
+	# Workplaces have distinct finite inventories and active physical goals.
+	# The new GLBs are visual surfaces only, on those same named sites.
+	var workplace: Node3D=world.get_node_or_null("VillageWorkingDistrict") as Node3D
+	if workplace==null or int(workplace.get_meta("foundry_workshop_count",0))!=WORKSHOP_TARGETS.size():
+		_fail("The new Blender village workshops were not installed")
+		return
+	for target_path in WORKSHOP_TARGETS:
+		var site: Node3D=world.get_node_or_null(target_path) as Node3D
+		if site==null or not site.has_meta("foundry_model"):
+			_fail("Village job location lost its authored model: "+target_path)
+			return
+		if site.get_node_or_null("BlenderAuthored_"+String(site.get_meta("foundry_model")))==null:
+			_fail("Village GLB not attached to existing worksite: "+target_path)
+			return
+		if site.find_child("CarvedWorkplaceSign",true,false)==null and target_path.ends_with("VillagePublicMarket"):
+			_fail("Village market lost its visible Latin signage")
+			return
+	for invariant in [
+		{"site":"IdaStoneBakery","light":"BakerCoalLight","glow":"BakerWorkingEmbers","physical":"PhysicalBakeOven"},
+		{"site":"OrinBlacksmithForge","light":"SmithCoalLight","glow":"ForgeWorkingCoals","physical":"PhysicalCoalForge"}
+	]:
+		var site: Node3D=workplace.get_node_or_null(String(invariant["site"])) as Node3D
+		if site==null:
+			_fail("Lost critical village workshop "+String(invariant["site"]))
+			return
+		var glow: GeometryInstance3D=site.find_child(String(invariant["glow"]),true,false) as GeometryInstance3D
+		if glow==null or not glow.visible:
+			_fail("New stonework concealed the working live fire or stock for "+String(invariant["site"]))
+			return
+		if site.find_child(String(invariant["light"]),true,false)==null:
+			_fail("Forge replacement erased firelight for "+String(invariant["site"]))
+			return
+		if site.find_child(String(invariant["physical"]),true,false)==null:
+			_fail("Forge replacement erased the actual interaction collider for "+String(invariant["site"]))
+			return
 	var castle: Node3D=world.get_node_or_null("StrangeRoadDistrict/CastleOfTheSecondRoad") as Node3D
 	if castle==null or castle.get_node_or_null("CastleOpenGate")==null:
 		_fail("Blender castle facade erased the physical open gate")
@@ -153,7 +198,9 @@ func _check() -> void:
 	var views: Array[Dictionary]=[
 		{"name":"02_stillwater_jetty","eye":Vector2(54,-57),"look":Vector2(64,-60)},
 		{"name":"09_shop_and_canopy","eye":Vector2(-90,78),"look":Vector2(-102,77)},
-		{"name":"10_masonry_castle","eye":Vector2(-33,39),"look":Vector2(-49,44)}
+		{"name":"10_masonry_castle","eye":Vector2(-33,39),"look":Vector2(-49,44)},
+		{"name":"11_village_bakery_market","eye":Vector2(8,9),"look":Vector2(7,17)},
+		{"name":"12_village_forge","eye":Vector2(18,12),"look":Vector2(21.8,19.1)}
 	]
 	for shot in views:
 		var eye: Vector2=shot["eye"]
@@ -170,5 +217,5 @@ func _check() -> void:
 			_fail("Cannot save proof screenshot: "+String(shot["name"]))
 			return
 		print("REGIONAL_FOUNDRY_FRAME: "+String(shot["name"]))
-	print("PASS: ten editable Blender GLBs import, nine landmark visuals replace live geometry without collision loss, and three actual-world screenshots render")
+	print("PASS: thirteen editable Blender GLBs import, nine landmarks and three village workplaces preserve physics, and five actual-world screenshots render")
 	quit(0)
