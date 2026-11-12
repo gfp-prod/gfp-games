@@ -4,6 +4,7 @@ extends CharacterBody3D
 ## physically navigate based on independent simulated economic/social actions.
 const ART = preload("res://scripts/art.gd")
 const COSTUME = preload("res://scripts/folk_costume_finish.gd")
+const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 # Reuse existing villagers and the two physically enterable houses.
 # This has no effect on save IDs, simulated spouses or work locations.
 # Residents approach off-center so they do not block the front doorway.
@@ -373,9 +374,21 @@ func _destination_for(action: String) -> Vector3:
 		var building: Node3D=world.get_node_or_null(
 			"PhysicalVillageHomesteads/"+String(residence["house"])) as Node3D
 		if building!=null and building.get_node_or_null("BlenderAuthoredVernacularHouse")!=null:
-			var threshold: Vector3=building.to_global(
-				Vector3(float(residence["x"]),0.0,-4.35))
-			return Vector3(threshold.x,world.height_at(threshold.x,threshold.z)+.1,threshold.z)
+			# Tree growth and the planted village garden can make one precise
+			# porch tile unavailable. Sample short, side-stepped approaches
+			# against the SAME navigation law used to build the real nav mesh.
+			# The first candidate preserves each resident's own side.
+			for nudge in [
+				Vector2.ZERO,Vector2(.95,-.45),Vector2(-.95,-.45),
+				Vector2(1.4,-1.1),Vector2(-1.4,-1.1)
+			]:
+				var threshold: Vector3=building.to_global(Vector3(
+					float(residence["x"])+nudge.x,0.0,-4.35+nudge.y))
+				if NAV_BUILDER.traversable(world,threshold.x,threshold.z):
+					return Vector3(threshold.x,
+						world.height_at(threshold.x,threshold.z)+.1,threshold.z)
+			# If all porch approaches are impassable in a saved/modified
+			# landscape, the original authored home remains the safe goal.
 	# Work faces the actual crop plot, oven approach or anvil, not a generic
 	# point in the middle of the old market. Deliveries go to the grain cart.
 	if action=="work":
