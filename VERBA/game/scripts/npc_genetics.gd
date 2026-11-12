@@ -100,7 +100,7 @@ static func validate_family(f: Variant,person_id: String,people: Dictionary) -> 
 	for key in ["parents","children","ancestors","founder_ids"]:
 		if not (f.get(key,null) is Array): return false
 		var arr: Array=f[key]
-		if arr.size()>MAX_ANCIENT or arr.has(person_id): return false
+		if arr.size()>MAX_ANCIENT or (key!="founder_ids" and arr.has(person_id)): return false
 		for id in arr:
 			if not (id is String) or id.is_empty() or not people.has(id): return false
 			if arr.count(id)>1: return false
