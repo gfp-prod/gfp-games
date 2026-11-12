@@ -13,7 +13,7 @@ static func lake_distance(x: float, z: float) -> float:
 	var dz: float = (z-LAKE.y)/LAKE_RADII.y
 	# Slightly uneven banks; the irregularity is deterministic and matches
 	# shoreline geometry and the terrain shader.
-	return sqrt(dx*dx+dz*dz)*(1.0+0.044*sin(x*.37)+.031*cos(z*.29))
+	return sqrt(dx*dx+dz*dz)*(1.0+.085*sin(x*.17+z*.05)+.052*cos(z*.31)+.028*sin(x*.61+z*.20))
 
 static func lake_level(world) -> float:
 	return world.lake_water_level
