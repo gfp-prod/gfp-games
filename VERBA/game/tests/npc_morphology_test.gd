@@ -79,6 +79,38 @@ func _run() -> void:
 		FACE.expression(figure,-.05,0.0,true,.21)
 		if not opening.visible:
 			_fail("NPC lip rig cannot articulate spoken syllables"); return
+		# A blink is a lid closure, not eye compression. The inherited
+		# iris and sclera must keep their geometry while two fitted lids
+		# meet across them. A recent visual pass made this an explicit gate.
+		var eye: Node3D=portrait.get_node("ExpressionEyeLeft")
+		var sclera: MeshInstance3D=eye.get_node("SmallRecessedEye")
+		var sclera_size: Vector3=sclera.scale
+		var upper: Node3D=eye.get_node_or_null("ExpressionUpperBlinkCover")
+		var lower_lid: Node3D=eye.get_node_or_null("ExpressionLowerBlinkCover")
+		if upper==null or lower_lid==null:
+			_fail("Individual eyes lack physical blink surfaces"); return
+		var upper_rest: float=float(upper.get_meta("rest_y",-999.0))
+		var lower_rest: float=float(lower_lid.get_meta("rest_y",999.0))
+		for tick in range(20): FACE.expression(figure,0.0,1.0,false,0.0)
+		if upper.position.y>upper_rest-.015 or lower_lid.position.y<lower_rest+.014:
+			_fail("Eyelid covers did not articulate during a blink"); return
+		if not is_equal_approx(eye.scale.y,1.0) or sclera.scale!=sclera_size:
+			_fail("Blink deformed the entire eye and iris instead of the lids"); return
+		for tick in range(20): FACE.expression(figure,0.0,0.0,false,0.0)
+		if absf(upper.position.y-upper_rest)>.003:
+			_fail("Anatomical blink did not reopen"); return
+		var lower_lips: Node3D=mouth.get_node_or_null("ExpressionLowerLip")
+		if lower_lips==null:
+			_fail("Mouth has no independent lower lip or jaw"); return
+		for tick in range(20): FACE.expression(figure,0.0,0.0,true,.21)
+		if lower_lips.position.y>-.008:
+			_fail("Speech did not open a genuine space between the lips"); return
+		# The tip should actually emerge from the sculpted nasal bridge;
+		# an old offset placed it behind the surface at most angles.
+		var tip: MeshInstance3D=portrait.get_node("ModeledNoseTip")
+		var nose_y: float=lerpf(1.704,1.732,GENES.value(record,"nose_bridge"))
+		if tip.position.z>=FACE._depth(0.0,nose_y,record)-.005:
+			_fail("The modeled nose tip is buried in its head"); return
 	var one: MeshInstance3D=figures[0].get_node("InheritedChestWaistHipCloth")
 	var two: MeshInstance3D=figures[1].get_node("InheritedChestWaistHipCloth")
 	var verts_a: PackedVector3Array=one.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
@@ -86,5 +118,5 @@ func _run() -> void:
 	if verts_a==verts_b:
 		_fail("Distinct parent genomes created the same chest/waist/hip model")
 		return
-	print("PASS: individually sculpted inherited chest/bust/waist/hips, true eyes/noses/lips/cheekbones/brows, speaking animation, allele migration and no new collision")
+	print("PASS: inherited chest/bust/waist/hips, uncompressed irises, blinking lids, articulated speech, projected noses, allele migration, no new collision")
 	quit(0)
