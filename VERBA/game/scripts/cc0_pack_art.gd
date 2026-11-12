@@ -108,11 +108,16 @@ static func build(world: Node3D) -> void:
 		geometry.name="LicensedKenneyOriginalMesh"
 		node.add_child(geometry)
 		var bounds: AABB=_bounds_relative(geometry)
-		if bounds.size.y<.01 or bounds.size.x<.01 or bounds.size.z<.01:
+		# Some authentic retro pack assets are intentionally planar (a
+		# hanging cable, ladder or wall sign). They can still render in
+		# Godot; do not reject a valid model just because one axis is thin.
+		var valid_axes: int=int(bounds.size.x>.002)+int(bounds.size.y>.002)+int(bounds.size.z>.002)
+		if valid_axes<2:
 			node.queue_free()
-			missing.append("invalid bounds:"+String(spec["file"]))
+			missing.append("invalid geometry bounds:"+String(spec["file"])+":"+str(bounds.size))
 			continue
-		var scale: float=clampf(float(spec["height"])/bounds.size.y,.1,8.0)
+		var primary_height: float=bounds.size.y if bounds.size.y>.005 else maxf(bounds.size.x,bounds.size.z)
+		var scale: float=clampf(float(spec["height"])/primary_height,.1,8.0)
 		geometry.scale=Vector3.ONE*scale
 		geometry.position=Vector3(
 			-(bounds.position.x+bounds.size.x*.5)*scale,
