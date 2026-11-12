@@ -386,17 +386,38 @@ func _process(delta: float) -> void:
 	else:
 		gait_weight=move_toward(gait_weight,0.0,delta*7.0)
 	var working: bool=not order.is_empty() and phase=="labor" and _near_work_goal()
-	var stride: float=sin(distance_gait_phase)*.44*gait_weight
+	var body: Dictionary=anatomy_state()
+	var missing_left_leg: bool=body["missing"].has("left_leg")
+	var missing_right_leg: bool=body["missing"].has("right_leg")
+	var limping: bool=missing_left_leg or missing_right_leg
+	# A peg makes contact with the ground on a slower, uneven stride.
+	# No injury: preserve the baseline distance-driven walk exactly.
+	var stride: float=sin(distance_gait_phase)*(.31 if limping else .44)*gait_weight
 	# A quiet breathing/sway pass animates only visual mesh roots; the
 	# CharacterBody3D, ray collider, navigation and saved positions do not bob.
 	if visual_figure!=null:
 		var breath: float=sin(motion_clock*1.78+float(absi(npc_id.hash())%7))*.010
-		visual_figure.position.y=breath+absf(sin(distance_gait_phase))*.028*gait_weight
-		visual_figure.rotation.z=sin(distance_gait_phase)*.016*gait_weight
+		var foot_lift: float=absf(sin(distance_gait_phase))*(.012 if limping else .028)*gait_weight
+		visual_figure.position.y=breath+foot_lift
+		# Lean toward the remaining leg or fitted aid; no hopping
+		# oscillation on an amputated leg's invisible animation bone.
+		var lean: float=(.060 if missing_left_leg else (-.060 if missing_right_leg else 0.0))
+		visual_figure.rotation.z=lean*gait_weight+sin(distance_gait_phase)*(.026 if limping else .016)*gait_weight
 	if visual_attendant!=null:
 		visual_attendant.position.y=sin(motion_clock*1.55)*.008
-	left_leg.rotation.x=lerpf(left_leg.rotation.x,stride,minf(1.0,delta*9.0))
-	right_leg.rotation.x=lerpf(right_leg.rotation.x,-stride,minf(1.0,delta*9.0))
+	if left_leg!=null and not missing_left_leg:
+		left_leg.rotation.x=lerpf(left_leg.rotation.x,stride,minf(1.0,delta*9.0))
+	if right_leg!=null and not missing_right_leg:
+		right_leg.rotation.x=lerpf(right_leg.rotation.x,-stride,minf(1.0,delta*9.0))
+	if support_visual!=null and is_instance_valid(support_visual):
+		var peg: Node3D=support_visual.get_node_or_null("FittedPegPivot") as Node3D
+		if peg!=null:
+			peg.rotation.x=lerpf(peg.rotation.x,
+				(-stride*.70 if missing_left_leg else stride*.70),minf(1.0,delta*8.0))
+		var crutch: Node3D=support_visual.get_node_or_null("WalkingCrutchPivot") as Node3D
+		if crutch!=null:
+			crutch.rotation.x=lerpf(crutch.rotation.x,
+				-stride*.22,minf(1.0,delta*7.0))
 	var reach: float=0.0
 	var offhand: float=0.0
 	if working:
@@ -561,16 +582,24 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 	var side: float=-1.0 if lost_left else 1.0
 	match String(anatomy["support"]):
 		"crutch":
-			ART.bone(support_visual,Vector3(side*.45,1.28,-.08),
-				Vector3(side*.62,.03,-.09),.052,.039,timber,8).name="BuiltWalkingCrutch"
-			ART.bone(support_visual,Vector3(side*.34,1.18,-.08),
-				Vector3(side*.56,1.18,-.08),.033,.033,linen,8)
-			ART.bone(support_visual,Vector3(side*.37,.85,-.08),
-				Vector3(side*.54,.85,-.08),.033,.027,timber,8)
+			var crutch_pivot:=Node3D.new()
+			crutch_pivot.name="WalkingCrutchPivot"
+			crutch_pivot.position=Vector3(side*.45,1.28,-.08)
+			support_visual.add_child(crutch_pivot)
+			ART.bone(crutch_pivot,Vector3.ZERO,
+				Vector3(side*.17,-1.25,-.01),.052,.039,timber,8).name="BuiltWalkingCrutch"
+			ART.bone(crutch_pivot,Vector3(-side*.10,-.11,0),
+				Vector3(side*.10,-.11,0),.033,.033,linen,8)
+			ART.bone(crutch_pivot,Vector3(-side*.08,-.40,0),
+				Vector3(side*.09,-.40,0),.033,.027,timber,8)
 		"peg":
-			ART.bone(support_visual,Vector3(side*.17,.55,0),
-				Vector3(side*.17,.035,-.035),.11,.075,timber,10).name="FittedPegLeg"
-			ART.box(support_visual,Vector3(side*.17,.52,0),
+			var peg_pivot:=Node3D.new()
+			peg_pivot.name="FittedPegPivot"
+			peg_pivot.position=Vector3(side*.17,.55,0)
+			support_visual.add_child(peg_pivot)
+			ART.bone(peg_pivot,Vector3.ZERO,
+				Vector3(0,-.515,-.035),.11,.075,timber,10).name="FittedPegLeg"
+			ART.box(peg_pivot,Vector3(0,-.03,0),
 				Vector3(.27,.09,.27),iron)
 
 func _near_work_goal() -> bool:
