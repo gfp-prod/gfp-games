@@ -5,6 +5,7 @@ extends CharacterBody3D
 const ART = preload("res://scripts/art.gd")
 const COSTUME = preload("res://scripts/folk_costume_finish.gd")
 const PORTRAIT = preload("res://scripts/folk_portrait_finish.gd")
+const ANATOMY = preload("res://scripts/npc_anatomy.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 # Reuse existing villagers and the two physically enterable houses.
 # This has no effect on save IDs, simulated spouses or work locations.
@@ -41,6 +42,12 @@ var distance_gait_phase: float=0.0
 var gait_weight: float=0.0
 var work_dwell: float = 0.0
 var active_work_token: String = ""
+var modular_limbs: Dictionary={}
+var limb_hitboxes: Dictionary={}
+var anatomy_visual_signature: String=""
+var blood_emitter: CPUParticles3D
+var support_visual: Node3D
+var anatomy_visual_elapsed: float=0.0
 
 func setup(owner_world: Node3D, data: Dictionary) -> void:
 	world = owner_world
@@ -135,6 +142,12 @@ func _ready() -> void:
 		figure.add_child(leg)
 		ART.bone(leg,Vector3.ZERO,Vector3(0,-.46,0),.115,.10,leather,8)
 		ART.box(leg,Vector3(0,-.52,-.095),Vector3(.25,.13,.42),leather)
+		var limb_arm: String="left_arm" if side<0.0 else "right_arm"
+		var limb_leg: String="left_leg" if side<0.0 else "right_leg"
+		modular_limbs[limb_arm]=arm
+		modular_limbs[limb_leg]=leg
+		_install_limb_hitbox(arm,limb_arm)
+		_install_limb_hitbox(leg,limb_leg)
 		if side<0.0:
 			left_arm=arm
 			left_leg=leg
@@ -242,17 +255,32 @@ func _ready() -> void:
 		ART.box(attendant,Vector3(0,1.13,0),Vector3(.74,.88,.37),shirt)
 		ART.box(attendant,Vector3(0,.84,-.21),Vector3(.68,.63,.08),apron)
 		for side in [-1.0,1.0]:
-			ART.box(attendant,Vector3(side*.19,.39,0),Vector3(.27,.79,.27),denim)
-			ART.box(attendant,Vector3(side*.20,.06,-.10),Vector3(.31,.15,.46),leather)
-			ART.bone(attendant,Vector3(side*.43,1.42,0),
-				Vector3(side*.51,.99,-.06),.115,.081,shirt,10)
-			ART.orb(attendant,Vector3(side*.52,.94,-.06),Vector3(.095,.105,.084),skin,10)
+			var side_name: String="left" if side<0.0 else "right"
+			var modern_leg:=Node3D.new()
+			modern_leg.name="ModularModern"+side_name.capitalize()+"Leg"
+			modern_leg.position=Vector3(side*.19,.70,0)
+			attendant.add_child(modern_leg)
+			ART.box(modern_leg,Vector3(0,-.31,0),Vector3(.27,.79,.27),denim)
+			ART.box(modern_leg,Vector3(side*.01,-.64,-.10),Vector3(.31,.15,.46),leather)
+			modular_limbs[side_name+"_leg"]=modern_leg
+			_install_limb_hitbox(modern_leg,side_name+"_leg")
+			var modern_arm:=Node3D.new()
+			modern_arm.name="ModularModern"+side_name.capitalize()+"Arm"
+			modern_arm.position=Vector3(side*.43,1.42,0)
+			attendant.add_child(modern_arm)
+			ART.bone(modern_arm,Vector3.ZERO,Vector3(side*.08,-.43,-.06),.115,.081,shirt,10)
+			ART.orb(modern_arm,Vector3(side*.09,-.47,-.06),Vector3(.095,.105,.084),skin,10)
+			modular_limbs[side_name+"_arm"]=modern_arm
+			_install_limb_hitbox(modern_arm,side_name+"_arm")
 		ART.orb(attendant,Vector3(0,1.76,0),Vector3(.23,.27,.21),skin,12)
 		ART.box(attendant,Vector3(0,2.04,-.03),Vector3(.51,.15,.45),denim)
 		ART.box(attendant,Vector3(0,2.01,-.26),Vector3(.40,.052,.27),denim)
 		COSTUME.dress_attendant(attendant)
 	else:
 		COSTUME.dress(figure,npc_id,cloth,trim,leather)
+	# All existing authored NPCs—including the roadside attendant—use
+	# individually detachable physical limb modules.
+	refresh_anatomy_visuals()
 	var collider := StaticBody3D.new()
 	collider.name = "LivingNPCConversationCollider"
 	collider.collision_layer = 4 if mobile else (4 | 16)
@@ -328,6 +356,10 @@ func _process(delta: float) -> void:
 		if toward.length_squared()>.05:
 			rotation.y=lerp_angle(rotation.y,atan2(-toward.x,-toward.z),minf(1.0,delta*8.0))
 	if left_arm==null or world==null or world.village_sim==null: return
+	anatomy_visual_elapsed+=delta
+	if anatomy_visual_elapsed>=.30:
+		anatomy_visual_elapsed=0.0
+		refresh_anatomy_visuals()
 	motion_clock+=delta
 	var order: Dictionary=world.village_sim.work_orders.get(npc_id,{})
 	var phase: String=String(order.get("phase",""))
@@ -374,7 +406,152 @@ func _process(delta: float) -> void:
 	left_arm.rotation.x=lerpf(left_arm.rotation.x,offhand,minf(1.0,delta*8.0))
 	right_arm.rotation.x=lerpf(right_arm.rotation.x,reach,minf(1.0,delta*8.0))
 	if harvest_sack!=null:
-		harvest_sack.visible=phase=="delivery"
+		harvest_sack.visible=phase=="delivery" and not limb_missing("right_arm")
+
+func anatomy_state() -> Dictionary:
+	if world==null or world.village_sim==null or not world.village_sim.people.has(npc_id):
+		return ANATOMY.new_state()
+	return world.village_sim.people[npc_id]["anatomy"]
+
+func limb_missing(part: String) -> bool:
+	return anatomy_state()["missing"].has(part)
+
+func _install_limb_hitbox(limb: Node3D, part: String) -> void:
+	var area:=Area3D.new()
+	area.name="Hitbox_"+part
+	area.collision_layer=4
+	area.collision_mask=0
+	area.set_meta("npc_ref",self)
+	area.set_meta("hit_limb",part)
+	limb.add_child(area)
+	var shape:=CollisionShape3D.new()
+	var capsule:=CapsuleShape3D.new()
+	capsule.height=.42
+	capsule.radius=.135
+	shape.shape=capsule
+	shape.position=Vector3(0,-.23,0)
+	area.add_child(shape)
+	limb_hitboxes[part]=area
+
+func _drop_severed_limb(part: String) -> void:
+	if not modular_limbs.has(part) or world==null: return
+	var source: Node3D=modular_limbs[part]
+	var piece:=RigidBody3D.new()
+	piece.name="Detached_"+npc_id+"_"+part
+	piece.collision_layer=8
+	piece.collision_mask=16
+	piece.mass=1.25 if part.ends_with("leg") else .65
+	world.add_child(piece)
+	piece.global_position=source.global_position
+	piece.global_rotation=source.global_rotation
+	var mesh_clone: Node3D=source.duplicate()
+	mesh_clone.name="SeparatedPhysicalAnatomy"
+	mesh_clone.position=Vector3.ZERO
+	mesh_clone.rotation=Vector3.ZERO
+	for area in mesh_clone.find_children("*","Area3D",true,false):
+		area.queue_free()
+	piece.add_child(mesh_clone)
+	var collider:=CollisionShape3D.new()
+	var capsule:=CapsuleShape3D.new()
+	capsule.radius=.12
+	capsule.height=.52
+	collider.shape=capsule
+	collider.position=Vector3(0,-.25,0)
+	piece.add_child(collider)
+	piece.apply_central_impulse(Vector3(
+		-.9 if part.begins_with("left") else .9,.75,-.5))
+	# Separated remains a real finite-lived rigid body. Person status is
+	# authoritative and permanent; this loose physics object is not a
+	# second simulation citizen or something resurrected by loading.
+	var timer:=get_tree().create_timer(75.0)
+	timer.timeout.connect(func() -> void:
+		if is_instance_valid(piece): piece.queue_free())
+
+func strike_limb(part: String, force: float, attacker: String="wizard") -> Dictionary:
+	if part not in ANATOMY.PARTS or world==null or world.village_sim==null:
+		return {"ok":false,"severed":false}
+	var observers: Array=[]
+	if world.has_method("physical_witnesses_of"):
+		observers=world.physical_witnesses_of(self)
+	var result: Dictionary=world.village_sim.injure_person(
+		npc_id,part,force,attacker,observers)
+	if not bool(result.get("ok",false)): return result
+	if bool(result.get("severed",false)):
+		_drop_severed_limb(part)
+	refresh_anatomy_visuals()
+	return result
+
+func refresh_anatomy_visuals() -> void:
+	if world==null or world.village_sim==null: return
+	var anatomy: Dictionary=anatomy_state()
+	if not ANATOMY.validate(anatomy): return
+	var signature: String=str(anatomy["missing"])+":"+str(anatomy["bandaged"])+":"+str(anatomy["support"])
+	for part in ANATOMY.PARTS:
+		if modular_limbs.has(part):
+			(modular_limbs[part] as Node3D).visible=not anatomy["missing"].has(part)
+		if limb_hitboxes.has(part):
+			(limb_hitboxes[part] as Area3D).collision_layer=(
+				0 if anatomy["missing"].has(part) else 4)
+	if signature!=anatomy_visual_signature:
+		anatomy_visual_signature=signature
+		_build_support_visual(anatomy)
+	var flow: float=float(anatomy["bleeding"])
+	if flow>.25 and blood_emitter==null:
+		blood_emitter=CPUParticles3D.new()
+		blood_emitter.name="ActualWoundBloodParticles"
+		blood_emitter.amount=12
+		blood_emitter.lifetime=.8
+		blood_emitter.emission_shape=CPUParticles3D.EMISSION_SHAPE_SPHERE
+		blood_emitter.emission_sphere_radius=.07
+		blood_emitter.direction=Vector3(.12,.4,0)
+		blood_emitter.spread=55.0
+		blood_emitter.gravity=Vector3(0,-5,0)
+		blood_emitter.initial_velocity_min=.3
+		blood_emitter.initial_velocity_max=1.2
+		blood_emitter.color=Color("5b1717")
+		var globule:=SphereMesh.new()
+		globule.radius=.018
+		globule.height=.035
+		blood_emitter.mesh=globule
+		add_child(blood_emitter)
+	if blood_emitter!=null:
+		blood_emitter.emitting=flow>.25
+		blood_emitter.position=Vector3(.32,.9,0) if anatomy["missing"].has("right_arm") else Vector3(-.32,.9,0)
+
+func _build_support_visual(anatomy: Dictionary) -> void:
+	if support_visual!=null and is_instance_valid(support_visual):
+		support_visual.queue_free()
+	support_visual=Node3D.new()
+	support_visual.name="AnatomicalAftercareVisuals"
+	# Keep support on the same visual root; ambient breathing must not
+	# leave a crutch behind in the world while its person sways.
+	var root: Node3D=visual_attendant if visual_attendant!=null else visual_figure
+	if root==null: return
+	root.add_child(support_visual)
+	var pale:=ART.mat(Color("8b7e69"),.99)
+	var timber:=ART.mat(Color("62503c"),.99)
+	var iron:=ART.mat(Color("5d5c55"),.86)
+	for part in ANATOMY.PARTS:
+		if not anatomy["missing"].has(part): continue
+		var side: float=-1.0 if part.begins_with("left") else 1.0
+		var joint_y: float=1.43 if part.ends_with("arm") else .57
+		var joint_x: float=side*(.35 if part.ends_with("arm") else .17)
+		var stump: MeshInstance3D=ART.orb(support_visual,
+			Vector3(joint_x,joint_y,0),
+			Vector3(.19,.15,.19),pale if anatomy["bandaged"] else iron,10)
+		stump.name="DetachableJoint_"+part
+	if not ANATOMY.needs_support(anatomy): return
+	var lost_left: bool=anatomy["missing"].has("left_leg")
+	var side: float=-1.0 if lost_left else 1.0
+	match String(anatomy["support"]):
+		"crutch":
+			ART.bone(support_visual,Vector3(side*.45,1.28,-.08),
+				Vector3(side*.62,.03,-.09),.052,.039,timber,8).name="BuiltWalkingCrutch"
+		"peg":
+			ART.bone(support_visual,Vector3(side*.17,.55,0),
+				Vector3(side*.17,.035,-.035),.11,.075,timber,10).name="FittedPegLeg"
+			ART.box(support_visual,Vector3(side*.17,.52,0),
+				Vector3(.27,.09,.27),iron)
 
 func _near_work_goal() -> bool:
 	if world==null or npc_id.is_empty(): return false
@@ -472,8 +649,10 @@ func _physics_process(delta: float) -> void:
 			var along: Vector3 = Vector3(-normal.z,0.0,normal.x)
 			if along.dot(move_dir)<0.0: along = -along
 			move_dir = along.normalized()
-	velocity.x = move_dir.x * 1.55
-	velocity.z = move_dir.z * 1.55
+	var anatomy: Dictionary=anatomy_state()
+	var movement: float=ANATOMY.locomotion(anatomy)
+	velocity.x = move_dir.x * 1.55 * movement
+	velocity.z = move_dir.z * 1.55 * movement
 	if is_on_floor(): velocity.y = -0.1
 	else: velocity.y -= 16.0*delta
 	move_and_slide()
