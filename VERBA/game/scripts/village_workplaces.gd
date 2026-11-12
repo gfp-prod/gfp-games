@@ -4,6 +4,7 @@ extends Node3D
 ## All large work areas live beside, not on, the citizens' navigation goals.
 const ART = preload("res://scripts/art.gd")
 const ECONOMY = preload("res://scripts/village_economy.gd")
+const WORLD_ART_UPGRADE = preload("res://scripts/world_art_upgrade.gd")
 var world: Node3D
 var displays: Dictionary = {}
 var production_lamps: Dictionary = {}
@@ -21,7 +22,33 @@ func _ready() -> void:
 	_build_bakery()
 	_build_forge()
 	_build_market()
+	_install_foundry_workshops()
 	refresh_from_economy(true)
+
+func _install_foundry_workshops() -> void:
+	# The economy and navigation are owned by the *existing* workplace
+	# instances. Blender adds only visible construction, never new NPC goals,
+	# shop stock, collision IDs or extra light emitters.
+	var swapped: int=0
+	var worksite_models: Array[Dictionary]=[
+		{"site":"IdaStoneBakery","asset":"village_bakery",
+		 "keep":["BakerWorkingEmbers"]},
+		{"site":"OrinBlacksmithForge","asset":"village_forge",
+		 "keep":["ForgeWorkingCoals"]},
+		{"site":"VillagePublicMarket","asset":"village_market_stall",
+		 "keep":[]}
+	]
+	for spec in worksite_models:
+		var site: Node3D=get_node_or_null(String(spec["site"])) as Node3D
+		if site == null:
+			push_warning("Missing existing VERBA village workplace: "+String(spec["site"]))
+			continue
+		var visible_stock: Array[String]=[]
+		visible_stock.assign(spec["keep"])
+		if WORLD_ART_UPGRADE.replace_visuals(site,String(spec["asset"]),
+				true,visible_stock):
+			swapped+=1
+	set_meta("foundry_workshop_count",swapped)
 
 func _material(path: String, color: Color) -> StandardMaterial3D:
 	return world.textured(path,color)
