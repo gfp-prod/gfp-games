@@ -4,6 +4,7 @@ extends CharacterBody3D
 ## physically navigate based on independent simulated economic/social actions.
 const ART = preload("res://scripts/art.gd")
 const COSTUME = preload("res://scripts/folk_costume_finish.gd")
+const PORTRAIT = preload("res://scripts/folk_portrait_finish.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 # Reuse existing villagers and the two physically enterable houses.
 # This has no effect on save IDs, simulated spouses or work locations.
@@ -32,6 +33,12 @@ var left_leg: Node3D
 var right_leg: Node3D
 var harvest_sack: Node3D
 var motion_clock: float = 0.0
+var visual_figure: Node3D
+var visual_attendant: Node3D
+var previous_footstep_position: Vector3=Vector3.ZERO
+var has_footstep_origin: bool=false
+var distance_gait_phase: float=0.0
+var gait_weight: float=0.0
 var work_dwell: float = 0.0
 var active_work_token: String = ""
 
@@ -74,6 +81,7 @@ func _ready() -> void:
 	var figure := Node3D.new()
 	figure.name = "VisibleInhabitant"
 	add_child(figure)
+	visual_figure=figure
 	var cloth := ART.mat(Color(String(definition.get("robe","746c60"))),.98)
 	# Worn linen uses the same bundled fiber grain as the study vellum,
 	# tinted per profession rather than perfectly smooth plastic robes.
@@ -109,23 +117,11 @@ func _ready() -> void:
 	var head:=ART.orb(figure,Vector3(0,1.77,0),
 		Vector3(.42,.49,.39),skin,13)
 	head.name="ModeledInhabitantHead"
-	# A small cap or hair crown stays close to the skull. Face features sit
-	# against the actual front surface at -Z, never suspended in space.
+	# Individual anatomy replaces the floating eyes and identical hair
+	# caps, retaining the original tested head and collision silhouette.
 	var hair:=ART.mat(Color("3e302a"),.96)
-	ART.orb(figure,Vector3(0,1.97,.045),
-		Vector3(.44,.13,.39),hair,12)
 	var brow:=ART.mat(Color("3a3029"),.95)
-	for side in [-1.0,1.0]:
-		# Eyes sit deep under the brow as narrow shadowed slits. The former
-		# spherical beads made every villager resemble a child's doll.
-		ART.box(figure,Vector3(side*.083,1.789,-.195),
-			Vector3(.065,.018,.010),brow,Vector3(0,side*.08,0))
-		ART.bone(figure,Vector3(side*.041,1.829,-.180),
-			Vector3(side*.123,1.834,-.163),.013,.010,brow,7)
-	ART.orb(figure,Vector3(0,1.704,-.198),
-		Vector3(.070,.090,.069),skin,9)
-	ART.bone(figure,Vector3(-.051,1.643,-.180),
-		Vector3(.051,1.643,-.180),.009,.009,brow,7)
+	PORTRAIT.finish(figure,npc_id,skin,hair,brow)
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
@@ -239,6 +235,7 @@ func _ready() -> void:
 		var attendant:=Node3D.new()
 		attendant.name="DistinctModernAttendant"
 		add_child(attendant)
+		visual_attendant=attendant
 		var shirt:=ART.mat(Color("5c7373"),.94)
 		var denim:=ART.mat(Color("485461"),.98)
 		var apron:=ART.mat(Color("b2a17e"),.95)
@@ -334,9 +331,32 @@ func _process(delta: float) -> void:
 	motion_clock+=delta
 	var order: Dictionary=world.village_sim.work_orders.get(npc_id,{})
 	var phase: String=String(order.get("phase",""))
-	var walking: bool=mobile and Vector2(velocity.x,velocity.z).length()>.20
+	# Drive gait from actual world displacement, never just an animation
+	# clock. Feet no longer keep cycling while a villager hits a wall or
+	# stands in conversation. Teleports/save loads do not advance gait.
+	if not has_footstep_origin:
+		previous_footstep_position=global_position
+		has_footstep_origin=true
+	var traveled: float=Vector2(global_position.x-previous_footstep_position.x,
+		global_position.z-previous_footstep_position.z).length()
+	previous_footstep_position=global_position
+	var talking: bool=world.player!=null and world.player.conversation_actor==self
+	var walking: bool=mobile and not talking and traveled>.002 and traveled<.38
+	if walking:
+		distance_gait_phase+=traveled*8.3
+		gait_weight=move_toward(gait_weight,1.0,delta*7.0)
+	else:
+		gait_weight=move_toward(gait_weight,0.0,delta*7.0)
 	var working: bool=not order.is_empty() and phase=="labor" and _near_work_goal()
-	var stride: float=sin(motion_clock*8.0)*.42 if walking else 0.0
+	var stride: float=sin(distance_gait_phase)*.44*gait_weight
+	# A quiet breathing/sway pass animates only visual mesh roots; the
+	# CharacterBody3D, ray collider, navigation and saved positions do not bob.
+	if visual_figure!=null:
+		var breath: float=sin(motion_clock*1.78+float(absi(npc_id.hash())%7))*.010
+		visual_figure.position.y=breath+absf(sin(distance_gait_phase))*.028*gait_weight
+		visual_figure.rotation.z=sin(distance_gait_phase)*.016*gait_weight
+	if visual_attendant!=null:
+		visual_attendant.position.y=sin(motion_clock*1.55)*.008
 	left_leg.rotation.x=lerpf(left_leg.rotation.x,stride,minf(1.0,delta*9.0))
 	right_leg.rotation.x=lerpf(right_leg.rotation.x,-stride,minf(1.0,delta*9.0))
 	var reach: float=0.0
