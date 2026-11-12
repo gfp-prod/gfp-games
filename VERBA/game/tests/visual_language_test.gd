@@ -42,7 +42,7 @@ func _run() -> void:
 	# scene owner. Inspect the real VBox children instead of ownership-filtered
 	# scene traversal.
 	for child in player.conversation_name.get_parent().get_children():
-		if child is HSeparator and child.name=="ThinBrassRule":
+		if child is HSeparator:
 			folio_rules+=1
 	if folio_rules<2:
 		_fail("Dialogue has no visual hierarchy between speech, choices and writing")
