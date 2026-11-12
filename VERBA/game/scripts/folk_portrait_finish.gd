@@ -15,23 +15,25 @@ static func _depth(x: float,y: float,g: Dictionary) -> float:
 	var ny: float=(y-1.77)/length
 	# Narrower chin versus broader lower jaw is inherited independently
 	# of cheekbones. All vertices remain part of a single coherent surface.
-	var jaw: float=lerpf(.83,1.18,_v(g,"jaw_width"))
-	var cheek: float=lerpf(.91,1.11,_v(g,"cheek_fullness"))
-	var profile: float=lerpf(jaw,cheek,smoothstep(1.64,1.79,y))
+	var jaw: float=lerpf(.76,1.26,_v(g,"jaw_width"))
+	var cheek: float=lerpf(.83,1.21,_v(g,"cheek_fullness"))
+	# Independent inherited jaw angle determines squareness at the chin.
+	var angle: float=lerpf(-.028,.038,_v(g,"jaw_angle"))
+	var profile: float=lerpf(jaw,cheek,smoothstep(1.66+angle,1.79+angle,y))
 	nx/=profile
 	var shell: float=-.193*sqrt(maxf(.013,1.0-nx*nx-ny*ny))
-	var bridge_width: float=lerpf(.030,.057,_v(g,"nose_width"))
+	var bridge_width: float=lerpf(.026,.065,_v(g,"nose_width"))
 	var bridge_height: float=lerpf(1.715,1.746,_v(g,"nose_bridge"))
-	var nose: float=-lerpf(.033,.097,_v(g,"nose_projection"))*exp(
+	var nose: float=-lerpf(.034,.118,_v(g,"nose_projection"))*exp(
 		-pow(x/bridge_width,2.0)-pow((y-bridge_height)/.070,2.0))
 	var cheek_height: float=lerpf(1.703,1.756,_v(g,"cheek_height"))
-	var cheeks: float=-lerpf(.003,.019,_v(g,"cheek_fullness"))*exp(
+	var cheeks: float=-lerpf(.004,.031,_v(g,"cheek_fullness"))*exp(
 		-pow((absf(x)-.115)/.058,2.0)-pow((y-cheek_height)/.054,2.0))
 	var eye_level: float=lerpf(1.779,1.804,_v(g,"brow_height"))
 	var socket: float=.008*exp(-pow(
 		(absf(x)-lerpf(.074,.105,_v(g,"eye_spacing")))/.037,2.0)
 		-pow((y-eye_level)/.025,2.0))
-	var lips: float=-lerpf(.003,.013,_v(g,"lip_fullness"))*exp(
+	var lips: float=-lerpf(.005,.024,_v(g,"lip_fullness"))*exp(
 		-pow(x/.076,2.0)-pow((y-1.666)/.019,2.0))
 	return shell+nose+cheeks+socket+lips-.003
 
@@ -79,12 +81,13 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	_integrated_face(root,skin,g)
 	var eye_ink:=ART.mat(Color("201c1a"),1.0)
 	var iris_ink:=ART.mat(GENES.eye_color(g),.98)
-	var lip_ink:=ART.mat(Color("513934").lerp(Color("91675c"),_v(g,"pigment")*.5),.99)
-	var ear_scale: float=lerpf(.75,1.25,_v(g,"ear_size"))
-	var eye_gap: float=lerpf(.071,.111,_v(g,"eye_spacing"))
+	var lip_ink:=ART.mat(GENES.skin_color(g).darkened(
+		lerpf(.31,.18,_v(g,"lip_fullness"))),.99)
+	var ear_scale: float=lerpf(.70,1.33,_v(g,"ear_size"))
+	var eye_gap: float=lerpf(.068,.113,_v(g,"eye_spacing"))
 	var eye_height: float=lerpf(1.780,1.802,_v(g,"brow_height"))
-	var eye_width: float=lerpf(.033,.051,_v(g,"eye_shape"))
-	var tilt: float=lerpf(-.14,.14,_v(g,"brow_angle"))
+	var eye_width: float=lerpf(.033,.055,_v(g,"eye_shape"))
+	var tilt: float=lerpf(-.22,.22,_v(g,"brow_angle"))
 	for sign in [-1.0,1.0]:
 		var ear:=ART.orb(root,Vector3(sign*.205,1.762,.010),
 			Vector3(.065,.102,.064)*ear_scale,skin,9)
@@ -95,15 +98,25 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		socket.name="ExpressionEyeLeft" if sign<0.0 else "ExpressionEyeRight"
 		socket.position=Vector3(x,eye_height,depth)
 		root.add_child(socket)
-		var eye:=ART.box(socket,Vector3.ZERO,
-			Vector3(eye_width,.018,.010),eye_ink)
-		eye.name="SmallRecessedEye"
-		var iris:=ART.box(socket,Vector3(0,0,-.006),
-			Vector3(.011,.012,.004),iris_ink)
+		# A real layered eye: recessed sclera, genetically colored iris,
+		# pupil and upper/lower eyelids instead of a black flat square.
+		var eye_aperture: float=lerpf(.73,1.26,_v(g,"eye_aperture"))
+		var sclera:=ART.orb(socket,Vector3(0,0,-.004),
+			Vector3(eye_width*1.64,.036*eye_aperture,.020),
+			ART.mat(Color("d5cab7"),.89),12)
+		sclera.name="SmallRecessedEye"
+		var iris:=ART.orb(socket,Vector3(0,0,-.015),
+			Vector3(.022,.023*eye_aperture,.009),iris_ink,12)
 		iris.name="InheritedIris"
-		var lid:=ART.bone(socket,Vector3(-eye_width*.64,.012,-.007),
-			Vector3(eye_width*.64,.012,-.007),.008,.008,skin,8)
+		var pupil:=ART.orb(socket,Vector3(0,0,-.021),
+			Vector3(.011,.015*eye_aperture,.005),eye_ink,10)
+		pupil.name="AnatomicalPupil"
+		var lid:=ART.bone(socket,Vector3(-eye_width*.83,.015*eye_aperture,-.010),
+			Vector3(eye_width*.83,.015*eye_aperture,-.010),.009,.008,skin,9)
 		lid.name="IndividualUpperEyelid"
+		var lower_lid:=ART.bone(socket,Vector3(-eye_width*.75,-.015*eye_aperture,-.007),
+			Vector3(eye_width*.75,-.015*eye_aperture,-.007),.006,.006,skin,9)
+		lower_lid.name="AnatomicalLowerEyelid"
 		var brow_rig:=Node3D.new()
 		brow_rig.name="ExpressionBrowLeft" if sign<0.0 else "ExpressionBrowRight"
 		brow_rig.position=Vector3(x,eye_height+.044,_depth(x,eye_height+.044,g)-.012)
@@ -112,7 +125,50 @@ static func finish(figure: Node3D,person: String,skin: Material,
 			Vector3(eye_width*.82,sign*tilt*.034,0),
 			.008,.010,brow,8)
 		brow_mesh.name="InheritedBrow"
-	var mouth_width: float=lerpf(.024,.063,_v(g,"mouth_width"))
+		brow_rig.set_meta("rest_y",brow_rig.position.y)
+		brow_rig.set_meta("rest_tilt",sign*tilt*.11)
+	# These nose pieces attach directly to the genetically sculpted face.
+	# A bridge/tip/nostril pair gives a distinct profile without a giant
+	# cartoon bulb or unsupported free-floating cylinder.
+	var nose_y: float=lerpf(1.704,1.732,_v(g,"nose_bridge"))
+	var nose_width: float=lerpf(.027,.058,_v(g,"nose_width"))
+	var nostril_width: float=lerpf(.64,1.28,_v(g,"nostril_width"))
+	var nose_front: float=_depth(0,nose_y,g)
+	var tip:=ART.orb(root,Vector3(0,nose_y-.012,nose_front-.005),
+		Vector3(nose_width*1.37,.052,.042),skin,12)
+	tip.name="ModeledNoseTip"
+	var nostril_skin:=ART.mat(GENES.skin_color(g).darkened(.39),.99)
+	for side in [-1.0,1.0]:
+		var wing_x: float=side*nose_width*.72
+		var wing_y: float=nose_y-.035
+		var wing_front: float=_depth(wing_x,wing_y,g)
+		var alar:=ART.orb(root,Vector3(wing_x,wing_y,wing_front-.010),
+			Vector3(nose_width*.90,.031,.026),skin,10)
+		alar.name="ModeledNoseWing"
+		var nostril:=ART.orb(root,
+			Vector3(side*nose_width*.67*nostril_width,wing_y-.011,wing_front-.027),
+			Vector3(.012*nostril_width,.007,.006),nostril_skin,8)
+		nostril.name="InheritedNostril"
+	# Faceted cheekbone highlights follow the integrated mesh surface.
+	# The underlying skull is continuous, not an attached cheek sphere.
+	var cheek_tone:=ART.mat(GENES.skin_color(g).lightened(.038),.99)
+	for side in [-1.0,1.0]:
+		var ridge_x: float=side*lerpf(.113,.133,_v(g,"cheek_fullness"))
+		var ridge_y: float=lerpf(1.727,1.773,_v(g,"cheek_height"))
+		var plane:=SurfaceTool.new()
+		plane.begin(Mesh.PRIMITIVE_TRIANGLES)
+		for offset in [Vector2(-.028,-.018),Vector2(.013,.016),
+				Vector2(.039,-.010)]:
+			var px: float=ridge_x+offset.x*side
+			var py: float=ridge_y+offset.y
+			plane.set_uv(Vector2(px*2.0,py*2.0))
+			plane.add_vertex(Vector3(px,py,_depth(px,py,g)-.003))
+		var highlight:=MeshInstance3D.new()
+		highlight.name="InheritedCheekboneFacet"
+		highlight.mesh=plane.commit()
+		highlight.material_override=cheek_tone
+		root.add_child(highlight)
+	var mouth_width: float=lerpf(.028,.069,_v(g,"mouth_width"))
 	var lip_height: float=1.65+(_v(g,"face_length")-.5)*.017
 	var mouth:=Node3D.new()
 	mouth.name="ExpressionMouth"
@@ -123,15 +179,28 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var left_corner:=Node3D.new()
 	left_corner.name="ExpressionLipLeft"
 	mouth.add_child(left_corner)
-	var left_lip:=ART.bone(left_corner,Vector3(-mouth_width,0,0),
-		Vector3(0,0,0),.006,.006,lip_ink,8)
+	var fullness: float=lerpf(.006,.021,_v(g,"lip_fullness"))
+	# Upper and lower lip bands occupy separate volumes and articulate
+	# from their own corners. Very thin lips remain truly thin.
+	var left_lip:=ART.bone(left_corner,
+		Vector3(-mouth_width,.002,0),Vector3(0,.008,0),
+		fullness,fullness*.75,lip_ink,9)
 	left_lip.name="SmallNaturalLipLine"
+	var left_lower:=ART.bone(left_corner,
+		Vector3(-mouth_width,-.005,0),Vector3(0,-.010,0),
+		fullness*.67,fullness*.85,lip_ink,9)
+	left_lower.name="ModeledLowerLipLeft"
 	var right_corner:=Node3D.new()
 	right_corner.name="ExpressionLipRight"
 	mouth.add_child(right_corner)
-	var right_lip:=ART.bone(right_corner,Vector3(0,0,0),
-		Vector3(mouth_width,0,0),.006,.006,lip_ink,8)
+	var right_lip:=ART.bone(right_corner,
+		Vector3(0,.008,0),Vector3(mouth_width,.002,0),
+		fullness*.75,fullness,lip_ink,9)
 	right_lip.name="NaturalLipCorner"
+	var right_lower:=ART.bone(right_corner,
+		Vector3(0,-.010,0),Vector3(mouth_width,-.005,0),
+		fullness*.85,fullness*.67,lip_ink,9)
+	right_lower.name="ModeledLowerLipRight"
 	var open_mouth:=ART.orb(mouth,Vector3(0,-.005,-.002),
 		Vector3(.075,.007,.009),ART.mat(Color("301c1c"),1),8)
 	open_mouth.name="ExpressionMouthOpening"
