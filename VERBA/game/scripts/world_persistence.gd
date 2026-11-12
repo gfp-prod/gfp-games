@@ -194,6 +194,9 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 		var stored_village: Variant = data.get("village",{})
 		if stored_village is Dictionary and not stored_village.is_empty():
 			if not world.village_sim.restore(stored_village): return false
+			# Recreate exactly the children documented in the saved lineage.
+			# Genetic appearance is obtained from the restored genome.
+			world.sync_bloodline_population()
 		world.village_elapsed = clampf(float(data.get("village_elapsed",0.0)),0.0,10.0)
 		# Rebuild visuals from authoritative simulation anatomy. Physical
 		# severed pieces are transient; lasting amputations and mobility
