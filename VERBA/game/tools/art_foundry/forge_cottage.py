@@ -155,9 +155,9 @@ def build_cottage():
       "charred":material("03 blackened oak","cottage_wood_diffuse.jpg",
                          (.28,.26,.24)),
       "slate":material("04 moss slate roof","cottage_roof_diffuse.jpg",
-                      (.54,.59,.54)),
+                      (.46,.52,.45)),
       "slate_dry":material("05 weathered grey slate","cottage_roof_diffuse.jpg",
-                          (.65,.63,.56)),
+                          (.57,.58,.52)),
       "foundation":material("06 wet fieldstone","stone_diffuse.jpg",
                              (.56,.55,.49)),
       "lichen":material("07 mossy fieldstone","moss_diffuse.jpg",
@@ -318,7 +318,7 @@ def build_cottage():
                 lichen.stone((tower_x+math.cos(a+.24)*.99,
                               y,tower_z+math.sin(a+.24)*.99),
                              (.23,.12,.14),j+course)
-        dry.polygon([ (tower_x+math.cos(a)*1.31,4.65,
+        s.polygon([ (tower_x+math.cos(a)*1.31,4.65,
                         tower_z+math.sin(a)*1.31),
                       (tower_x+math.cos(b)*1.31,4.65,
                         tower_z+math.sin(b)*1.31),
@@ -338,6 +338,60 @@ def build_cottage():
                (tower_x+.31,y,tower_z+1.075),.105,.08)
     o.beam((tower_x,2.35,tower_z+1.105),
            (tower_x,3.01,tower_z+1.105),.045,.045)
+
+    # SECOND ART PASS: a lived-in entry, exposed timber joinery, and
+    # a small upper gable window. The existing game door stays clear:
+    # portal posts are OUTSIDE the opening [-1.28, -.10] in local X.
+    # Source geometry remains grouped into the same eight material
+    # batches, so additional architectural detail costs no new draw calls.
+    for post_x in [-1.69, .37]:
+        f.stone((post_x,.15,3.05),(.31,.28,.34),int(post_x*100))
+        o.beam((post_x,.31,3.09),(post_x,2.64,3.09),.16,.16)
+    o.beam((-1.83,2.72,3.12),(.52,2.72,3.12),.18,.17)
+    o.beam((-1.69,2.61,3.13),(-1.31,2.19,3.13),.11,.105)
+    o.beam((.37,2.61,3.13),(.00,2.19,3.13),.11,.105)
+    # A short door hood diverts runoff without blocking the lintel.
+    for x in [-1.77,.44]:
+        o.beam((x,2.78,3.10),(x,2.78,3.38),.08,.09)
+    dry.box((-.66,2.82,3.24),(2.28,.105,.38),.56)
+
+    # Timbered gable: visible collar tie, kingpost and paired braces.
+    # The narrow dark opening reads as an inhabited attic, not blank
+    # flat plaster; its surface is real geometry, not a painted decal.
+    o.beam((-1.99,3.48,2.80),(1.61,3.48,2.80),.14,.11)
+    o.beam((-.20,5.48,2.78),(-.20,4.55,2.78),.13,.12)
+    o.beam((-1.79,3.52,2.78),(-.73,4.38,2.78),.10,.10)
+    o.beam((1.39,3.52,2.78),(.32,4.38,2.78),.10,.10)
+    d.box((-.20,4.02,2.715),(.42,.66,.075))
+    for edge_x in [-.47,.07]:
+        o.beam((edge_x,3.62,2.86),(edge_x,4.43,2.86),.10,.105)
+    for edge_y in [3.61,4.43]:
+        o.beam((-.50,edge_y,2.86),(.10,edge_y,2.86),.095,.10)
+    o.beam((-.20,3.69,2.87),(-.20,4.38,2.87),.045,.05)
+
+    # The older in-world cottage had a more convincing facade because
+    # it included shutters and readable carpentry. Keep that character,
+    # but use actual modeled weathered planks and iron hinge straps.
+    for shutter_x in [.64,2.58]:
+        o.box((shutter_x,1.78,2.96),(.32,1.12,.085),.62)
+        for strap_y in [1.31,2.23]:
+            d.beam((shutter_x-.14,strap_y,3.017),
+                   (shutter_x+.14,strap_y,3.017),.052,.048)
+        d.beam((shutter_x-.125,1.39,3.021),
+               (shutter_x+.12,2.17,3.021),.046,.04)
+    # Door crossbrace and slightly uneven sill ground the proportions.
+    d.beam((-1.11,.46,2.755),(-.36,2.14,2.755),.046,.035)
+    f.stone((-.69,.10,2.91),(1.16,.16,.28),7)
+
+    # Stone ring on the turret ties the dark cylinder to its roof:
+    # the cone uses the SAME moss-slate family as the main roof.
+    for j in range(sections):
+        a=math.tau*j/sections
+        b=math.tau*(j+1)/sections
+        f.beam((tower_x+math.cos(a)*1.01,4.46,
+                tower_z+math.sin(a)*1.01),
+               (tower_x+math.cos(b)*1.01,4.46,
+                tower_z+math.sin(b)*1.01),.14,.15)
 
     # Workshop trade goods and planter ledge reinforce readable scale.
     o.box((1.62,.98,2.99),(1.20,.23,.36))
