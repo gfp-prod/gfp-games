@@ -3,13 +3,15 @@ extends SceneTree
 ## Existing physics/navigation and save-sensitive world coordinates remain intact.
 const MODELS: Array[String] = [
 	"old_creek_footbridge","old_fishing_jetty","witness_stone_circle",
-	"rusting_delivery_wreck","dead_ash_tree"
+	"rusting_delivery_wreck","dead_ash_tree",
+	"ridge_arch","stone_prayer_shrine","cold_charcoal_kiln"
 ]
 const TARGETS: Array[String] = [
 	"ValleyScenicDetails/OldCreekFootbridge",
 	"OuterValeRegionalLandmarks/StillwaterLake/OldFishingJetty",
 	"OuterValeRegionalLandmarks/SevenWeatheredWitnessStones",
-	"StrangeRoadDistrict/ValeFuelStation/WeatheredForecourtHistory/RustingDeliveryWreck"
+	"StrangeRoadDistrict/ValeFuelStation/WeatheredForecourtHistory/RustingDeliveryWreck",
+	"RidgeArch","StonePrayerShrine","OuterValeRegionalLandmarks/ColdCharcoalKiln"
 ]
 
 func _initialize() -> void:
@@ -93,7 +95,10 @@ func _check() -> void:
 		{"name":"02_stillwater_jetty","eye":Vector2(54,-57),"look":Vector2(64,-60)},
 		{"name":"03_witness_circle","eye":Vector2(68,45),"look":Vector2(76,49)},
 		{"name":"04_abandoned_station","eye":Vector2(-91,87),"look":Vector2(-93,82)},
-		{"name":"05_dead_ash","eye":Vector2(-28,29),"look":Vector2(-37,31)}
+		{"name":"05_dead_ash","eye":Vector2(-28,29),"look":Vector2(-37,31)},
+		{"name":"06_ridge_arch","eye":Vector2(24,-18),"look":Vector2(33,-22)},
+		{"name":"07_prayer_shrine","eye":Vector2(-4,-4),"look":Vector2(-8,-7)},
+		{"name":"08_charcoal_kiln","eye":Vector2(44,-20),"look":Vector2(50,-21)}
 	]
 	for shot in views:
 		var eye: Vector2=shot["eye"]
@@ -110,5 +115,5 @@ func _check() -> void:
 			_fail("Cannot save proof screenshot: "+String(shot["name"]))
 			return
 		print("REGIONAL_FOUNDRY_FRAME: "+String(shot["name"]))
-	print("PASS: five editable Blender GLBs import, four landmark visuals replace live geometry without collision loss, and five actual-world screenshots render")
+	print("PASS: eight editable Blender GLBs import, seven landmark visuals replace live geometry without collision loss, and eight actual-world screenshots render")
 	quit(0)
