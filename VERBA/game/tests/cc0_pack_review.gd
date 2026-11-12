@@ -75,8 +75,9 @@ func _run() -> void:
 	var with_homes: bool=houses!=null and int(houses.get_meta("authored_homestead_count",0))==2
 	var count: int=int(pack.get_meta("installed_count",-1))
 	if count!=COUNT_BASE+(4 if with_homes else 0):
-		_fail("Only %d real retro models installed, expected %d"%
-			[count,COUNT_BASE+(4 if with_homes else 0)])
+		_fail("Only %d real retro models installed, expected %d; skipped=%s"%
+			[count,COUNT_BASE+(4 if with_homes else 0),
+			str(pack.get_meta("missing_selected_assets",[]))])
 		return
 	if int(pack.get_meta("simulation_entities_created",-1))!=0:
 		_fail("Decorative imported props created unauthorized gameplay entities")
