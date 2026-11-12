@@ -3,6 +3,7 @@ extends CharacterBody3D
 ## Existing authored characters retain their landmarks; village citizens
 ## physically navigate based on independent simulated economic/social actions.
 const ART = preload("res://scripts/art.gd")
+const COSTUME = preload("res://scripts/folk_costume_finish.gd")
 
 var npc_id: String = ""
 var display_name: String = ""
@@ -243,6 +244,9 @@ func _ready() -> void:
 		ART.orb(attendant,Vector3(0,1.76,0),Vector3(.23,.27,.21),skin,12)
 		ART.box(attendant,Vector3(0,2.04,-.03),Vector3(.51,.15,.45),denim)
 		ART.box(attendant,Vector3(0,2.01,-.26),Vector3(.40,.052,.27),denim)
+		COSTUME.dress_attendant(attendant)
+	else:
+		COSTUME.dress(figure,npc_id,cloth,trim,leather)
 	var collider := StaticBody3D.new()
 	collider.name = "LivingNPCConversationCollider"
 	collider.collision_layer = 4 if mobile else (4 | 16)
