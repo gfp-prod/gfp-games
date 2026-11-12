@@ -72,9 +72,9 @@ jobs:
           import json
           from pathlib import Path
           assets=json.loads(Path("../regional_build/regional_provenance.json").read_text())["assets"]
-          assert len(assets)==10
+          assert len(assets)==13
           assert all(x["faces"]>=120 and x["size_bytes"]>3000 for x in assets)
-          print("PASS: ten real Blender model families", [(x["name"],x["faces"]) for x in assets])
+          print("PASS: thirteen real Blender model families", [(x["name"],x["faces"]) for x in assets])
           PY
 
       - name: Stage region GLBs before Godot import
@@ -105,14 +105,14 @@ jobs:
           fi
           python3 tools/art_foundry/check_game_comparisons.py
 
-      - name: Verify live landmark visual replacements, physics and three rendered views
+      - name: Verify live landmark and village jobs, physics and five rendered views
         run: |
           set -o pipefail
-          timeout 840s xvfb-run -a -s "-screen 0 1280x720x24" \
+          timeout 1000s xvfb-run -a -s "-screen 0 1280x720x24" \
             godot --rendering-driver opengl3 --rendering-method gl_compatibility \
             --path . --script res://tests/regional_foundry_review.gd 2>&1 \
             | tee /tmp/regional-foundry-review.log
-          grep -q "PASS: ten editable Blender GLBs import" /tmp/regional-foundry-review.log
+          grep -q "PASS: thirteen editable Blender GLBs import" /tmp/regional-foundry-review.log
           if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:|REGIONAL FOUNDRY FAIL:' /tmp/regional-foundry-review.log; then
             echo "::error::Foundry region review failed"
             exit 1
@@ -153,6 +153,9 @@ jobs:
             assets/models/foundry/cold_charcoal_kiln.glb \
             assets/models/foundry/roadside_station.glb \
             assets/models/foundry/castle_gatehouse.glb \
+            assets/models/foundry/village_bakery.glb \
+            assets/models/foundry/village_forge.glb \
+            assets/models/foundry/village_market_stall.glb \
             assets/models/foundry/regional_provenance.json
           if ! git diff --cached --quiet; then
             git commit -m "VERBA art: checked-in Blender cottage with real texture, UV and gameplay import QA"
