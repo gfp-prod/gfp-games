@@ -7,6 +7,7 @@ const COSTUME = preload("res://scripts/folk_costume_finish.gd")
 const PORTRAIT = preload("res://scripts/folk_portrait_finish.gd")
 const FABRIC = preload("res://scripts/npc_cloth_finish.gd")
 const ANATOMY = preload("res://scripts/npc_anatomy.gd")
+const GENES = preload("res://scripts/npc_genetics.gd")
 const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 # Reuse existing villagers and the two physically enterable houses.
 # This has no effect on save IDs, simulated spouses or work locations.
@@ -93,22 +94,22 @@ func _ready() -> void:
 	# Profession-specific dye on one coherent, coarse woven cloth. Do not
 	# use the aged parchment texture for clothing or a glossy material.
 	var cloth := FABRIC.worn_linen(Color(String(definition.get("robe","746c60"))))
+	var genome: Dictionary=GENES.founder(npc_id)
+	var stage: String="adult"
+	if world!=null and world.village_sim!=null and world.village_sim.people.has(npc_id):
+		var record: Dictionary=world.village_sim.people[npc_id]
+		genome=record.get("genome",genome)
+		stage=String(record.get("life_stage","adult"))
+	if not GENES.validate(genome):
+		genome=GENES.founder(npc_id)
+	set_meta("genome_traits",true)
+	set_meta("bloodline_generation",
+		int(world.village_sim.people[npc_id]["family"].get("generation",0)) if
+		world!=null and world.village_sim!=null and world.village_sim.people.has(npc_id) else 0)
 	var trim := ART.mat(Color(String(definition.get("trim","c0aa86"))),.95)
 	# A human should read as a particular person, not an identical tan
 	# mannequin re-dressed for each job.
-	var complexion: String="a98b72"
-	match npc_id:
-		"ida": complexion="b69b82"
-		"orin": complexion="8d6c57"
-		"daro": complexion="ad896b"
-		"titus": complexion="997b67"
-		"cass": complexion="c2a18a"
-		"sela": complexion="9c745e"
-		"nima": complexion="75564b"
-		"lena": complexion="bb957b"
-		"mara": complexion="b09a85"
-		_: pass
-	var skin := ART.mat(Color(complexion),.94)
+	var skin := ART.mat(GENES.skin_color(genome),.96)
 	var leather := ART.mat(Color("463f37"),.99)
 	# A separate torso, narrower tunic hem and jointed legs replace the
 	# one-piece walking cone. Props remain on their own worker identities.
@@ -124,9 +125,9 @@ func _ready() -> void:
 	head.name="ModeledInhabitantHead"
 	# Individual anatomy replaces the floating eyes and identical hair
 	# caps, retaining the original tested head and collision silhouette.
-	var hair:=ART.mat(Color("3e302a"),.96)
-	var brow:=ART.mat(Color("3a3029"),.95)
-	PORTRAIT.finish(figure,npc_id,skin,hair,brow)
+	var hair:=ART.mat(GENES.hair_color(genome),.96)
+	var brow:=ART.mat(GENES.hair_color(genome).darkened(.12),.95)
+	PORTRAIT.finish(figure,npc_id,skin,hair,brow,genome)
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
@@ -278,14 +279,29 @@ func _ready() -> void:
 			else:
 				right_arm=modern_arm
 				right_leg=modern_leg
-		ART.orb(attendant,Vector3(0,1.76,0),Vector3(.23,.27,.21),skin,12)
+		var modern_head:=ART.orb(attendant,Vector3(0,1.76,0),
+			Vector3(.42,.49,.39),skin,12)
+		modern_head.name="ModernGeneticHead"
 		ART.box(attendant,Vector3(0,2.04,-.03),Vector3(.51,.15,.45),denim)
 		ART.box(attendant,Vector3(0,2.01,-.26),Vector3(.40,.052,.27),denim)
 		COSTUME.dress_attendant(attendant)
 	else:
 		COSTUME.dress(figure,npc_id,cloth,trim,leather)
-	# All existing authored NPCs—including the roadside attendant—use
-	# individually detachable physical limb modules.
+	# Mild-to-noticeable, inherited body dimensions. The faceted look is
+	# deliberate; we change proportions, not topology or collision IDs.
+	var shoulder: float=lerpf(.88,1.17,GENES.value(genome,"shoulder_width"))
+	var height: float=lerpf(.85,1.16,GENES.value(genome,"stature"))
+	var depth: float=lerpf(.87,1.15,GENES.value(genome,"body_depth"))
+	if stage=="child":
+		shoulder*=.74
+		height*=.60
+		depth*=.78
+	figure.scale=Vector3(shoulder,height,depth)
+	if visual_attendant!=null:
+		visual_attendant.scale=Vector3(shoulder,height,depth)
+		PORTRAIT.finish(visual_attendant,npc_id,skin,hair,brow,genome)
+	# Both face and limb models inherit the same body shape, and child
+	# models use the existing detachable body-part system.
 	refresh_anatomy_visuals()
 	var collider := StaticBody3D.new()
 	collider.name = "LivingNPCConversationCollider"
@@ -362,6 +378,20 @@ func _process(delta: float) -> void:
 		if toward.length_squared()>.05:
 			rotation.y=lerp_angle(rotation.y,atan2(-toward.x,-toward.z),minf(1.0,delta*8.0))
 	if left_arm==null or world==null or world.village_sim==null: return
+	# Facial animation reacts to the person's own mood and memories of
+	# the player, without changing any inherited genetic trait.
+	var me: Dictionary=world.village_sim.people.get(npc_id,{})
+	if not me.is_empty():
+		var opinion: float=float(me["trust"].get("wizard",0.0))
+		var feeling: float=clampf((float(me["mood"])-50.0)/75.0+opinion*.009,-1,1)
+		if world.player!=null and world.player.conversation_actor==self:
+			feeling=clampf(feeling+.18,-1,1)
+		var time_in_blink: float=fposmod(motion_clock+float(posmod(npc_id.hash(),11))*.33,4.25)
+		var blink: float=clampf(1.0-absf(time_in_blink-3.72)/.13,0,1)
+		if visual_attendant!=null:
+			PORTRAIT.expression(visual_attendant,feeling,blink)
+		else:
+			PORTRAIT.expression(visual_figure,feeling,blink)
 	anatomy_visual_elapsed+=delta
 	if anatomy_visual_elapsed>=.30:
 		anatomy_visual_elapsed=0.0
