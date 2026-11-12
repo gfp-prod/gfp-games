@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 import bpy
+import numpy as np
 from mathutils import Vector, Matrix
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -36,11 +37,23 @@ def material(name, texture, tint, roughness=.94):
     source = TEX / texture
     if not source.is_file():
         raise FileNotFoundError(f"Missing committed CC0 material: {source}")
-    image = bpy.data.images.load(str(source), check_existing=True)
-    image.pack()
+    # Pack a separately graded copy. A texture wired directly into Base
+    # Color OVERRIDES Blender's material color, which made the first cottage
+    # brilliant white and detached from VERBA's old timber/moss palette.
+    # Pack these pixels as images so both Blender and Godot show the SAME art.
+    source_image = bpy.data.images.load(str(source), check_existing=True)
+    arr = np.empty(len(source_image.pixels), dtype=np.float32)
+    source_image.pixels.foreach_get(arr)
+    arr = arr.reshape((-1,4))
+    pigment = np.array(tint, dtype=np.float32)
+    arr[:,:3] *= pigment
+    graded = bpy.data.images.new(name + " graded albedo",
+        width=source_image.size[0], height=source_image.size[1], alpha=True)
+    graded.pixels.foreach_set(arr.reshape(-1))
+    graded.pack(as_png=True)
     node = m.node_tree.nodes.new("ShaderNodeTexImage")
-    node.label = source.name
-    node.image = image
+    node.label = "graded CC0: " + source.name
+    node.image = graded
     m.node_tree.links.new(node.outputs["Color"], bsdf.inputs["Base Color"])
     return m
 
@@ -272,6 +285,51 @@ def build_cottage():
         x=-2.28+(k%2)*.60
         z=-1.84+(k//2)*.60
         d.stone((x,6.23,z),(.16,.08,.19),k)
+
+    # A true secondary turret makes the art replace the fantasy silhouette
+    # rather than flattening it into a suburban house. Stone courses join
+    # the main wall without obstructing the existing first-floor door.
+    tower_x,tower_z = 3.49,-.58
+    tower_radius = .96
+    sections = 12
+    for j in range(sections):
+        a = math.tau*j/sections
+        b = math.tau*(j+1)/sections
+        bottom_a = (tower_x+math.cos(a)*tower_radius,
+                    .20,tower_z+math.sin(a)*tower_radius)
+        bottom_b = (tower_x+math.cos(b)*tower_radius,
+                    .20,tower_z+math.sin(b)*tower_radius)
+        top_a = (bottom_a[0]*1.0,4.64,bottom_a[2])
+        top_b = (bottom_b[0]*1.0,4.64,bottom_b[2])
+        f.polygon([bottom_a,bottom_b,top_b,top_a],
+                  [(j*.4,0),(j*.4+.4,0),
+                   (j*.4+.4,2.7),(j*.4,2.7)])
+        for course in range(9):
+            y = .32+course*.44
+            if (j*5+course)%7 in [0,2]:
+                lichen.stone((tower_x+math.cos(a+.24)*.99,
+                              y,tower_z+math.sin(a+.24)*.99),
+                             (.23,.12,.14),j+course)
+        dry.polygon([ (tower_x+math.cos(a)*1.31,4.65,
+                        tower_z+math.sin(a)*1.31),
+                      (tower_x+math.cos(b)*1.31,4.65,
+                        tower_z+math.sin(b)*1.31),
+                      (tower_x-.11,6.72,tower_z+.06)],
+                    [(0,0),(1,0),(.49,1)])
+        o.beam((tower_x+math.cos(a)*1.31,4.65,
+                tower_z+math.sin(a)*1.31),
+               (tower_x+math.cos(b)*1.31,4.65,
+                tower_z+math.sin(b)*1.31),.10,.095)
+    # Turret windows have actual timber surrounds and dark recesses.
+    d.box((tower_x,2.67,tower_z+1.00),(.40,.61,.045))
+    for x in [tower_x-.25,tower_x+.25]:
+        o.beam((x,2.26,tower_z+1.075),
+               (x,3.06,tower_z+1.075),.105,.08)
+    for y in [2.28,3.06]:
+        o.beam((tower_x-.31,y,tower_z+1.075),
+               (tower_x+.31,y,tower_z+1.075),.105,.08)
+    o.beam((tower_x,2.35,tower_z+1.105),
+           (tower_x,3.01,tower_z+1.105),.045,.045)
 
     # Workshop trade goods and planter ledge reinforce readable scale.
     o.box((1.62,.98,2.99),(1.20,.23,.36))
