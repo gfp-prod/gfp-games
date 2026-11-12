@@ -319,6 +319,7 @@ func _ready() -> void:
 	capsule.radius = .43
 	capsule.height = 1.95
 	var shape := CollisionShape3D.new()
+	shape.name="LivingInteractionCapsule"
 	shape.shape = capsule
 	shape.position.y = 1.0
 	collider.add_child(shape)
@@ -351,7 +352,7 @@ func _fit_growth_colliders(physical_scale: Vector3) -> void:
 		capsule.height=maxf(1.75*physical_scale.y,2.0*capsule.radius+.05)
 		walker.position.y=.90*physical_scale.y
 	var conversation: CollisionShape3D=get_node_or_null(
-		"LivingNPCConversationCollider/CollisionShape3D") as CollisionShape3D
+		"LivingNPCConversationCollider/LivingInteractionCapsule") as CollisionShape3D
 	if conversation!=null and conversation.shape is CapsuleShape3D:
 		var target: CapsuleShape3D=conversation.shape as CapsuleShape3D
 		target.radius=clampf(.43*physical_scale.x,.24,.53)
