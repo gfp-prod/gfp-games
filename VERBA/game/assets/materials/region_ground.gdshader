@@ -10,6 +10,8 @@ uniform sampler2D dry_tex : source_color, repeat_enable, filter_linear_mipmap;
 uniform sampler2D packed_tex : source_color, repeat_enable, filter_linear_mipmap;
 uniform sampler2D silt_tex : source_color, repeat_enable, filter_linear_mipmap;
 uniform sampler2D stone_tex : source_color, repeat_enable, filter_linear_mipmap;
+// Only on the non-collidable far-terrain copy. Never recolor the playfield.
+uniform bool distant_mode = false;
 
 varying vec3 world_pos;
 
@@ -77,6 +79,20 @@ void fragment() {
 	pigment*=mix(vec3(.88,.90,.89),vec3(.99,.96,.91),weather);
 	pigment=mix(pigment,pigment*vec3(.82,.91,.89),wet*.25);
 	pigment*=.97+(detail-.5)*.045;
+	// Sunset-yellow far ridges caused a glowing horizon; the original
+	// six-soil shader is valid for nearby earth, not mountains 400m away.
+	// This grade starts at zero exactly on the physical 256m map boundary,
+	// then shifts only the visual-only background toward slate, heather
+	// and shaded woodland. Foreground palette and all ground collisions
+	// remain unchanged.
+	if (distant_mode) {
+		float outside=max(max(abs(p.x),abs(p.y))-128.0,0.0);
+		float distance_mix=smoothstep(6.0,188.0,outside);
+		float mineral=clamp(weather*.72+detail*.28,0.0,1.0);
+		vec3 far_stone=mix(vec3(.085,.148,.148),
+		                   vec3(.172,.225,.204),mineral);
+		pigment=mix(pigment,far_stone,distance_mix*.96);
+	}
 	ALBEDO=clamp(pigment,vec3(.025),vec3(.87));
 	METALLIC=0.0;
 	ROUGHNESS=.98;
