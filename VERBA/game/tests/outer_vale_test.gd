@@ -103,6 +103,20 @@ func _run() -> void:
 	if masonry==null or masonry.get_child_count()<39:
 		_fail("The abandoned kiln is still one smooth cone instead of broken masonry")
 		return
+	var track: MeshInstance3D=world.get_node_or_null(
+		"OuterValeRegionalLandmarks/LongTrackToStillwater/RuttedWalkableFootpath")
+	if track==null or track.mesh==null:
+		_fail("Lake path does not render over the walking terrain")
+		return
+	var trail_vertices: PackedVector3Array=track.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	if trail_vertices.size()<1500:
+		_fail("Lake path was not subdivided laterally to follow the heightfield")
+		return
+	for j in range(0,trail_vertices.size(),maxi(1,int(trail_vertices.size()/48))):
+		var p: Vector3=trail_vertices[j]
+		if p.y-world.height_at(p.x,p.z)<.065:
+			_fail("Lake trail is still buried in large triangular soil gaps")
+			return
 	for landmark in ["TumbledTollGate","ColdCharcoalKiln","OldHunterBlind",
 			"SevenWeatheredWitnessStones","WindbrokenOrchard",
 			"LastMeasuredMileStone","LongTrackToStillwater"]:
