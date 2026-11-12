@@ -80,13 +80,15 @@ static func finish(figure: Node3D, person: String,
 		"sela":
 			# Wrapped hair at the nape; this is a lived-in trader, not
 			# another identical crown worn by every profession.
-			ART.orb(root,Vector3(0,1.798,.205),
-				Vector3(.238,.258,.175),hair,12).name="BoundHairAtNape"
+			var hair_binding:=ART.orb(root,Vector3(0,1.798,.205),
+				Vector3(.238,.258,.175),hair,12)
+			hair_binding.name="BoundHairAtNape"
 			ART.bone(root,Vector3(-.180,1.908,.072),
 				Vector3(.180,1.912,.072),.035,.036,hair,9)
 		"mara":
-			ART.orb(root,Vector3(-.208,1.750,.074),
-				Vector3(.113,.258,.101),hair,11).name="ScribeHairAtTemple"
+			var temple_hair:=ART.orb(root,Vector3(-.208,1.750,.074),
+				Vector3(.113,.258,.101),hair,11)
+			temple_hair.name="ScribeHairAtTemple"
 		"brin":
 			ART.bone(root,Vector3(-.24,1.978,-.051),
 				Vector3(.19,1.984,-.056),.053,.040,hair,9)
