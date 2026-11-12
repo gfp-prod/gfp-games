@@ -44,6 +44,19 @@ func _run() -> void:
 	if triangles.size()!=24:
 		_fail("Baker apron no longer has eight curved, fitted cloth triangles")
 		return
+	# Prove the actual pale apron stays outside the inherited front
+	# surface, not hidden behind the worker's shirt as it was on camera.
+	var genetic_body=load("res://scripts/npc_body_morph.gd")
+	var ida_genome: Dictionary=world.village_sim.people["ida"]["genome"]
+	for vertex_id in [1,4,7]:
+		var v: Vector3=triangles[vertex_id]
+		var outer_front: float=genetic_body._point(v.y,-PI*.5,ida_genome).z
+		if v.z>outer_front-.046:
+			_fail("Baker apron is buried behind genetically modeled clothing")
+			return
+	if not bool(apron.get_meta("drapes_over_inherited_torso",false)):
+		_fail("Baker apron lost its fitted living-body surface")
+		return
 	var bounds: AABB=apron.get_aabb()
 	if bounds.size.y<.8 or bounds.size.x<.4 or bounds.size.x>.7:
 		_fail("The apron has lost plausible body proportions")
