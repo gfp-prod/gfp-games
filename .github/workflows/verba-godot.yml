@@ -37,6 +37,10 @@ jobs:
         run: godot --headless --path . --editor --import --quit
       - name: World smoke
         run: godot --headless --path . --script res://tests/smoke_test.gd
+      - name: Diagnose tall portrait occluder meshes in the real cast
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/diagnose_genetic_meshes.gd 2>&1 | tee /tmp/mesh-diagnostic.log
+          grep -q "PASS: inspected exceptional full-body mesh extents" /tmp/mesh-diagnostic.log
       - name: Village seeded adversarial regression
         run: godot --headless --path . --script res://tests/village_sim_test.gd
       - name: Resource economy and simulation inspector
