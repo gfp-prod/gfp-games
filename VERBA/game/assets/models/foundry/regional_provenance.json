@@ -1,0 +1,94 @@
+{
+  "assets": [
+    {
+      "name": "old_creek_footbridge",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 4,
+      "faces": 1908,
+      "sha256": "6884e118f5b2b2aac568d622dbf8ebad4a088062550f42db5b767dfe7603a748",
+      "size_bytes": 6573920
+    },
+    {
+      "name": "old_fishing_jetty",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 4,
+      "faces": 980,
+      "sha256": "564c80295c9aa3db9969cdb0f3cbc91e302fed121f7067f4273d117925be6480",
+      "size_bytes": 6506092
+    },
+    {
+      "name": "witness_stone_circle",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 2,
+      "faces": 1850,
+      "sha256": "efd21ceafa25595684524b9b878f911bc2b52e61645c87c7bdb4208e295e50f7",
+      "size_bytes": 3638636
+    },
+    {
+      "name": "rusting_delivery_wreck",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 4,
+      "faces": 944,
+      "sha256": "f8fb25240e2ac924d5d66e65419808556661c3f45944928a59d50a8f82911eff",
+      "size_bytes": 7086240
+    },
+    {
+      "name": "dead_ash_tree",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 3,
+      "faces": 892,
+      "sha256": "52cbdf3a5217e3e1baf50d82b9954a6630482e7f6d0e2bd4df37c168176d0c76",
+      "size_bytes": 4977768
+    },
+    {
+      "name": "ridge_arch",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 2,
+      "faces": 1900,
+      "sha256": "8d2e5e4ab3ffa8c5068f4d8c411cbf2cc8591e9c8033be06cde91d5dc33cb1b4",
+      "size_bytes": 3643736
+    },
+    {
+      "name": "stone_prayer_shrine",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 3,
+      "faces": 836,
+      "sha256": "42db52699fbb26f7e0c50527d6c15af88c3976da88c4a4e9970c8a857e7b172b",
+      "size_bytes": 4846672
+    },
+    {
+      "name": "cold_charcoal_kiln",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 3,
+      "faces": 1968,
+      "sha256": "bed3c72d5914a88f24636526d6eb315fed87c6df4cc7b9eae2cb9f9f63f9f3fb",
+      "size_bytes": 5592820
+    },
+    {
+      "name": "roadside_station",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 9,
+      "faces": 4026,
+      "sha256": "c527a21979d8d431716d6c5e0d00fddca22b3782b34166d5e52e3c7cab21d5e4",
+      "size_bytes": 14707732
+    }
+  ]
+}
