@@ -880,27 +880,27 @@
     "name": "Juno",
     "role": "Roadside attendant",
     "position": [
-      -36,
-      43.6
+      -104.5,
+      76.5
     ],
     "home": [
-      -36,
-      43.6
+      -104.5,
+      76.5
     ],
     "work": [
-      -35,
-      44.2
+      -103.3,
+      77.3
     ],
     "market": [
-      -27.5,
-      44
+      -98.7,
+      76.5
     ],
     "yaw": -1.57,
     "robe": "52676a",
     "trim": "ddd0a4",
     "intro": [
       "Salve! Welcome to Vale Fuel. No cars today.",
-      "Salve, viator. You are far from the village.",
+      "Salve, viator. You are far from the village. The blacktop has been here longer than I have.",
       "Salve, amice. Quid quaeris? (What are you looking for?)"
     ],
     "choices": [
@@ -913,7 +913,7 @@
         ],
         "reply": [
           "Hi there. Some roads lead nowhere.",
-          "Salve! The western road leads to the castle.",
+          "Salve! The old road runs east toward the castle.",
           "Salve, amice. The roads are strange today."
         ]
       },
