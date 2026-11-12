@@ -8,10 +8,7 @@ const FABRIC=preload("res://scripts/npc_cloth_finish.gd")
 
 static func dress(figure: Node3D,person: String,
 		tunic: Material,trim: Material,leather: Material) -> void:
-	var variant: int=absi(person.hash())%4
-	var worn:=ART.mat(Color("514b42"),.99)
-	var cloth_dark: StandardMaterial3D=FABRIC.worn_linen(
-		Color("635c54") if variant%2==0 else Color("6c675b"))
+	var worn:=FABRIC.worn_linen(Color("514b42"))
 	# Overlapping fabric planes on a mannequin cause z-fighting. This 12-sided
 	# shaped silhouette sits outside the existing tunic and pinches at waist.
 	var hem:=SurfaceTool.new()
