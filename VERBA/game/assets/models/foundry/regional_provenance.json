@@ -127,8 +127,18 @@
       "meters": true,
       "mesh_count": 6,
       "faces": 704,
-      "sha256": "df44be4c9e5554ccd93a442204e17fb2ca33e3615498a3ae0382186e0521d615",
+      "sha256": "34c9ebd07276e78bd2987f1f64781e5922936823746a63a78c5c186d23baf5a8",
       "size_bytes": 9593664
+    },
+    {
+      "name": "village_hearth_house",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 10,
+      "faces": 3718,
+      "sha256": "d4209258a71a50095000f1fc9bf16a15965fb378c671b593354c25e84ae911e7",
+      "size_bytes": 16333124
     }
   ]
 }
