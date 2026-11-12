@@ -114,7 +114,10 @@ def authors():
         rust=Geometry("oxide_sheet_metal",mat("rusted_panels","cottage_roof_diffuse.jpg",(.47,.31,.25))),
         steel=Geometry("cold_galvanized_metal",mat("oxidized_steel","cottage_roof_diffuse.jpg",(.45,.49,.48))),
         dark=Geometry("char_and_rubber",mat("rubber_char","woodland_ground_diffuse.jpg",(.22,.24,.23))),
-        rope=Geometry("weathered_rope",mat("hemp","earth_path_diffuse.jpg",(.70,.61,.43)))
+        rope=Geometry("weathered_rope",mat("hemp","earth_path_diffuse.jpg",(.70,.61,.43))),
+        plaster=Geometry("faded_facade",mat("pitted_concrete","cottage_plaster_diffuse.jpg",(.67,.66,.57))),
+        glass=Geometry("smoky_window_glass",mat("smoked_window","cottage_roof_diffuse.jpg",(.22,.27,.27),.28)),
+        sign=Geometry("old_green_enamel",mat("faded_enamel","cottage_roof_diffuse.jpg",(.37,.45,.38),.68))
     )
 
 def bridge(g):
@@ -298,6 +301,108 @@ def charcoal_kiln(g):
                    (.45,.18,.47),2400+i)
 
 
+
+def roadside_station(g):
+    """Lived-in, 1960s rural roadside station that is visually incompatible
+    with the medieval keep but physically plausible at first-person distance.
+    Dimensions and doors match scripts/strange_road.gd exactly.
+    Existing Godot solids, signs, lights and quest markers are preserved.
+    """
+    limestone=g["plaster"]; concrete=g["stone"]; oak=g["oak"]
+    steel=g["steel"]; rust=g["rust"]; dark=g["dark"]
+    frame=g["timber"]; pane=g["glass"]; faded=g["sign"]
+    # Worn apron and wooden interior: preserve original collision elevations.
+    concrete.box((2,-.015,0),(14.9,.19,9.64),4)
+    oak.box((-2.15,.182,0),(7.08,.19,6.97),2)
+    # Genuine open-sided east entrance, not a textured door.
+    limestone.box((-5.70,1.82,0),(.36,3.42,7.20),2)
+    for sign in [-1,1]:
+        limestone.box((-2.10,1.82,sign*3.48),(7.5,3.42,.38),2)
+        limestone.box((1.45,1.82,sign*2.35),(.38,3.42,2.30),2)
+    limestone.box((1.45,3.08,0),(.38,.88,2.40),1)
+    # Vertical clapboard strips with half the boards missing and discoloration.
+    for z in [-3.68,3.68]:
+        for i in range(14):
+            x=-5.42+i*.48
+            if i in [2,9,12]:continue
+            frame.box((x,2.66,z),(.055,.15,.052))
+    for x in [-5.89,1.67]:
+        for z in [-3.17,3.17]:
+            frame.beam((x,.29,z),(x,3.34,z),.12,.12)
+    # The flat roof is layered with a stepped corroded cornice, not a cube.
+    dark.box((-2.15,3.72,0),(7.91,.16,7.70),2)
+    steel.box((-2.15,3.91,0),(8.26,.11,7.99),2)
+    rust.box((-2.15,4.00,0),(8.43,.04,8.07),3)
+    for z in [-3.75,3.75]:
+        rust.box((-2.15,3.75,z),(8.0,.22,.09),2)
+    for x in [-5.99,1.67]:
+        rust.box((x,3.75,0),(.095,.22,7.66),2)
+    # Shop-front windows, dark real-looking glass, muntins and corroded sills.
+    for z in [-2.25,2.25]:
+        pane.box((1.672,2.02,z),(.048,1.16,.98),1)
+        frame.box((1.719,1.39,z),(.11,.13,1.16))
+        frame.box((1.719,2.66,z),(.11,.13,1.16))
+        for zz in [z-.54,z+.54]:
+            frame.beam((1.72,1.40,zz),(1.72,2.63,zz),.068)
+        frame.beam((1.725,2.025,z-.55),(1.725,2.025,z+.55),.057)
+        for y in [1.52,2.59]:
+            rust.box((1.733,y,z),(.017,.052,.81),1)
+    # Shop interior: real shelved objects visible through opening.
+    for z in [-2.57,2.57]:
+        frame.box((-3.78,.77,z),(2.46,1.1,.60),2)
+        for y in [.44,1.09,1.54]:
+            oak.box((-3.76,y,z),(2.52,.095,.66),2)
+            for i in range(5):
+                if R.random()<.28:continue
+                x=-4.75+i*.46
+                faded.box((x,y+.16,z),(.23,.30,.21))
+    oak.box((-.70,.71,1.66),(.69,1.18,2.58),2)
+    dark.box((-.70,1.32,1.66),(.79,.10,2.67),2)
+    steel.box((-.66,1.42,1.9),(.18,.14,.25))
+    # Frayed awning, low canopy and head-bracing visibly carry the roof load.
+    dark.box((5,4.09,0),(6.65,.30,8.60),3)
+    faded.box((5.00,3.87,0),(6.61,.22,8.65),3)
+    rust.box((5.00,4.29,0),(6.82,.10,8.75),2)
+    for x in [1.66,8.33]:
+        rust.box((x,4.11,0),(.14,.19,8.68),2)
+    for z in [-3.52,3.52]:
+        steel.beam((6.68,.14,z),(6.68,4.02,z),.26,.26)
+        for zz in [z-.27,z+.27]:
+            rust.beam((6.61,.10,zz),(6.61,3.83,zz),.04)
+        frame.beam((6.70,3.02,z),(5.46,3.87,z),.16)
+        frame.beam((6.70,3.02,z),(7.79,3.88,z),.16)
+    # Two tactile, mechanically legible petrol pumps in their original spots.
+    for z in [-2.27,2.27]:
+        dark.box((4.61,.075,z),(1.01,.15,.93))
+        faded.box((4.60,.77,z),(.80,1.39,.78),1)
+        steel.box((4.60,1.52,z),(.92,.12,.96))
+        rust.box((4.60,.82,z+.40),(.70,1.00,.055))
+        pane.box((5.03,1.11,z),(.045,.48,.49))
+        dark.box((5.065,1.20,z),(.052,.24,.31))
+        for side in [-1,1]:
+            steel.beam((4.72,1.12,z+side*.41),
+                       (4.88,.82,z+side*.62),.055)
+            dark.beam((4.88,.82,z+side*.62),
+                      (4.99,.53,z+side*.60),.055)
+        steel.box((4.58,.45,z),(.31,.10,.88))
+        rust.box((4.60,.58,z-.43),(.48,.035,.05))
+    # Distinctive roadside pole sign; actual Label3D remains owned by Godot.
+    steel.beam((9.12,0,-2.68),(9.12,6.98,-2.68),.20)
+    faded.box((9.12,6.22,-2.68),(.31,1.52,3.56),2)
+    for z in [-4.43,-.93]:
+        rust.beam((9.30,5.51,z),(9.30,6.97,z),.08)
+    for y in [5.49,6.98]:
+        rust.beam((9.30,y,-4.43),(9.30,y,-.93),.08)
+    # Ragged foundation stones and local stains, not scattered object spam.
+    for i in range(45):
+        x=R.uniform(-5.55,8.15);z=R.choice([-1,1])*R.uniform(3.72,4.68)
+        concrete.rock((x,.09,z),
+                      (R.uniform(.18,.48),R.uniform(.10,.21),R.uniform(.18,.43)),9000+i)
+    for i in range(17):
+        x=R.uniform(1.86,8.12);z=R.uniform(-4.52,4.46)
+        if 3.4<x<5.4 and abs(z)<3.0:continue
+        dark.box((x,.10,z),(R.uniform(.12,.64),.007,R.uniform(.08,.48)))
+
 BUILDERS={
     "old_creek_footbridge":bridge,
     "old_fishing_jetty":jetty,
@@ -306,7 +411,8 @@ BUILDERS={
     "dead_ash_tree":dead_tree,
     "ridge_arch":ridge_arch,
     "stone_prayer_shrine":prayer_shrine,
-    "cold_charcoal_kiln":charcoal_kiln
+    "cold_charcoal_kiln":charcoal_kiln,
+    "roadside_station":roadside_station
 }
 
 def export_asset(out,name,builder):
