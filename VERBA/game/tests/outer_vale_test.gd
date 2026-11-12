@@ -227,6 +227,24 @@ func _run() -> void:
 		_fail("Village art replaced real worksite identities")
 		return
 
+	# First-person screenshot review caught a real defect: vernacular
+	# houses were embedded in the ungraded valley slope. A textured model
+	# isn't accepted if its footprint isn't actually level in the HEIGHTFIELD
+	# used for collision, flora and player navigation.
+	if ResourceLoader.exists("res://assets/models/foundry/village_hearth_house.glb"):
+		var real_homes: Node3D=world.get_node_or_null("PhysicalVillageHomesteads") as Node3D
+		if real_homes==null or int(real_homes.get_meta("authored_homestead_count",0))!=2:
+			_fail("Real house GLB is available but the two village houses are absent")
+			return
+		for center in [Vector2(-7.5,34.0),Vector2(30.0,33.5)]:
+			var foundation_y: float=world.height_at(center.x,center.y)
+			for dx in [-2.9,0.0,2.9]:
+				for dz in [-3.05,0.0,3.05]:
+					if absf(world.height_at(center.x+dx,center.y+dz)-foundation_y)>.09:
+						_fail("Vernacular house sits on a cliff/uneven terrain: "+
+							str(center)+" at "+str(Vector2(dx,dz)))
+						return
+
 	# Existing structures and academic simulation survive untouched.
 	if world.get_node_or_null("HermitCottage")==null or not world.scholar.books.has("de_herbis"):
 		_fail("Visual expansion destroyed the original learning loop")
