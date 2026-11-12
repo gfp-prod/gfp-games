@@ -65,6 +65,11 @@ func _ready() -> void:
 	figure.name = "VisibleInhabitant"
 	add_child(figure)
 	var cloth := ART.mat(Color(String(definition.get("robe","746c60"))),.98)
+	# Worn linen uses the same bundled fiber grain as the study vellum,
+	# tinted per profession rather than perfectly smooth plastic robes.
+	cloth.albedo_texture=load("res://assets/textures/authored/aged_vellum.png")
+	cloth.uv1_triplanar=true
+	cloth.uv1_scale=Vector3(2.0,2.0,2.0)
 	var trim := ART.mat(Color(String(definition.get("trim","c0aa86"))),.95)
 	# A human should read as a particular person, not an identical tan
 	# mannequin re-dressed for each job.
@@ -101,12 +106,14 @@ func _ready() -> void:
 		Vector3(.44,.13,.39),hair,12)
 	var brow:=ART.mat(Color("3a3029"),.95)
 	for side in [-1.0,1.0]:
-		ART.orb(figure,Vector3(side*.083,1.79,-.191),
-			Vector3(.047,.040,.028),brow,9)
-		ART.bone(figure,Vector3(side*.047,1.841,-.189),
-			Vector3(side*.123,1.846,-.172),.012,.008,brow,7)
-	ART.orb(figure,Vector3(0,1.706,-.198),
-		Vector3(.084,.104,.075),skin,9)
+		# Eyes sit deep under the brow as narrow shadowed slits. The former
+		# spherical beads made every villager resemble a child's doll.
+		ART.box(figure,Vector3(side*.083,1.789,-.195),
+			Vector3(.065,.018,.010),brow,Vector3(0,side*.08,0))
+		ART.bone(figure,Vector3(side*.041,1.829,-.180),
+			Vector3(side*.123,1.834,-.163),.013,.010,brow,7)
+	ART.orb(figure,Vector3(0,1.704,-.198),
+		Vector3(.070,.090,.069),skin,9)
 	ART.bone(figure,Vector3(-.051,1.643,-.180),
 		Vector3(.051,1.643,-.180),.009,.009,brow,7)
 	for side in [-1.0,1.0]:
@@ -252,11 +259,11 @@ func _ready() -> void:
 	var title := Label3D.new()
 	title.name = "InWorldPersonName"
 	title.text = display_name + "\n" + role
-	title.font_size = 38
-	title.pixel_size = .0035
+	title.font_size = 31
+	title.pixel_size = .00265
 	title.modulate = Color("d8cbb0")
 	title.outline_modulate = Color("252b2a")
-	title.outline_size = 7
+	title.outline_size = 3
 	title.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	title.no_depth_test = false
 	title.position = Vector3(0,2.29,0)
