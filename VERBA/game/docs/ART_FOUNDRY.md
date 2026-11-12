@@ -32,19 +32,19 @@ keys, cloud inference endpoints or new third-party downloads during baking.
 Run from VERBA/game with Blender, Python 3, Pillow and Godot installed:
 
     python3 -m py_compile tools/art_foundry/forge_cottage.py
-    mkdir -p tests/foundry_build
+    mkdir -p ../foundry_build
     blender -b -t 2 --python tools/art_foundry/forge_cottage.py -- \
-        --output tests/foundry_build
+        --output ../foundry_build
     python3 tools/art_foundry/validate_foundry.py \
-        --out tests/foundry_build
+        --out ../foundry_build
     mkdir -p assets/models/foundry
-    cp tests/foundry_build/hermit_cottage_v2.glb \
+    cp ../foundry_build/hermit_cottage_v2.glb \
        assets/models/foundry/hermit_cottage_v2.glb
     godot --headless --path . --editor --import --quit
     godot --rendering-method gl_compatibility --path . \
        --script res://tests/foundry_review.gd
 
-The last step needs a display. In Linux CI it runs under xvfb-run with a real
+The editable .blend and lit studio images are deliberately baked in VERBA/foundry_build, **outside** the Godot game directory, so Godot never attempts to import .blend headlessly. The last step needs a display. In Linux CI it runs under xvfb-run with a real
 1280x720 OpenGL-compatible viewport.
 
 ## Generated outputs
