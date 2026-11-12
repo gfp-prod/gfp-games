@@ -4,6 +4,7 @@ const ART = preload("res://scripts/art.gd")
 const GRIMOIRE = preload("res://scripts/grimoire.gd")
 const INCANTATION = preload("res://scripts/incantation.gd")
 const GRAMMAR = preload("res://scripts/latin_grammar.gd")
+const VISUAL_LANGUAGE = preload("res://scripts/visual_language.gd")
 var world
 var camera: Camera3D
 var pitch: Node3D
@@ -18,6 +19,8 @@ var echo: Label3D
 var cast_hand: Node3D
 var reticle: Label
 var interaction_hint: Label
+var interaction_plate: PanelContainer
+var survival_plate: PanelContainer
 var prompt_time:=0.0
 var speed:=5.0
 var run_speed:=8.6
@@ -100,6 +103,7 @@ func _ready() -> void:
 	create_first_steps()
 	create_diagnostics()
 	create_conversation_panel()
+	VISUAL_LANGUAGE.dress_player(self)
 	Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 
 func configure_inputs() -> void:
@@ -202,24 +206,41 @@ func create_minimal_reticle() -> void:
 	reticle.add_theme_font_size_override("font_size",28)
 	reticle.add_theme_color_override("font_color",Color("d3c5ab"))
 	layer.add_child(reticle)
+	# Interaction text lives on an iron plaque, never a bare bright HUD
+	# string. The center reticle remains unobstructed by the lower plaque.
+	interaction_plate=PanelContainer.new()
+	interaction_plate.name="WornInteractionPlaque"
+	interaction_plate.set_anchors_preset(Control.PRESET_CENTER)
+	interaction_plate.offset_left=-205
+	interaction_plate.offset_right=205
+	interaction_plate.offset_top=42
+	interaction_plate.offset_bottom=78
+	interaction_plate.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	layer.add_child(interaction_plate)
 	interaction_hint=Label.new()
-	interaction_hint.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	interaction_hint.set_anchors_preset(Control.PRESET_CENTER)
-	interaction_hint.offset_left=-200;interaction_hint.offset_right=200
-	interaction_hint.offset_top=44;interaction_hint.offset_bottom=77
+	interaction_hint.name="EtchedInteractionText"
 	interaction_hint.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	interaction_hint.add_theme_font_size_override("font_size",14)
-	interaction_hint.add_theme_color_override("font_color",Color("c6bba9",.87))
+	interaction_hint.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
+	interaction_hint.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	interaction_hint.text=""
-	layer.add_child(interaction_hint)
-	survival_label = Label.new()
-	survival_label.name = "VitaEtVigorWhenNeeded"
-	survival_label.position = Vector2(26,651)
-	survival_label.add_theme_font_size_override("font_size",16)
-	survival_label.add_theme_color_override("font_color",Color("dcc9a6"))
-	survival_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	survival_label.visible = false
-	layer.add_child(survival_label)
+	interaction_plate.add_child(interaction_hint)
+	interaction_plate.visible=false
+	# A small field-reading of health and endurance appears only when
+	# threatened, pinned to the real viewport bottom rather than y=651.
+	survival_plate=PanelContainer.new()
+	survival_plate.name="IronStatusPlaque"
+	survival_plate.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	survival_plate.offset_left=24
+	survival_plate.offset_right=305
+	survival_plate.offset_top=-66
+	survival_plate.offset_bottom=-24
+	survival_plate.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	layer.add_child(survival_plate)
+	survival_label=Label.new()
+	survival_label.name="VitaEtVigorWhenNeeded"
+	survival_label.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	survival_plate.add_child(survival_label)
+	survival_plate.visible=false
 
 func create_first_steps() -> void:
 	# One compact introductory card, hidden after play begins; H brings it back.
@@ -234,8 +255,8 @@ func create_first_steps() -> void:
 	guide_panel.custom_minimum_size = Vector2(310, 0)
 	guide_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.055, 0.074, 0.070, 0.91)
-	style.border_color = Color(0.53, 0.43, 0.29, 0.85)
+	style.bg_color = Color("242421",.94)
+	style.border_color = Color("726855",.90)
 	style.set_border_width_all(1)
 	style.set_content_margin_all(16)
 	guide_panel.add_theme_stylebox_override("panel", style)
@@ -246,12 +267,12 @@ func create_first_steps() -> void:
 	var head := Label.new()
 	head.text = "V E R B A"
 	head.add_theme_font_size_override("font_size", 19)
-	head.add_theme_color_override("font_color", Color("f0d9ad"))
+	head.add_theme_color_override("font_color", Color("b49a76"))
 	v.add_child(head)
 	var sub := Label.new()
-	sub.text = "WASD move · Mouse look · E interact\nG grimoire · B books · N study\n1-3 answers/dialogue · Enter cast\nC familiar orders · V build · H help"
+	sub.text = "WASD walk · Mouse look · E examine\nG grimoire · B manuscripts · N reading\nEnter Latin · ↑↓ when speaking\nC familiar · V construction · H notes"
 	sub.add_theme_font_size_override("font_size", 14)
-	sub.add_theme_color_override("font_color", Color("ded6bf"))
+	sub.add_theme_color_override("font_color", Color("c9c0ae"))
 	v.add_child(sub)
 	guide_clock = 0.0
 	guide_panel.visible = false
@@ -289,8 +310,8 @@ func create_conversation_panel() -> void:
 	conversation_panel.offset_top = -326
 	conversation_panel.offset_bottom = -18
 	var frame := StyleBoxFlat.new()
-	frame.bg_color = Color(.055,.066,.062,.94)
-	frame.border_color = Color(.55,.46,.32,.90)
+	frame.bg_color = Color("191c1b",.95)
+	frame.border_color = Color("82725b",.9)
 	frame.set_border_width_all(1)
 	frame.set_content_margin_all(16)
 	conversation_panel.add_theme_stylebox_override("panel",frame)
@@ -686,11 +707,15 @@ func _process(delta: float) -> void:
 		diagnostics.text = "WASD: %s  pos: %.1f, %.1f, %.1f\nMouse: %s  Book: %s  Typing: %s" % [str(last_motion),global_position.x,global_position.y,global_position.z,str(Input.mouse_mode),str(book.open),str(typing)]
 	if is_instance_valid(survival_label):
 		survival_label.visible = health < max_health-.05 or stamina < max_stamina-.5
+		if is_instance_valid(survival_plate):
+			survival_plate.visible = survival_label.visible
 		if survival_label.visible:
 			survival_label.text = "VITA  %d / %d     VIGOR  %d / %d" % [
 				ceili(health),int(max_health),ceili(stamina),int(max_stamina)]
 			survival_label.add_theme_color_override("font_color",
 				Color("df9187") if health < 35.0 else Color("dcc9a6"))
+	if is_instance_valid(interaction_plate):
+		interaction_plate.visible=not interaction_hint.text.is_empty() and not book.open and conversation_actor==null
 	reticle.visible=not book.open and not typing and conversation_actor == null and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED
 	held.visible=not book.open and conversation_actor == null and not held_type.is_empty()
 	if held.visible:
