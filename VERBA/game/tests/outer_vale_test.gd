@@ -57,8 +57,13 @@ func _run() -> void:
 	if clerk==null or Vector2(clerk.global_position.x,clerk.global_position.z).distance_to(REGIONS.STATION)>6.5:
 		_fail("The living attendant was left behind in the castle courtyard")
 		return
-	if road.find_child("RoadSegment_1",true,false)==null:
+	var old_road: MeshInstance3D=road.find_child("RoadSegment_1",true,false)
+	if old_road==null:
 		_fail("New distant station is disconnected from the actual visible road")
+		return
+	var road_skin: ShaderMaterial=old_road.material_override as ShaderMaterial
+	if road_skin==null or not road_skin.shader.resource_path.ends_with("aged_road.gdshader"):
+		_fail("Distant road reverted to a perfectly smooth gray plane")
 		return
 
 	var lake: Node3D=world.get_node_or_null("OuterValeRegionalLandmarks/StillwaterLake")
@@ -90,6 +95,34 @@ func _run() -> void:
 		if world.get_node_or_null("OuterValeRegionalLandmarks/"+landmark)==null:
 			_fail("Outer world has no identifiable location: "+landmark)
 			return
+	var history: Node3D=world.get_node_or_null("WeatheredWorldHistory")
+	if history==null:
+		_fail("The weathering layer never made it into the actual scene")
+		return
+	for name in ["OldRoadShouldersAndBoundaryFence","StillwaterDriftwoodAndSedge",
+			"WindbrokenOrchard"]:
+		if name=="WindbrokenOrchard": continue
+		if history.get_node_or_null(name)==null:
+			_fail("A material-history region is missing: "+name)
+			return
+	var scratches: Node3D=station.find_child("WeatheredForecourtHistory",true,false)
+	if scratches==null or scratches.find_child("RustingDeliveryWreck",true,false)==null:
+		_fail("The station is still a clean showroom with no aging or abandonment")
+		return
+	var covered: int=0
+	for group in ["LakeSedges","OldRoadHeather","WitnessMeadow","OrchardThistle"]:
+		var clumps: MultiMeshInstance3D=history.get_node_or_null(group)
+		if clumps==null or clumps.multimesh.instance_count<2500:
+			_fail("Expanded map returned to a giant empty green ground in "+group)
+			return
+		covered+=clumps.multimesh.instance_count
+	if covered<10000:
+		_fail("Outer region cover is too sparse")
+		return
+	var orchard: Node3D=world.get_node_or_null("OuterValeRegionalLandmarks/WindbrokenOrchard")
+	if orchard==null or orchard.find_child("CollapsedOrchardFence",true,false)==null:
+		_fail("Orchard does not show signs of previous habitation")
+		return
 	if world.navigation_region.navigation_mesh.get_polygon_count()<1000:
 		_fail("Navigation was not expanded with the terrain")
 		return
