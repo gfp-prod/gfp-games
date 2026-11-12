@@ -143,7 +143,7 @@ static func _shore_rock_batches(world,root: Node3D) -> void:
 	var rocks:=MultiMeshInstance3D.new()
 	rocks.name="SiltAndPebblesAtWaterline"
 	rocks.multimesh=mm
-	var material:=world.textured("res://assets/textures/stone.png",Color("8d8b80"))
+	var material: StandardMaterial3D=world.textured("res://assets/textures/stone.png",Color("8d8b80"))
 	material.vertex_color_use_as_albedo=true
 	rocks.material_override=material
 	root.add_child(rocks)
@@ -198,10 +198,10 @@ static func _path(world,parent: Node3D,points: Array[Vector2],
 	parent.add_child(road)
 
 static func _distant_landmarks(world,root: Node3D) -> void:
-	var wet_stone:=world.textured("res://assets/textures/wet_fieldstone.png",
+	var wet_stone: StandardMaterial3D=world.textured("res://assets/textures/wet_fieldstone.png",
 		Color("817d73"))
-	var oak:=world.textured("res://assets/textures/wood.png",Color("74604a"))
-	var moss:=world.textured("res://assets/textures/moss.png",Color("72785f"))
+	var oak: StandardMaterial3D=world.textured("res://assets/textures/wood.png",Color("74604a"))
+	var moss: StandardMaterial3D=world.textured("res://assets/textures/moss.png",Color("72785f"))
 	var iron:=ART.mat(Color("4d4f4b"),.86)
 	# Ruined lakeside toll-post.
 	var toll:=Node3D.new()
@@ -317,7 +317,7 @@ static func _remote_gravel(world,root: Node3D) -> void:
 	var pebbles:=MultiMeshInstance3D.new()
 	pebbles.name="RegionalGravelDeposits"
 	pebbles.multimesh=mm
-	var surface:=world.textured("res://assets/textures/stone.png",Color("b7afa0"))
+	var surface: StandardMaterial3D=world.textured("res://assets/textures/stone.png",Color("b7afa0"))
 	surface.vertex_color_use_as_albedo=true
 	pebbles.material_override=surface
 	root.add_child(pebbles)
@@ -325,8 +325,8 @@ static func _remote_gravel(world,root: Node3D) -> void:
 static func _remote_heath(world,root: Node3D) -> void:
 	# A few clean distant silhouettes rather than a blank new hundred metres.
 	# Geometry is decorative; it cannot reorder existing saved tree IDs.
-	var trunk:=world.textured("res://assets/textures/bark.png",Color("554939"))
-	var olive:=world.textured("res://assets/textures/moss.png",Color("68715b"))
+	var trunk: StandardMaterial3D=world.textured("res://assets/textures/bark.png",Color("554939"))
+	var olive: StandardMaterial3D=world.textured("res://assets/textures/moss.png",Color("68715b"))
 	var rng:=RandomNumberGenerator.new()
 	rng.seed=781933
 	var stands: Array[Dictionary]=[
