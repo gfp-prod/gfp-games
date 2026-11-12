@@ -121,8 +121,8 @@ func _ready() -> void:
 	var tunic:=ART.cone(figure,Vector3(0,1.125,0),.285,.56,cloth,.205,12)
 	tunic.name="TaperedVillagerTunic"
 	ART.cone(figure,Vector3(0,.79,0),.315,.52,cloth,.255,12)
-	ART.bone(figure,Vector3(0,1.45,0),Vector3(0,1.63,0),
-		.19,.16,cloth,10)
+	ART.bone(figure,Vector3(0,1.45,0),Vector3(0,1.58,0),
+		.14,.115,cloth,10)
 	var head:=ART.orb(figure,Vector3(0,1.77,0),
 		Vector3(.42,.49,.39),skin,13)
 	head.name="ModeledInhabitantHead"
@@ -384,34 +384,33 @@ func _apply_genetic_growth() -> void:
 
 func _make_baker_apron(parent: Node3D, fabric: Material,
 		tie: Material, genome: Dictionary) -> void:
-	# Drape the apron OVER the same inherited bust/waist/hip sculpt
-	# used by the wearable tunic. The old fixed-world Z coordinates were
-	# buried behind inherited torso geometry; only its pocket showed.
-	# Three sections x three lateral samples retain 24 triangles/vertices
-	# and the familiar named baker outfit for save/visual regressions.
+	# The chest has its own anatomical curve. Sampling only at the
+	# top and waist lets the physical ribcage and bust protrude through
+	# the flat apron, creating a giant brown hole in the actual render.
+	# A genuine conformal surface follows inherited chest/waist/hips
+	# at 8 heights and 5 lateral points, without introducing colliders.
+	const COLUMNS: int=5
+	const HEIGHTS: Array[float]=[1.40,1.35,1.29,1.24,1.17,1.08,.93,.77,.64,.55]
 	var vertices: Array[Vector3]=[]
-	for section in [
-		{"height":1.40,"half_width":.20},
-		{"height":1.04,"half_width":.24},
-		{"height":.55,"half_width":.285}
-	]:
-		var y: float=float(section["height"])
-		var half_width: float=float(section["half_width"])
+	for y in HEIGHTS:
+		var t: float=clampf((1.40-y)/.85,0.0,1.0)
+		var half_width: float=lerpf(.20,.285,t)
 		var torso_section: Vector2=BODY._section(y,genome)
-		for fraction in [-1.0,0.0,1.0]:
+		for col in range(COLUMNS):
+			var fraction: float=float(col)/float(COLUMNS-1)*2.0-1.0
 			var x: float=half_width*fraction
 			var angle: float=-PI*.5+asin(clampf(x/torso_section.x,-.89,.89))
 			var point: Vector3=BODY._point(y,angle,genome)
-			# The outer tunic is 4.2% wider than the body. This 6cm
-			# cloth allowance clears the real chest without a billboard.
-			vertices.append(Vector3(x,y,point.z-.068))
+			# Keep the cloth off the curved belly/bust at *every* row
+			# and undercut the outside of the 4.2%-wider outer tunic.
+			vertices.append(Vector3(x,y,point.z-.080))
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(fabric)
-	for row in range(2):
-		for column in range(2):
-			var i: int=row*3+column
-			for j in [i,i+1,i+3,i+1,i+4,i+3]:
+	for row in range(HEIGHTS.size()-1):
+		for column in range(COLUMNS-1):
+			var i: int=row*COLUMNS+column
+			for j in [i,i+1,i+COLUMNS,i+1,i+COLUMNS+1,i+COLUMNS]:
 				surface.set_uv(Vector2(vertices[j].x+.5,vertices[j].y))
 				surface.add_vertex(vertices[j])
 	surface.generate_normals()
