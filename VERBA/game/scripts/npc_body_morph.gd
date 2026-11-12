@@ -76,6 +76,11 @@ static func finish(root: Node3D,g: Dictionary,cloth: Material,
 	var garment:=MeshInstance3D.new()
 	garment.name="InheritedChestWaistHipCloth"
 	garment.mesh=sculpt.commit()
+	# The torso is a thin cloth shell with interior visible at the open
+	# neck. Render both sides instead of having silhouette patches vanish
+	# when the camera is below the inherited garment surface.
+	if cloth is StandardMaterial3D:
+		(cloth as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
 	garment.material_override=cloth
 	garment.set_meta("seamless_ribcage_waist_hips",true)
 	garment.set_meta("genetic_bust_shape",GENES.value(g,"bust_volume"))
