@@ -1,0 +1,108 @@
+name: VERBA free Quaternius Standard architecture in Godot
+on:
+  push:
+    branches: ["verba/blender-asset-foundry"]
+    paths:
+      - ".github/workflows/verba-quaternius-standard-import.yml"
+      - "VERBA/game/tools/art_foundry/import_quaternius_standard.py"
+      - "VERBA/game/tests/quaternius_standard_review.gd"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verba-quaternius-std-import
+  cancel-in-progress: false
+
+jobs:
+  import-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install free source-image decoder
+        run: |
+          python3 -m pip install --quiet Pillow==11.3.0
+          python3 -m py_compile tools/art_foundry/import_quaternius_standard.py
+      - name: Import ONLY genuine CC0 Standard (not Pro/Source)
+        run: |
+          set -o pipefail
+          python3 tools/art_foundry/import_quaternius_standard.py \
+            2>&1 | tee /tmp/verba-quaternius-standard.log
+          grep -q 'QUATERNIUS_STANDARD_IMPORT_PASS 4 ' /tmp/verba-quaternius-standard.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          d=Path("assets/models/cc0/quaternius/medieval-standard")
+          j=json.loads((d/"SOURCE_MANIFEST.json").read_text())
+          assert j["license"]=="CC0-1.0" and "Standard" in j["original_pack"]
+          assert len(j["models"])==4 and len(j["textures"])>=5
+          assert all((d/p["model"]).exists() for p in j["models"])
+          print("PASS: Quaternius Standard only, four glTF assets and original PBR texture references present")
+          PY
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Godot import of actual authored free medieval meshes
+        run: |
+          timeout 240s godot --headless --path . --editor --import --quit
+      - name: Verify live physical houses and photograph original/new geometry
+        run: |
+          set -o pipefail
+          timeout 650s xvfb-run -a -s "-screen 0 1280x720x24" \
+            godot --rendering-driver opengl3 --rendering-method gl_compatibility \
+            --path . --script res://tests/quaternius_standard_review.gd \
+            2>&1 | tee /tmp/verba-quaternius-game.log
+          grep -q 'PASS: four genuine CC0 Quaternius Standard glTF sources load' /tmp/verba-quaternius-game.log
+          if grep -E 'SCRIPT ERROR:|Parse Error:|Compile Error:|FREE MEDIEVAL KIT FAIL:' /tmp/verba-quaternius-game.log; then
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image,ImageChops
+          d=Path('tests/quaternius_frames')
+          for n in ('01_medieval_threshold','02_stonecutter_shutters','03_miller_steps'):
+              a=Image.open(d/(n+'_before.png')).convert('RGB')
+              b=Image.open(d/(n+'_new.png')).convert('RGB')
+              assert a.size==b.size==(1280,720)
+              changed=ImageChops.difference(a,b).getbbox()
+              assert changed, 'Model invisible at both camera views: '+n
+              print('PASS QUATERNIUS IMAGE',n,changed)
+          PY
+      - name: Preserve six real in-game architecture comparisons
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verba-quaternius-free-standard-game-art
+          path: |
+            VERBA/game/tests/quaternius_frames/*.png
+            VERBA/game/assets/models/cc0/quaternius/medieval-standard/SOURCE_MANIFEST.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Bundle ONLY source-verified free Standard files into game branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/verba/blender-asset-foundry'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/models/cc0/quaternius/medieval-standard/
+          if git diff --cached --quiet; then
+            echo "Already committed"
+          else
+            git commit -m "VERBA art: bundle four free Quaternius Standard architecture GLTFs and source maps"
+            for attempt in 1 2 3 4 5; do
+              git pull --rebase origin verba/blender-asset-foundry
+              if git push origin HEAD:verba/blender-asset-foundry; then
+                echo "PASS: Quaternius Standard assets checked into working RPG"
+                exit 0
+              fi
+              sleep $((attempt*2))
+            done
+            exit 1
+          fi
