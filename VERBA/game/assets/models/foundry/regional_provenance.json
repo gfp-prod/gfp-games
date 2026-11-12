@@ -89,6 +89,16 @@
       "faces": 4026,
       "sha256": "c527a21979d8d431716d6c5e0d00fddca22b3782b34166d5e52e3c7cab21d5e4",
       "size_bytes": 14707732
+    },
+    {
+      "name": "castle_gatehouse",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 6,
+      "faces": 36098,
+      "sha256": "48b1e1bb54ca3067faea8cab384764803df547b64c44e5826b03fb1a35507a98",
+      "size_bytes": 13658700
     }
   ]
 }
