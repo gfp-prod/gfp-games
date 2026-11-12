@@ -405,7 +405,7 @@ func refresh_conversation() -> void:
 	if conversation_listening:
 		conversation_footer.text = "> " + conversation_buffer + "▌\nEnter: speak    Esc: stop writing"
 	else:
-		conversation_footer.text = "Enter: speak Latin    1–6 respond    Esc / E leave"
+		conversation_footer.text = "Enter: speak Latin    1–7 respond    Esc / E leave"
 	conversation_panel.visible = true
 
 func choose_conversation_option(index: int) -> Dictionary:
