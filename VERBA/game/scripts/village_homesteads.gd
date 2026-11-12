@@ -28,8 +28,18 @@ static func build(world: Node3D) -> void:
 	root.name="PhysicalVillageHomesteads"
 	world.add_child(root)
 	var installed: int=0
-	var timber: Material=world.textured(
-		"res://assets/textures/real/cottage_wood_diffuse.jpg",Color("65594d"))
+	# A true worn-board photographic PBR surface for the handcart, house
+	# joinery and practical yard wood; preserve original if not bundled yet.
+	var planks_path: String="res://assets/textures/cc0/polyhaven/weathered_planks_diffuse.png"
+	if not ResourceLoader.exists(planks_path):
+		planks_path="res://assets/textures/real/cottage_wood_diffuse.jpg"
+	var timber: StandardMaterial3D=world.textured(planks_path,Color("65594d"))
+	if ResourceLoader.exists("res://assets/textures/cc0/polyhaven/weathered_planks_normal.png"):
+		timber.normal_enabled=true
+		timber.normal_scale=.42
+		timber.normal_texture=load("res://assets/textures/cc0/polyhaven/weathered_planks_normal.png")
+	if ResourceLoader.exists("res://assets/textures/cc0/polyhaven/weathered_planks_rough.png"):
+		timber.roughness_texture=load("res://assets/textures/cc0/polyhaven/weathered_planks_rough.png")
 	var stone: Material=world.textured(
 		"res://assets/textures/real/stone_diffuse.jpg",Color("8d8b81"))
 	var metal: Material=ART.mat(Color("5e615c"),.78)
