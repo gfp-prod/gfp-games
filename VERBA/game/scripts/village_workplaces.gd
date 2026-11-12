@@ -40,8 +40,8 @@ func _sign(parent: Node3D, writing: String, at: Vector3, tone: Color, yaw: float
 	var text_node := Label3D.new()
 	text_node.name = "CarvedWorkplaceSign"
 	text_node.text = writing
-	text_node.font_size = 48
-	text_node.pixel_size = .0032
+	text_node.font_size = 32
+	text_node.pixel_size = .0025
 	text_node.modulate = tone
 	text_node.outline_size = 0
 	text_node.no_depth_test = false
@@ -308,7 +308,12 @@ func _build_market() -> void:
 	for x in [-.93,-.28,.37,.97]:
 		ART.box(stall,Vector3(x,2.61,-.98),Vector3(.48,.30,.07),pale)
 	ART.box(stall,Vector3(0,.98,0),Vector3(2.55,.16,1.35),timber)
-	_sign(stall,"MERCATUS",Vector3(0,2.06,-.82),pale.albedo_color)
+	# The name is etched on a physical timber fascia below the awning.
+	# The former bare letters hung in midair over conversations.
+	var market_board: MeshInstance3D=ART.box(stall,Vector3(0,2.10,-.90),
+		Vector3(1.92,.48,.105),timber)
+	market_board.name="MarketTimberNameFascia"
+	_sign(stall,"MERCATUS",Vector3(0,2.085,-.962),Color("d2c3a3"))
 
 func is_field_target(point: Vector3) -> bool:
 	# The spell must actually touch Daro's cultivated ground, not a
