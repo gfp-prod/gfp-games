@@ -4,6 +4,10 @@ extends RefCounted
 ## interactions and scene coordinates remain untouched.
 const FOUNDRY = "res://assets/models/foundry/"
 const REPLACEMENTS: Array[Dictionary] = [
+	# Only shop-level procedural meshes: preserve child ruins, labels, lights,
+	# the already-imported delivery truck, all physical shop and pump bodies.
+	{"path":"StrangeRoadDistrict/ValeFuelStation",
+	 "asset":"roadside_station","direct_only":true},
 	{"path":"ValleyScenicDetails/OldCreekFootbridge","asset":"old_creek_footbridge"},
 	{"path":"OuterValeRegionalLandmarks/StillwaterLake/OldFishingJetty","asset":"old_fishing_jetty"},
 	{"path":"OuterValeRegionalLandmarks/SevenWeatheredWitnessStones","asset":"witness_stone_circle"},
@@ -24,11 +28,13 @@ static func apply(world: Node3D) -> void:
 		if target == null:
 			push_warning("Foundry target not present: "+String(definition["path"]))
 			continue
-		if replace_visuals(target,String(definition["asset"])):
+		if replace_visuals(target,String(definition["asset"]),
+				bool(definition.get("direct_only",false))):
 			applied += 1
 	world.set_meta("foundry_replacements",applied)
 
-static func replace_visuals(target: Node3D, asset_name: String) -> bool:
+static func replace_visuals(target: Node3D, asset_name: String,
+		direct_only: bool=false) -> bool:
 	var path: String = FOUNDRY+asset_name+".glb"
 	if not ResourceLoader.exists(path):
 		# A fresh checkout remains playable until the Actions build
@@ -48,10 +54,15 @@ static func replace_visuals(target: Node3D, asset_name: String) -> bool:
 		return false
 	candidate.name="BlenderAuthored_"+asset_name
 	# Hide only geometry, NEVER physics bodies or collision/navigation.
-	for old_mesh in target.find_children("*","MeshInstance3D",true,false):
-		(old_mesh as MeshInstance3D).visible=false
-	for old_multimesh in target.find_children("*","MultiMeshInstance3D",true,false):
-		(old_multimesh as MultiMeshInstance3D).visible=false
+	if direct_only:
+		for child in target.get_children():
+			if child is MeshInstance3D or child is MultiMeshInstance3D:
+				(child as GeometryInstance3D).visible=false
+	else:
+		for old_mesh in target.find_children("*","MeshInstance3D",true,false):
+			(old_mesh as MeshInstance3D).visible=false
+		for old_multimesh in target.find_children("*","MultiMeshInstance3D",true,false):
+			(old_multimesh as MultiMeshInstance3D).visible=false
 	target.add_child(candidate)
 	target.set_meta("foundry_model",asset_name)
 	target.set_meta("foundry_sections",sections)
