@@ -9,7 +9,8 @@ static func new_state() -> Dictionary:
 	for part in PARTS: integrity[part]=MAX_INTEGRITY
 	return {"integrity":integrity,"missing":[],"bleeding":0.0,
 		"vitality":100.0,"bandaged":false,"support":"none",
-		"injured_tick":-1,"last_care_tick":-100}
+		"injured_tick":-1,"last_care_tick":-100,
+		"last_hit_part":""}
 
 static func validate(state: Variant) -> bool:
 	if not (state is Dictionary): return false
@@ -29,6 +30,7 @@ static func validate(state: Variant) -> bool:
 	if flow<0.0 or flow>20.0 or life<0.0 or life>100.0: return false
 	if String(state.get("support","none")) not in ["none","crutch","peg"]: return false
 	if state.get("bandaged",false) is not bool: return false
+	if String(state.get("last_hit_part","")) not in [""]+PARTS: return false
 	return true
 
 static func injured(state: Dictionary) -> bool:
@@ -52,6 +54,7 @@ static func strike(state: Dictionary, part: String, force: float, tick: int) -> 
 		state["bleeding"]=minf(20.0,float(state["bleeding"])+force*.012)
 	state["vitality"]=maxf(0.0,float(state["vitality"])-force*.10)
 	state["injured_tick"]=tick
+	state["last_hit_part"]=part
 	return {"ok":true,"severed":severed,"part":part,
 		"bleeding":state["bleeding"],"remaining":remaining}
 
