@@ -203,8 +203,10 @@ func _check() -> void:
 		# A 1.4-metre central corridor remains free of the only two new
 		# furniture blockers; existing masonry owns the entrance.
 		for obstacle_name in ["PhysicalDomesticBed","PhysicalDomesticHearth"]:
-			var obstacle: Node3D=house.get_node(obstacle_name) as Node3D
-			if absf(obstacle.position.x)<.8 or obstacle.position.z<.5:
+			var obstacle: StaticBody3D=house.get_node(obstacle_name) as StaticBody3D
+			var solid_shape: CollisionShape3D=obstacle.get_node_or_null(
+				"CollisionShape3D") as CollisionShape3D
+			if solid_shape==null or absf(solid_shape.position.x)<.8 or solid_shape.position.z<.5:
 				_fail("Furnishing intersects the house's open front aisle")
 				return
 	# The new homesteads must be settled into the ACTUAL physical terrain:
