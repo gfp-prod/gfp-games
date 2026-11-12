@@ -79,7 +79,14 @@ func _run() -> void:
 		return
 	world.village_sim.economy.stocks["herb"]=0
 	world.village_sim.observe_wound("daro",["sela"])
-	world.village_sim.nearby_care["sela"]=["daro"]
+	# Photograph the result of care at genuine touching distance.
+	var helper: Node3D=_find(world,"sela")
+	if helper==null:
+		_fail("The farmer's spouse is missing")
+		return
+	helper.set_physics_process(false)
+	helper.global_position=daro.global_position+Vector3(1.4,0.0,0)
+	world._refresh_neighbor_care()
 	if not world.village_sim._perform_neighbor_aid("sela","daro"):
 		_fail("Spouse could not build the resource-funded peg")
 		return
