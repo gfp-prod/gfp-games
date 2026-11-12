@@ -370,9 +370,9 @@ func height_at(x: float,z: float) -> float:
 	var station_delta: Vector2=Vector2(x,z)-WORLD_REGIONS.STATION
 	var station_x_edge: float=absf(station_delta.x)/6.4 if station_delta.x<0.0 else station_delta.x/10.0
 	var station_edge: float=maxf(station_x_edge,absf(station_delta.y)/5.0)
-	if station_edge<1.16:
+	if station_edge<1.64:
 		raw=lerpf(raw,_raw_height_at(WORLD_REGIONS.STATION.x,WORLD_REGIONS.STATION.y),
-			1.0-smoothstep(1.0,1.16,station_edge))
+			1.0-smoothstep(1.0,1.64,station_edge))
 	if absf(x-29.0) > 13.0 or absf(z-8.0) > 13.0:
 		return raw
 	var local: Vector2 = cottage_local_xz(x,z)
