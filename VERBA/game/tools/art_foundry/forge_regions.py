@@ -227,12 +227,81 @@ def dead_tree(g):
         a=2*math.pi*i/8
         lichen.rock((math.cos(a)*.35,1.2+i*.43,math.sin(a)*.32),(.24,.30,.23),190+i)
 
+def ridge_arch(g):
+    stone,lichen=g["stone"],g["lichen"]
+    # Walkthrough gap from x -0.85 to +0.85 and original pillars +/-1.2.
+    for side in [-1,1]:
+        x=side*1.22
+        for course in range(6):
+            h=.24+course*.45
+            stone.rock((x+R.uniform(-.05,.05),h,R.uniform(-.07,.07)),
+                       (.83,.47,.90),1000+course*11+(side+1))
+        stone.rock((x,2.66,0),(.97,.47,.98),1005+side)
+        # Crumbling springer arches, intentionally missing a few units.
+    for i in range(11):
+        t=math.pi*float(i)/10.0
+        if i in [1,8]: continue
+        x=math.cos(t)*1.23
+        y=2.82+math.sin(t)*1.29
+        stone.rock((x,y,.02),(.53,.54,.86),1100+i)
+        if i%3==0:
+            lichen.rock((x+.05,y+.22,.02),(.33,.18,.52),1300+i)
+    for i in range(11):
+        x=R.uniform(-2.55,2.55); z=R.choice([-1,1])*R.uniform(.65,2.10)
+        stone.rock((x,.12,z),(R.uniform(.25,.72),.22,R.uniform(.25,.52)),1400+i)
+
+def prayer_shrine(g):
+    stone,lichen,timber=g["stone"],g["lichen"],g["timber"]
+    # Base shares original 1.8m altar collision; keep its exposed top reachable.
+    for x in [-.53,0,.53]:
+        for z in [-.4,.37]:
+            stone.rock((x,.28,z),(.68,.59,.69),1500+int((x+2)*100+(z+2)*80))
+    stone.box((0,.72,0),(1.75,.26,1.37))
+    # Split low standing tablet above the altar; deliberately not generic cross.
+    stone.rock((0,1.56,-.31),(1.20,1.58,.50),1559)
+    lichen.rock((.35,1.76,-.34),(.29,.52,.22),1560)
+    for side in [-1,1]:
+        timber.beam((side*.38,.90,.30),(side*.38,1.20,.30),.06)
+    # A scattering of old offerings at ground level.
+    for i in range(8):
+        a=2*math.pi*i/8
+        stone.rock((math.cos(a)*1.3,.12,math.sin(a)*1.09),
+                   (.27,.18,.25),1570+i)
+
+def charcoal_kiln(g):
+    stone,lichen,dark=g["stone"],g["lichen"],g["dark"]
+    # Original cold kiln footprint is 2.1m square. Cracked concentric masonry
+    # with an open dark firemouth instead of an intact toy pyramid.
+    for course in range(6):
+        y=.20+course*.37
+        radius=1.55-.16*course
+        for i in range(13):
+            if course<4 and i in [0,1,12]:continue
+            if course==5 and i in [5,6,7]:continue
+            a=2*math.pi*i/13+course*.08
+            b=2*math.pi*(i+.83)/13+course*.08
+            p=(math.cos(a)*radius,y,math.sin(a)*radius)
+            q=(math.cos(b)*radius,y,math.sin(b)*radius)
+            stone.beam(p,q,.40,.38)
+            if course>2 and i%4==0:
+                lichen.rock((math.cos(a)*radius,y+.18,math.sin(a)*radius),
+                            (.28,.18,.28),2000+course*19+i)
+    dark.box((1.23,.36,0),(.15,.54,.85))
+    for i in range(14):
+        a=2*math.pi*i/14
+        stone.rock((math.cos(a)*1.86,.09,math.sin(a)*1.80),
+                   (.45,.18,.47),2400+i)
+
+
 BUILDERS={
     "old_creek_footbridge":bridge,
     "old_fishing_jetty":jetty,
     "witness_stone_circle":standing_stones,
     "rusting_delivery_wreck":wreck,
-    "dead_ash_tree":dead_tree
+    "dead_ash_tree":dead_tree,
+    "ridge_arch":ridge_arch,
+    "stone_prayer_shrine":prayer_shrine,
+    "cold_charcoal_kiln":charcoal_kiln
 }
 
 def export_asset(out,name,builder):
