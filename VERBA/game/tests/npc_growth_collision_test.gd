@@ -27,6 +27,14 @@ func _run() -> void:
 	var talk: CollisionShape3D=child.get_node_or_null(
 		"LivingNPCConversationCollider/CollisionShape3D")
 	if walk==null or parent_walk==null or talk==null:
+		print("GROWTH_DIAGNOSTIC child_mobile=",child.mobile,
+			" parent_mobile=",parent.mobile,
+			" child_walker=",walk," parent_walker=",parent_walk,
+			" conversation=",talk)
+		for actor in [child,parent]:
+			for node in actor.get_children():
+				print("GROWTH_NODE ",actor.npc_id," ",node.name,
+					" ",node.get_class())
 		_fail("Physical walking or ray-interaction capsule was lost"); return
 	if not (walk.shape is CapsuleShape3D) or not (talk.shape is CapsuleShape3D):
 		_fail("Modular physical actor lost its original capsule physics"); return
