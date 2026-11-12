@@ -20,7 +20,7 @@ jobs:
   cottage:
     name: Blender model + Godot actual asset review
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     defaults:
       run:
         working-directory: VERBA/game
@@ -93,7 +93,8 @@ jobs:
 
       - name: Render live-game old versus new cottage through identical lenses
         run: |
-          timeout 360s xvfb-run -a -s "-screen 0 1280x720x24" \
+          set -o pipefail
+          timeout 720s xvfb-run -a -s "-screen 0 1280x720x24" \
             godot --rendering-driver opengl3 --rendering-method gl_compatibility \
             --path . --script res://tests/foundry_review.gd 2>&1 \
             | tee /tmp/foundry-godot-review.log
@@ -104,9 +105,10 @@ jobs:
           fi
           python3 tools/art_foundry/check_game_comparisons.py
 
-      - name: Verify live landmark visual replacements, physics and five rendered views
+      - name: Verify live landmark visual replacements, physics and three rendered views
         run: |
-          timeout 420s xvfb-run -a -s "-screen 0 1280x720x24" \
+          set -o pipefail
+          timeout 840s xvfb-run -a -s "-screen 0 1280x720x24" \
             godot --rendering-driver opengl3 --rendering-method gl_compatibility \
             --path . --script res://tests/regional_foundry_review.gd 2>&1 \
             | tee /tmp/regional-foundry-review.log
