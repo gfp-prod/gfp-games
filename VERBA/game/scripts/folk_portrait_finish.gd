@@ -236,32 +236,43 @@ static func finish(figure: Node3D,person: String,skin: Material,
 			dot.name="InheritedFreckle"
 	root.set_meta("expression_blink",0.0)
 
-static func expression(figure: Node3D,feel: float,blink: float=0.0) -> void:
+static func expression(figure: Node3D,feel: float,blink: float=0.0,
+		speaking: bool=false,conversation_phase: float=0.0) -> void:
 	var root: Node3D=figure.get_node_or_null("IndividualFaceConstruction")
 	if root==null: return
 	var emotion: float=clampf(feel,-1.0,1.0)
 	var eyelid_drop: float=clampf(blink,0.0,1.0)
+	var tension: float=maxf(0.0,-emotion)
 	for part in ["ExpressionEyeLeft","ExpressionEyeRight"]:
 		var eye: Node3D=root.get_node_or_null(part)
 		if eye!=null:
-			eye.scale.y=lerpf(1.0,.09,eyelid_drop)
+			var opening: float=clampf(1.0-tension*.27-eyelid_drop*.91,.09,1.0)
+			eye.scale.y=lerpf(eye.scale.y,opening,.29)
 	for part in ["ExpressionBrowLeft","ExpressionBrowRight"]:
 		var brow: Node3D=root.get_node_or_null(part)
 		if brow!=null:
+			# Preserve the actual inherited eyebrow height: older animation
+			# reset every person's brow to the same Y after one frame.
+			var rest: float=float(brow.get_meta("rest_y",brow.position.y))
+			var inherited_tilt: float=float(brow.get_meta("rest_tilt",0.0))
+			var side: float=-1.0 if part.ends_with("Left") else 1.0
 			brow.position.y=lerpf(brow.position.y,
-				1.843+emotion*.009,0.18)
+				rest+emotion*.016+(side*.005 if speaking else 0.0),.20)
 			brow.rotation.z=lerpf(brow.rotation.z,
-				(-.14 if part.ends_with("Left") else .14)*emotion,0.18)
+				inherited_tilt+side*emotion*.20,.20)
 	var mouth: Node3D=root.get_node_or_null("ExpressionMouth")
 	if mouth!=null:
-		mouth.scale.x=lerpf(mouth.scale.x,1.0+maxf(0,emotion)*.22,.16)
-		mouth.scale.y=lerpf(mouth.scale.y,1.0+absf(emotion)*.48,.16)
+		mouth.scale.x=lerpf(mouth.scale.x,1.0+maxf(0.0,emotion)*.18,.18)
+		mouth.scale.y=lerpf(mouth.scale.y,1.0+absf(emotion)*.31,.18)
 		var left: Node3D=mouth.get_node_or_null("ExpressionLipLeft") as Node3D
 		var right: Node3D=mouth.get_node_or_null("ExpressionLipRight") as Node3D
-		if left!=null: left.rotation.z=lerpf(left.rotation.z,-emotion*.40,.22)
-		if right!=null: right.rotation.z=lerpf(right.rotation.z,emotion*.40,.22)
-		var opening: MeshInstance3D=mouth.get_node_or_null("ExpressionMouthOpening") as MeshInstance3D
-		if opening!=null:
-			opening.visible=emotion<-.42
-			opening.scale.y=.6+absf(emotion)*2.0
+		if left!=null: left.rotation.z=lerpf(left.rotation.z,-emotion*.45,.25)
+		if right!=null: right.rotation.z=lerpf(right.rotation.z,emotion*.45,.25)
+		var opening_mesh: MeshInstance3D=mouth.get_node_or_null("ExpressionMouthOpening") as MeshInstance3D
+		if opening_mesh!=null:
+			var syllable: float=absf(sin(conversation_phase*7.5))
+			var talking: bool=speaking and syllable>.38
+			opening_mesh.visible=talking or emotion<-.64
+			opening_mesh.scale.y=lerpf(.7,2.5,syllable) if talking else .6+absf(emotion)*2.0
 	root.set_meta("expression_blink",eyelid_drop)
+	root.set_meta("expression_speaking",speaking)
