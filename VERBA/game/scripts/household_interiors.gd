@@ -66,17 +66,17 @@ static func _bed(room: Node3D, timber: Material, linen: Material, wool: Material
 
 static func _hearth(room: Node3D, stone: Material, iron: Material,
 		soot: Material) -> void:
-	# A small banked domestic firebox against the far west wall. It is
+	# A small banked domestic firebox against the west wall near the entrance, well clear of the licensed shelves. It is
 	# deliberately dark in daylight: the world's existing night lighting
 	# provides a subtle hearth glow after dusk, not permanent neon embers.
 	var hearth:=Node3D.new()
 	hearth.name="SootMarkedDomesticHearth"
 	room.add_child(hearth)
-	ART.box(hearth,Vector3(-2.00,.22,2.45),Vector3(.83,.34,.65),stone)
-	ART.box(hearth,Vector3(-2.00,.36,2.40),Vector3(.59,.045,.46),soot)
+	ART.box(hearth,Vector3(-2.00,.22,-1.48),Vector3(.83,.34,.65),stone)
+	ART.box(hearth,Vector3(-2.00,.36,-1.43),Vector3(.59,.045,.46),soot)
 	for x in [-2.37,-1.63]:
-		ART.stone(hearth,Vector3(x,.34,2.47),Vector3(.22,.36,.43),stone)
-	ART.bone(hearth,Vector3(-2.26,.61,2.40),Vector3(-1.74,.61,2.40),
+		ART.stone(hearth,Vector3(x,.34,-1.48),Vector3(.22,.36,.43),stone)
+	ART.bone(hearth,Vector3(-2.26,.61,-1.43),Vector3(-1.74,.61,-1.43),
 		.029,.029,iron,9)
 
 static func _craft_table(room: Node3D, kind: String, timber: Material,
@@ -155,17 +155,25 @@ static func build(world: Node3D, house: Node3D, kind: String,
 	var soot:=ART.mat(Color("342e29"),1.0)
 	var clay:=ART.mat(Color("856957") if kind=="stonecutter" else Color("967a61"),.97)
 	var flour:=ART.mat(Color("a99c84"),1.0)
-	_bed(room,timber,linen,wool)
+	# A genuine Kenney CC0 bed is already placed in MillwardHouse by the
+	# source-pinned asset installer. Do not put a second bed through it.
+	# A bare checkout still gets the authored bed instead of an empty room.
+	var licensed_bed: bool=kind=="miller" and ResourceLoader.exists(
+		"res://assets/models/cc0/kenney/furniture/bedSingle.glb")
+	if not licensed_bed:
+		_bed(room,timber,linen,wool)
 	_hearth(room,stone,iron,soot)
 	_craft_table(room,kind,timber,stone,iron,clay,flour)
 	_storage(room,timber,clay,kind)
 	# These two forms are the only new blocking furniture; both are
 	# behind the front threshold and built BEFORE world navigation bakes.
-	world.add_solid_box(house,Vector3(1.51,.38,1.62),
-		Vector3(1.30,.62,2.02),"PhysicalDomesticBed")
-	world.add_solid_box(house,Vector3(-2.00,.26,2.45),
+	if not licensed_bed:
+		world.add_solid_box(house,Vector3(1.51,.38,1.62),
+			Vector3(1.30,.62,2.02),"PhysicalDomesticBed")
+	world.add_solid_box(house,Vector3(-2.00,.26,-1.48),
 		Vector3(.90,.50,.72),"PhysicalDomesticHearth")
 	room.set_meta("occupation",kind)
+	room.set_meta("uses_licensed_bed",licensed_bed)
 	room.set_meta("new_simulation_entities",0)
 	room.set_meta("authored_storage_vessels",4)
 	room.set_meta("walkable_door_clear",true)
