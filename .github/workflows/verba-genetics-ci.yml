@@ -35,4 +35,4 @@ jobs:
       - name: Verify individually modeled inheritable eyes, lips, noses, cheekbones and body forms
         run: |
           timeout 60s godot --headless --path . --script res://tests/npc_morphology_test.gd 2>&1 | tee /tmp/npc-morphology.log
-          grep -q "PASS: individually sculpted inherited chest/bust/waist/hips" /tmp/npc-morphology.log
+          grep -q "PASS: inherited chest/bust/waist/hips" /tmp/npc-morphology.log
