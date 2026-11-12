@@ -26,6 +26,8 @@ const LANDMARK_TREE = preload("res://scripts/landmark_tree.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
 const LATIN_WAYSTONE = preload("res://scripts/latin_waystone.gd")
+const WORLD_REGIONS = preload("res://scripts/world_regions.gd")
+const WORLD_EXPANSION = preload("res://scripts/world_expansion.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
 var magic
@@ -80,6 +82,7 @@ var leaf_green: Array[Material] = []
 var leaf_rust: Array[Material] = []
 var leaf_blue: Array[Material] = []
 var ground_seed := 1938
+var lake_water_level: float = 0.0
 const CC0_DIR: String = "res://assets/textures/real/"
 
 func _ready() -> void:
@@ -90,6 +93,7 @@ func _ready() -> void:
 	terrain_noise.fractal_octaves=4
 	small_noise.seed=77421
 	small_noise.frequency=.13
+	lake_water_level=_raw_height_at(WORLD_REGIONS.LAKE.x,WORLD_REGIONS.LAKE.y)-.38
 	setup_materials()
 	setup_atmosphere()
 	build_terrain()
@@ -105,6 +109,9 @@ func _ready() -> void:
 	HOME_DRESSING.populate(self)
 	SCENIC_DETAILS.populate(self)
 	build_water()
+	# Physical lake, remote routes and landmarks: scenery with no ecological
+	# UID allocations, preserving older save and simulation indices.
+	WORLD_EXPANSION.build(self)
 	FOLIAGE.populate_grass(self)
 	FOLIAGE.populate_ferns(self)
 	FOLIAGE.populate_litter(self)
@@ -346,6 +353,7 @@ func stream_x(z: float) -> float:
 # smooth, short transition are flattened. All other valley heights match.
 func height_at(x: float,z: float) -> float:
 	var raw: float = _raw_height_at(x,z)
+	raw = WORLD_REGIONS.lake_height(self,x,z,raw)
 	# Two small intentionally levelled authored sites. The surrounding hills
 	# blend back over 4–5 metres; no hovering floors or invisible terrain seams.
 	# Non-overlapping graded pads: the original broad falloffs merged two
@@ -356,10 +364,11 @@ func height_at(x: float,z: float) -> float:
 			1.0-smoothstep(1.0,1.17,castle_edge))
 	# Station forecourt extends farther toward the river than the shop does
 	# toward the castle. Asymmetric extents preserve both usable flat floors.
-	var station_x_edge: float=(absf(x+33.0)/6.4) if x < -33.0 else ((x+33.0)/10.0)
-	var station_edge: float=maxf(station_x_edge,absf(z-44.0)/5.0)
+	var station_delta: Vector2=Vector2(x,z)-WORLD_REGIONS.STATION
+	var station_x_edge: float=absf(station_delta.x)/6.4 if station_delta.x<0.0 else station_delta.x/10.0
+	var station_edge: float=maxf(station_x_edge,absf(station_delta.y)/5.0)
 	if station_edge<1.16:
-		raw=lerpf(raw,_raw_height_at(-33.0,44.0),
+		raw=lerpf(raw,_raw_height_at(WORLD_REGIONS.STATION.x,WORLD_REGIONS.STATION.y),
 			1.0-smoothstep(1.0,1.16,station_edge))
 	if absf(x-29.0) > 13.0 or absf(z-8.0) > 13.0:
 		return raw
@@ -413,8 +422,9 @@ func move_vegetation_outside_roadside(x: float,z: float) -> Vector2:
 	# saved ecological IDs must not be renumbered by the new district.
 	if x>=-58.5 and x<=-40.0 and z>=35.0 and z<=53.6:
 		return Vector2(x,34.4 if z<44.0 else 54.25)
-	if x>=-40.0 and x<=-21.8 and z>=37.5 and z<=50.5:
-		return Vector2(x,36.9 if z<44.0 else 51.05)
+	var station: Vector2=WORLD_REGIONS.STATION
+	if x>=station.x-8.0 and x<=station.x+11.0 and z>=station.y-7.0 and z<=station.y+7.0:
+		return Vector2(x,station.y-7.7 if z<station.y else station.y+7.7)
 	return Vector2(x,z)
 
 func build_terrain() -> void:
@@ -425,8 +435,8 @@ func build_terrain() -> void:
 	# identically on Godot's GL Compatibility renderer and works without web.
 	var visual_tool := SurfaceTool.new()
 	visual_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var grid_size: int = 126
-	var extent: float = 144.0
+	var grid_size: int = 154
+	var extent: float = WORLD_REGIONS.HALF_EXTENT*2.0
 	for zi in range(grid_size-1):
 		for xi in range(grid_size-1):
 			var x0: float = (float(xi)/float(grid_size-1)-.5)*extent
@@ -449,17 +459,20 @@ func build_terrain() -> void:
 	var ground := MeshInstance3D.new()
 	ground.name = "OpenMeadow"
 	ground.mesh = visual_tool.commit()
-	var material := StandardMaterial3D.new()
-	var atlas: String = "res://assets/textures/real/vale_terrain_blend.jpg"
-	if not ResourceLoader.exists(atlas):
-		push_error("Missing baked CC0 terrain atlas; run the source/bake workflow")
-		material.albedo_texture = load(photo_or_fallback("res://assets/textures/meadow_ground.png"))
-	else:
-		material.albedo_texture = load(atlas)
-	material.roughness = .98
-	material.metallic = 0.0
-	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	# One draw call; six continuously blended, shipped soil textures.
+	# Vertex-world coordinates keep their grain size stable after expansion.
+	var material := ShaderMaterial.new()
+	material.shader = load("res://assets/materials/region_ground.gdshader")
+	var surfaces: Dictionary={
+		"meadow_tex":"res://assets/textures/meadow_ground.png",
+		"woodland_tex":"res://assets/textures/woodland_ground.png",
+		"dry_tex":"res://assets/textures/dry_grass.png",
+		"packed_tex":"res://assets/textures/earth_path.png",
+		"silt_tex":"res://assets/textures/river_silt.png",
+		"stone_tex":"res://assets/textures/stone.png"
+	}
+	for parameter in surfaces.keys():
+		material.set_shader_parameter(parameter,load(surfaces[parameter]))
 	ground.material_override = material
 	ground_root.add_child(ground)
 	# Physics remains a single, untouched HeightMapShape3D: no visual-material
