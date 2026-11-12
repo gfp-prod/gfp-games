@@ -32,7 +32,7 @@ jobs:
       - name: Photograph inherited physical faces and bodies inside Godot
         run: |
           timeout 190s xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/genetic_faces_gallery.gd 2>&1 | tee /tmp/genetic-gallery.log
-          grep -q "PASS: nine actual Godot inherited face and body PNG frames" /tmp/genetic-gallery.log
+          grep -q "PASS: ten actual Godot inherited face and body PNG frames" /tmp/genetic-gallery.log
       - name: Upload individual actual game screenshots
         if: always()
         uses: actions/upload-artifact@v4
