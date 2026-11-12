@@ -15,6 +15,7 @@ const SOCIAL = preload("res://scripts/dialogue_social.gd")
 const VILLAGE_SIM = preload("res://scripts/village_sim.gd")
 const WORLD_CALENDAR = preload("res://scripts/world_calendar.gd")
 const VILLAGE_WORKPLACES = preload("res://scripts/village_workplaces.gd")
+const VILLAGE_HOMESTEADS = preload("res://scripts/village_homesteads.gd")
 const SIM_LAB = preload("res://scripts/simulation_lab.gd")
 const NPC_ACTOR = preload("res://scripts/npc_actor.gd")
 const CONSTRUCTION = preload("res://scripts/tower_construction.gd")
@@ -126,6 +127,9 @@ func _ready() -> void:
 	HERMITAGE_LAKE_ART.build(self)
 	# Blender Foundry replaces only scenery visuals; old collision and saves survive.
 	WORLD_ART_UPGRADE.apply(self)
+	# Two open-doored, physical vernacular homes are built before navigation,
+	# so AI agents see their real masonry rather than invisible geometry.
+	VILLAGE_HOMESTEADS.build(self)
 	FOLIAGE.populate_grass(self)
 	FOLIAGE.populate_ferns(self)
 	FOLIAGE.populate_litter(self)
