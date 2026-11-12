@@ -89,7 +89,12 @@ class Geometry:
     def finish(self):
         if not self.f:return None
         mesh=bpy.data.meshes.new(self.name)
-        mesh.from_pydata(self.v,[],self.f);mesh.update()
+        # We design these landmarks in Godot's Y-up coordinates.
+        # Blender is Z-up and its glTF exporter rotates into Y-up.
+        # Convert first so the finished GLBs and editable .blends stand upright.
+        # Without this, the water bridge, trees, and standing stones lie sideways.
+        blender_vertices=[(x,-z,y) for x,y,z in self.v]
+        mesh.from_pydata(blender_vertices,[],self.f);mesh.update()
         uv=mesh.uv_layers.new(name="Authored UV")
         for i,poly in enumerate(mesh.polygons):
             for j,loop_id in enumerate(poly.loop_indices):
