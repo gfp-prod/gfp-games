@@ -85,21 +85,29 @@ static func _road(world,root: Node3D) -> void:
 				var p0: Vector2=first.lerp(last,u0)
 				var p1: Vector2=first.lerp(last,u1)
 				var half_width: float=1.46 if index==1 else 1.15
-				var a: Vector2=p0+normal*half_width
-				var b: Vector2=p0-normal*half_width
-				var c: Vector2=p1+normal*half_width
-				var d: Vector2=p1-normal*half_width
-				var aa:=Vector3(a.x,world.height_at(a.x,a.y)+.047,a.y)
-				var bb:=Vector3(b.x,world.height_at(b.x,b.y)+.047,b.y)
-				var cc:=Vector3(c.x,world.height_at(c.x,c.y)+.047,c.y)
-				var dd:=Vector3(d.x,world.height_at(d.x,d.y)+.047,d.y)
-				var v0: float=(dist+length*u0)*.3
-				var v1: float=(dist+length*u1)*.3
-				for vertex in [[aa,Vector2(0,v0)],[bb,Vector2(1,v0)],
-						[cc,Vector2(0,v1)],[bb,Vector2(1,v0)],
-						[dd,Vector2(1,v1)],[cc,Vector2(0,v1)]]:
-					mesh_tool.set_uv(vertex[1])
-					mesh_tool.add_vertex(vertex[0])
+				# Split each section into two lateral strips. The old single
+				# quad skipped the raised midline of the actual heightfield,
+				# causing large exposed triangles and apparent holes in road.
+				for band in range(2):
+					var lateral0: float=lerpf(-half_width,half_width,float(band)/2.0)
+					var lateral1: float=lerpf(-half_width,half_width,float(band+1)/2.0)
+					var edge0: Vector2=p0+normal*lateral0
+					var edge1: Vector2=p0+normal*lateral1
+					var edge2: Vector2=p1+normal*lateral0
+					var edge3: Vector2=p1+normal*lateral1
+					var aa:=Vector3(edge0.x,world.height_at(edge0.x,edge0.y)+.115,edge0.y)
+					var bb:=Vector3(edge1.x,world.height_at(edge1.x,edge1.y)+.115,edge1.y)
+					var cc:=Vector3(edge2.x,world.height_at(edge2.x,edge2.y)+.115,edge2.y)
+					var dd:=Vector3(edge3.x,world.height_at(edge3.x,edge3.y)+.115,edge3.y)
+					var v0: float=(dist+length*u0)*.30
+					var v1: float=(dist+length*u1)*.30
+					var tx0: float=float(band)/2.0
+					var tx1: float=float(band+1)/2.0
+					for vertex in [[aa,Vector2(tx0,v0)],[bb,Vector2(tx1,v0)],
+							[cc,Vector2(tx0,v1)],[bb,Vector2(tx1,v0)],
+							[dd,Vector2(tx1,v1)],[cc,Vector2(tx0,v1)]]:
+						mesh_tool.set_uv(vertex[1])
+						mesh_tool.add_vertex(vertex[0])
 			dist+=length
 		mesh_tool.generate_normals()
 		var roadway:=MeshInstance3D.new()
