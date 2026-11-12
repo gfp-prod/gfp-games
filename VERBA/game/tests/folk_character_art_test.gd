@@ -66,11 +66,20 @@ func _run() -> void:
 		if portrait==null or not bool(portrait.get_meta("no_new_collision",false)):
 			_fail("The villager lost its distinctive non-physical facial rig")
 			return
-		for part in ["RecessedEyeSocket","NoseBridgeAndPlane",
-				"NaturalCheekPlane","NaturalHairline","ShapedJawAndChin"]:
+		for part in ["IndividualIntegratedFaceMesh","SmallRecessedEye",
+				"NaturalHairline","SmallNaturalLipLine"]:
 			if portrait.find_child(part,true,false)==null:
 				_fail("A low-poly facial feature was lost: "+part)
 				return
+		var sculpt: MeshInstance3D=portrait.get_node_or_null(
+			"IndividualIntegratedFaceMesh") as MeshInstance3D
+		if sculpt==null or sculpt.mesh==null or sculpt.mesh.surface_get_count()!=1:
+			_fail("An anatomical face has regressed to disconnected prop spheres")
+			return
+		var verts: PackedVector3Array=sculpt.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+		if verts.size()<2000:
+			_fail("The face no longer has sufficient sculpted profile topology")
+			return
 		if portrait.find_children("*","StaticBody3D",true,false).size()>0:
 			_fail("An artistic face introduced unnecessary collision")
 			return
