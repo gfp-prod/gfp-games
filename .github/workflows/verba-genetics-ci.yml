@@ -1,0 +1,32 @@
+name: VERBA inheritance and bloodline tests
+on:
+  pull_request:
+    paths:
+      - "VERBA/game/scripts/npc_genetics.gd"
+      - "VERBA/game/scripts/village_sim.gd"
+      - "VERBA/game/scripts/folk_portrait_finish.gd"
+      - "VERBA/game/scripts/npc_actor.gd"
+      - "VERBA/game/scripts/world.gd"
+      - "VERBA/game/scripts/world_persistence.gd"
+      - "VERBA/game/tests/npc_genetics_test.gd"
+      - ".github/workflows/verba-genetics-ci.yml"
+concurrency:
+  group: verba-inheritance-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  genetic-consistency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Parse genetics and verify allele inheritance without heavy world asset import
+        run: |
+          timeout 55s godot --headless --path . --script res://tests/npc_genetics_test.gd 2>&1 | tee /tmp/npc-genetics.log
+          grep -q "PASS: deterministic diverse founders" /tmp/npc-genetics.log
