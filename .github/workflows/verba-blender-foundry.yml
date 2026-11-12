@@ -72,9 +72,9 @@ jobs:
           import json
           from pathlib import Path
           assets=json.loads(Path("../regional_build/regional_provenance.json").read_text())["assets"]
-          assert len(assets)==5
+          assert len(assets)==8
           assert all(x["faces"]>=120 and x["size_bytes"]>3000 for x in assets)
-          print("PASS: five real Blender model families", [(x["name"],x["faces"]) for x in assets])
+          print("PASS: eight real Blender model families", [(x["name"],x["faces"]) for x in assets])
           PY
 
       - name: Stage region GLBs before Godot import
@@ -110,7 +110,7 @@ jobs:
             godot --rendering-driver opengl3 --rendering-method gl_compatibility \
             --path . --script res://tests/regional_foundry_review.gd 2>&1 \
             | tee /tmp/regional-foundry-review.log
-          grep -q "PASS: five editable Blender GLBs import" /tmp/regional-foundry-review.log
+          grep -q "PASS: eight editable Blender GLBs import" /tmp/regional-foundry-review.log
           if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:|REGIONAL FOUNDRY FAIL:' /tmp/regional-foundry-review.log; then
             echo "::error::Foundry region review failed"
             exit 1
@@ -146,6 +146,9 @@ jobs:
             assets/models/foundry/witness_stone_circle.glb \
             assets/models/foundry/rusting_delivery_wreck.glb \
             assets/models/foundry/dead_ash_tree.glb \
+            assets/models/foundry/ridge_arch.glb \
+            assets/models/foundry/stone_prayer_shrine.glb \
+            assets/models/foundry/cold_charcoal_kiln.glb \
             assets/models/foundry/regional_provenance.json
           if ! git diff --cached --quiet; then
             git commit -m "VERBA art: checked-in Blender cottage with real texture, UV and gameplay import QA"
