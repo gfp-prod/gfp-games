@@ -59,10 +59,27 @@ Palette, as actually implemented in `scripts/visual_language.gd`:
 - The real 3D grimoire uses worn oxblood leather, bronze hinges and dull vellum illumination with dark serif ink. Its recall, manuscripts, journal and experimentation use one object, not separate UI skins.
 - Text may be rough in texture, but never low in contrast. Legibility outranks decoration.
 
+## Environmental history layer
+
+The visual overhaul adds **WeatheredWorldHistory** as a deterministic, save-safe visual layer. Its authored materials come from bundled CC0/source-attributed textures and code-generated meshes; it does not mint flora or social records.
+
+- **Gas station:** cracked forecourt, small grass intrusions, pump oil stains, oxidized canopy seams, peeling plaster, discarded crates and the broken delivery vehicle. The original shop, entrance, attendant and pumps remain usable.
+- **Old road:** ragged asphalt edges expose real ground; stone dust, fine fissures, weathered shoulder gravel, broken fence segments and a fallen mile marker tell the story of prior maintenance.
+- **Lake:** the water surface and physical basin share the same irregular radial function. The shore includes dry/wet silt, pebbles, driftwood, sedges and a worn mooring post. The bank is a real terrain depression, not an oval plane.
+- **Orchard:** most limbs are dead but several retain sparse autumn crowns; fallen fruit, broken fencing and overturned produce crates imply a place where people once worked.
+- **Other landmarks:** stone courses, ash, lichen, eroded timber and imperfect silhouettes distinguish the tollgate, kiln and hunter's blind.
+- **Outer region cover:** four MultiMesh groups provide over 12,000 deliberately placed grass/heather clumps without allocating persistent biological IDs. The player can still interact with the originally living simulation vegetation.
+
+The old broad daylight was too clean; the art pass adopts a slightly overcast, mineral-toned sky with diffuse sunlight, while night, rain and other lighting states remain functional. This must be evaluated at real first-person scale, not only from a concept-map camera.
+
+## Legibility and interfaces
+
+All ordinary screen surfaces retain a functional solid iron frame but now share a lightweight **authored grain texture** and brass separators. The texture is generated offline-equivalent in code and reused rather than downloaded or layered with a giant opaque graphic. The physical grimoire retains its own vellum/leather; there is no second floating RPG inventory window. Dialogue options, scrolling NPC speech and the pinned editable Latin reply occupy separate visual regions.
+
 ## Regional art QA
 
-The acceptance artifact is **actual Godot GL Compatibility capture**, not a mood board. `tests/outer_vale_gallery.gd` captures 13 views at 1280×720: lake overlook, reed shore, physical jetty, station approach, forecourt, old road, stone circle, orchard, tollgate, worn help, survival, typed conversation, and physical grimoire.
+The acceptance artifact is **actual Godot GL Compatibility capture**, not a mood board. `tests/outer_vale_gallery.gd` captures **17 views at 1280×720**: lake overlook, reed shore, physical jetty, station approach, forecourt, old road, stone circle, orchard, tollgate, worn help, survival, typed conversation, and physical grimoire.
 
 The release gate also tests the 256m render/collision bounds, six material uniforms, station separation, attendant position, physical jetty, actual lake depth, wildlife water exclusion, landmark presence, and old save continuity in `tests/outer_vale_test.gd`. The UI test checks bounded panels, bottom-anchored status, readable typed Latin and consistent grimoire ink.
 
-A passing script is *necessary but not sufficient* for visual sign-off. Inspect the final PNGs for clipped labels, overly uniform terrain, exposed lake walls, impossible shoreline heights, flat road intersections, texture aliasing and scenery that looks unrelated to its neighbor. Do not claim this alpha is finished conceptually because 13 screenshots rendered.
+A passing script is *necessary but not sufficient* for visual sign-off. Inspect the final PNGs for clipped labels, overly uniform terrain, exposed lake walls, impossible shoreline heights, flat road intersections, texture aliasing and scenery that looks unrelated to its neighbor. Do not claim the alpha is finished artistically because 17 screenshots rendered. The visual test is a release gate for the work-in-progress branch, not proof of final environment art.

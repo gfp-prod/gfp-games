@@ -1,5 +1,5 @@
 # VERBA — Master Development Plan
-Version: 2026-11-11 (reconciled to live Godot repository) | Engine: Godot 4.5.x | Platform: Windows PC, offline | Source: `verba-godot/VERBA/game`
+Version: 2026-11-12 (reconciled to live Godot repository) | Engine: Godot 4.5.x | Platform: Windows PC, offline | Source: `verba-godot/VERBA/game`
 
 ## Live development truth — November 11, 2026
 
