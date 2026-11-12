@@ -111,6 +111,48 @@ func _run() -> void:
 		var nose_y: float=lerpf(1.704,1.732,GENES.value(record,"nose_bridge"))
 		if tip.position.z>=FACE._depth(0.0,nose_y,record)-.005:
 			_fail("The modeled nose tip is buried in its head"); return
+	# Morphology acceptance must prove the lip-curve locus reaches geometry,
+	# not merely exist in the saved genome. Vary ONLY that inherited locus.
+	var flat_genes: Dictionary=GENES.founder("lip-curve-acceptance")
+	var raised_genes: Dictionary=flat_genes.duplicate(true)
+	flat_genes["alleles"]["lip_curve"]=[0,0]
+	raised_genes["alleles"]["lip_curve"]=[1000,1000]
+	var curved_models: Array[Node3D]=[]
+	for genome in [flat_genes,raised_genes]:
+		var portrait_model:=Node3D.new()
+		root.add_child(portrait_model)
+		FACE.finish(portrait_model,"lip-curve-acceptance",
+			ART.mat(GENES.skin_color(genome),.96),
+			ART.mat(GENES.hair_color(genome),.95),
+			ART.mat(GENES.hair_color(genome),.95),genome)
+		curved_models.append(portrait_model)
+	var flat_mouth: Node3D=curved_models[0].get_node(
+		"IndividualFaceConstruction/ExpressionMouth")
+	var raised_mouth: Node3D=curved_models[1].get_node(
+		"IndividualFaceConstruction/ExpressionMouth")
+	var flat_upper: MeshInstance3D=flat_mouth.get_node(
+		"ExpressionLipLeft/SmallNaturalLipLine")
+	var raised_upper: MeshInstance3D=raised_mouth.get_node(
+		"ExpressionLipLeft/SmallNaturalLipLine")
+	var flat_lower: MeshInstance3D=flat_mouth.get_node(
+		"ExpressionLowerLip/ModeledLowerLipLeft")
+	var raised_lower: MeshInstance3D=raised_mouth.get_node(
+		"ExpressionLowerLip/ModeledLowerLipLeft")
+	if flat_upper.transform==raised_upper.transform or flat_lower.transform==raised_lower.transform:
+		_fail("Inherited lip curve does not change the visible upper AND lower lip contours")
+		return
+	if float(flat_mouth.get_meta("rest_corner_rise"))>=float(
+			raised_mouth.get_meta("rest_corner_rise")):
+		_fail("Neutral mouth corners ignore the transmitted lip curve")
+		return
+	var upper_at_rest: Transform3D=raised_upper.transform
+	for tick in range(20):
+		FACE.expression(curved_models[1],.7,0.0,true,.21)
+	if raised_upper.transform!=upper_at_rest or float(
+			raised_mouth.get_meta("rest_cupid_rise"))<=float(
+			flat_mouth.get_meta("rest_cupid_rise")):
+		_fail("Talking or smiling erased the inherited upper-lip shape")
+		return
 	var one: MeshInstance3D=figures[0].get_node("InheritedChestWaistHipCloth")
 	var two: MeshInstance3D=figures[1].get_node("InheritedChestWaistHipCloth")
 	var verts_a: PackedVector3Array=one.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
@@ -118,5 +160,5 @@ func _run() -> void:
 	if verts_a==verts_b:
 		_fail("Distinct parent genomes created the same chest/waist/hip model")
 		return
-	print("PASS: inherited chest/bust/waist/hips, uncompressed irises, blinking lids, articulated speech, projected noses, allele migration, no new collision")
+	print("PASS: inherited chest/bust/waist/hips, uncompressed irises, blinking lids, articulated speech, projected noses, lip-curve inheritance, allele migration, no new collision")
 	quit(0)
