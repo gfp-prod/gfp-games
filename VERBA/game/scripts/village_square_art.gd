@@ -5,7 +5,13 @@ extends RefCounted
 const ROUTES: Array[Dictionary]=[
 	{"a":Vector2(5.3,20.5),"b":Vector2(8.9,16.25)},
 	{"a":Vector2(8.9,16.25),"b":Vector2(21.8,19.1)},
-	{"a":Vector2(21.8,19.1),"b":Vector2(18.0,27.0)}
+	{"a":Vector2(21.8,19.1),"b":Vector2(18.0,27.0)},
+	# A continuous footpath joins both existing work districts to the
+	# north-west stonecutter house and the east miller's cottage. Its
+	# geometry remains purely visual and never creates a new NPC goal.
+	{"a":Vector2(5.3,20.5),"b":Vector2(-7.5,30.0)},
+	{"a":Vector2(-7.5,30.0),"b":Vector2(-7.5,30.8)},
+	{"a":Vector2(18.0,27.0),"b":Vector2(30.0,29.8)}
 ]
 const SEED: int=902711
 
