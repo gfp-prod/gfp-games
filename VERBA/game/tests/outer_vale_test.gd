@@ -208,6 +208,25 @@ func _run() -> void:
 		_fail("Cottage landscaping is disconnected from its approach")
 		return
 
+	# A functioning market requires connected pedestrian geometry, but no
+	# loose decorative stones may alter NPC work, collisions or save IDs.
+	var village: Node3D=world.get_node_or_null("VillageWorkingDistrict") as Node3D
+	var village_walk: Node3D=village.get_node_or_null("ArtDirectedVillageApproaches") as Node3D if village!=null else null
+	if village_walk==null or bool(village_walk.get_meta("simulation_or_collisions_modified",true)):
+		_fail("Village landscaping either disappeared or changed live simulation")
+		return
+	var pavers: MultiMeshInstance3D=village_walk.get_node_or_null(
+		"StaggeredSettledVillagePathStones") as MultiMeshInstance3D
+	if pavers==null or pavers.multimesh==null or pavers.multimesh.instance_count<40:
+		_fail("Bakery, market and smith are still disconnected on a bare green sheet")
+		return
+	if village_walk.find_children("*","StaticBody3D",true,false).size()>0:
+		_fail("Non-physical village paving blocks working citizens")
+		return
+	if village.get_node_or_null("IdaStoneBakery")==null or village.get_node_or_null("OrinBlacksmithForge")==null:
+		_fail("Village art replaced real worksite identities")
+		return
+
 	# Existing structures and academic simulation survive untouched.
 	if world.get_node_or_null("HermitCottage")==null or not world.scholar.books.has("de_herbis"):
 		_fail("Visual expansion destroyed the original learning loop")
