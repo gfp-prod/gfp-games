@@ -4,6 +4,7 @@ extends RefCounted
 const VERSION := 1
 const ECONOMY = preload("res://scripts/village_economy.gd")
 const ANATOMY = preload("res://scripts/npc_anatomy.gd")
+const GENES = preload("res://scripts/npc_genetics.gd")
 const COMMISSIONS = preload("res://scripts/wizard_commissions.gd")
 const ROLES := [
 	["mara","scribe","crow",82,53,24],
@@ -42,12 +43,16 @@ var commissions: Dictionary = {}
 var nearby_care: Dictionary = {}
 # Sight alone never grants the ability to administer treatment.
 var care_contact: Dictionary = {}
+var gene_seed: int=1938
+var next_child_serial: int=1
 
 func _init(seed_value: int = 1938) -> void:
 	reset(seed_value)
 
 func reset(seed_value: int) -> void:
 	rng.seed = seed_value
+	gene_seed=seed_value
+	next_child_serial=1
 	people.clear()
 	events.clear()
 	recent_action.clear()
@@ -71,7 +76,10 @@ func reset(seed_value: int) -> void:
 			"wealth":rng.randi_range(2,10),"mood":50.0,
 			"spouse":"","trust":{},"grievance":{},
 			"known_events":[],"last_action":"idle","alive":true,
-			"anatomy":ANATOMY.new_state(),"known_wounded":[]}
+			"anatomy":ANATOMY.new_state(),"known_wounded":[],
+			"genome":GENES.founder(id,gene_seed),
+			"family":GENES.founder_family(id,-365*(21+posmod(id.hash(),28))),
+			"life_stage":"adult"}
 	# Stable initial families without hardcoded affair, crime, or plot outcomes.
 	people["ida"]["spouse"] = "orin"
 	people["orin"]["spouse"] = "ida"
@@ -294,6 +302,16 @@ func advance_day(day: int) -> void:
 	if day<=current_day: return
 	for next_day in range(current_day+1,day+1):
 		current_day=next_day
+		# Natural development uses calendar time, not render ticks.
+		# Family ties and appearance are immutable across stages.
+		for who in people:
+			var citizen: Dictionary=people[who]
+			if not bool(citizen.get("alive",true)): continue
+			var age: int=current_day-int(citizen["family"]["birth_day"])
+			if String(citizen.get("life_stage","adult"))=="child" and age>=18*365:
+				citizen["life_stage"]="adult"
+				citizen["role"]=String(citizen.get("trained_role","wanderer"))
+				_event("coming_of_age",String(who))
 		COMMISSIONS.day_passed(self)
 
 func step() -> void:
@@ -317,6 +335,11 @@ func step() -> void:
 	for id in ordered:
 		var p: Dictionary = people[id]
 		if not bool(p["alive"]): continue
+		# Children are residents with persistent IDs and genes, but do
+		# not participate in adult courtship, theft or economic production.
+		if String(p.get("life_stage","adult"))=="child":
+			p["last_action"]="rest"
+			continue
 		p["hunger"] = minf(100.0,float(p["hunger"])+3.5)
 		p["fatigue"] = minf(100.0,float(p["fatigue"])+2.5)
 		p["loneliness"] = minf(100.0,float(p["loneliness"])+2.0)
@@ -493,6 +516,52 @@ func witness_event(kind: String, actor: String, target: String = "") -> bool:
 	_event(kind,actor,target)
 	return true
 
+# No forced marriage or childbirth. Existing or future NPC behaviors may
+# request birth once conditions are met; this API is the shared authority.
+# A newborn is a new persistent person, not a copy of a parent's visual mesh.
+func create_child(parent_a_id: String,parent_b_id: String,
+		child_name: String="") -> Dictionary:
+	if not people.has(parent_a_id) or not people.has(parent_b_id) or parent_a_id==parent_b_id:
+		return {"ok":false,"reason":"unknown or identical parents"}
+	var a: Dictionary=people[parent_a_id]
+	var b: Dictionary=people[parent_b_id]
+	if not bool(a["alive"]) or not bool(b["alive"]):
+		return {"ok":false,"reason":"deceased parent"}
+	if String(a.get("life_stage","adult"))!="adult" or String(b.get("life_stage","adult"))!="adult":
+		return {"ok":false,"reason":"child parent"}
+	var child_id: String="born_%04d" % next_child_serial
+	if people.has(child_id) or people.size()>=60:
+		return {"ok":false,"reason":"population limit or repeated ID"}
+	var family: Dictionary=GENES.descendant_family(child_id,parent_a_id,parent_b_id,people,current_day)
+	var genome: Dictionary=GENES.child(a["genome"],b["genome"],child_id,gene_seed)
+	if family.is_empty() or not GENES.validate(genome):
+		return {"ok":false,"reason":"invalid pedigree"}
+	var record: Dictionary={
+		"id":child_id,"role":"child","trained_role":"wanderer","life_stage":"child",
+		"display_name":child_name if not child_name.strip_edges().is_empty() else "Child",
+		"nature":"unformed","crow":50,"cat":50,"wolf":50,
+		"hunger":15.0,"fatigue":15.0,"loneliness":15.0,
+		"wealth":0,"mood":50.0,"spouse":"","trust":{},"grievance":{},
+		"known_events":[],"last_action":"rest","alive":true,
+		"anatomy":ANATOMY.new_state(),"known_wounded":[],
+		"genome":genome,"family":family}
+	people[child_id]=record
+	for parent_id in [parent_a_id,parent_b_id]:
+		people[parent_id]["family"]["children"].append(child_id)
+	next_child_serial+=1
+	_event("birth",parent_a_id,child_id)
+	return {"ok":true,"id":child_id,"child":record.duplicate(true)}
+
+func bloodline(person_id: String) -> Dictionary:
+	if not people.has(person_id): return {}
+	var result: Dictionary=people[person_id]["family"].duplicate(true)
+	result["person_id"]=person_id
+	result["living_children"]=[]
+	for child_id in result["children"]:
+		if people.has(child_id) and bool(people[child_id]["alive"]):
+			result["living_children"].append(child_id)
+	return result
+
 func inspector(id: String) -> Dictionary:
 	if not people.has(id): return {}
 	var p: Dictionary=people[id]
@@ -516,6 +585,7 @@ func snapshot() -> Dictionary:
 		"events":events.duplicate(true),"recent_action":recent_action.duplicate(true),
 		"work_orders":work_orders.duplicate(true),"field_fertility":field_fertility,
 		"current_day":current_day,"commissions":commissions.duplicate(true),
+		"gene_seed":gene_seed,"next_child_serial":next_child_serial,
 		"economy":economy.snapshot()}
 
 func restore(record: Dictionary) -> bool:
@@ -529,9 +599,44 @@ func restore(record: Dictionary) -> bool:
 	if stored is Dictionary and stored.size()==ROLES.size()-1 and not stored.has("juno"):
 		stored=stored.duplicate(true)
 		stored["juno"]=people["juno"].duplicate(true)
-	if not (stored is Dictionary) or stored.size()!=ROLES.size():
+	if not (stored is Dictionary) or stored.size()<ROLES.size() or stored.size()>60:
 		restore_error = "population: %d" % stored.size()
 		return false
+	stored=stored.duplicate(true)
+	var restore_gene_seed: int=int(record.get("gene_seed",gene_seed))
+	# Upgrade old saves without discarding any relationships or injuries.
+	for stored_id in stored:
+		var old_person: Dictionary=stored[stored_id]
+		if not old_person.has("genome"):
+			old_person["genome"]=GENES.founder(String(stored_id),restore_gene_seed)
+		if not old_person.has("family"):
+			old_person["family"]=GENES.founder_family(String(stored_id),
+				-365*(21+posmod(String(stored_id).hash(),28)))
+		if not old_person.has("life_stage"):
+			old_person["life_stage"]="adult"
+		if not GENES.validate(old_person["genome"]) or not GENES.validate_family(
+				old_person["family"],String(stored_id),stored):
+			restore_error="invalid genome or bloodline: "+String(stored_id)
+			return false
+		if old_person.get("life_stage","") not in ["adult","child"]:
+			restore_error="invalid stage"
+			return false
+		if String(stored_id).begins_with("born_") and (
+				old_person["family"]["parents"].size()!=2 or
+				String(old_person.get("id",""))!=String(stored_id)):
+			restore_error="broken child identity"
+			return false
+	# A bloodline must be reciprocal; forged parent/child links cannot
+	# enter world state through tampered or corrupted save data.
+	for stored_id in stored:
+		for parent_id in stored[stored_id]["family"]["parents"]:
+			if not stored[parent_id]["family"]["children"].has(stored_id):
+				restore_error="broken parent-child bond"
+				return false
+		for child_id in stored[stored_id]["family"]["children"]:
+			if not stored[child_id]["family"]["parents"].has(stored_id):
+				restore_error="broken child-parent bond"
+				return false
 	for row in ROLES:
 		if not stored.has(row[0]) or not (stored[row[0]] is Dictionary):
 			restore_error = "missing person: %s" % row[0]
@@ -610,6 +715,12 @@ func restore(record: Dictionary) -> bool:
 	current_day=saved_day
 	commissions=saved_jobs.duplicate(true)
 	people = stored.duplicate(true)
+	gene_seed=restore_gene_seed
+	next_child_serial=maxi(1,int(record.get("next_child_serial",1)))
+	if not record.has("next_child_serial"):
+		for person_id in people:
+			if String(person_id).begins_with("born_"):
+				next_child_serial=maxi(next_child_serial,int(String(person_id).trim_prefix("born_"))+1)
 	nearby_care.clear()
 	care_contact.clear()
 	events.clear()
