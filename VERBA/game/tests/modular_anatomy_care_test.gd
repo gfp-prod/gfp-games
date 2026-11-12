@@ -107,6 +107,17 @@ func _run() -> void:
 		return
 	sim.observe_wound("daro",["sela"])
 	sim.nearby_care["sela"]=["daro"]
+	# Awareness alone does not teleport a bandage or peg leg. The helper
+	# must first close the physical distance to the patient.
+	if sim._perform_neighbor_aid("sela","daro"):
+		_fail("A villager treated somebody from beyond physical contact")
+		return
+	sela.set_physics_process(false)
+	sela.global_position=daro.global_position+Vector3(1.4,0.0,0.0)
+	world._refresh_neighbor_care()
+	if not sim.care_contact.get("sela",[]).has("daro"):
+		_fail("Nearby spouse did not gain real physical treatment contact")
+		return
 	# Different levels of supplies lead to different forms of aid. Remove
 	# herb in this particular scenario to test a wooden prosthetic;
 	# emergency bandaging was independently verified above.
