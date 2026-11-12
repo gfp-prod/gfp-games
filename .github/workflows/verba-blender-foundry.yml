@@ -1,0 +1,105 @@
+name: VERBA free Blender asset foundry
+on:
+  push:
+    branches: ["verba/blender-asset-foundry"]
+    paths:
+      - ".github/workflows/verba-blender-foundry.yml"
+      - "VERBA/game/tools/art_foundry/**"
+      - "VERBA/game/tests/foundry_review.gd"
+      - "VERBA/game/docs/ART_FOUNDRY.md"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verba-blender-asset-foundry
+  cancel-in-progress: true
+
+jobs:
+  cottage:
+    name: Blender model + Godot actual asset review
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install free Blender, virtual display and image checking
+        run: |
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends blender xvfb
+          python3 -m pip install --quiet Pillow
+          blender --version | head -n 2
+
+      - name: Compile and inspect reproducible authoring scripts
+        run: |
+          python3 -m py_compile tools/art_foundry/forge_cottage.py
+          python3 -m py_compile tools/art_foundry/validate_foundry.py
+
+      - name: Build real textured cottage, glTF, editable blend and 4 renders
+        run: |
+          mkdir -p tests/foundry_build
+          timeout 1200s xvfb-run -a -s "-screen 0 1280x720x24" \
+            blender -b -t 2 --python tools/art_foundry/forge_cottage.py -- \
+            --output tests/foundry_build
+
+      - name: Prove real geometry, packed CC0 surfaces, meters and camera evidence
+        run: |
+          python3 tools/art_foundry/validate_foundry.py --out tests/foundry_build
+
+      - name: Stage exported glTF into Godot's actual import directory
+        run: |
+          mkdir -p assets/models/foundry
+          cp tests/foundry_build/hermit_cottage_v2.glb \
+            assets/models/foundry/hermit_cottage_v2.glb
+          cp tests/foundry_build/provenance.json \
+            assets/models/foundry/hermit_cottage_v2.provenance.json
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+
+      - name: Godot import and GDScript compilation
+        run: |
+          timeout 240s godot --headless --path . --editor --import --quit
+
+      - name: Render live-game old versus new cottage through identical lenses
+        run: |
+          timeout 360s xvfb-run -a -s "-screen 0 1280x720x24" \
+            godot --rendering-driver opengl3 --rendering-method gl_compatibility \
+            --path . --script res://tests/foundry_review.gd 2>&1 \
+            | tee /tmp/foundry-godot-review.log
+          grep -q "PASS: Blender cottage GLB imports" /tmp/foundry-godot-review.log
+
+      - name: Preserve all generated editable art and real gameplay comparisons
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verba-blender-cottage-studio
+          path: |
+            VERBA/game/tests/foundry_build/*.blend
+            VERBA/game/tests/foundry_build/*.glb
+            VERBA/game/tests/foundry_build/*.png
+            VERBA/game/tests/foundry_build/*.json
+            VERBA/game/tests/foundry_frames/*.png
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Save validated model and origin manifest back to review branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/verba/blender-asset-foundry'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/models/foundry/hermit_cottage_v2.glb \
+            assets/models/foundry/hermit_cottage_v2.provenance.json
+          if ! git diff --cached --quiet; then
+            git commit -m "VERBA art: checked-in Blender cottage with real texture, UV and gameplay import QA"
+            git pull --rebase origin verba/blender-asset-foundry
+            git push origin HEAD:verba/blender-asset-foundry
+          fi
