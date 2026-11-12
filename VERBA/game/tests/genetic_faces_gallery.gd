@@ -17,7 +17,7 @@ func _find(world: Node3D,wanted: String) -> Node3D:
 
 func _capture(world: Node3D,cam: Camera3D,actor: Node3D,
 		name: String,base: String,focus: float,distance: float) -> bool:
-	cam.global_position=actor.to_global(Vector3(.08,focus+.03,-distance))
+	cam.global_position=actor.to_global(Vector3(.56,focus+.07,-distance))
 	cam.look_at(actor.to_global(Vector3(0,focus,0)),Vector3.UP)
 	for frame in range(2): await process_frame
 	RenderingServer.force_draw()
@@ -39,6 +39,12 @@ func _run() -> void:
 	if DirAccess.make_dir_recursive_absolute(base)!=OK:
 		_fail("Could not make visual artifact directory")
 		return
+	# Keep the first-person avatar and its held item out of the
+	# comparative portrait staging area. Only the NPC being reviewed
+	# belongs in the photograph.
+	if world.player!=null:
+		world.player.visible=false
+		world.player.set_physics_process(false)
 	var first: Dictionary=world.birth_child("ida","orin","Alma")
 	var second: Dictionary=world.birth_child("ida","orin","Milo")
 	if not first.get("ok",false) or not second.get("ok",false):
@@ -58,8 +64,8 @@ func _run() -> void:
 	# For comparative anatomy pictures, move the existing physical actors
 	# temporarily into the same open piece of their actual game landscape.
 	# Their bodies, modules, shaders and sim state stay unchanged.
-	var center_x: float=-8.0
-	var center_z: float=8.5
+	var center_x: float=-13.5
+	var center_z: float=9.5
 	# Never accumulate faces on top of one another during inspection.
 	# All actors are the real villagers, temporarily hidden until it is
 	# their turn to stand in the exact same light.
