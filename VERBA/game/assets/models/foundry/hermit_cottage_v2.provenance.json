@@ -11,7 +11,7 @@
     "z": 2.55
   },
   "mesh_count": 8,
-  "faces": 3882,
+  "faces": 4386,
   "textures": {
     "cottage_plaster_diffuse.jpg": "8b561f102577e8043f73c71381d5594e2e4264e8d682b2de34bc349880308170",
     "cottage_roof_diffuse.jpg": "5eab9ca967af6dd6aa0d96dfff492ffd8fc45b055c9e6727f4309624d1fc1ed0",
@@ -27,5 +27,5 @@
     "03_moss_slate_roof",
     "04_back_and_chimney"
   ],
-  "glb_sha256": "c76a178ce1f667bbc013b08197586087801c2142f3462fdee67367970d9c8e48"
+  "glb_sha256": "2f733db3c749ede67df010853b499973319f85cea1a5a7569796e46acfb8ec4a"
 }
