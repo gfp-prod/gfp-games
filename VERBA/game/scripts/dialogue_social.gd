@@ -93,11 +93,20 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 				"reason":"They refuse to let you near." if not friendly else
 				"Carry medicinal herbs, or usable timber and tools."})
 			if condition["missing"].size()>0:
-				spoken+="\\nYou see an old injury. Their missing limb has not grown back."
+				spoken+="\nYou see an old injury. Their missing limb has not grown back."
 			if float(condition["bleeding"])>.2:
-				spoken+="\\nBlood still seeps from the wound."
+				spoken+="\nBlood still seeps from the wound."
 			if String(condition["support"])!="none":
-				spoken+="\\nThey rely on a "+String(condition["support"])+" to move."
+				spoken+="\nThey rely on a "+String(condition["support"])+" to move."
+	# Relationships with the player are visible in ordinary dialogue.
+	# Characters remember deeds through their own observed trust, not
+	# through player reputation points or a globally omniscient flag.
+	if village_sim!=null and village_sim.people.has(id) and id!="daro":
+		var reputation: float=float(village_sim.people[id]["trust"].get("wizard",0.0))
+		if reputation<=-20.0:
+			spoken+="\nTheir gaze keeps returning to your hands."
+		elif reputation>=20.0:
+			spoken+="\nThey greet you with evident relief."
 	if id=="tomas" and tier==1 and not bool(past.get("traded",false)):
 		spoken += "\nTomas points to his book. 'Da mihi librum.' Give me the book: da, mihi, librum."
 	if id=="ida" and tier==1:
@@ -197,7 +206,13 @@ func choose(id: String, index: int, scholar, player, spoken_latin: bool = false)
 	# Index seven is reserved for contextual injury care; it never
 	# shadows a person's existing authored choices or Daro's commissions.
 	if index==6 and village_sim!=null and village_sim.people.has(id):
-		var help: Dictionary=village_sim.player_help(id,player.inventory)
+		var witnesses: Array=[]
+		if player.world!=null and player.world.has_method("physical_witnesses_of"):
+			for patient in player.world.npcs:
+				if is_instance_valid(patient) and String(patient.npc_id)==id:
+					witnesses=player.world.physical_witnesses_of(patient,"wizard")
+					break
+		var help: Dictionary=village_sim.player_help(id,player.inventory,witnesses)
 		if bool(help.get("ok",false)):
 			player.selected_slot=clampi(player.selected_slot,0,
 				maxi(0,player.inventory.size()-1))
