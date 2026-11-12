@@ -181,10 +181,8 @@ func _ready() -> void:
 			var bonnet:=ART.orb(figure,Vector3(0,1.989,.025),
 				Vector3(.46,.24,.40),flour,12)
 			bonnet.name="VisibleBakerBonnet"
-			ART.bone(figure,Vector3(-.22,1.94,-.08),
-				Vector3(-.20,1.75,-.10),.037,.022,flour,8)
-			ART.bone(figure,Vector3(.22,1.94,-.08),
-				Vector3(.20,1.75,-.10),.037,.022,flour,8)
+			# Avoid two unsupported ivory rods sticking out beside the face.
+			# The bonnet silhouette is readable without fake face-hanging bones.
 		"orin":
 			var hide:=ART.mat(Color("775b42"),.99)
 			var metal:=ART.mat(Color("737e81"),.52)
