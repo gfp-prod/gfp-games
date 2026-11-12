@@ -39,8 +39,8 @@ func _run() -> void:
 		_fail("The shaped baker apron surface is missing")
 		return
 	var triangles: PackedVector3Array=apron.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	if triangles.size()!=12:
-		_fail("Baker apron no longer has four fitted cloth triangles")
+	if triangles.size()!=24:
+		_fail("Baker apron no longer has eight curved, fitted cloth triangles")
 		return
 	var bounds: AABB=apron.get_aabb()
 	if bounds.size.y<.8 or bounds.size.x<.4 or bounds.size.x>.7:
