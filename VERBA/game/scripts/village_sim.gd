@@ -3,6 +3,7 @@ extends RefCounted
 ## Each fixed tick evaluates circumstances; actions emit causal, witnessed events.
 const VERSION := 1
 const ECONOMY = preload("res://scripts/village_economy.gd")
+const ANATOMY = preload("res://scripts/npc_anatomy.gd")
 const COMMISSIONS = preload("res://scripts/wizard_commissions.gd")
 const ROLES := [
 	["mara","scribe","crow",82,53,24],
@@ -37,6 +38,8 @@ var seeded := false
 var restore_error: String = ""
 var current_day: int = 0
 var commissions: Dictionary = {}
+# Transient physical reach is supplied by the scene, not serialized as omniscience.
+var nearby_care: Dictionary = {}
 
 func _init(seed_value: int = 1938) -> void:
 	reset(seed_value)
@@ -51,6 +54,7 @@ func reset(seed_value: int) -> void:
 	current_day=0
 	commissions.clear()
 	last_scores.clear()
+	nearby_care.clear()
 	economy=ECONOMY.new()
 	tick_count = 0
 	next_event_id = 1
@@ -63,7 +67,8 @@ func reset(seed_value: int) -> void:
 			"loneliness":rng.randf_range(5.0,40.0),
 			"wealth":rng.randi_range(2,10),"mood":50.0,
 			"spouse":"","trust":{},"grievance":{},
-			"known_events":[],"last_action":"idle","alive":true}
+			"known_events":[],"last_action":"idle","alive":true,
+			"anatomy":ANATOMY.new_state(),"known_wounded":[]}
 	# Stable initial families without hardcoded affair, crime, or plot outcomes.
 	people["ida"]["spouse"] = "orin"
 	people["orin"]["spouse"] = "ida"
@@ -78,11 +83,24 @@ func _score(p: Dictionary, action: String) -> float:
 	match action:
 		"eat": return float(p["hunger"])*1.45 if int(p["wealth"]) > 0 and int(economy.stocks["bread"])>0 else -1.0
 		"rest": return float(p["fatigue"])*1.45
-		"work": return (15.0 + crow*32.0 + (8.0 if int(p["wealth"]) < 4 else 0.0) - float(p["fatigue"])*0.30) if economy.can_work(String(p["role"])) else -1.0
+		"work":
+			var body: Dictionary=p.get("anatomy",ANATOMY.new_state())
+			if ANATOMY.locomotion(body)<.42 or body["missing"].has("right_arm"): return -1.0
+			return (15.0 + crow*32.0 + (8.0 if int(p["wealth"]) < 4 else 0.0) - float(p["fatigue"])*0.30) if economy.can_work(String(p["role"])) else -1.0
 		"socialize": return float(p["loneliness"])*0.80 + cat*22.0 - float(p["fatigue"])*0.12
 		"court": return float(p["loneliness"])*0.58 + cat*25.0 + wolf*8.0 - (22.0 if not String(p["spouse"]).is_empty() else 0.0)
 		"steal": return (46.0 if int(p["wealth"]) < 3 else -25.0) + wolf*28.0 - crow*14.0
 		"investigate": return 18.0 + wolf*30.0 if String(p["role"])=="guard" and _unresolved_crime_known(p) else -1.0
+		"aid":
+			var target_id: String=_care_target(String(p["id"]))
+			if target_id.is_empty(): return -1.0
+			var target: Dictionary=people[target_id]
+			var relationship: float=float(p["trust"].get(target_id,0.0))
+			var resentment: float=float(p["grievance"].get(target_id,0.0))
+			var loyalty: float=47.0 if String(p["spouse"])==target_id else 0.0
+			# Kindness is contextual, not hardcoded to one NPC or plot.
+			# Fear, character, trust, exhaustion and scarcity can overcome care.
+			return 14.0+cat*32.0+crow*10.0-wolf*18.0+loyalty+relationship*.45-resentment*.8-float(p["fatigue"])*.4
 	return -1.0
 
 func _unresolved_crime_known(p: Dictionary) -> bool:
@@ -98,7 +116,7 @@ func _select(p: Dictionary) -> String:
 	if spatial_work_enabled and work_orders.has(String(p["id"])):
 		return "work"
 	var scores: Dictionary = {}
-	for action in ["eat","rest","work","socialize","court","steal","investigate"]:
+	for action in ["eat","rest","work","socialize","court","steal","investigate","aid"]:
 		# Gumbel-free small bounded noise avoids action lockstep, not arbitrary decisions.
 		scores[action] = _score(p,action) + rng.randf_range(-3.0,3.0)
 		if String(recent_action.get(p["id"],"")) == action:
@@ -154,6 +172,14 @@ func _act(id: String, action: String) -> void:
 		"rest":
 			p["fatigue"] = maxf(0.0,float(p["fatigue"])-55.0)
 		"work":
+			# A severed working arm or untreated loss of mobility changes
+			# what this person can actually produce.
+			var body: Dictionary=p.get("anatomy",ANATOMY.new_state())
+			if ANATOMY.locomotion(body)<.42 or body["missing"].has("right_arm"):
+				work_orders.erase(id)
+				p["last_action"]="rest"
+				recent_action[id]="rest"
+				return
 			var job_role: String = String(p["role"])
 			if spatial_work_enabled and job_role in ["farmer","baker","blacksmith"]:
 				# A work order is permission to travel and labor, not a resource
@@ -188,6 +214,8 @@ func _act(id: String, action: String) -> void:
 				p["wealth"] = mini(100,int(p["wealth"])+1)
 				people[victim]["grievance"][id] = float(people[victim]["grievance"].get(id,0.0))+18.0
 				_event("theft",id,victim,1)
+		"aid":
+			_perform_neighbor_aid(id,_care_target(id))
 		"investigate":
 			for entry in events:
 				if entry["type"]=="theft" and not bool(entry["resolved"]) and p["known_events"].has(entry["id"]):
@@ -283,8 +311,121 @@ func step() -> void:
 		p["hunger"] = minf(100.0,float(p["hunger"])+3.5)
 		p["fatigue"] = minf(100.0,float(p["fatigue"])+2.5)
 		p["loneliness"] = minf(100.0,float(p["loneliness"])+2.0)
+		ANATOMY.passage(p["anatomy"])
+		if float(p["anatomy"]["vitality"])<=0.0:
+			p["alive"]=false
+			work_orders.erase(id)
+			_event("fatal_injury",id)
+			continue
 		_act(id,_select(p))
 	_stabilize_floats()
+
+# Actual observations are made by existing physical world characters. A
+# stranger does not know a wound merely because the village sim has its ID.
+func observe_wound(victim_id: String, witnesses: Array) -> void:
+	if not people.has(victim_id): return
+	for observer in witnesses:
+		var id: String=String(observer)
+		if id==victim_id or not people.has(id): continue
+		var known: Array=people[id]["known_wounded"]
+		if not known.has(victim_id): known.append(victim_id)
+
+func injure_person(victim_id: String, part: String, force: float,
+		attacker: String, witnesses: Array=[]) -> Dictionary:
+	if not people.has(victim_id) or not bool(people[victim_id]["alive"]):
+		return {"ok":false,"severed":false}
+	var victim: Dictionary=people[victim_id]
+	var result: Dictionary=ANATOMY.strike(victim["anatomy"],part,force,tick_count)
+	if not bool(result.get("ok",false)): return result
+	work_orders.erase(victim_id) if bool(result["severed"]) else null
+	observe_wound(victim_id,witnesses)
+	if attacker=="wizard":
+		victim["trust"]["wizard"]=clampf(
+			float(victim["trust"].get("wizard",0.0))-16.0,-100.0,100.0)
+		for seen in witnesses:
+			var observer: String=String(seen)
+			if not people.has(observer) or observer==victim_id: continue
+			var witness: Dictionary=people[observer]
+			witness["trust"]["wizard"]=clampf(
+				float(witness["trust"].get("wizard",0.0))-10.0,-100.0,100.0)
+	elif people.has(attacker) and attacker!=victim_id:
+		victim["grievance"][attacker]=clampf(
+			float(victim["grievance"].get(attacker,0.0))+28.0,0.0,100.0)
+	# The event has exact observed witnesses; random village witnesses
+	# cannot magically learn the particulars of a physical injury.
+	var observers: Array=[victim_id]
+	for seen in witnesses:
+		if people.has(String(seen)) and not observers.has(String(seen)):
+			observers.append(String(seen))
+	events.append({"id":next_event_id,"tick":tick_count,
+		"type":"severance" if bool(result["severed"]) else "wound",
+		"actor":victim_id,"target":attacker if people.has(attacker) else "",
+		"part":part,"witnesses":observers,"resolved":false,"amount":int(force)})
+	for seen in observers:
+		var memory: Array=people[String(seen)]["known_events"]
+		memory.append(next_event_id)
+		if memory.size()>32: memory.pop_front()
+	next_event_id+=1
+	if events.size()>256: events.pop_front()
+	return result
+
+func _care_target(helper_id: String) -> String:
+	if not people.has(helper_id): return ""
+	var helper: Dictionary=people[helper_id]
+	var seen: Array=nearby_care.get(helper_id,[])
+	for other in seen:
+		var target_id: String=String(other)
+		if target_id==helper_id or not people.has(target_id): continue
+		if not helper["known_wounded"].has(target_id): continue
+		if not bool(people[target_id]["alive"]): continue
+		if not ANATOMY.aid_kind(people[target_id]["anatomy"],economy.stocks).is_empty():
+			return target_id
+	return ""
+
+func _perform_neighbor_aid(helper_id: String, target_id: String) -> bool:
+	if target_id.is_empty() or not people.has(target_id) or not people.has(helper_id):
+		return false
+	if not nearby_care.get(helper_id,[]).has(target_id): return false
+	var kind: String=ANATOMY.aid_kind(people[target_id]["anatomy"],economy.stocks)
+	if kind.is_empty(): return false
+	var recipe: Dictionary={"herb":1} if kind=="bandage" else (
+		{"wood":1,"tools":1} if kind=="peg" else {"wood":1})
+	for item in recipe:
+		if int(economy.stocks.get(item,0))<int(recipe[item]): return false
+	if not ANATOMY.aid(people[target_id]["anatomy"],kind,tick_count): return false
+	for item in recipe:
+		economy.stocks[item]=int(economy.stocks[item])-int(recipe[item])
+		economy._record("care",helper_id,String(item),int(recipe[item]))
+	var trust: Dictionary=people[target_id]["trust"]
+	trust[helper_id]=clampf(float(trust.get(helper_id,0.0))+14.0,-100.0,100.0)
+	_event("neighbor_care",helper_id,target_id)
+	return true
+
+func player_help(target_id: String, inventory: Array) -> Dictionary:
+	if not people.has(target_id) or not bool(people[target_id]["alive"]):
+		return {"ok":false,"message":"There is nobody here to help."}
+	var target: Dictionary=people[target_id]
+	var loyalty: float=float(target["trust"].get("wizard",0.0))
+	if loyalty< -55.0:
+		return {"ok":false,"message":"They recoil from you and refuse treatment."}
+	var supplies: Dictionary={"herb":int(inventory.count("herb")),
+		"wood":int(inventory.count("wood")),
+		"tools":int(inventory.count("tools"))}
+	var kind: String=ANATOMY.aid_kind(target["anatomy"],supplies)
+	if kind.is_empty():
+		return {"ok":false,"message":"They need a wound dressing or usable timber and tools."}
+	var consumed: Array=["herb"] if kind=="bandage" else (
+		["wood","tools"] if kind=="peg" else ["wood"])
+	if not ANATOMY.aid(target["anatomy"],kind,tick_count):
+		return {"ok":false,"message":"That aid is not needed now."}
+	for item in consumed: inventory.erase(item)
+	target["trust"]["wizard"]=clampf(loyalty+19.0,-100.0,100.0)
+	_event("wizard_care",target_id)
+	return {"ok":true,"message":(
+		"The wound is dressed." if kind=="bandage" else
+		"You fit a wooden prosthetic leg." if kind=="peg" else
+		"You fashion a walking crutch."),
+		"kind":kind}
 
 func witness_event(kind: String, actor: String, target: String = "") -> bool:
 	if not people.has(actor): return false
@@ -296,7 +437,7 @@ func inspector(id: String) -> Dictionary:
 	if not people.has(id): return {}
 	var p: Dictionary=people[id]
 	var ranked: Array[Dictionary]=[]
-	for action in ["eat","rest","work","socialize","court","steal","investigate"]:
+	for action in ["eat","rest","work","socialize","court","steal","investigate","aid"]:
 		ranked.append({"action":action,"score":_score(p,action)})
 	ranked.sort_custom(func(a,b): return float(a["score"])>float(b["score"]))
 	return {"id":id,"person":p.duplicate(true),"ranked_actions":ranked,
@@ -332,6 +473,21 @@ func restore(record: Dictionary) -> bool:
 		if not stored.has(row[0]) or not (stored[row[0]] is Dictionary):
 			restore_error = "missing person: %s" % row[0]
 			return false
+		# Recover original schema-1 citizens without altering save IDs.
+		if not stored[row[0]].has("anatomy"):
+			stored[row[0]]["anatomy"]=ANATOMY.new_state()
+		if not stored[row[0]].has("known_wounded"):
+			stored[row[0]]["known_wounded"]=[]
+		if not ANATOMY.validate(stored[row[0]]["anatomy"]):
+			restore_error="invalid anatomical record"
+			return false
+		if not (stored[row[0]]["known_wounded"] is Array):
+			restore_error="invalid wound memories"
+			return false
+		for seen in stored[row[0]]["known_wounded"]:
+			if not (seen is String) or not stored.has(seen):
+				restore_error="unknown remembered patient"
+				return false
 		if String(stored[row[0]].get("id",""))!=row[0]:
 			restore_error = "identity mismatch: %s" % row[0]
 			return false
@@ -391,6 +547,7 @@ func restore(record: Dictionary) -> bool:
 	current_day=saved_day
 	commissions=saved_jobs.duplicate(true)
 	people = stored.duplicate(true)
+	nearby_care.clear()
 	events.clear()
 	for entry in history:
 		events.append(entry.duplicate(true))
