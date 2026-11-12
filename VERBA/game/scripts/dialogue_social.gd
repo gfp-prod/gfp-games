@@ -5,6 +5,7 @@ extends RefCounted
 const NPC_DATA = "res://data/npcs.json"
 const COMMISSIONS = preload("res://scripts/wizard_commissions.gd")
 const LATIN_SPEECH = preload("res://scripts/latin_conversation.gd")
+const ANATOMY = preload("res://scripts/npc_anatomy.gd")
 # These small attested questions transfer between people and places.
 # Unlike a word-to-quest lookup, the SAME utterance addresses the listener's
 # existing role or knowledge. Dialogue is still bounded, not free-form Latin.
@@ -76,6 +77,27 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 		var confidence: float=float(village_sim.people["daro"]["trust"].get("wizard",0.0))
 		if confidence>15.0: spoken+=" Daro speaks to you warmly."
 		elif confidence < -8.0: spoken+=" His words have become guarded."
+	# Every physically injured villager can become a care conversation,
+	# but player help is optional, can be refused after violence, and must
+	# transfer actual carried supplies. This is not a mandatory quest.
+	if village_sim!=null and village_sim.people.has(id):
+		var person: Dictionary=village_sim.people[id]
+		var condition: Dictionary=person["anatomy"]
+		if ANATOMY.injured(condition) and bool(person["alive"]):
+			var available: Dictionary={"herb":inventory.count("herb"),
+				"wood":inventory.count("wood"),"tools":inventory.count("tools")}
+			var care_kind: String=ANATOMY.aid_kind(condition,available)
+			var friendly: bool=float(person["trust"].get("wizard",0.0))>=-55.0
+			menu.append({"index":6,"label":"Offer bandaging or build a walking aid.",
+				"available":not care_kind.is_empty() and friendly,
+				"reason":"They refuse to let you near." if not friendly else
+				"Carry medicinal herbs, or usable timber and tools."})
+			if condition["missing"].size()>0:
+				spoken+="\\nYou see an old injury. Their missing limb has not grown back."
+			if float(condition["bleeding"])>.2:
+				spoken+="\\nBlood still seeps from the wound."
+			if String(condition["support"])!="none":
+				spoken+="\\nThey rely on a "+String(condition["support"])+" to move."
 	if id=="tomas" and tier==1 and not bool(past.get("traded",false)):
 		spoken += "\nTomas points to his book. 'Da mihi librum.' Give me the book: da, mihi, librum."
 	if id=="ida" and tier==1:
@@ -172,6 +194,15 @@ func speak(id: String, utterance: String, scholar, player) -> Dictionary:
 func choose(id: String, index: int, scholar, player, spoken_latin: bool = false) -> Dictionary:
 	var definition: Dictionary = npc(id)
 	if definition.is_empty(): return {"ok": false, "message": "There is nobody to speak with."}
+	# Index seven is reserved for contextual injury care; it never
+	# shadows a person's existing authored choices or Daro's commissions.
+	if index==6 and village_sim!=null and village_sim.people.has(id):
+		var help: Dictionary=village_sim.player_help(id,player.inventory)
+		if bool(help.get("ok",false)):
+			player.selected_slot=clampi(player.selected_slot,0,
+				maxi(0,player.inventory.size()-1))
+			player.refresh_held_model()
+		return help
 	if id=="daro" and village_sim!=null and index>=4:
 		var status: String=COMMISSIONS.state(village_sim)
 		if status=="offered" and index==4: return COMMISSIONS.accept(village_sim)
