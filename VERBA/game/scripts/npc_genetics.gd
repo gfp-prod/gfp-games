@@ -2,7 +2,13 @@ extends RefCounted
 ## Compact, fictional polygenic appearance model. Two alleles per locus are
 ## persisted, one transmitted from each parent; no locus encodes ethnicity,
 ## morality, intelligence, sex, social role or an individual's choices.
-const VERSION: int=1
+const VERSION: int=2
+# Version 2 extends the physique and facial-control genome without changing
+# any of the original 28 loci or their transmitted parental alleles.
+const EXTRA_MORPH_TRAITS: Array[String]=[
+	"chest_width","bust_volume","waist_width","hip_width",
+	"muscle_tone","eye_aperture","nostril_width","lip_curve"
+]
 const TRAITS: Array[String]=[
 	"pigment","warmth","eye_pigment","hair_pigment","hair_curl",
 	"face_width","face_length","jaw_width","jaw_angle",
@@ -10,7 +16,9 @@ const TRAITS: Array[String]=[
 	"nose_projection","eye_spacing","eye_shape","brow_height",
 	"brow_angle","mouth_width","lip_fullness","ear_size",
 	"stature","shoulder_width","body_depth","limb_ratio",
-	"hair_volume","freckles","magic_sensitivity"
+	"hair_volume","freckles","magic_sensitivity",
+	"chest_width","bust_volume","waist_width","hip_width",
+	"muscle_tone","eye_aperture","nostril_width","lip_curve"
 ]
 const CAP: int=1000
 const MAX_ANCIENT: int=64
@@ -52,6 +60,32 @@ static func validate(g: Variant) -> bool:
 			if not (value is int or value is float): return false
 			if value<0 or value>CAP or float(value)!=float(int(value)): return false
 	return true
+
+static func upgrade(g: Variant,person_id: String,salt: int=1938) -> Dictionary:
+	# Persisted v1 founders and their children keep EVERY historical allele.
+	# Only the new morphological loci are deterministically populated. Old
+	# relationships, life stages, careers and anatomy do not change.
+	if validate(g): return normalize(g)
+	if not (g is Dictionary) or int(g.get("version",0))!=1:
+		return {}
+	var source: Variant=g.get("alleles",{})
+	if not (source is Dictionary): return {}
+	if source.size()!=TRAITS.size()-EXTRA_MORPH_TRAITS.size(): return {}
+	for locus in TRAITS:
+		if locus in EXTRA_MORPH_TRAITS: continue
+		if not source.has(locus) or not (source[locus] is Array):
+			return {}
+		if source[locus].size()!=2: return {}
+		for allele in source[locus]:
+			if not (allele is int or allele is float): return {}
+			if int(allele)<0 or int(allele)>CAP or float(allele)!=float(int(allele)):
+				return {}
+	var result: Dictionary={"version":VERSION,"alleles":{}}
+	var baseline: Dictionary=founder(person_id,salt)
+	for locus in TRAITS:
+		var pair: Array=source[locus] if source.has(locus) else baseline["alleles"][locus]
+		result["alleles"][locus]=[int(pair[0]),int(pair[1])]
+	return result
 
 static func normalize(g: Dictionary) -> Dictionary:
 	# JSON parses integer-looking values as numeric variants that may
