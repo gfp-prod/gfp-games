@@ -618,6 +618,7 @@ func restore(record: Dictionary) -> bool:
 				old_person["family"],String(stored_id),stored):
 			restore_error="invalid genome or bloodline: "+String(stored_id)
 			return false
+		old_person["genome"]=GENES.normalize(old_person["genome"])
 		if old_person.get("life_stage","") not in ["adult","child"]:
 			restore_error="invalid stage"
 			return false
