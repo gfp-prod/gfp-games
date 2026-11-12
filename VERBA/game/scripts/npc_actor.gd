@@ -283,8 +283,15 @@ func _ready() -> void:
 		var modern_head:=ART.orb(attendant,Vector3(0,1.76,0),
 			Vector3(.42,.49,.39),skin,12)
 		modern_head.name="ModernGeneticHead"
-		ART.box(attendant,Vector3(0,2.04,-.03),Vector3(.51,.15,.45),denim)
-		ART.box(attendant,Vector3(0,2.01,-.26),Vector3(.40,.052,.27),denim)
+		# The former two huge head-level boxes became a floating roof in
+		# close-up. A close crown and shallow visor preserve the station
+		# worker's hat without hiding the genetic face beneath it.
+		var crown:=ART.box(attendant,Vector3(0,2.040,-.015),
+			Vector3(.43,.105,.34),denim)
+		crown.name="FittedAttendantCapCrown"
+		var peak:=ART.box(attendant,Vector3(0,2.018,-.207),
+			Vector3(.34,.025,.13),denim)
+		peak.name="ShortAttendantVisor"
 		COSTUME.dress_attendant(attendant)
 		BODY.finish(attendant,genome,shirt,true)
 	else:
