@@ -118,9 +118,9 @@ func _ready() -> void:
 	# one-piece walking cone. Props remain on their own worker identities.
 	# Twelve-sided fitted tunic with a broad shoulder and a shaped hem:
 	# these surfaces replace the previous square torso and floating eyes.
-	var tunic:=ART.cone(figure,Vector3(0,1.24,0),.32,.73,cloth,.275,12)
+	var tunic:=ART.cone(figure,Vector3(0,1.125,0),.285,.56,cloth,.205,12)
 	tunic.name="TaperedVillagerTunic"
-	ART.cone(figure,Vector3(0,.79,0),.36,.58,cloth,.265,12)
+	ART.cone(figure,Vector3(0,.79,0),.315,.52,cloth,.255,12)
 	ART.bone(figure,Vector3(0,1.45,0),Vector3(0,1.63,0),
 		.19,.16,cloth,10)
 	var head:=ART.orb(figure,Vector3(0,1.77,0),
@@ -178,7 +178,7 @@ func _ready() -> void:
 			var flour:=ART.mat(Color("d2c4a1"),.98)
 			# A shaped cloth bib, a tied waist and a pocket replace the
 			# vertical white rectangle that used to obscure the whole body.
-			_make_baker_apron(figure,flour,trim)
+			_make_baker_apron(figure,flour,trim,genome)
 			var bonnet:=ART.orb(figure,Vector3(0,1.989,.025),
 				Vector3(.46,.24,.40),flour,12)
 			bonnet.name="VisibleBakerBonnet"
@@ -382,16 +382,29 @@ func _apply_genetic_growth() -> void:
 	_fit_growth_colliders(shape)
 	last_body_age_day=world.village_sim.current_day
 
-func _make_baker_apron(parent: Node3D, fabric: Material, tie: Material) -> void:
-	# A front-facing trapezoidal cloth panel follows shoulders, waist, hem.
-	# Its surface normal points toward the player (-Z); it does not add
-	# collision to a character whose collider already works.
-	# Three cross-sectional columns curve the cloth around a real torso,
-	# keeping the bottom hem from disappearing inside the flared tunic.
-	var vertices: Array[Vector3]=[
-		Vector3(-.20,1.41,-.265),Vector3(0,1.41,-.34),Vector3(.20,1.41,-.265),
-		Vector3(-.24,1.04,-.285),Vector3(0,1.04,-.39),Vector3(.24,1.04,-.285),
-		Vector3(-.285,.55,-.248),Vector3(0,.55,-.415),Vector3(.285,.55,-.248)]
+func _make_baker_apron(parent: Node3D, fabric: Material,
+		tie: Material, genome: Dictionary) -> void:
+	# Drape the apron OVER the same inherited bust/waist/hip sculpt
+	# used by the wearable tunic. The old fixed-world Z coordinates were
+	# buried behind inherited torso geometry; only its pocket showed.
+	# Three sections x three lateral samples retain 24 triangles/vertices
+	# and the familiar named baker outfit for save/visual regressions.
+	var vertices: Array[Vector3]=[]
+	for section in [
+		{"height":1.40,"half_width":.20},
+		{"height":1.04,"half_width":.24},
+		{"height":.55,"half_width":.285}
+	]:
+		var y: float=float(section["height"])
+		var half_width: float=float(section["half_width"])
+		var torso_section: Vector2=BODY._section(y,genome)
+		for fraction in [-1.0,0.0,1.0]:
+			var x: float=half_width*fraction
+			var angle: float=-PI*.5+asin(clampf(x/torso_section.x,-.89,.89))
+			var point: Vector3=BODY._point(y,angle,genome)
+			# The outer tunic is 4.2% wider than the body. This 6cm
+			# cloth allowance clears the real chest without a billboard.
+			vertices.append(Vector3(x,y,point.z-.068))
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(fabric)
@@ -399,19 +412,23 @@ func _make_baker_apron(parent: Node3D, fabric: Material, tie: Material) -> void:
 		for column in range(2):
 			var i: int=row*3+column
 			for j in [i,i+1,i+3,i+1,i+4,i+3]:
+				surface.set_uv(Vector2(vertices[j].x+.5,vertices[j].y))
 				surface.add_vertex(vertices[j])
 	surface.generate_normals()
 	var apron:=MeshInstance3D.new()
 	apron.name="VisibleBakerApron"
 	apron.mesh=surface.commit()
+	apron.set_meta("drapes_over_inherited_torso",true)
 	parent.add_child(apron)
-	ART.bone(parent,Vector3(-.35,1.04,-.33),
-		Vector3(.35,1.04,-.33),.028,.028,tie,8)
-	var pocket:=ART.box(parent,Vector3(-.08,.75,-.419),
+	var waist_front: float=BODY._point(1.04,-PI*.5,genome).z-.07
+	ART.bone(parent,Vector3(-.35,1.04,waist_front),
+		Vector3(.35,1.04,waist_front),.025,.025,tie,8)
+	var pocket_z: float=BODY._point(.75,-PI*.5,genome).z-.077
+	var pocket:=ART.box(parent,Vector3(-.08,.75,pocket_z),
 		Vector3(.17,.14,.022),fabric)
 	pocket.name="BakerWorkPocket"
-	ART.bone(parent,Vector3(-.17,.83,-.424),
-		Vector3(.01,.83,-.424),.009,.009,tie,7)
+	ART.bone(parent,Vector3(-.17,.83,pocket_z-.011),
+		Vector3(.01,.83,pocket_z-.011),.009,.009,tie,7)
 
 func _process(delta: float) -> void:
 	# World labels are discovery aids, not floating billboards visible across
