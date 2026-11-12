@@ -212,10 +212,23 @@ func _capture() -> void:
 	if not String(world.player.conversation_body.text).contains("Quid fers?"):
 		_fail("Ida's inventory-conditioned Latin question is not visible in real dialogue")
 		return
+	for i in range(2): await process_frame
+	if world.player.conversation_footer==null or world.player.conversation_speech_scroll==null:
+		_fail("Scrolling speech and pinned Latin input do not exist")
+		return
+	if world.player.conversation_footer.get_global_rect().end.y>root.size.y-5:
+		_fail("Latin writing controls are clipped beyond the bottom of the physical screen")
+		return
+	if world.player.conversation_speech_scroll.size.y<55:
+		_fail("The villager's speech cannot be read in a usable scrolling window")
+		return
 	world.player.conversation_listening=true
 	world.player.conversation_buffer="Frumentum fero"
 	world.player.refresh_conversation()
 	for i in range(8): await process_frame
+	if world.player.conversation_footer.get_global_rect().end.y>root.size.y-5 or not world.player.conversation_footer.text.contains("Frumentum fero"):
+		_fail("The typed first-person Latin response is not visibly accessible in the footer")
+		return
 	RenderingServer.force_draw()
 	var baker_question: Image=root.get_texture().get_image()
 	if baker_question==null or baker_question.save_png(directory+"/baker_latin_question.png")!=OK:
