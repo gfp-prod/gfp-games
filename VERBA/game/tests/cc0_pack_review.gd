@@ -4,9 +4,9 @@ extends SceneTree
 const COUNT_BASE: int=11
 const CAMERA_SITES: Array[Dictionary]=[
 	{"id":"01_market_props","eye":Vector2(-1.5,20.0),"look":Vector2(2.9,23.8)},
-	{"id":"02_station_service_yard","eye":Vector2(-113.2,90.0),"look":Vector2(-105.7,84.0)},
-	{"id":"03_millward_yard","eye":Vector2(37.4,27.6),"look":Vector2(34.4,34.2)},
-	{"id":"04_stonecutter_home","eye":Vector2(-13.1,28.2),"look":Vector2(-9.8,34.3)}
+	{"id":"02_station_service_yard","eye":Vector2(-98.1,80.80),"look":Vector2(-104.1,80.70)},
+	{"id":"03_millward_yard","eye":Vector2(31.8,26.4),"look":Vector2(33.5,30.7)},
+	{"id":"04_stonecutter_home","eye":Vector2(-7.8,25.2),"look":Vector2(-9.2,31.2)}
 ]
 func _initialize() -> void:
 	call_deferred("_run")
