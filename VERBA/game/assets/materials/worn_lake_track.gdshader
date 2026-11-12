@@ -7,6 +7,8 @@ render_mode blend_mix, depth_draw_opaque, cull_disabled, diffuse_burley;
 // remain entirely under the existing world terrain.
 uniform sampler2D path_photograph : source_color, repeat_enable, filter_linear_mipmap;
 uniform sampler2D river_silt : source_color, repeat_enable, filter_linear_mipmap;
+// Shared track shading; the village's compacted soil is cooler and darker.
+uniform vec3 soil_tint=vec3(.64,.60,.52);
 
 varying vec3 ground_location;
 
@@ -37,7 +39,7 @@ void fragment() {
 	vec3 earth=texture(path_photograph,vec2(UV.x*2.4,UV.y)).rgb;
 	vec3 fines=texture(river_silt,vec2(UV.x*2.3,UV.y*.76)).rgb;
 	vec3 pigment=mix(earth,fines,.13+wear*.25);
-	pigment*=vec3(.64,.60,.52);
+	pigment*=soil_tint;
 	pigment*=1.0-ruts*(.052+wear*.035);
 	// Moisture darkens the deeper ruts; organic margins disappear into soil.
 	pigment*=.94+.10*roughness;
