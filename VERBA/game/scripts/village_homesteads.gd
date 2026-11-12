@@ -12,6 +12,7 @@ const SITES: Array[Dictionary]=[
 	 "yard_side":1.0,"kind":"miller"}
 ]
 const ART=preload("res://scripts/art.gd")
+const VILLAGE_YARD_ART=preload("res://scripts/village_yard_art.gd")
 
 static func build(world: Node3D) -> void:
 	if world.get_node_or_null("PhysicalVillageHomesteads")!=null:
@@ -130,3 +131,6 @@ static func build(world: Node3D) -> void:
 		installed+=1
 	root.set_meta("authored_homestead_count",installed)
 	root.set_meta("new_simulation_entities",0)
+	# Terrain-conforming old garden beds, trampled access and worked yards.
+	# Visual-only, with no new NPC goals, collision or persistence identities.
+	VILLAGE_YARD_ART.build(world,root)
