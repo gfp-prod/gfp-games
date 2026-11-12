@@ -50,6 +50,8 @@ var anatomy_visual_signature: String=""
 var blood_emitter: CPUParticles3D
 var support_visual: Node3D
 var anatomy_visual_elapsed: float=0.0
+var inherited_body_dimensions: Vector3=Vector3.ONE
+var last_body_age_day: int=-999999
 
 func setup(owner_world: Node3D, data: Dictionary) -> void:
 	world = owner_world
@@ -292,13 +294,9 @@ func _ready() -> void:
 	var shoulder: float=lerpf(.88,1.17,GENES.value(genome,"shoulder_width"))
 	var height: float=lerpf(.85,1.16,GENES.value(genome,"stature"))
 	var depth: float=lerpf(.87,1.15,GENES.value(genome,"body_depth"))
-	if stage=="child":
-		shoulder*=.74
-		height*=.60
-		depth*=.78
-	figure.scale=Vector3(shoulder,height,depth)
+	inherited_body_dimensions=Vector3(shoulder,height,depth)
+	_apply_genetic_growth()
 	if visual_attendant!=null:
-		visual_attendant.scale=Vector3(shoulder,height,depth)
 		PORTRAIT.finish(visual_attendant,npc_id,skin,hair,brow,genome)
 	# Both face and limb models inherit the same body shape, and child
 	# models use the existing detachable body-part system.
@@ -329,6 +327,26 @@ func _ready() -> void:
 	title.position = Vector3(0,2.29,0)
 	add_child(title)
 	name_label=title
+
+func _apply_genetic_growth() -> void:
+	# Juveniles physically grow toward their own inherited adult body
+	# proportions over calendar years; there is no 18th-birthday pop.
+	if world==null or world.village_sim==null or not world.village_sim.people.has(npc_id):
+		return
+	var person: Dictionary=world.village_sim.people[npc_id]
+	var age_days: int=maxi(0,world.village_sim.current_day-int(person["family"]["birth_day"]))
+	var years_progress: float=clampf(float(age_days)/(18.0*365.0),0.0,1.0)
+	var growth: float=pow(years_progress,.74)
+	var shape: Vector3=inherited_body_dimensions
+	if String(person.get("life_stage","adult"))=="child":
+		shape.x*=lerpf(.67,1.0,growth)
+		shape.y*=lerpf(.54,1.0,growth)
+		shape.z*=lerpf(.73,1.0,growth)
+	if visual_figure!=null:
+		visual_figure.scale=shape
+	if visual_attendant!=null:
+		visual_attendant.scale=shape
+	last_body_age_day=world.village_sim.current_day
 
 func _make_baker_apron(parent: Node3D, fabric: Material, tie: Material) -> void:
 	# A front-facing trapezoidal cloth panel follows shoulders, waist, hem.
@@ -378,6 +396,8 @@ func _process(delta: float) -> void:
 		if toward.length_squared()>.05:
 			rotation.y=lerp_angle(rotation.y,atan2(-toward.x,-toward.z),minf(1.0,delta*8.0))
 	if left_arm==null or world==null or world.village_sim==null: return
+	if last_body_age_day!=world.village_sim.current_day:
+		_apply_genetic_growth()
 	# Facial animation reacts to the person's own mood and memories of
 	# the player, without changing any inherited genetic trait.
 	var me: Dictionary=world.village_sim.people.get(npc_id,{})
