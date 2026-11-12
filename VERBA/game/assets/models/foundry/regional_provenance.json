@@ -96,9 +96,9 @@
       "license": "Original VERBA geometry and bundled CC0 photographs",
       "meters": true,
       "mesh_count": 6,
-      "faces": 36098,
-      "sha256": "48b1e1bb54ca3067faea8cab384764803df547b64c44e5826b03fb1a35507a98",
-      "size_bytes": 13658700
+      "faces": 18862,
+      "sha256": "9fd28f05cd2951ec00123cb35bc2b0d36c2d90279c02bedebb9c67b29548cdb3",
+      "size_bytes": 11318032
     }
   ]
 }
