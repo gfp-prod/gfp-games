@@ -10,23 +10,23 @@ const SPECS: Array[Dictionary]=[
 	{"id":"MarketOldDeliveryBox","pack":"retro-fantasy","file":"detail-crate.glb",
 	 "at":Vector2(3.85,24.10),"height":.64,"yaw":.19,"tone":Color("7d715c"),"solid":false},
 	{"id":"MillwardWaterBarrels","pack":"retro-fantasy","file":"barrels.glb",
-	 "at":Vector2(35.2,35.1),"height":1.32,"yaw":.22,"tone":Color("8b806d"),"solid":true},
+	 "at":Vector2(33.60,29.75),"height":1.22,"yaw":.22,"tone":Color("8b806d"),"solid":true},
 	{"id":"StonecutterStaveLadder","pack":"retro-fantasy","file":"ladder.glb",
-	 "at":Vector2(-11.8,34.9),"height":2.58,"yaw":1.22,"tone":Color("817a6a"),"solid":false},
+	 "at":Vector2(-10.4,30.30),"height":2.50,"yaw":1.22,"tone":Color("817a6a"),"solid":false},
 	{"id":"RuinedNorthKeepColumn","pack":"retro-fantasy","file":"column-damaged.glb",
 	 "at":Vector2(-61.3,36.6),"height":2.15,"yaw":-.4,"tone":Color("8b8a82"),"solid":true},
 	{"id":"StonecutterOldSteps","pack":"retro-fantasy","file":"stairs-stone.glb",
 	 "at":Vector2(-7.5,29.62),"height":.38,"yaw":0.0,"tone":Color("83837b"),"solid":false},
 	{"id":"StationWornDumpster","pack":"retro-urban","file":"detail-dumpster-closed.glb",
-	 "at":Vector2(-109.1,82.6),"height":1.42,"yaw":.60,"tone":Color("68716b"),"solid":true},
+	 "at":Vector2(-106.90,81.10),"height":1.42,"station_apron":true,"yaw":.60,"tone":Color("68716b"),"solid":true},
 	{"id":"StationOldWoodPallet","pack":"retro-urban","file":"pallet.glb",
-	 "at":Vector2(-106.2,84.4),"height":.26,"yaw":.22,"tone":Color("776f5e"),"solid":true},
+	 "at":Vector2(-104.45,81.10),"height":.26,"station_apron":true,"yaw":.22,"tone":Color("776f5e"),"solid":true},
 	{"id":"StationRetainingBricks","pack":"retro-urban","file":"detail-bricks-type-a.glb",
-	 "at":Vector2(-97.3,84.5),"height":.48,"yaw":1.14,"tone":Color("7f736c"),"solid":false},
+	 "at":Vector2(-99.50,80.65),"height":.48,"station_apron":true,"yaw":1.14,"tone":Color("7f736c"),"solid":false},
 	{"id":"StationAbandonedRoadBarricade","pack":"retro-urban","file":"detail-barrier-strong-damaged.glb",
-	 "at":Vector2(-97.0,87.7),"height":1.09,"yaw":.35,"tone":Color("73766d"),"solid":true},
+	 "at":Vector2(-93.45,80.58),"height":1.09,"station_apron":true,"yaw":.35,"tone":Color("73766d"),"solid":true},
 	{"id":"StationOldCableTangle","pack":"retro-urban","file":"detail-cables-type-a.glb",
-	 "at":Vector2(-106.7,85.5),"height":.46,"yaw":.42,"tone":Color("676765"),"solid":false},
+	 "at":Vector2(-102.85,81.35),"height":.46,"station_apron":true,"yaw":.42,"tone":Color("676765"),"solid":false},
 	{"id":"StonecutterUsefulBookshelf","pack":"furniture","file":"bookcaseOpen.glb",
 	 "at":Vector2(-9.5,36.2),"height":1.74,"yaw":PI,"tone":Color("7c796b"),"solid":true,
 	 "requires":"StonecutterHouse"},
@@ -97,7 +97,16 @@ static func build(world: Node3D) -> void:
 		var p: Vector2=spec["at"]
 		var node:=Node3D.new()
 		node.name=String(spec["id"])
-		node.position=Vector3(p.x,world.height_at(p.x,p.y),p.y)
+		# The modern station forecourt is a physically level concrete apron.
+		# Placing service props on the noisy terrain height underneath it
+		# previously left a dumpster hanging above the steep back slope.
+		var ground: float=world.height_at(p.x,p.y)
+		if bool(spec.get("station_apron",false)):
+			var station: Node3D=world.get_node_or_null(
+				"StrangeRoadDistrict/ValeFuelStation") as Node3D
+			if station!=null:
+				ground=station.global_position.y+.11
+		node.position=Vector3(p.x,ground,p.y)
 		node.rotation.y=float(spec["yaw"])
 		root.add_child(node)
 		var geometry: Node3D=source.instantiate() as Node3D
