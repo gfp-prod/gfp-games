@@ -268,8 +268,11 @@ func _run() -> void:
 				return
 			var visit: Vector3=citizen.call("_destination_for","rest")
 			var entrance: Vector3=house.to_global(Vector3(float(residence["side"]),0,-4.35))
-			if Vector2(visit.x,visit.z).distance_to(Vector2(entrance.x,entrance.z))>.08:
-				_fail("Rest still sends "+String(residence["id"])+" to an empty map coordinate")
+			# An individual tree may occupy the ideal porch tile. In that
+			# case the citizen must approach a nearby safe doorstep, not clip
+			# through a trunk or wander back to a remote spawn location.
+			if Vector2(visit.x,visit.z).distance_to(Vector2(entrance.x,entrance.z))>2.25:
+				_fail("Rest sends "+String(residence["id"])+" far from their real house")
 				return
 			if not NAV.traversable(world,visit.x,visit.z):
 				_fail("Resident's porch lies inside blocked house/stream navigation: "+String(residence["id"]))
