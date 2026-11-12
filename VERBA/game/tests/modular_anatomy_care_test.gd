@@ -102,6 +102,10 @@ func _run() -> void:
 		return
 	sim.observe_wound("daro",["sela"])
 	sim.nearby_care["sela"]=["daro"]
+	# Different levels of supplies lead to different forms of aid. Remove
+	# herb in this particular scenario to test a wooden prosthetic;
+	# emergency bandaging was independently verified above.
+	sim.economy.stocks["herb"]=0
 	var wood_before: int=int(sim.economy.stocks["wood"])
 	var tools_before: int=int(sim.economy.stocks["tools"])
 	if sim._score(sim.people["sela"],"aid")<=0.0:
@@ -141,12 +145,10 @@ func _run() -> void:
 	if not ida.limb_missing("left_arm") or ida.modular_limbs["left_arm"].visible:
 		_fail("Saved arm loss did not reconstruct on the original NPC")
 		return
-	if not daro.limb_missing("right_leg") or daro_body["support"]=="none":
-		# After restore use freshly loaded patient record, not stale Dictionary.
-		var restored: Dictionary=sim.people["daro"]["anatomy"]
-		if not restored["missing"].has("right_leg") or restored["support"]!="peg":
-			_fail("Saved peg leg did not survive reload")
-			return
+	var restored: Dictionary=sim.people["daro"]["anatomy"]
+	if not daro.limb_missing("right_leg") or restored["support"]!="peg":
+		_fail("Saved peg leg did not survive reload")
+		return
 	# Pre-injury schema-1 characters also need to load without resets.
 	var legacy: Dictionary=sim.snapshot()
 	for id in legacy["people"]:
