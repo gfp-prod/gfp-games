@@ -134,20 +134,20 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var nose_width: float=lerpf(.027,.058,_v(g,"nose_width"))
 	var nostril_width: float=lerpf(.64,1.28,_v(g,"nostril_width"))
 	var nose_front: float=_depth(0,nose_y,g)
-	var tip:=ART.orb(root,Vector3(0,nose_y-.012,nose_front-.005),
-		Vector3(nose_width*1.37,.052,.042),skin,12)
+	var tip:=ART.orb(root,Vector3(0,nose_y-.012,nose_front+.010),
+		Vector3(nose_width*.84,.036,.023),skin,10)
 	tip.name="ModeledNoseTip"
 	var nostril_skin:=ART.mat(GENES.skin_color(g).darkened(.39),.99)
 	for side in [-1.0,1.0]:
 		var wing_x: float=side*nose_width*.72
 		var wing_y: float=nose_y-.035
 		var wing_front: float=_depth(wing_x,wing_y,g)
-		var alar:=ART.orb(root,Vector3(wing_x,wing_y,wing_front-.010),
-			Vector3(nose_width*.90,.031,.026),skin,10)
+		var alar:=ART.orb(root,Vector3(wing_x,wing_y,wing_front+.007),
+			Vector3(nose_width*.48,.024,.017),skin,9)
 		alar.name="ModeledNoseWing"
 		var nostril:=ART.orb(root,
-			Vector3(side*nose_width*.67*nostril_width,wing_y-.011,wing_front-.027),
-			Vector3(.012*nostril_width,.007,.006),nostril_skin,8)
+			Vector3(side*nose_width*.68*nostril_width,wing_y-.013,wing_front-.009),
+			Vector3(.008*nostril_width,.005,.004),nostril_skin,8)
 		nostril.name="InheritedNostril"
 	# Faceted cheekbone highlights follow the integrated mesh surface.
 	# The underlying skull is continuous, not an attached cheek sphere.
@@ -217,10 +217,17 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		scalp.visible=false
 	var curl: float=_v(g,"hair_curl")
 	if curl>.46 and person not in ["ida","daro"]:
-		for i in range(5):
-			var cx: float=(float(i)-2.0)*.080
-			var curl_piece:=ART.orb(root,Vector3(cx,2.011+volume*.09,-.121),
-				Vector3(.092,.092+curl*.09,.083),hair,9)
+		# Hair texture comes from small overlapping facets embedded inside
+		# the crown. Large vertical egg-shaped spheres looked like horns.
+		var count: int=4+int(floor(curl*3.0))
+		for i in range(count):
+			var lateral: float=float(i)-float(count-1)*.5
+			var cx: float=lateral*(.31/float(maxi(1,count-1)))
+			var irregular: float=sin(float(i)*2.4+volume*8.0)
+			var crown: float=-.010+volume*.017+irregular*.006
+			var curl_piece:=ART.orb(root,
+				Vector3(cx,1.973+crown,-.114),
+				Vector3(.042+volume*.009,.027+curl*.020,.044),hair,8)
 			curl_piece.name="GeneticCurlCluster"
 	elif curl<.31 and person not in ["ida","daro"]:
 		var part:=ART.bone(root,Vector3(-.15,1.975,-.14),
