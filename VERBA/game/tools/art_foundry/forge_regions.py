@@ -117,7 +117,10 @@ def authors():
         rope=Geometry("weathered_rope",mat("hemp","earth_path_diffuse.jpg",(.70,.61,.43))),
         plaster=Geometry("faded_facade",mat("pitted_concrete","cottage_plaster_diffuse.jpg",(.67,.66,.57))),
         glass=Geometry("smoky_window_glass",mat("smoked_window","cottage_roof_diffuse.jpg",(.22,.27,.27),.28)),
-        sign=Geometry("old_green_enamel",mat("faded_enamel","cottage_roof_diffuse.jpg",(.37,.45,.38),.68))
+        sign=Geometry("old_green_enamel",mat("faded_enamel","cottage_roof_diffuse.jpg",(.37,.45,.38),.68)),
+        canvas=Geometry("natural_dyed_canvas",mat("stained_canvas","cottage_plaster_diffuse.jpg",(.72,.68,.56),.99)),
+        brick=Geometry("firebrick_and_clay",mat("burnt_firebrick","stone_diffuse.jpg",(.65,.44,.33),.96)),
+        soot=Geometry("kiln_soot_and_embers",mat("kiln_soot","woodland_ground_diffuse.jpg",(.18,.20,.17),.99))
     )
 
 def bridge(g):
@@ -559,6 +562,208 @@ def castle_gatehouse(g):
         stone.rock((x,.10,z),
                    (R.uniform(.17,.48),R.uniform(.09,.22),R.uniform(.20,.50)),5100+i)
 
+
+def village_bakery(g):
+    """An open-front, physically credible stone oven with an old bread peel rack.
+    Replaces bakery visuals, not PhysicalBakeOven, coal glow or village inventory.
+    The active oven bounds in village_workplaces.gd remain authoritative.
+    """
+    stone,brick,lichen,oak=g["stone"],g["brick"],g["lichen"],g["oak"]
+    frame,soot,steel,rope=g["timber"],g["soot"],g["steel"],g["rope"]
+    # Raised fieldstone hearth, staggered brick and a proper dressed foundation.
+    stone.box((.04,.27,.29),(2.49,.54,2.24),1.7)
+    for course in range(3):
+        y=.095+course*.175
+        for face_z in [-.875,1.46]:
+            for index in range(5):
+                x=-1.02+index*.51+(course%2)*.13
+                if x>1.12:continue
+                brick.box((x,y,face_z),(.44,.154,.065),1.0)
+        for face_x in [-1.21,1.29]:
+            for index in range(4):
+                z=-.60+index*.55+(course%2)*.17
+                if z>1.23: continue
+                stone.box((face_x,y,z),(.065,.16,.47),1.1)
+    # Low domed kiln: 12 tiers and 24 segments. Actual shaped vaulted
+    # masonry rather than a giant grey sphere or geometric cone.
+    n=24
+    levels=12
+    for ring in range(levels):
+        t0=ring/levels*math.pi*.5
+        t1=(ring+1)/levels*math.pi*.5
+        r0=1.15*math.cos(t0)
+        r1=1.15*math.cos(t1)
+        y0=.57+1.47*math.sin(t0)
+        y1=.57+1.47*math.sin(t1)
+        for i in range(n):
+            a=i*2*math.pi/n
+            b=(i+1)*2*math.pi/n
+            def pt(angle,r,y):
+                return (.04+math.cos(angle)*r,y,.32+math.sin(angle)*r)
+            (lichen if ring in [0,1] and i%17==1 else stone).face(
+                [pt(a,r0,y0),pt(b,r0,y0),pt(b,r1,y1),pt(a,r1,y1)],1.3)
+            # Deep, incomplete brick bands create plausible repairs around
+            # the weather-exposed lower dome instead of pasted on boulders.
+            if ring in [1,4] and i%4!=0:
+                a_mid=(a+b)*.5
+                radius=1.15*math.cos(t0)+.023
+                x=.04+math.cos(a_mid)*radius
+                z=.32+math.sin(a_mid)*radius
+                if z>- .62:
+                    continue # keep firebox aperture readable
+                brick.beam(pt(a,r0+.031,y0),pt(b,r0+.031,y0),.045,.055)
+    # Proper front arch; soot sits behind retained real working embers.
+    soot.box((0,1.00,-.876),(.90,.64,.055),1.0)
+    for i in range(13):
+        angle0=i*math.pi/13
+        angle1=(i+1)*math.pi/13
+        p0=(math.cos(angle0)*.59,.96+math.sin(angle0)*.45,-.991)
+        p1=(math.cos(angle1)*.59,.96+math.sin(angle1)*.45,-.991)
+        brick.beam(p0,p1,.113,.105)
+    for sign in [-1,1]:
+        stone.box((sign*.635,.89,-.982),(.18,.42,.20),1.0)
+    # Purpose-built chimney, bonded to rear, held by iron collars.
+    frame.beam((.64,1.53,.92),(.69,3.04,.94),.27,.22)
+    for y in [2.35,2.81]:
+        steel.box((.68,y,.94),(.40,.07,.37),1.2)
+    soot.box((.69,3.03,.94),(.25,.06,.19))
+    # Two hand-worn kitchen tools and stacked repair blocks.
+    for dy in [.28,.90]:
+        oak.beam((-1.60,dy,-.35),(-2.03,dy,-.35),.049,.041)
+    oak.beam((-1.60,.08,-.26),(-1.60,1.70,-.26),.067)
+    oak.beam((-2.02,1.12,-.34),(-1.61,1.40,-.34),.032)
+    for i in range(6):
+        x=.84+.12*(i%2)
+        z=1.55+.27*(i//2)
+        brick.box((x,.12,z),(.27,.18,.24),1.0)
+    # A stonework ash shelf with realistic iron binding, away from the
+    # preserved finite working ember visual.
+    steel.box((0,.55,-1.02),(.90,.045,.17))
+    for sign in [-1,1]:
+        steel.beam((sign*.43,.51,-1.04),(sign*.43,.72,-1.04),.032)
+
+
+def village_forge(g):
+    """Forge furnace with metal hood, laid refractory stone and riveted flue.
+    The glowing coal stock, functional light and collision stay in Godot.
+    """
+    stone,brick,lichen=g["stone"],g["brick"],g["lichen"]
+    steel,rust,oak,soot=g["steel"],g["rust"],g["oak"],g["soot"]
+    # Hearth fits PhysicalCoalForge 2.19x1.75x1.25: no visual physics inflation.
+    stone.box((0,.44,.47),(2.26,.84,1.33),1.8)
+    for y in [.24,.61,.91]:
+        for i in range(5):
+            x=-.93+i*.48+(0.16 if y==.61 else 0)
+            if x>1.0:continue
+            brick.box((x,y,-.224),(.41,.25,.08),1.5)
+    for x in [-1.12,1.12]:
+        for z in [-.05,.47,.99]:
+            stone.box((x,.60,z),(.11,.44,.46),1.3)
+    # Arch opening recessed *behind* the original animated, finite coal.
+    soot.box((0,.87,-.216),(1.18,.55,.042))
+    for i in range(11):
+        a=i*math.pi/11; b=(i+1)*math.pi/11
+        p=(math.cos(a)*.69,.85+math.sin(a)*.37,-.275)
+        q=(math.cos(b)*.69,.85+math.sin(b)*.37,-.275)
+        brick.beam(p,q,.106,.098)
+    for sign in [-1,1]:
+        steel.box((sign*.70,.67,-.29),(.095,.49,.08))
+        steel.box((sign*.72,1.04,.11),(.046,.09,.73),1.1)
+    # Faceted raised forge throat and mechanically anchored hood.
+    steel.box((0,1.35,.54),(2.05,.13,1.36),2)
+    for i in range(14):
+        a=math.pi*2*i/14
+        b=math.pi*2*(i+1)/14
+        def p(theta,r,y):
+            return (math.cos(theta)*r,y,.51+math.sin(theta)*r*.65)
+        rust.face([p(a,1.06,1.41),p(b,1.06,1.41),
+                   p(b,.38,2.29),p(a,.38,2.29)],2)
+    # A proper flue and rivet lines, not a free-floating chimney.
+    steel.box((.17,2.63,.64),(.64,.91,.60),2)
+    soot.box((.17,3.11,.64),(.47,.065,.43),1)
+    rust.box((.17,3.17,.64),(.78,.12,.76),2)
+    for y in [2.36,2.76]:
+        rust.box((.17,y,.34),(.65,.085,.035))
+    for x in [-.12,.42]:
+        for y in [2.36,2.77]:
+            steel.box((x,y,.313),(.038,.044,.022))
+    for z in [.17,.83]:
+        oak.beam((-1.22,.16,z),(-1.22,1.78,z),.115,.10)
+        oak.beam((1.22,.16,z),(1.22,1.78,z),.115,.10)
+    for y in [1.58,1.90]:
+        rust.box((0,y,1.16),(2.55,.075,.11),1.4)
+    # The human-maintained footprint has the soot and repair scars implied
+    # by welding and working steel, but isn't cluttered with fake loot.
+    for i in range(13):
+        x=R.uniform(-1.0,1.0)
+        z=R.uniform(.74,1.16)
+        if i%4==0:
+            lichen.rock((x,.12,z),(.15,.12,.18),7100+i)
+
+
+def village_market_stall(g):
+    """Worn pitched cloth canopy, braced framing, legible walk-through stall.
+    This overlays only visual geometry; citizens still reach the market.
+    """
+    oak,frame,cloth,rope=g["oak"],g["timber"],g["canvas"],g["rope"]
+    stone,rust=g["stone"],g["rust"]
+    # Irregular handmade ground frame of four real posts and supports.
+    for x in [-1.14,1.14]:
+        for z in [-.73,.73]:
+            stone.box((x,.08,z),(.29,.16,.29),1.1)
+            frame.beam((x,.13,z),(x+(.025 if z<0 else -.025),2.56,z),.105,.094)
+            for sign in [-1,1]:
+                if sign*x>0:
+                    frame.beam((x,2.09,z),(x-sign*.42,2.47,z),.063)
+    # Two thick sill beams and braced carpentry support the overhead cloth.
+    for z in [-.82,.82]:
+        oak.beam((-1.22,2.55,z),(1.22,2.55,z),.12,.095)
+    for x in [-1.16,1.16]:
+        oak.beam((x,2.55,-.87),(x,2.55,.87),.108,.09)
+    frame.beam((0,3.05,-1.01),(0,3.05,1.01),.08,.07)
+    # Cloth is a pitched ridge with layered panels and slightly ragged
+    # seams. Real fabric texture from CC0 plaster photo pigment.
+    for side in [-1,1]:
+        for i in range(6):
+            z0=-1.02+i*.34
+            z1=z0+.34
+            outside=side*1.38
+            sag=.045+R.uniform(-.023,.028)
+            h0=3.07-abs(side)*.06
+            cloth.face([(0,h0,z0),(outside,2.52-sag,z0),
+                        (outside,2.52-sag,z1),(0,h0,z1)],1.25)
+            # Stitched hems make a readable edge instead of a bald triangle.
+            rope.beam((outside,2.53-sag,z0),(outside,2.53-sag,z1),.030)
+            if i in [1,4]:
+                patch_side=side*(.61+.09*i)
+                rust.box((patch_side,2.78-.045*i,z0+.17),
+                         (.18,.018,.29),1.2)
+        # Ragged valance sways visually but no physics or animated rig added.
+        for i in range(8):
+            z=-1.0+i*.29
+            edge=side*1.38
+            w=.24
+            cloth.face([(edge,2.53,z),(edge,2.34+R.uniform(-.04,.06),z+.035),
+                        (edge,2.39+R.uniform(-.03,.05),z+w),
+                        (edge,2.53,z+w)],.8)
+    # Worktop is not a cube. Individual short weathered boards and legs.
+    for i in range(8):
+        z=-.56+i*.155
+        oak.box((0,.99,z),(2.53,.09,.15),1.4)
+    for x in [-1.0,1.0]:
+        for z in [-.45,.45]:
+            frame.beam((x,.13,z),(x,.94,z),.10)
+        frame.beam((x,.48,-.49),(x,.48,.49),.055)
+    # Existing MERCATUS Label3D is kept; a believable wooden fascia now
+    # actually carries it at the original position (z=-.96).
+    frame.box((0,2.13,-.92),(2.16,.46,.12),1.8)
+    for x in [-1.13,1.13]:
+        rust.box((x,2.13,-1.0),(.045,.40,.025))
+    # Worn split shelf, few repeated basket frames. Do not mint stock items.
+    for x in [-.84,.84]:
+        oak.box((x,.57,.47),(.63,.07,.39),1.2)
+        rope.beam((x-.27,.52,.64),(x+.27,.52,.64),.029)
+
 BUILDERS={
     "old_creek_footbridge":bridge,
     "old_fishing_jetty":jetty,
@@ -569,7 +774,10 @@ BUILDERS={
     "stone_prayer_shrine":prayer_shrine,
     "cold_charcoal_kiln":charcoal_kiln,
     "roadside_station":roadside_station,
-    "castle_gatehouse":castle_gatehouse
+    "castle_gatehouse":castle_gatehouse,
+    "village_bakery":village_bakery,
+    "village_forge":village_forge,
+    "village_market_stall":village_market_stall
 }
 
 def export_asset(out,name,builder):
