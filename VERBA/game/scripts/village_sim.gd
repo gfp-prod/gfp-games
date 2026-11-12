@@ -116,7 +116,13 @@ func _select(p: Dictionary) -> String:
 	if spatial_work_enabled and work_orders.has(String(p["id"])):
 		return "work"
 	var scores: Dictionary = {}
-	for action in ["eat","rest","work","socialize","court","steal","investigate","aid"]:
+	var actions: Array=["eat","rest","work","socialize","court","steal","investigate"]
+	# Preserve the exact seven-action seed/replay RNG sequence when there
+	# is no known nearby patient. Optional care must not silently rewrite
+	# the entire economy in old saves or independent simulations.
+	if not _care_target(String(p["id"])).is_empty():
+		actions.append("aid")
+	for action in actions:
 		# Gumbel-free small bounded noise avoids action lockstep, not arbitrary decisions.
 		scores[action] = _score(p,action) + rng.randf_range(-3.0,3.0)
 		if String(recent_action.get(p["id"],"")) == action:
@@ -438,7 +444,10 @@ func inspector(id: String) -> Dictionary:
 	if not people.has(id): return {}
 	var p: Dictionary=people[id]
 	var ranked: Array[Dictionary]=[]
-	for action in ["eat","rest","work","socialize","court","steal","investigate","aid"]:
+	var actions: Array=["eat","rest","work","socialize","court","steal","investigate"]
+	if not _care_target(id).is_empty():
+		actions.append("aid")
+	for action in actions:
 		ranked.append({"action":action,"score":_score(p,action)})
 	ranked.sort_custom(func(a,b): return float(a["score"])>float(b["score"]))
 	return {"id":id,"person":p.duplicate(true),"ranked_actions":ranked,
