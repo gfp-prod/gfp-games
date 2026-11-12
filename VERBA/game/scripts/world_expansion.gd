@@ -41,9 +41,11 @@ static func _lake(world,root: Node3D) -> void:
 			center.y+sin(b)*REGIONS.LAKE_RADII.y)
 		# Correct the radius to match the same irregular shore function
 		# used for the physical basin and six-material ground shader.
-		for j in range(4):
-			p0=center+(p0-center)*(.993 if REGIONS.lake_distance(p0.x,p0.y)>1.0 else 1.008)
-			p1=center+(p1-center)*(.993 if REGIONS.lake_distance(p1.x,p1.y)>1.0 else 1.008)
+		for j in range(6):
+			var d0: float=REGIONS.lake_distance(p0.x,p0.y)
+			var d1: float=REGIONS.lake_distance(p1.x,p1.y)
+			p0=center+(p0-center)*clampf(1.0/maxf(.01,d0),.82,1.18)
+			p1=center+(p1-center)*clampf(1.0/maxf(.01,d1),.82,1.18)
 		for p in [p1,center,p0]:
 			st.set_uv(Vector2((p.x-center.x)*.04,(p.y-center.y)*.04))
 			st.add_vertex(Vector3(p.x,level,p.y))
@@ -62,7 +64,7 @@ static func _lake(world,root: Node3D) -> void:
 	dock.name="OldFishingJetty"
 	dock.position=Vector3(center.x-REGIONS.LAKE_RADII.x-2.0,level+.61,center.y)
 	water.add_child(dock)
-	var plank: Material=world.textured("res://assets/textures/wood.png",Color("756c58"))
+	var plank: Material=world.textured("res://assets/textures/authored/weathered_oak.png",Color("756c58"))
 	var pitch: Material=world.textured("res://assets/textures/bark.png",Color("50443b"))
 	for i in range(13):
 		var dx: float=float(i)*.70
@@ -79,7 +81,7 @@ static func _lake(world,root: Node3D) -> void:
 	isle.name="TheHalfDrownedAltar"
 	isle.position=Vector3(center.x+2.2,level-.9,center.y-1.8)
 	water.add_child(isle)
-	var stone: Material=world.textured("res://assets/textures/wet_fieldstone.png",Color("696b63"))
+	var stone: Material=world.textured("res://assets/textures/authored/wet_fieldstone.png",Color("696b63"))
 	ART.stone(isle,Vector3.ZERO,Vector3(2.0,2.9,1.9),stone)
 	ART.stone(isle,Vector3(.6,1.25,-.4),Vector3(.65,1.4,.56),stone)
 	ART.bone(isle,Vector3(-.45,1.4,-.4),Vector3(.35,2.75,-.4),.20,.14,stone,7)
@@ -198,10 +200,10 @@ static func _path(world,parent: Node3D,points: Array[Vector2],
 	parent.add_child(road)
 
 static func _distant_landmarks(world,root: Node3D) -> void:
-	var wet_stone: StandardMaterial3D=world.textured("res://assets/textures/wet_fieldstone.png",
+	var wet_stone: StandardMaterial3D=world.textured("res://assets/textures/authored/wet_fieldstone.png",
 		Color("817d73"))
-	var oak: StandardMaterial3D=world.textured("res://assets/textures/wood.png",Color("74604a"))
-	var moss: StandardMaterial3D=world.textured("res://assets/textures/moss.png",Color("72785f"))
+	var oak: StandardMaterial3D=world.textured("res://assets/textures/authored/weathered_oak.png",Color("74604a"))
+	var moss: StandardMaterial3D=world.textured("res://assets/textures/real/moss_diffuse.jpg",Color("72785f"))
 	var iron:=ART.mat(Color("4d4f4b"),.86)
 	# Ruined lakeside toll-post.
 	var toll:=Node3D.new()
@@ -326,7 +328,7 @@ static func _remote_heath(world,root: Node3D) -> void:
 	# A few clean distant silhouettes rather than a blank new hundred metres.
 	# Geometry is decorative; it cannot reorder existing saved tree IDs.
 	var trunk: StandardMaterial3D=world.textured("res://assets/textures/bark.png",Color("554939"))
-	var olive: StandardMaterial3D=world.textured("res://assets/textures/moss.png",Color("68715b"))
+	var olive: StandardMaterial3D=world.textured("res://assets/textures/real/moss_diffuse.jpg",Color("68715b"))
 	var rng:=RandomNumberGenerator.new()
 	rng.seed=781933
 	var stands: Array[Dictionary]=[
