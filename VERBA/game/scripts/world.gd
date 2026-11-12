@@ -28,6 +28,7 @@ const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
 const LATIN_WAYSTONE = preload("res://scripts/latin_waystone.gd")
 const WORLD_REGIONS = preload("res://scripts/world_regions.gd")
 const WORLD_EXPANSION = preload("res://scripts/world_expansion.gd")
+const WORLD_ART_UPGRADE = preload("res://scripts/world_art_upgrade.gd")
 const WORLD_WEATHERING = preload("res://scripts/world_weathering.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
@@ -115,6 +116,8 @@ func _ready() -> void:
 	WORLD_EXPANSION.build(self)
 	# History belongs to the landscape, not to a floating decoration layer.
 	WORLD_WEATHERING.build(self)
+	# Blender Foundry replaces only scenery visuals; old collision and saves survive.
+	WORLD_ART_UPGRADE.apply(self)
 	FOLIAGE.populate_grass(self)
 	FOLIAGE.populate_ferns(self)
 	FOLIAGE.populate_litter(self)
@@ -836,6 +839,8 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 			source_name="BirchTree_1.gltf" if r.randf()<0.5 else "BirchTree_3.gltf"
 			target_height=7.1
 	var path: String="res://assets/models/cc0/nature/"+source_name
+	if kind == "dead" and ResourceLoader.exists("res://assets/models/foundry/dead_ash_tree.glb"):
+		path="res://assets/models/foundry/dead_ash_tree.glb"
 	var attached: bool = false
 	if kind == "willow":
 		LANDMARK_TREE.decorate(node)
