@@ -515,7 +515,13 @@ func build_stone_ridges() -> void:
 			var offset_x:float=sin(float(j)*2.3+p.x)*1.5
 			var offset_z:float=cos(float(j)*1.8+p.z)*1.1
 			var tall:float=3.4+float(j)*1.9
-			ART.cone(spire,Vector3(offset_x,tall*.43,offset_z),1.8+float(j)*.38,tall,ridge_stone,.35,7)
+			# Layered angular bedrock replaces the uniform pointed cones.
+			# Leaning, uneven geology should be distinct from conical roofs.
+			ART.stone(spire,Vector3(offset_x,tall*.38,offset_z),
+				Vector3(3.1+float(j)*.52,tall*.80,2.55+float(j)*.35),
+				ridge_stone)
+			ART.stone(spire,Vector3(offset_x+.45,tall*.78,offset_z-.36),
+				Vector3(1.45+float(j)*.17,tall*.33,1.28),ridge_stone)
 			add_solid_box(spire, Vector3(offset_x,tall*.44,offset_z), Vector3(2.5+float(j)*.5, tall*.85, 2.5+float(j)*.5), "RockOutcropSolid")
 	# One very large dead tree, deliberately isolated on a hill.
 	var px:float=-37.0
