@@ -267,9 +267,17 @@ func _check() -> void:
 		{"name":"13_stonecutter_house","eye":Vector2(-10,25.7),"look":Vector2(-7.5,34.0)},
 		{"name":"14_millward_house","eye":Vector2(27.3,26),"look":Vector2(30.0,33.5)},
 		{"name":"15_stonecutter_dooryard","eye":Vector2(-12.0,29.1),"look":Vector2(-12.4,34.0)},
-		{"name":"16_millward_dooryard","eye":Vector2(35.0,28.9),"look":Vector2(35.1,33.7)}
+		{"name":"16_millward_dooryard","eye":Vector2(35.0,28.9),"look":Vector2(35.1,33.7)},
+		{"name":"17_stonecutter_evening","eye":Vector2(-12.0,29.1),"look":Vector2(-12.4,34.0),"night":true},
+		{"name":"18_millward_evening","eye":Vector2(35.0,28.9),"look":Vector2(35.1,33.7),"night":true}
 	]
 	for shot in views:
+		if bool(shot.get("night",false)):
+			# Recreate a coherent late-evening clock for gameplay screenshots,
+			# rather than illuminating a midday scene by manually adding lamps.
+			world.world_calendar.elapsed=213.0
+			world.night_visual_blend=.93
+			world._update_day_night_art(.93)
 		var eye: Vector2=shot["eye"]
 		var target: Vector2=shot["look"]
 		camera.global_position=Vector3(eye.x,world.height_at(eye.x,eye.y)+1.7,eye.y)
@@ -284,5 +292,5 @@ func _check() -> void:
 			_fail("Cannot save proof screenshot: "+String(shot["name"]))
 			return
 		print("REGIONAL_FOUNDRY_FRAME: "+String(shot["name"]))
-	print("PASS: fourteen editable Blender GLBs import, nine landmarks, three workplaces and two physical homes preserve gameplay, and nine actual-world screenshots render")
+	print("PASS: fourteen editable Blender GLBs import, nine landmarks, three workplaces and two physical homes preserve gameplay, and eleven actual-world screenshots render, including two actual dusk views")
 	quit(0)
