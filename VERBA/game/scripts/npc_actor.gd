@@ -499,24 +499,33 @@ func refresh_anatomy_visuals() -> void:
 	if flow>.25 and blood_emitter==null:
 		blood_emitter=CPUParticles3D.new()
 		blood_emitter.name="ActualWoundBloodParticles"
-		blood_emitter.amount=12
-		blood_emitter.lifetime=.8
+		blood_emitter.amount=25
+		blood_emitter.lifetime=1.05
 		blood_emitter.emission_shape=CPUParticles3D.EMISSION_SHAPE_SPHERE
 		blood_emitter.emission_sphere_radius=.07
-		blood_emitter.direction=Vector3(.12,.4,0)
-		blood_emitter.spread=55.0
-		blood_emitter.gravity=Vector3(0,-5,0)
-		blood_emitter.initial_velocity_min=.3
-		blood_emitter.initial_velocity_max=1.2
-		blood_emitter.color=Color("5b1717")
+		blood_emitter.direction=Vector3(.15,.25,0)
+		blood_emitter.spread=63.0
+		blood_emitter.gravity=Vector3(0,-7.5,0)
+		blood_emitter.initial_velocity_min=.25
+		blood_emitter.initial_velocity_max=1.45
+		blood_emitter.color=Color("681f20")
 		var globule:=SphereMesh.new()
 		globule.radius=.018
 		globule.height=.035
 		blood_emitter.mesh=globule
 		add_child(blood_emitter)
 	if blood_emitter!=null:
-		blood_emitter.emitting=flow>.25
-		blood_emitter.position=Vector3(.32,.9,0) if anatomy["missing"].has("right_arm") else Vector3(-.32,.9,0)
+		# Blood comes from the actual injured joint, not a generic point
+		# around the character's stomach. Bandaging visibly stops drops.
+		blood_emitter.emitting=flow>.45 and not bool(anatomy["bandaged"])
+		var wound: String=String(anatomy.get("last_hit_part",""))
+		if wound.is_empty() and anatomy["missing"].size()>0:
+			wound=String(anatomy["missing"][0])
+		if wound in ANATOMY.PARTS:
+			var side: float=-1.0 if wound.begins_with("left") else 1.0
+			var from_leg: bool=wound.ends_with("_leg")
+			blood_emitter.position=Vector3(side*(.17 if from_leg else .35),
+				.57 if from_leg else 1.43,-.035)
 
 func _build_support_visual(anatomy: Dictionary) -> void:
 	if support_visual!=null and is_instance_valid(support_visual):
@@ -528,7 +537,8 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 	var root: Node3D=visual_attendant if visual_attendant!=null else visual_figure
 	if root==null: return
 	root.add_child(support_visual)
-	var pale:=ART.mat(Color("8b7e69"),.99)
+	var linen:=ART.mat(Color("aba090"),.99)
+	var wound:=ART.mat(Color("6f2927"),.98)
 	var timber:=ART.mat(Color("62503c"),.99)
 	var iron:=ART.mat(Color("5d5c55"),.86)
 	for part in ANATOMY.PARTS:
@@ -538,7 +548,7 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 		var joint_x: float=side*(.35 if part.ends_with("arm") else .17)
 		var stump: MeshInstance3D=ART.orb(support_visual,
 			Vector3(joint_x,joint_y,0),
-			Vector3(.19,.15,.19),pale if anatomy["bandaged"] else iron,10)
+			Vector3(.19,.13,.19),linen if anatomy["bandaged"] else wound,10)
 		stump.name="DetachableJoint_"+part
 	if not ANATOMY.needs_support(anatomy): return
 	var lost_left: bool=anatomy["missing"].has("left_leg")
@@ -547,6 +557,10 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 		"crutch":
 			ART.bone(support_visual,Vector3(side*.45,1.28,-.08),
 				Vector3(side*.62,.03,-.09),.052,.039,timber,8).name="BuiltWalkingCrutch"
+			ART.bone(support_visual,Vector3(side*.34,1.18,-.08),
+				Vector3(side*.56,1.18,-.08),.033,.033,linen,8)
+			ART.bone(support_visual,Vector3(side*.37,.85,-.08),
+				Vector3(side*.54,.85,-.08),.033,.027,timber,8)
 		"peg":
 			ART.bone(support_visual,Vector3(side*.17,.55,0),
 				Vector3(side*.17,.035,-.035),.11,.075,timber,10).name="FittedPegLeg"
