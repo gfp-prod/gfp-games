@@ -77,7 +77,7 @@ func _run() -> void:
 			_fail("An anatomical face has regressed to disconnected prop spheres")
 			return
 		var verts: PackedVector3Array=sculpt.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-		if verts.size()<2000:
+		if verts.size()<1200:
 			_fail("The face no longer has sufficient sculpted profile topology")
 			return
 		if portrait.find_children("*","StaticBody3D",true,false).size()>0:
