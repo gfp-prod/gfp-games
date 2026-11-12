@@ -4,6 +4,10 @@ on:
     paths:
       - "VERBA/game/scripts/folk_portrait_finish.gd"
       - "VERBA/game/scripts/npc_actor.gd"
+      - "VERBA/game/scripts/npc_body_morph.gd"
+      - "VERBA/game/scripts/npc_genetics.gd"
+      - "VERBA/game/tests/npc_morphology_test.gd"
+      - "VERBA/game/tests/genetic_faces_gallery.gd"
       - "VERBA/game/scripts/folk_costume_finish.gd"
       - "VERBA/game/scripts/npc_cloth_finish.gd"
       - "VERBA/game/tests/folk_character_art_test.gd"
@@ -35,13 +39,21 @@ jobs:
         run: |
           timeout 120s godot --headless --path . --script res://tests/folk_character_art_test.gd 2>&1 | tee /tmp/verba-character-art.log
           grep -q "PASS: fitted villager bodies" /tmp/verba-character-art.log
+      - name: Validate inheritable facial volumes and articulated blinking
+        run: |
+          timeout 120s godot --headless --path . --script res://tests/npc_morphology_test.gd 2>&1 | tee /tmp/verba-inherited-morphology.log
+          grep -q "PASS: inherited chest/bust/waist/hips" /tmp/verba-inherited-morphology.log
       - name: Photograph actual villagers and house interiors
         run: xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/folk_portrait_gallery.gd
+      - name: Photograph parents and non-identical bloodline descendants in the real game
+        run: xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/genetic_faces_gallery.gd
       - name: Attach separate ordinary screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: verba-village-portrait-and-interior-pngs
-          path: VERBA/game/tests/portrait_screens/*.png
+          path: |
+            VERBA/game/tests/portrait_screens/*.png
+            VERBA/game/tests/genetic_faces/*.png
           if-no-files-found: warn
           retention-days: 30
