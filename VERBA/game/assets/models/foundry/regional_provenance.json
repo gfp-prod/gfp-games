@@ -99,6 +99,36 @@
       "faces": 18862,
       "sha256": "9fd28f05cd2951ec00123cb35bc2b0d36c2d90279c02bedebb9c67b29548cdb3",
       "size_bytes": 11318032
+    },
+    {
+      "name": "village_bakery",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 7,
+      "faces": 1680,
+      "sha256": "151bbef36e140c3ddcb56d58d225ac95b392ff37d3273dcde36957060a0db927",
+      "size_bytes": 11580944
+    },
+    {
+      "name": "village_forge",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 7,
+      "faces": 864,
+      "sha256": "f017d1f2327cc6a5af4430033654d8da167b55dd20efa22ff7e18830250e9e3a",
+      "size_bytes": 11744384
+    },
+    {
+      "name": "village_market_stall",
+      "source": "Original authored geometry; photographic CC0 textures already bundled",
+      "license": "Original VERBA geometry and bundled CC0 photographs",
+      "meters": true,
+      "mesh_count": 6,
+      "faces": 704,
+      "sha256": "df44be4c9e5554ccd93a442204e17fb2ca33e3615498a3ae0382186e0521d615",
+      "size_bytes": 9593664
     }
   ]
 }
