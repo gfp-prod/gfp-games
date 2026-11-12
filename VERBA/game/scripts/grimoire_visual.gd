@@ -21,21 +21,21 @@ static func parchment_material() -> StandardMaterial3D:
 	# The held volume faces away from the open-world sun. Real vellum still
 	# has reflected, diffuse ambient light; without a soft lighting floor,
 	# correct face normals render the study pages charcoal-black.
-	var paper := material("res://assets/textures/authored/vellum_cream.png",Color("e8ddc7"),.98)
+	var paper := material("res://assets/textures/authored/vellum_cream.png",Color("dbccb1"),.98)
 	paper.emission_enabled = true
-	paper.emission = Color("d8b18d")
-	paper.emission_energy_multiplier = .53
+	paper.emission = Color("b89b75")
+	paper.emission_energy_multiplier = .39
 	paper.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return paper
 
 static func make_open_binding() -> Node3D:
 	var root := Node3D.new()
 	root.name = "LayeredLeatherGrimoire"
-	var cover: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("6d5045"),.82)
-	var leather_edge: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("3a2523"),.93)
+	var cover: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("57423d"),.88)
+	var leather_edge: StandardMaterial3D = material("res://assets/textures/authored/oxblood_leather.png",Color("332b28"),.96)
 	var vellum: StandardMaterial3D = parchment_material()
-	var page_edge: StandardMaterial3D = ART.mat(Color("948475"),1.0)
-	var bronze: StandardMaterial3D = ART.mat(Color("75624b"),.83)
+	var page_edge: StandardMaterial3D = ART.mat(Color("8d816f"),1.0)
+	var bronze: StandardMaterial3D = ART.mat(Color("8b7457"),.87)
 	bronze.metallic = .14
 	var bronze_dark: StandardMaterial3D = ART.mat(Color("4e4439"),.90)
 	bronze_dark.metallic = .12
