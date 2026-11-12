@@ -187,5 +187,49 @@ func _capture() -> void:
 	if guided==null or guided.save_png(directory+"/latin_waystone_revealed.png")!=OK:
 		_fail("Could not capture the physically revealed forest direction")
 		return
-	print("PASS: nineteen actual rendered views including Latin-revealed waystone and in-world NPC conversation")
+	# A second genuine first-person conversation: the baker initiates a
+	# Latin question about actual carried inventory and consumes it for bread.
+	var ida: Node3D
+	for actor in world.npcs:
+		if actor.npc_id=="ida":
+			ida=actor
+			break
+	if ida==null:
+		_fail("The physical baker is missing from the living village")
+		return
+	world.player.inventory.append("grain")
+	world.player.refresh_held_model()
+	world.player.position=Vector3(ida.position.x,
+		world.height_at(ida.position.x,ida.position.z+2.0)+.22,
+		ida.position.z+2.0)
+	world.player.camera.current=true
+	await physics_frame
+	world.player.camera.look_at(ida.global_position+Vector3.UP*1.25,Vector3.UP)
+	await physics_frame
+	if not world.player.begin_conversation(ida):
+		_fail("The baker cannot be approached for her contextual Latin question")
+		return
+	if not String(world.player.conversation_body.text).contains("Quid fers?"):
+		_fail("Ida's inventory-conditioned Latin question is not visible in real dialogue")
+		return
+	world.player.conversation_listening=true
+	world.player.conversation_buffer="Frumentum fero"
+	world.player.refresh_conversation()
+	for i in range(8): await process_frame
+	RenderingServer.force_draw()
+	var baker_question: Image=root.get_texture().get_image()
+	if baker_question==null or baker_question.save_png(directory+"/baker_latin_question.png")!=OK:
+		_fail("Failed to capture Ida's spoken Latin question and typed response")
+		return
+	var baker_response: Dictionary=world.player.submit_conversation_latin()
+	if not bool(baker_response.get("ok",false)) or not world.player.inventory.has("bread"):
+		_fail("The actual Latin answer did not produce a real bakery exchange")
+		return
+	for i in range(8): await process_frame
+	RenderingServer.force_draw()
+	var baker_bread: Image=root.get_texture().get_image()
+	if baker_bread==null or baker_bread.save_png(directory+"/baker_latin_bread.png")!=OK:
+		_fail("Failed to capture real baked-goods response to productive Latin")
+		return
+	print("PASS: twenty-one actual rendered views including Ida's Latin question, real bread exchange and forest waystone")
 	quit(0)
