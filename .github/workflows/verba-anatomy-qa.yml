@@ -10,6 +10,7 @@ on:
       - "VERBA/game/scripts/dialogue_social.gd"
       - "VERBA/game/scripts/player.gd"
       - "VERBA/game/tests/modular_anatomy_care_test.gd"
+      - "VERBA/game/tests/injury_relationship_test.gd"
       - "VERBA/game/tests/modular_anatomy_gallery.gd"
       - ".github/workflows/verba-anatomy-qa.yml"
 concurrency:
@@ -36,6 +37,10 @@ jobs:
         run: |
           godot --headless --path . --script res://tests/village_sim_test.gd
           godot --headless --path . --script res://tests/village_economy_test.gd
+      - name: Different patient bonds, private witness knowledge and optional care
+        run: |
+          timeout 30s godot --headless --path . --script res://tests/injury_relationship_test.gd 2>&1 | tee /tmp/verba-personal-care.log
+          grep -q "PASS: witnessed personalized violence" /tmp/verba-personal-care.log
       - name: Limb-hitbox injury witnesses saved amputations and elective aftercare
         run: |
           timeout 180s godot --headless --path . --script res://tests/modular_anatomy_care_test.gd 2>&1 | tee /tmp/verba-anatomy-test.log
