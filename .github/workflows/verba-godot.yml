@@ -105,6 +105,8 @@ jobs:
         run: |
           timeout 90s godot --headless --path . --script res://tests/latin_question_transfer_test.gd 2>&1 | tee /tmp/verba-latin-questions.log
           grep -q "PASS: learned reusable Latin questions report only witnessed news" /tmp/verba-latin-questions.log
+      - name: Shaped faces, tapered villager clothes and baker work silhouette
+        run: godot --headless --path . --script res://tests/folk_character_art_test.gd
       - name: NPC-initiated Latin reply drives finite bakery transaction
         run: |
           timeout 90s godot --headless --path . --script res://tests/latin_baker_reply_test.gd 2>&1 | tee /tmp/verba-baker-dialogue.log

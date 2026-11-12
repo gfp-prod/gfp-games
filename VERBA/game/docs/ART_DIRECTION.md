@@ -22,6 +22,10 @@
 
 Soft haze, warm raking sun through mist, slightly brighter distant horizons, readable fore- and mid-ground. Rain should darken/wet surfaces and influence fire/creatures. Avoid aggressive bloom that obscures Latin text.
 
+### Village character readability
+
+The first focused villager pass uses sculpted twelve-sided tapered tunics, anatomically proportioned heads and facial features seated against the skull rather than floating in space. The baker has a fitted four-triangle cloth apron, work pocket, head-covering and visible sash; different citizens retain their own skin and role materials. These are deliberately stylized early-PS2 placeholders, with normal world movement, ray interaction, physical employment and saved knowledge still owned by the existing systems. Review actual 720p first-person renders before artistic sign-off; no claim of finished human animation or sculpted skin.
+
 ### Animations
 
 Grimoire should have a visible closed state, hand lift, jointed cover opening, page changes, and a gentle lower-back motion. Creatures need gait cycles, alert reactions, and fleeing, not sliding along the ground. The v0.5 creature rigs are procedural animations and placeholders for sculpted/rigged assets; the book is a procedural articulated mesh.
