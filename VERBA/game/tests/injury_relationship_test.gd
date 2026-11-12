@@ -16,7 +16,7 @@ func _run() -> void:
 	var resentful: Dictionary=sim.people["brin"]
 	compassionate["trust"]["ida"]=55.0
 	resentful["grievance"]["ida"]=100.0
-	var struck: Dictionary=sim.injure_person("ida","left_arm",13.0,
+	var struck: Dictionary=sim.injure_person("ida","left_arm",22.0,
 		"wizard",["sela","brin"])
 	if not struck.get("ok",false) or struck.get("severed",true):
 		_fail("Small observed hit should cause a real wound, not severance")
@@ -46,6 +46,7 @@ func _run() -> void:
 		_fail("Uninvolved villagers received distant player care reputation")
 		return
 	var triage=SIM.new(842)
+	triage.economy.stocks["herb"]=3
 	triage.nearby_care["sela"]=["ida","daro"]
 	triage.people["sela"]["known_wounded"]=["ida","daro"]
 	ANATOMY.strike(triage.people["ida"]["anatomy"],"right_arm",66.0,0)
