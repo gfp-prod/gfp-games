@@ -48,9 +48,10 @@ func _run() -> void:
 	# surface, not hidden behind the worker's shirt as it was on camera.
 	var genetic_body=load("res://scripts/npc_body_morph.gd")
 	var ida_genome: Dictionary=world.village_sim.people["ida"]["genome"]
-	for vertex_id in [1,4,7]:
-		var v: Vector3=triangles[vertex_id]
-		var outer_front: float=genetic_body._point(v.y,-PI*.5,ida_genome).z
+	for v in triangles:
+		var section_width: float=genetic_body._section(v.y,ida_genome).x
+		var angle: float=-PI*.5+asin(clampf(v.x/section_width,-.89,.89))
+		var outer_front: float=genetic_body._point(v.y,angle,ida_genome).z
 		if v.z>outer_front-.046:
 			_fail("Baker apron is buried behind genetically modeled clothing")
 			return
