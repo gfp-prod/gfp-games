@@ -195,6 +195,12 @@ static func apply_snapshot(world: Node3D, data: Dictionary) -> bool:
 		if stored_village is Dictionary and not stored_village.is_empty():
 			if not world.village_sim.restore(stored_village): return false
 		world.village_elapsed = clampf(float(data.get("village_elapsed",0.0)),0.0,10.0)
+		# Rebuild visuals from authoritative simulation anatomy. Physical
+		# severed pieces are transient; lasting amputations and mobility
+		# equipment are part of the patient's saved identity.
+		for person in world.npcs:
+			if is_instance_valid(person) and person.has_method("refresh_anatomy_visuals"):
+				person.refresh_anatomy_visuals()
 
 	# Rebuild pickups from immutable templates: works in a fresh instance AND
 	# when loading a save into an already-played world. No duplicates.
