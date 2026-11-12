@@ -44,21 +44,21 @@ jobs:
 
       - name: Build real textured cottage, glTF, editable blend and 4 renders
         run: |
-          mkdir -p tests/foundry_build
+          mkdir -p ../foundry_build
           timeout 1200s xvfb-run -a -s "-screen 0 1280x720x24" \
             blender -b -t 2 --python tools/art_foundry/forge_cottage.py -- \
-            --output tests/foundry_build
+            --output ../foundry_build
 
       - name: Prove real geometry, packed CC0 surfaces, meters and camera evidence
         run: |
-          python3 tools/art_foundry/validate_foundry.py --out tests/foundry_build
+          python3 tools/art_foundry/validate_foundry.py --out ../foundry_build
 
       - name: Stage exported glTF into Godot's actual import directory
         run: |
           mkdir -p assets/models/foundry
-          cp tests/foundry_build/hermit_cottage_v2.glb \
+          cp ../foundry_build/hermit_cottage_v2.glb \
             assets/models/foundry/hermit_cottage_v2.glb
-          cp tests/foundry_build/provenance.json \
+          cp ../foundry_build/provenance.json \
             assets/models/foundry/hermit_cottage_v2.provenance.json
 
       - uses: chickensoft-games/setup-godot@v2
@@ -84,10 +84,10 @@ jobs:
         with:
           name: verba-blender-cottage-studio
           path: |
-            VERBA/game/tests/foundry_build/*.blend
-            VERBA/game/tests/foundry_build/*.glb
-            VERBA/game/tests/foundry_build/*.png
-            VERBA/game/tests/foundry_build/*.json
+            VERBA/foundry_build/*.blend
+            VERBA/foundry_build/*.glb
+            VERBA/foundry_build/*.png
+            VERBA/foundry_build/*.json
             VERBA/game/tests/foundry_frames/*.png
           if-no-files-found: warn
           retention-days: 30
