@@ -118,10 +118,20 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	mouth.name="ExpressionMouth"
 	mouth.position=Vector3(0,lip_height,_depth(0,lip_height,g)-.019)
 	root.add_child(mouth)
-	var center:=ART.bone(mouth,Vector3(-mouth_width,0,0),
-		Vector3(mouth_width,0,0),
-		.006,.006,lip_ink,8)
-	center.name="SmallNaturalLipLine"
+	# Two independently articulated lip corners make smiles, frowns,
+	# exhaustion and uncertainty readable on even a blocky face.
+	var left_corner:=Node3D.new()
+	left_corner.name="ExpressionLipLeft"
+	mouth.add_child(left_corner)
+	var left_lip:=ART.bone(left_corner,Vector3(-mouth_width,0,0),
+		Vector3(0,0,0),.006,.006,lip_ink,8)
+	left_lip.name="SmallNaturalLipLine"
+	var right_corner:=Node3D.new()
+	right_corner.name="ExpressionLipRight"
+	mouth.add_child(right_corner)
+	var right_lip:=ART.bone(right_corner,Vector3(0,0,0),
+		Vector3(mouth_width,0,0),.006,.006,lip_ink,8)
+	right_lip.name="NaturalLipCorner"
 	var open_mouth:=ART.orb(mouth,Vector3(0,-.005,-.002),
 		Vector3(.075,.007,.009),ART.mat(Color("301c1c"),1),8)
 	open_mouth.name="ExpressionMouthOpening"
@@ -173,6 +183,10 @@ static func expression(figure: Node3D,feel: float,blink: float=0.0) -> void:
 	if mouth!=null:
 		mouth.scale.x=lerpf(mouth.scale.x,1.0+maxf(0,emotion)*.22,.16)
 		mouth.scale.y=lerpf(mouth.scale.y,1.0+absf(emotion)*.48,.16)
+		var left: Node3D=mouth.get_node_or_null("ExpressionLipLeft") as Node3D
+		var right: Node3D=mouth.get_node_or_null("ExpressionLipRight") as Node3D
+		if left!=null: left.rotation.z=lerpf(left.rotation.z,-emotion*.40,.22)
+		if right!=null: right.rotation.z=lerpf(right.rotation.z,emotion*.40,.22)
 		var opening: MeshInstance3D=mouth.get_node_or_null("ExpressionMouthOpening") as MeshInstance3D
 		if opening!=null:
 			opening.visible=emotion<-.42
