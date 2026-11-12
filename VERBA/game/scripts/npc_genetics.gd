@@ -43,7 +43,9 @@ static func validate(g: Variant) -> bool:
 	return true
 
 static func value(g: Dictionary, trait: String) -> float:
-	if not validate(g) or not g["alleles"].has(trait): return .5
+	# Per-vertex geometry evaluation calls this many times. Full schema
+	# validation runs once at the boundary, never for each face vertex.
+	if not g.has("alleles") or not g["alleles"].has(trait): return .5
 	var pair: Array=g["alleles"][trait]
 	return (float(pair[0])+float(pair[1]))/(2.0*CAP)
 
