@@ -79,8 +79,8 @@ func _run() -> void:
 			var info: Dictionary=world.village_sim.people[ids[i]]
 			# Diverse state so facial animation is visible alongside
 			# genetic structural differences.
-			info["mood"]=95.0 if i in [0,3,7] else (
-				18.0 if i in [1,4,8] else 50.0)
+			info["mood"]=95.0 if i in [0,3,5] else (
+				18.0 if i in [1,4,6] else 50.0)
 		var focus: float=1.74
 		var dist: float=1.80
 		if ids[i].begins_with("born_"):
@@ -88,8 +88,9 @@ func _run() -> void:
 			dist=1.17
 		# Stage an actual expression using the same runtime facial
 		# controls that respond to mood in ordinary play.
-		var visual_root: Node3D=citizen.visual_attendant if
-			citizen.visual_attendant!=null else citizen.visual_figure
+		var visual_root: Node3D=citizen.visual_figure
+		if citizen.visual_attendant!=null:
+			visual_root=citizen.visual_attendant
 		var feel: float=clampf(
 			(float(world.village_sim.people[ids[i]]["mood"])-50.0)/75.0,-1,1)
 		for n in range(7):
