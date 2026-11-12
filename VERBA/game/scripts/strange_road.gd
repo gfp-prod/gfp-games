@@ -1,9 +1,11 @@
 extends RefCounted
-## Original authored roadside district: a gas station beside a medieval castle.
+## Rural road history: the modern petrol station is a long walk west of
+## the medieval archive, so the impossible juxtaposition unfolds gradually.
 ## All geometry is built from committed, offline-compatible art/texture helpers.
 ## Open entries, floors, walls and pumps have matching real physics.
 const ART=preload("res://scripts/art.gd")
-const STATION: Vector2=Vector2(-33.0,44.0)
+const REGIONS=preload("res://scripts/world_regions.gd")
+const STATION: Vector2=Vector2(-102.0,77.0)
 const CASTLE: Vector2=Vector2(-49.0,44.0)
 
 static func _at(world, xy: Vector2) -> Vector3:
@@ -49,14 +51,19 @@ static func _road(world,root: Node3D) -> void:
 	# Deliberate hand-curated road graph, rather than scattered random props.
 	# Splines are samples at terrain height; the heightmap remains the collider.
 	var tracks: Array=[
-		[Vector2(0,26),Vector2(-7,30),Vector2(-11,32.22),Vector2(-24,40.82),Vector2(-27.8,44),Vector2(-31.55,44)],
-		[Vector2(-31.55,44),Vector2(-29,38.2),Vector2(-33,35),Vector2(-40,34.5),Vector2(-39.4,43.7),Vector2(-42,44)],
+		[Vector2(0,26),Vector2(-7,30),Vector2(-11,32.22),
+			Vector2(-24,40.82),Vector2(-32,41),Vector2(-41.4,44)],
+		[Vector2(-41.4,44),Vector2(-44,53),Vector2(-56,61),
+			Vector2(-71,65),Vector2(-87,71),Vector2(-99.2,77)],
 		[Vector2(0,26),Vector2(6,19),Vector2(10,11),Vector2(7,-3),
 			Vector2(5,-19),Vector2(4,-35)]
 	]
-	var path: StandardMaterial3D=world.textured("res://assets/textures/real/cottage_wood_diffuse.jpg",Color("8b8270"))
+	var path: StandardMaterial3D=world.textured("res://assets/textures/earth_path.png",Color("948977"))
+	var asphalt: StandardMaterial3D=world.textured("res://assets/textures/stone.png",Color("5c5b58"))
 	path.roughness=1.0
 	path.cull_mode=BaseMaterial3D.CULL_DISABLED
+	asphalt.roughness=1.0
+	asphalt.cull_mode=BaseMaterial3D.CULL_DISABLED
 	for index in range(tracks.size()):
 		var points: Array=tracks[index]
 		var mesh_tool:=SurfaceTool.new()
@@ -95,7 +102,7 @@ static func _road(world,root: Node3D) -> void:
 		var roadway:=MeshInstance3D.new()
 		roadway.name="RoadSegment_%d" % index
 		roadway.mesh=mesh_tool.commit()
-		roadway.material_override=path
+		roadway.material_override=asphalt if index==1 else path
 		roadway.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(roadway)
 
@@ -238,7 +245,8 @@ static func _station(world,root: Node3D) -> void:
 		ART.bone(site,Vector3(4.72,1.08,z+.39),Vector3(5.15,.57,z+.74),.038,.026,steel,9)
 		ART.box(site,Vector3(4.73,1.52,z),Vector3(1.0,.09,1.0),steel)
 	_lamp(site,Vector3(4.7,3.72,0),.81,9.0)
-	# Roadside pole sign, legible from the castle approach.
+	# Roadside pole sign, legible after following the old road rather than
+	# from the castle courtyard sixty metres away.
 	_solid(world,site,Vector3(9.12,3.55,-2.68),Vector3(.22,7.1,.22),steel,"FuelSignPole")
 	ART.box(site,Vector3(9.12,6.2,-2.68),Vector3(.34,1.47,3.6),signage)
 	_sign(site,"VALE FUEL",Vector3(9.32,6.24,-2.7),57,Color("f3dfb4"))
