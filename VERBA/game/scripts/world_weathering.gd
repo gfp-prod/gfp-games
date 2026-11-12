@@ -10,6 +10,7 @@ static func build(world) -> void:
 	var root:=Node3D.new()
 	root.name="WeatheredWorldHistory"
 	world.add_child(root)
+	_region_cover(world,root)
 	_station(world,root)
 	_old_road(world,root)
 	_stillwater(world,root)
@@ -24,6 +25,61 @@ static func _wood_mat(world, tint: Color) -> StandardMaterial3D:
 
 static func _at(world, pos: Vector2) -> Vector3:
 	return Vector3(pos.x,world.height_at(pos.x,pos.y),pos.y)
+
+static func _region_cover(world,root: Node3D) -> void:
+	# The old grass generator covered only the central 138 m square.
+	# These deterministic, batched clumps give the expanded Outer Vale
+	# regional ecology without touching the persistent living-flora IDs.
+	var grass_mesh: ArrayMesh=FOLIAGE.grass_mesh()
+	var mat:=StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo=true
+	mat.cull_mode=BaseMaterial3D.CULL_DISABLED
+	mat.roughness=.99
+	mat.albedo_color=Color("c6c3b1")
+	var groups: Array[Dictionary]=[
+		{"id":"LakeSedges","center":Vector2(79,-60),"radius":34.0,
+		 "count":3400,"tone":Color("738578")},
+		{"id":"OldRoadHeather","center":Vector2(-96,66),"radius":34.0,
+		 "count":2900,"tone":Color("827961")},
+		{"id":"WitnessMeadow","center":Vector2(78,39),"radius":38.0,
+		 "count":3200,"tone":Color("8a8c6d")},
+		{"id":"OrchardThistle","center":Vector2(103,-11),"radius":28.0,
+		 "count":2600,"tone":Color("968365")}
+	]
+	for group in groups:
+		var rng:=RandomNumberGenerator.new()
+		rng.seed=810139+int(group["count"])
+		var mm:=MultiMesh.new()
+		mm.transform_format=MultiMesh.TRANSFORM_3D
+		mm.use_colors=true
+		mm.mesh=grass_mesh
+		mm.instance_count=int(group["count"])
+		for i in range(mm.instance_count):
+			var x: float=0.0
+			var z: float=0.0
+			var center: Vector2=group["center"]
+			for attempts in range(18):
+				var theta: float=rng.randf_range(0,TAU)
+				var radius: float=sqrt(rng.randf())*float(group["radius"])
+				x=center.x+cos(theta)*radius
+				z=center.y+sin(theta)*radius
+				if absf(x)>123 or absf(z)>123: continue
+				if REGIONS.is_lake_water(x,z): continue
+				if Vector2(x,z).distance_to(REGIONS.STATION)<12.0: continue
+				break
+			var scale: float=rng.randf_range(.40,.94)
+			var basis:=Basis(Vector3.UP,rng.randf_range(0,TAU)).scaled(
+				Vector3(scale,rng.randf_range(.45,1.30),scale))
+			mm.set_instance_transform(i,Transform3D(basis,
+				Vector3(x,world.height_at(x,z)+.017,z)))
+			var tone: Color=group["tone"]
+			mm.set_instance_color(i,tone.lerp(
+				Color("c2b59a"),rng.randf_range(.0,.27)))
+		var clumps:=MultiMeshInstance3D.new()
+		clumps.name=String(group["id"])
+		clumps.multimesh=mm
+		clumps.material_override=mat
+		root.add_child(clumps)
 
 static func _station(world,root: Node3D) -> void:
 	var site: Node3D=world.get_node_or_null("StrangeRoadDistrict/ValeFuelStation")
