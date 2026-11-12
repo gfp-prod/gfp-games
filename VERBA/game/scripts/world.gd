@@ -274,6 +274,49 @@ func cycle_familiar_order() -> Dictionary:
 		save_world()
 	return {"ok":true,"message":"Familiar: " + familiar_mode}
 
+# Relationships can only react to an injury after the villager has had
+# an opportunity to perceive it. Walls, geographic separation and identities
+# still matter; save files carry observed memories, not omniscience.
+func _npc_can_see(a: Node3D, b: Node3D, radius: float=7.8) -> bool:
+	if a==null or b==null or a==b: return false
+	if a.global_position.distance_to(b.global_position)>radius: return false
+	var origin: Vector3=a.global_position+Vector3.UP*1.4
+	var target: Vector3=b.global_position+Vector3.UP*1.1
+	var ray:=PhysicsRayQueryParameters3D.create(origin,target,16)
+	var obstruction: Dictionary=get_world_3d().direct_space_state.intersect_ray(ray)
+	return obstruction.is_empty()
+
+func physical_witnesses_of(patient: Node3D) -> Array:
+	var witnesses: Array=[]
+	for observer in npcs:
+		if not is_instance_valid(observer) or observer==patient: continue
+		if _npc_can_see(observer,patient):
+			witnesses.append(String(observer.npc_id))
+	return witnesses
+
+func _refresh_neighbor_care() -> void:
+	if village_sim==null: return
+	village_sim.nearby_care.clear()
+	for person in npcs:
+		if not is_instance_valid(person): continue
+		var helper: String=String(person.npc_id)
+		if not village_sim.people.has(helper): continue
+		if not bool(village_sim.people[helper]["alive"]): continue
+		var visible: Array=[]
+		for injured in npcs:
+			if not is_instance_valid(injured) or injured==person: continue
+			var target: String=String(injured.npc_id)
+			if not village_sim.people.has(target): continue
+			if not bool(village_sim.people[target]["alive"]): continue
+			if not _npc_can_see(person,injured): continue
+			var body: Dictionary=village_sim.people[target]["anatomy"]
+			if not body["missing"].is_empty() or float(body["bleeding"])>.2:
+				visible.append(target)
+				village_sim.observe_wound(target,[helper])
+		if not visible.is_empty():
+			visible.sort()
+			village_sim.nearby_care[helper]=visible
+
 func skip_days(count: int) -> void:
 	# Developer-only calendar acceleration uses the SAME daily transition as
 	# real play. Work remains bounded; no fake fast-forward currency is minted.
@@ -281,7 +324,9 @@ func skip_days(count: int) -> void:
 		world_calendar.advance_days(1)
 		if village_sim!=null:
 			village_sim.advance_day(world_calendar.day)
-			for j in range(4): village_sim.step()
+			for j in range(4):
+				_refresh_neighbor_care()
+				village_sim.step()
 	if workplaces!=null: workplaces.refresh_from_economy(true)
 
 func save_world() -> bool:
@@ -1344,7 +1389,9 @@ func _process(delta: float) -> void:
 	if village_elapsed >= 10.0 and village_sim != null:
 		var steps: int = mini(6,int(village_elapsed/10.0))
 		village_elapsed -= float(steps)*10.0
-		for i in range(steps): village_sim.step()
+		for i in range(steps):
+			_refresh_neighbor_care()
+			village_sim.step()
 	ecology_timer += delta
 	if ecology_timer >= .5:
 		var elapsed:float=ecology_timer
