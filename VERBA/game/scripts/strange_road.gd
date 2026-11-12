@@ -47,23 +47,26 @@ static func build(world) -> void:
 	_station(world,root)
 	_castle(world,root)
 
+static func station_route() -> Array[Vector2]:
+	return [Vector2(-41.4,44),Vector2(-44,53),Vector2(-56,61),
+		Vector2(-71,65),Vector2(-87,71),Vector2(-99.2,77)]
+
 static func _road(world,root: Node3D) -> void:
 	# Deliberate hand-curated road graph, rather than scattered random props.
 	# Splines are samples at terrain height; the heightmap remains the collider.
 	var tracks: Array=[
 		[Vector2(0,26),Vector2(-7,30),Vector2(-11,32.22),
 			Vector2(-24,40.82),Vector2(-32,41),Vector2(-41.4,44)],
-		[Vector2(-41.4,44),Vector2(-44,53),Vector2(-56,61),
-			Vector2(-71,65),Vector2(-87,71),Vector2(-99.2,77)],
+		station_route(),
 		[Vector2(0,26),Vector2(6,19),Vector2(10,11),Vector2(7,-3),
 			Vector2(5,-19),Vector2(4,-35)]
 	]
 	var path: StandardMaterial3D=world.textured("res://assets/textures/earth_path.png",Color("948977"))
-	var asphalt: StandardMaterial3D=world.textured("res://assets/textures/stone.png",Color("5c5b58"))
+	var asphalt:=ShaderMaterial.new()
+	asphalt.shader=load("res://assets/materials/aged_road.gdshader")
+	asphalt.set_shader_parameter("road_stone",load("res://assets/textures/real/stone_diffuse.jpg"))
 	path.roughness=1.0
 	path.cull_mode=BaseMaterial3D.CULL_DISABLED
-	asphalt.roughness=1.0
-	asphalt.cull_mode=BaseMaterial3D.CULL_DISABLED
 	for index in range(tracks.size()):
 		var points: Array=tracks[index]
 		var mesh_tool:=SurfaceTool.new()
