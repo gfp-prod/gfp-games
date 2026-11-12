@@ -185,7 +185,7 @@ static func _stillwater(world,root: Node3D) -> void:
 	bank.name="StillwaterDriftwoodAndSedge"
 	root.add_child(bank)
 	var wood:=_wood_mat(world,Color("615b4d"))
-	var bark:=world.textured("res://assets/textures/bark.png",Color("5b5649"))
+	var bark: StandardMaterial3D=world.textured("res://assets/textures/bark.png",Color("5b5649"))
 	var stone:=_stone_mat(world,Color("868274"))
 	var brown:=ART.mat(Color("77664d"),.99)
 	var rng:=RandomNumberGenerator.new()
