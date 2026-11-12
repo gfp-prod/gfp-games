@@ -279,7 +279,7 @@ static func _distant_landmarks(world,root: Node3D) -> void:
 	# A boundary marker at the old route, deliberately low and weathered.
 	var mile:=Node3D.new()
 	mile.name="LastMeasuredMileStone"
-	mile.position=_place(world,Vector2(-79,68))
+	mile.position=_place(world,Vector2(-80,74.5))
 	root.add_child(mile)
 	ART.stone(mile,Vector3(0,.77,0),Vector3(.71,1.52,.41),wet_stone)
 	world.add_solid_box(mile,Vector3(0,.73,0),Vector3(.62,1.46,.38),
