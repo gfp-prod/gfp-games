@@ -16,7 +16,7 @@ static func lake_distance(x: float, z: float) -> float:
 	return sqrt(dx*dx+dz*dz)*(1.0+0.044*sin(x*.37)+.031*cos(z*.29))
 
 static func lake_level(world) -> float:
-	return world._raw_height_at(LAKE.x,LAKE.y)-.38
+	return world.lake_water_level
 
 static func lake_height(world, x: float, z: float, previous: float) -> float:
 	var radial: float=lake_distance(x,z)
