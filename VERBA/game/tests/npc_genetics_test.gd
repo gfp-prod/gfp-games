@@ -17,6 +17,22 @@ func _run() -> void:
 	if not _check(GENES.validate(a) and GENES.validate(b),"founder traits invalid"): return
 	if not _check(a==GENES.founder("ida",1938) and a!=b,
 			"founder traits are random on reload or everyone looks identical"): return
+	# Citizens must not cluster around one average-colored, average-
+	# shaped mannequin. Their inherited alleles define a useful visible
+	# range before any occupation-specific costumes are added.
+	var tone_min: float=1.0
+	var tone_max: float=0.0
+	var face_min: float=1.0
+	var face_max: float=0.0
+	for id in ["ida","orin","mara","sela","daro","nima",
+			"brin","cass","lena","titus","ves","juno"]:
+		var founder: Dictionary=GENES.founder(id,1938)
+		tone_min=minf(tone_min,GENES.value(founder,"pigment"))
+		tone_max=maxf(tone_max,GENES.value(founder,"pigment"))
+		face_min=minf(face_min,GENES.value(founder,"face_width"))
+		face_max=maxf(face_max,GENES.value(founder,"face_width"))
+	if not _check(tone_max-tone_min>.37 and face_max-face_min>.30,
+			"Founders still have nearly identical pigmentation or faces"): return
 	var child: Dictionary=GENES.child(a,b,"born_0001",1938)
 	var sibling: Dictionary=GENES.child(a,b,"born_0002",1938)
 	if not _check(GENES.validate(child) and GENES.validate(sibling) and child!=sibling,
