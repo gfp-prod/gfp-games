@@ -288,7 +288,7 @@ func _ready() -> void:
 		COSTUME.dress_attendant(attendant)
 		BODY.finish(attendant,genome,shirt,true)
 	else:
-		COSTUME.dress(figure,npc_id,cloth,trim,leather)
+		COSTUME.dress(figure,npc_id,cloth,trim,leather,genome)
 		BODY.finish(figure,genome,cloth)
 	# Mild-to-noticeable, inherited body dimensions. The faceted look is
 	# deliberate; we change proportions, not topology or collision IDs.
