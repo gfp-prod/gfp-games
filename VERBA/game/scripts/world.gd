@@ -28,6 +28,7 @@ const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
 const LATIN_WAYSTONE = preload("res://scripts/latin_waystone.gd")
 const WORLD_REGIONS = preload("res://scripts/world_regions.gd")
 const WORLD_EXPANSION = preload("res://scripts/world_expansion.gd")
+const WORLD_WEATHERING = preload("res://scripts/world_weathering.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
 var magic
@@ -112,6 +113,8 @@ func _ready() -> void:
 	# Physical lake, remote routes and landmarks: scenery with no ecological
 	# UID allocations, preserving older save and simulation indices.
 	WORLD_EXPANSION.build(self)
+	# History belongs to the landscape, not to a floating decoration layer.
+	WORLD_WEATHERING.build(self)
 	FOLIAGE.populate_grass(self)
 	FOLIAGE.populate_ferns(self)
 	FOLIAGE.populate_litter(self)
