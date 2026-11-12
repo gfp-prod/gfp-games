@@ -112,7 +112,7 @@ func _run() -> void:
 				return
 		var sculpt: MeshInstance3D=portrait.get_node_or_null(
 			"IndividualIntegratedFaceMesh") as MeshInstance3D
-		if sculpt==null or sculpt.mesh==null or sculpt.mesh.surface_get_count()!=1:
+		if sculpt==null or sculpt.mesh==null or sculpt.mesh.get_surface_count()!=1:
 			_fail("An anatomical face has regressed to disconnected prop spheres")
 			return
 		var verts: PackedVector3Array=sculpt.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
