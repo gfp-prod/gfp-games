@@ -41,8 +41,8 @@ func _run() -> void:
 		_fail("The shaped baker apron surface is missing")
 		return
 	var triangles: PackedVector3Array=apron.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	if triangles.size()!=24:
-		_fail("Baker apron no longer has eight curved, fitted cloth triangles")
+	if triangles.size()<180:
+		_fail("Baker apron has too few fitted patches to follow chest anatomy")
 		return
 	# Prove the actual pale apron stays outside the inherited front
 	# surface, not hidden behind the worker's shirt as it was on camera.
