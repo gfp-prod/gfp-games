@@ -26,6 +26,11 @@ func _run() -> void:
 		_fail("Required physical primer is unavailable")
 		return
 	var experience_before: int=scholar.xp
+	var ida_model: String=String(social.view("ida",scholar,player.inventory).get("spoken",""))
+	var daro_model: String=String(social.view("daro",scholar,player.inventory).get("spoken",""))
+	if not ida_model.contains("Ida calls to a customer: 'Quid novi?'") or not daro_model.contains("Daro asks a farmhand, 'Quid facis hodie?'"):
+		_fail("Villagers do not model reusable Latin questions naturally in conversation")
+		return
 	# The same real theft is visible ONLY to its actual witnesses.
 	if not world.village_sim.witness_event("theft","orin","ida"):
 		_fail("Theft scenario could not be registered by the real village simulation")
@@ -40,6 +45,9 @@ func _run() -> void:
 		return
 	if not social.memory("ida").get("spoken_topics",[]).has("rumors"):
 		_fail("Real productive Latin was not distinguished from menu help")
+		return
+	if String(social.view("ida",scholar,player.inventory).get("spoken","")).contains("Ida calls to a customer: 'Quid novi?'"):
+		_fail("The novice modeling phrase did not fade after real Latin production")
 		return
 	var unknown_id: String=""
 	for candidate in world.village_sim.people.keys():
@@ -59,6 +67,10 @@ func _run() -> void:
 		_fail("Word-order tolerant Latin fabricated a report from a non-witness")
 		return
 	# Another attested syntax moves between NPCs without duplicating content.
+	var farm_work: Dictionary=social.speak("daro","Quid facis hodie?",scholar,player)
+	if not bool(farm_work.get("ok",false)) or String(social.view("daro",scholar,player.inventory).get("spoken","")).contains("Daro asks a farmhand, 'Quid facis hodie?'"):
+		_fail("A farm worker cannot respond to actual Latin or still overexplains a mastered question")
+		return
 	var tomorrow: Dictionary=social.speak("ida","Quid facis hodie?",scholar,player)
 	if not bool(tomorrow.get("ok",false)) or not social.memory("ida").get("spoken_topics",[]).has("work"):
 		_fail("The same learned question cannot elicit an NPC's existing work")
