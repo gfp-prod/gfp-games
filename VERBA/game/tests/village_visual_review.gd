@@ -7,10 +7,10 @@ const VIEWS: Array[Dictionary]=[
 	 "asset":"village_bakery","eye":Vector2(11.7,10.9),
 	 "look":Vector2(8.9,16.25),"preserve":["BakerWorkingEmbers"]},
 	{"name":"02_forge","site":"VillageWorkingDistrict/OrinBlacksmithForge",
-	 "asset":"village_forge","eye":Vector2(20.7,12.65),
+	 "asset":"village_forge","eye":Vector2(24.8,15.6),
 	 "look":Vector2(21.8,19.1),"preserve":["ForgeWorkingCoals"]},
 	{"name":"03_market","site":"VillageWorkingDistrict/VillagePublicMarket",
-	 "asset":"village_market_stall","eye":Vector2(4.2,14.5),
+	 "asset":"village_market_stall","eye":Vector2(2.0,16.7),
 	 "look":Vector2(5.3,20.5),"preserve":[]}
 ]
 
