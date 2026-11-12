@@ -148,6 +148,10 @@ static func _station(world,root: Node3D) -> void:
 		world.height_at(site.global_position.x+gx,site.global_position.z+gz)-
 			site.global_position.y+.10,gz)
 	grime.add_child(wreck)
+	# This is wreckage in a walkable first-person world, not a ghost model.
+	# The truck sits beyond the shop approach so Juno's real path remains open.
+	world.add_solid_box(wreck,Vector3(0,.66,0),
+		Vector3(2.86,1.13,1.43),"RustingDeliveryVehicleCollision")
 	ART.box(wreck,Vector3(0,.58,0),Vector3(2.95,.58,1.48),rust)
 	ART.box(wreck,Vector3(-.64,1.07,0),Vector3(1.42,.57,1.26),dull_steel)
 	ART.box(wreck,Vector3(-1.37,.66,0),Vector3(.12,.39,1.40),cabin_wood)
@@ -320,6 +324,8 @@ static func _orchard(world,root: Node3D) -> void:
 	for k in range(2):
 		ART.box(crate,Vector3(float(k)*.9,.21,0),
 			Vector3(.71,.41,.55),oak,Vector3(.1,float(k)*.65,.03))
+		world.add_solid_box(crate,Vector3(float(k)*.9,.21,0),
+			Vector3(.67,.39,.52),"FallenProduceCrate_%d" % k)
 
 static func _forgotten_ruins(world,root: Node3D) -> void:
 	var landmarks: Node3D=world.get_node_or_null("OuterValeRegionalLandmarks")
