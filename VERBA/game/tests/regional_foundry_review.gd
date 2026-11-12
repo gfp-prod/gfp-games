@@ -45,6 +45,11 @@ func _check() -> void:
 		if imported==null:
 			_fail("Malformed asset root: "+id)
 			return
+		# Correct import scale checks need a genuine SceneTree transform.
+		# Calling global_transform on an unparented GLB logs hundreds of
+		# !is_inside_tree errors and silently returns identity matrices.
+		root.add_child(imported)
+		imported.visible=false
 		var meshes: Array[Node]=imported.find_children("*","MeshInstance3D",true,false)
 		if meshes.size()<2:
 			_fail("Unfinished authored model: "+id)
@@ -73,7 +78,7 @@ func _check() -> void:
 			"roadside_station":Vector3(13.0,5.9,8.0),
 			"castle_gatehouse":Vector3(14.2,5.8,14.2),
 			"village_bakery":Vector3(2.3,2.7,2.2),
-			"village_forge":Vector3(2.1,2.9,1.9),
+			"village_forge":Vector3(2.1,2.9,1.45),
 			"village_market_stall":Vector3(2.7,2.7,2.0)
 		}
 		var found: bool=false
