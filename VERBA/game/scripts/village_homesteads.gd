@@ -13,6 +13,7 @@ const SITES: Array[Dictionary]=[
 ]
 const ART=preload("res://scripts/art.gd")
 const VILLAGE_YARD_ART=preload("res://scripts/village_yard_art.gd")
+const HOUSEHOLD_INTERIORS=preload("res://scripts/household_interiors.gd")
 
 static func build(world: Node3D) -> void:
 	if world.get_node_or_null("PhysicalVillageHomesteads")!=null:
@@ -79,6 +80,10 @@ static func build(world: Node3D) -> void:
 		# One central worktable leaves a navigable ~1.2m doorway and aisle.
 		world.add_solid_box(house,Vector3(-1.25,.62,1.22),
 			Vector3(1.23,1.04,.66),"PhysicalHomesteadWorktable")
+		# Furnish the actual walk-in room with domestic furniture and
+		# occupational work details, preserving the original doorway and IDs.
+		# Both furniture blockers are baked into the world navigation mesh.
+		HOUSEHOLD_INTERIORS.build(world,house,String(definition["kind"]),timber,stone)
 		# A small carved Latin house inscription is a real world object,
 		# not a tutorial HUD or a lesson that breaks the fourth wall.
 		# It is fixed above the physically open doorway.
