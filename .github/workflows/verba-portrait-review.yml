@@ -5,6 +5,8 @@ on:
       - "VERBA/game/scripts/folk_portrait_finish.gd"
       - "VERBA/game/scripts/npc_actor.gd"
       - "VERBA/game/scripts/folk_costume_finish.gd"
+      - "VERBA/game/scripts/npc_cloth_finish.gd"
+      - "VERBA/game/tests/folk_character_art_test.gd"
       - "VERBA/game/scripts/household_interiors.gd"
       - "VERBA/game/scripts/village_homesteads.gd"
       - "VERBA/game/tests/folk_portrait_gallery.gd"
@@ -29,8 +31,10 @@ jobs:
         run: |
           godot --headless --path . --editor --import --quit 2>&1 | tee /tmp/portraits-import.log
           if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:' /tmp/portraits-import.log; then exit 1; fi
-      # The independent VERBA CI already runs the complete character and
-      # gameplay regression. Keep this workflow dedicated to early visual proof.
+      - name: Reject exposed collarbone props and untethered body animation
+        run: |
+          timeout 120s godot --headless --path . --script res://tests/folk_character_art_test.gd 2>&1 | tee /tmp/verba-character-art.log
+          grep -q "PASS: fitted villager bodies" /tmp/verba-character-art.log
       - name: Photograph actual villagers and house interiors
         run: xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/folk_portrait_gallery.gd
       - name: Attach separate ordinary screenshots
