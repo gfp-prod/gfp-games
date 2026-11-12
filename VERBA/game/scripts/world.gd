@@ -188,6 +188,86 @@ func populate_social_npcs() -> void:
 		add_child(actor)
 		npcs.append(actor)
 
+# A living bloodline extends the existing population and the physical
+# scene. Descendants receive unique permanent IDs and authored generic
+# dialogue rather than stealing another character's identity or lines.
+func _descendant_definition(person_id: String) -> Dictionary:
+	if village_sim==null or not village_sim.people.has(person_id): return {}
+	var person: Dictionary=village_sim.people[person_id]
+	var parents: Array=person["family"]["parents"]
+	if parents.is_empty(): return {}
+	var parent_id: String=String(parents[0])
+	var template: Dictionary=social.npc(parent_id)
+	if template.is_empty(): return {}
+	var old_place: Array=template.get("home",template.get("position",[7.0,17.0]))
+	var source_position: Array=template.get("position",old_place)
+	var serial: int=int(person_id.trim_prefix("born_"))
+	var place: Array=[float(source_position[0])+float(posmod(serial,3)-1)*1.2,
+		float(source_position[1])+float(posmod(serial,4)-2)*.85]
+	var label: String=String(person.get("display_name","Child"))
+	var role_name: String="Young villager" if String(person["life_stage"])=="child" else "Villager"
+	return {"id":person_id,"name":label,"role":role_name,
+		"position":place,"home":old_place,
+		"work":template.get("work",old_place),
+		"market":template.get("market",[11.0,13.0]),
+		"yaw":float(template.get("yaw",0.0)),
+		"robe":template.get("robe","746c60"),
+		"trim":template.get("trim","bba68b"),
+		"intro":[
+			"Salve. I am "+label+". My family has lived in the vale.",
+			"Salve, viator. I am still learning the old words.",
+			"Salve. Words and kinship both outlast us."],
+		"choices":[
+			{"id":"greeting","text":["Say hello.","Salve.","Salve, amice."],
+				"reply":["Salve.","Salve, viator.","Salve."]},
+			{"id":"family","text":["Ask about your family.","Quae est familia tua?","Quae est familia tua?"],
+				"reply":["My kin live here in the valley.",
+					"Familia mea hic habitat. My family lives here.",
+					"Familia mea hic habitat."]}]}
+
+func sync_bloodline_population() -> void:
+	if village_sim==null or social==null: return
+	# Save rollback can remove a recently created descendant; don't leave
+	# a duplicate orphan actor or dialogue identity in the world.
+	for actor in npcs.duplicate():
+		if not is_instance_valid(actor): continue
+		var actor_id: String=String(actor.npc_id)
+		if actor_id.begins_with("born_") and not village_sim.people.has(actor_id):
+			npcs.erase(actor)
+			social.definitions.erase(actor_id)
+			remove_child(actor)
+			actor.queue_free()
+	for id in village_sim.people:
+		var person_id: String=String(id)
+		if not person_id.begins_with("born_"): continue
+		var present: bool=false
+		for actor in npcs:
+			if is_instance_valid(actor) and String(actor.npc_id)==person_id:
+				present=true
+				break
+		if present: continue
+		var definition: Dictionary=_descendant_definition(person_id)
+		if definition.is_empty(): continue
+		social.definitions[person_id]=definition
+		var new_actor=NPC_ACTOR.new()
+		new_actor.setup(self,definition)
+		add_child(new_actor)
+		npcs.append(new_actor)
+
+func birth_child(parent_a_id: String,parent_b_id: String,
+		child_name: String="") -> Dictionary:
+	if village_sim==null: return {"ok":false,"reason":"village is not ready"}
+	var created: Dictionary=village_sim.create_child(
+		parent_a_id,parent_b_id,child_name)
+	if bool(created.get("ok",false)):
+		sync_bloodline_population()
+		if DisplayServer.get_name()!="headless": save_world()
+	return created
+
+func family_tree(person_id: String) -> Dictionary:
+	if village_sim==null: return {}
+	return village_sim.bloodline(person_id)
+
 func harvest_resource(source: Node3D) -> Dictionary:
 	# A small sustainable starter loop: salvage existing cut logs and
 	# loosen exposed stones from the valley. No mining through a wall.
