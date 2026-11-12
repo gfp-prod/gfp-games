@@ -71,6 +71,7 @@ func _run() -> void:
 	if no_supply.get("ok",false):
 		_fail("Player fabricated dressing supplies from nothing")
 		return
+	var trust_before_aid: float=float(sim.people["ida"]["trust"].get("wizard",0.0))
 	world.player.inventory.clear()
 	world.player.inventory.append("herb")
 	world.player.refresh_held_model()
@@ -88,8 +89,11 @@ func _run() -> void:
 	if not bool(ida_body["bandaged"]) or float(ida_body["bleeding"])>.7:
 		_fail("The blood loss was not controlled by real treatment")
 		return
-	if float(sim.people["ida"]["trust"].get("wizard",0.0))<=0.0:
-		_fail("Accepted aid does not improve trust in the wizard")
+	if float(sim.people["ida"]["trust"].get("wizard",0.0))<=trust_before_aid:
+		_fail("Accepted aid did not improve the damaged relationship")
+		return
+	if float(sim.people["ida"]["trust"].get("wizard",0.0))>=0.0:
+		_fail("One herb dressing should not erase two acts of violence")
 		return
 	# Daro's missing leg affects his gait. Sela may help her spouse only
 	# if she knows, they can meet, and the resource ledger can afford it.
