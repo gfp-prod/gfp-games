@@ -5,6 +5,9 @@ on:
       - "VERBA/game/scripts/world.gd"
       - "VERBA/game/scripts/world_regions.gd"
       - "VERBA/game/scripts/world_expansion.gd"
+      - "VERBA/game/scripts/distant_horizon.gd"
+      - "VERBA/game/scripts/hermitage_lake_art.gd"
+      - "VERBA/game/scripts/tree_palette.gd"
       - "VERBA/game/scripts/strange_road.gd"
       - "VERBA/game/scripts/player.gd"
       - "VERBA/game/scripts/visual_language.gd"
@@ -14,11 +17,11 @@ on:
       - ".github/workflows/verba-outer-vale-qa.yml"
 concurrency:
   group: verba-outer-vale-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   real-regional-frames:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     defaults:
       run:
         working-directory: VERBA/game
