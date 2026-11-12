@@ -1,11 +1,12 @@
 extends SceneTree
-## End-to-end proof: thirteen Blender GLBs appear in the actual playable world.
+## End-to-end proof: fourteen Blender GLBs appear in the actual playable world.
 ## Existing physics/navigation and save-sensitive world coordinates remain intact.
 const MODELS: Array[String] = [
 	"old_creek_footbridge","old_fishing_jetty","witness_stone_circle",
 	"rusting_delivery_wreck","dead_ash_tree",
 	"ridge_arch","stone_prayer_shrine","cold_charcoal_kiln","roadside_station","castle_gatehouse",
-	"village_bakery","village_forge","village_market_stall"
+	"village_bakery","village_forge","village_market_stall",
+	"village_hearth_house"
 ]
 const TARGETS: Array[String] = [
 	"StrangeRoadDistrict/CastleOfTheSecondRoad",
@@ -79,7 +80,8 @@ func _check() -> void:
 			"castle_gatehouse":Vector3(14.2,5.8,14.2),
 			"village_bakery":Vector3(2.3,2.7,2.2),
 			"village_forge":Vector3(2.1,2.9,1.45),
-			"village_market_stall":Vector3(2.7,2.7,2.0)
+			"village_market_stall":Vector3(2.7,2.7,2.0),
+			"village_hearth_house":Vector3(6.0,5.5,6.1)
 		}
 		var found: bool=false
 		var bounds: AABB=AABB()
@@ -154,6 +156,26 @@ func _check() -> void:
 		if site.find_child(String(invariant["physical"]),true,false)==null:
 			_fail("Forge replacement erased the actual interaction collider for "+String(invariant["site"]))
 			return
+	# New houses are real, enterable physical buildings, not decorative
+	# billboards. The world creates them before the AI navigation bake.
+	var homes: Node3D=world.get_node_or_null("PhysicalVillageHomesteads") as Node3D
+	if homes==null or int(homes.get_meta("authored_homestead_count",0))!=2:
+		_fail("Village still has no authored houses beyond the workstations")
+		return
+	if int(homes.get_meta("new_simulation_entities",-1))!=0:
+		_fail("Decorative house pass minted unrelated economic/save identities")
+		return
+	for house_name in ["StonecutterHouse","MillwardHouse"]:
+		var house: Node3D=homes.get_node_or_null(house_name) as Node3D
+		if house==null or house.get_node_or_null("BlenderAuthoredVernacularHouse")==null:
+			_fail("Actual textured house missing in village: "+house_name)
+			return
+		if house.find_children("*","StaticBody3D",true,false).size()<8:
+			_fail("Vernacular house walls, open entrance or floor are not physically present: "+house_name)
+			return
+		if house.get_node_or_null("HouseSolidStoneFoundation")==null or house.get_node_or_null("PhysicalOldSlateRoof")==null:
+			_fail("Village house doesn't have authentic collidable foundations and roof: "+house_name)
+			return
 	var castle: Node3D=world.get_node_or_null("StrangeRoadDistrict/CastleOfTheSecondRoad") as Node3D
 	if castle==null or castle.get_node_or_null("CastleOpenGate")==null:
 		_fail("Blender castle facade erased the physical open gate")
@@ -205,14 +227,16 @@ func _check() -> void:
 		{"name":"09_shop_and_canopy","eye":Vector2(-90,78),"look":Vector2(-102,77)},
 		{"name":"10_masonry_castle","eye":Vector2(-33,39),"look":Vector2(-49,44)},
 		{"name":"11_village_bakery_market","eye":Vector2(8,9),"look":Vector2(7,17)},
-		{"name":"12_village_forge","eye":Vector2(18,12),"look":Vector2(21.8,19.1)}
+		{"name":"12_village_forge","eye":Vector2(18,12),"look":Vector2(21.8,19.1)},
+		{"name":"13_stonecutter_house","eye":Vector2(-10,25.7),"look":Vector2(-7.5,34.0)},
+		{"name":"14_millward_house","eye":Vector2(27.3,26),"look":Vector2(30.0,33.5)}
 	]
 	for shot in views:
 		var eye: Vector2=shot["eye"]
 		var target: Vector2=shot["look"]
 		camera.global_position=Vector3(eye.x,world.height_at(eye.x,eye.y)+1.7,eye.y)
 		camera.look_at(Vector3(target.x,world.height_at(target.x,target.y)+1.7,target.y),Vector3.UP)
-		for i in range(6):await process_frame
+		for i in range(2):await process_frame
 		RenderingServer.force_draw()
 		var img: Image=root.get_texture().get_image()
 		if img==null or img.get_size()!=Vector2i(1280,720):
@@ -222,5 +246,5 @@ func _check() -> void:
 			_fail("Cannot save proof screenshot: "+String(shot["name"]))
 			return
 		print("REGIONAL_FOUNDRY_FRAME: "+String(shot["name"]))
-	print("PASS: thirteen editable Blender GLBs import, nine landmarks and three village workplaces preserve physics, and five actual-world screenshots render")
+	print("PASS: fourteen editable Blender GLBs import, nine landmarks, three workplaces and two physical homes preserve gameplay, and seven actual-world screenshots render")
 	quit(0)
