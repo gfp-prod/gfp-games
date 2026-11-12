@@ -33,13 +33,13 @@ void fragment() {
 	float fissure_z=abs(sin(p.y*.63+sin(p.x*.43)*1.95));
 	float cracks=(1.0-smoothstep(.018,.058,fissure_x))*step(.55,coarse);
 	cracks+=.65*(1.0-smoothstep(.014,.038,fissure_z))*step(.61,fine);
-	vec3 worn=basalt*.49+vec3(.175,.169,.160);
-	worn=mix(worn,vec3(.25,.242,.229),patch*.48);
-	worn+=vec3(.035,.030,.022)*(coarse-.50);
+	vec3 worn=basalt*.33+vec3(.082,.078,.072);
+	worn=mix(worn,vec3(.183,.174,.163),patch*.50);
+	worn+=vec3(.026,.022,.016)*(coarse-.50);
 	worn*=1.0-.45*clamp(cracks,0.0,1.0);
 	// Soft earth mixed through the shoulders, rather than clean uniform edges.
-	worn=mix(worn,vec3(.32,.309,.276),smoothstep(.64,.9,shoulder)*.39);
-	ALBEDO=clamp(worn,vec3(.08),vec3(.57));
+	worn=mix(worn,vec3(.239,.229,.206),smoothstep(.64,.9,shoulder)*.40);
+	ALBEDO=clamp(worn,vec3(.063),vec3(.41));
 	ROUGHNESS=.97;
 	SPECULAR=.15;
 }
