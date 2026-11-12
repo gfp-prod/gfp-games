@@ -384,6 +384,19 @@ func stream_x(z: float) -> float:
 func height_at(x: float,z: float) -> float:
 	var raw: float = _raw_height_at(x,z)
 	raw = WORLD_REGIONS.lake_height(self,x,z,raw)
+	# The new village houses must be on actual levelled foundations. The
+	# first visual review exposed houses perched on severe uneven cliffs:
+	# the original terrain was never graded where the new footprint stood.
+	# Keep the terrain + collision heights equal to the real house foundation,
+	# blend them back to the surrounding hills over roughly four metres.
+	# Don't sculpt invisible pads in a clean checkout without house assets.
+	if ResourceLoader.exists(VILLAGE_HOMESTEADS.SOURCE):
+		for center in [Vector2(-7.5,34.0),Vector2(30.0,33.5)]:
+			var delta: Vector2=Vector2(x,z)-center
+			var footprint: float=maxf(absf(delta.x)/3.45,absf(delta.y)/3.65)
+			if footprint<2.15:
+				var pad_center: float=_raw_height_at(center.x,center.y)
+				raw=lerpf(raw,pad_center,1.0-smoothstep(1.0,2.15,footprint))
 	# Two small intentionally levelled authored sites. The surrounding hills
 	# blend back over 4–5 metres; no hovering floors or invisible terrain seams.
 	# Non-overlapping graded pads: the original broad falloffs merged two
