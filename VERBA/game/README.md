@@ -2,6 +2,16 @@
 
 Open `project.godot` in Godot 4.5+ from an **extracted permanent folder**. The project's imported 3D models, tree textures and photographic ground materials are bundled. Do not use a separate asset installer.
 
+## Walking the expanded Outer Vale
+
+The world is a continuous **256 × 256 m** traversable valley with a varied meadow, worked village soil, dark forest humus, gravel and worn stone, dry heath, and wet river/lake silt. The original starting clearing and hermit's cottage still work as before. From the village, a long worn path heads southeast to **Stillwater Lake**, a carved basin with a fishing jetty, reeds and a half-drowned altar. Explore the remote tollgate, charcoal kiln, abandoned hunting blind, broken orchard, seven witness stones and a weathered mile marker.
+
+Follow the old western road to **Vale Fuel**, now a distinct distant destination, not planted against the medieval castle wall. Juno, its attendant, lives and works at the relocated station. The castle, road bridge, old priory, living farm, forge and bakery keep their existing positions, trades and save IDs. New landscape details are decorative or collidable without inventing ecological save objects.
+
+All overlays now share a subdued worn-iron and parchment visual language. The in-hand grimoire remains a physical book, never a generic HUD inventory. Longer conversations scroll with **mouse wheel or ↑/↓**, and the Latin writing prompt stays visible while text scrolls.
+
+The full design, materials and world geography are recorded in [The Outer Vale visual bible](docs/VISUAL_BIBLE_V2.md).
+
 ## Play the first reading loop
 
 Find **De Herbis** on a labeled stone near spawn and press **E** to collect. G opens/closes the grimoire; B cycles books; N asks a Latin comprehension question; 1/2/3 answer. Correct understanding earns one-time XP, raises scholarly level/max mana, and reduces the mana cost of book-taught incantations. The two other subject books lie elsewhere in the world. Full instructions: [Books and Scholar Progression](docs/BOOKS_AND_SCHOLAR_PROGRESSION.md).

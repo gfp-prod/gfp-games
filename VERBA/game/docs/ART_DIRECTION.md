@@ -4,6 +4,14 @@
 
 **A believable retro RPG, not a bright mobile low-poly pack.** Make the player feel small in an old, inhabitable world. The world should have history before the player enters it.
 
+### The Outer Vale visual identity (second pass)
+
+Six world-coordinate-blended terrain surfaces, using existing committed images: meadow ground, shaded woodland humus, desiccated grass, packed/eroded earth, stream/lake silt, and broken stone. Transitions are soft and include tonal mineral variation. Keep all assets near the same low-contrast, worn natural palette; no cartoon neon, universal bright-green plane, or free-floating biome squares.
+
+The lake is a depression in the **actual terrain collider**, not a decorative disk. Water is dark peat and cold slate, with an irregular shore, reed beds, rocky silt, a walkable wooden jetty and a half-drowned stone. Roads use the terrain as physics and follow the heightfield. The modern forecourt and distant castle are separated by roughly 60 m and connected by a legible worn route; this surrealism has travel distance and environmental history.
+
+UI and the grimoire use the same low-key material language: oxidized iron (#171b1b), charcoal (#242727), bone chalk (#dbd0bb), dirty parchment (#c6b79f), old brass (#ad9270), bruised rust (#a96e67). Continuous floating status bars and bright generic dialogue windows are prohibited. Latin input must remain legible while longer NPC speech scrolls.
+
 ### Shape and hierarchy
 
 1. **Primary:** chapel walls, a distant split arch, major dead tree, ridge, old cottage. Distinct silhouettes visible at walking distance.

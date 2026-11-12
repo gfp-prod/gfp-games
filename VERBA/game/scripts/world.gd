@@ -428,11 +428,10 @@ func move_vegetation_outside_roadside(x: float,z: float) -> Vector2:
 	return Vector2(x,z)
 
 func build_terrain() -> void:
-	# One continuous, physically grounded terrain mesh. A WorldUV photographic
-	# atlas already combines genuine CC0 meadow, soil, leaves, creek and worn
-	# path with smooth ecotones. No sharp per-triangle biome boundaries.
-	# All blending is baked offline via tools/bake_vale_terrain.py, so it runs
-	# identically on Godot's GL Compatibility renderer and works without web.
+	# One continuous, physically grounded terrain mesh. A single six-surface
+	# world-space shader now blends meadow, forest, dry grass, village earth,
+	# stone and river/lake silt; no more stretching one old green atlas
+	# over the outer 256m valley. Everything ships in the offline game.
 	var visual_tool := SurfaceTool.new()
 	visual_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var grid_size: int = 154
