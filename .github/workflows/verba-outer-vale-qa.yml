@@ -1,0 +1,42 @@
+name: VERBA Outer Vale art and UI review
+on:
+  pull_request:
+    paths:
+      - "VERBA/game/scripts/world.gd"
+      - "VERBA/game/scripts/world_regions.gd"
+      - "VERBA/game/scripts/world_expansion.gd"
+      - "VERBA/game/scripts/strange_road.gd"
+      - "VERBA/game/scripts/player.gd"
+      - "VERBA/game/scripts/visual_language.gd"
+      - "VERBA/game/scripts/grimoire_visual.gd"
+      - "VERBA/game/assets/materials/**"
+      - "VERBA/game/tests/outer_vale_gallery.gd"
+      - ".github/workflows/verba-outer-vale-qa.yml"
+concurrency:
+  group: verba-outer-vale-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  real-regional-frames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Import authored models and terrain textures
+        run: godot --headless --path . --editor --import --quit
+      - name: Capture lake, distant station, ruins and grounded UI in engine
+        run: xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/outer_vale_gallery.gd
+      - name: Keep every actual rendered scene for visual inspection
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verba-outer-vale-ui-visual-qa
+          path: VERBA/game/tests/outer_vale_screens/*.png
+          if-no-files-found: warn
+          retention-days: 30
