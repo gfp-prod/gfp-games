@@ -286,12 +286,24 @@ func _npc_can_see(a: Node3D, b: Node3D, radius: float=7.8) -> bool:
 	var obstruction: Dictionary=get_world_3d().direct_space_state.intersect_ray(ray)
 	return obstruction.is_empty()
 
-func physical_witnesses_of(patient: Node3D) -> Array:
+func physical_witnesses_of(patient: Node3D, source_id: String="") -> Array:
 	var witnesses: Array=[]
 	for observer in npcs:
 		if not is_instance_valid(observer) or observer==patient: continue
-		if _npc_can_see(observer,patient):
-			witnesses.append(String(observer.npc_id))
+		if not _npc_can_see(observer,patient): continue
+		# A bystander can see somebody bleeding without having seen who
+		# hurt or treated them. Do not award reputation for unseen acts.
+		if source_id=="wizard" and player!=null:
+			if not _npc_can_see(observer,player): continue
+		elif not source_id.is_empty() and source_id!="environment":
+			var culprit: Node3D=null
+			for person in npcs:
+				if is_instance_valid(person) and String(person.npc_id)==source_id:
+					culprit=person
+					break
+			if culprit!=null and not _npc_can_see(observer,culprit):
+				continue
+		witnesses.append(String(observer.npc_id))
 	return witnesses
 
 func _refresh_neighbor_care() -> void:
