@@ -29,6 +29,10 @@ The NPCs model sentences in context and reduce hints as comprehension increases.
 
 After the first understood manuscript, a player can use the same complete Latin question with multiple people: *Quid novi?* (What's new?), *Quid novi in oppido?* (What's new in town?), *Quid facis?* (What are you doing?), and *Quid facis hodie?* (What are you doing today?). *Quid novi?* uses a partitive genitive; *in oppido* uses the ablative of place where. A wrong ending such as *in oppidum* is not accepted as the same meaning. NPC responses use each citizen's actual profession and locally witnessed events. The same comprehension gate and one-time relationship credit apply. This is meaningful transfer between people within an authored grammar, not unrestricted Latin conversation.
 
+## Responding to an in-world question
+
+Once the player comprehends a book and physically carries grain, Ida asks *Quid fers?* (What are you carrying?). Her question uses the second-person singular present *fers*, from *fero*. The player can answer *Frumentum fero* (I carry grain), using *fero* in the first-person singular and *frumentum* in the accusative case. The world checks both morphology and actually held inventory before executing its existing finite grain-for-bread exchange. After a successful reply, Ida stops modeling that same question; the change is remembered in the ordinary social ledger. This contextual comprehension-to-production step provides a small real conversation without a study-app overlay. It is still a deliberately authored interaction, not a generative Latin tutor.
+
 ## Educational evidence (external to the fiction)
 
 - Dunlosky, Rawson, Marsh, Nathan & Willingham (2013), *Improving Students' Learning With Effective Learning Techniques*, *Psychological Science in the Public Interest* 14(1). DOI: https://doi.org/10.1177/1529100612453266. A broad review rated practice testing and distributed practice as high-utility learning techniques. This supports typed recollection and return intervals rather than rereading alone.

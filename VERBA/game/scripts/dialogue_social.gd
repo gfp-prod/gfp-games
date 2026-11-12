@@ -80,6 +80,11 @@ func view(id: String, scholar, inventory: Array) -> Dictionary:
 		spoken += "\nTomas points to his book. 'Da mihi librum.' Give me the book: da, mihi, librum."
 	if id=="ida" and tier==1:
 		spoken += "\nIda hefts a sack. 'Frumentum tibi fero' means I bring you grain."
+	# A naturally initiated question puts production into the action:
+	# once the player actually brings grain, Ida asks what they carry.
+	# No lesson overlay or tutorial dialog is spawned.
+	if id=="ida" and tier>=1 and inventory.has("grain") and not past.get("spoken_topics",[]).has("baker_delivery"):
+		spoken += "\nIda notices the sack in your hands. 'Quid fers?' — what are you carrying?"
 	# Observe the same natural question before producing it with others:
 	# contextual input fades after demonstrated, persistent productive use.
 	if tier>=1 and id=="ida" and not past.get("spoken_topics",[]).has("rumors"):

@@ -137,7 +137,9 @@
     "role": "Village baker",
     "speech": [
       {"form": "Frumentum tibi fero.", "topic": "baker_delivery", "min_stage": 0,
-       "hint": "Ida raises her sack. 'Frumentum' is what you carry; 'tibi' marks to whom."}
+       "hint": "Ida raises her sack. 'Frumentum' is what you carry; 'tibi' marks to whom."},
+      {"form": "Frumentum fero.", "topic": "baker_delivery", "min_stage": 1,
+       "hint": "Ida gestures to the sack: 'Frumentum' is what you carry; 'fero' is what you say about yourself."}
     ],
     "position": [
       6,
