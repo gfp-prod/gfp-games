@@ -74,6 +74,9 @@ func _sign(parent: Node3D, writing: String, at: Vector3, tone: Color, yaw: float
 	text_node.modulate = tone
 	text_node.outline_size = 0
 	text_node.no_depth_test = false
+	# Printed carving is legible on the front of its timber fascia; the
+	# old double-sided default mirrored MERCATUS across its reverse face.
+	text_node.double_sided = false
 	text_node.position = at
 	text_node.rotation.y=yaw
 	parent.add_child(text_node)
