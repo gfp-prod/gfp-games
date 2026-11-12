@@ -25,6 +25,7 @@ const STORYBOOK_HOUSE = preload("res://scripts/storybook_house.gd")
 const LANDMARK_TREE = preload("res://scripts/landmark_tree.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
+const LATIN_WAYSTONE = preload("res://scripts/latin_waystone.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
 var magic
@@ -37,6 +38,7 @@ var familiar_mode: String = "follow"
 var construction
 var harvest_counts: Dictionary = {}
 var social
+var forest_waystone
 var village_sim
 var world_calendar = WORLD_CALENDAR.new()
 var workplaces
@@ -120,6 +122,9 @@ func _ready() -> void:
 	workplaces.setup(self)
 	add_child(workplaces)
 	populate_social_npcs()
+	forest_waystone=LATIN_WAYSTONE.new()
+	forest_waystone.setup(self)
+	add_child(forest_waystone)
 	# Debug HUD is opt-in; it does not alter ordinary game input or saves.
 	simulation_lab=SIM_LAB.new()
 	simulation_lab.setup(self)

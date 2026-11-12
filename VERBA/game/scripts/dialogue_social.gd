@@ -31,7 +31,7 @@ func stage(scholar) -> int:
 	return mini(2, scholar.completed.size())
 
 func memory(id: String) -> Dictionary:
-	return memories.get(id, {"topics": [], "rapport": 0, "traded": false})
+	return memories.get(id, {"topics": [], "spoken_topics": [], "rapport": 0, "traded": false})
 
 func view(id: String, scholar, inventory: Array) -> Dictionary:
 	var definition: Dictionary = npc(id)
@@ -124,6 +124,14 @@ func speak(id: String, utterance: String, scholar, player) -> Dictionary:
 		if String(choices[index].get("id",""))==topic:
 			var response: Dictionary = choose(id,index,scholar,player,true)
 			response["latin_understood"] = bool(response.get("ok",false))
+			# Genuine productive Latin is a different remembered fact from
+			# having heard directions through an English dialogue choice.
+			if bool(response["latin_understood"]):
+				var record: Dictionary=memory(id)
+				var spoken: Array=record.get("spoken_topics",[]).duplicate()
+				if not spoken.has(topic): spoken.append(topic)
+				record["spoken_topics"]=spoken
+				memories[id]=record
 			return response
 	return {"ok":false,"changed":false,"message":"The listener cannot act upon that request."}
 
@@ -144,6 +152,13 @@ func choose(id: String, index: int, scholar, player, spoken_latin: bool = false)
 	var blocked: String = _reason(choice, scholar, player.inventory, previous, spoken_latin)
 	if not blocked.is_empty():
 		return {"ok": false, "message": blocked, "changed": false}
+	# Asking in English is still a legitimate way to explore. However,
+	# only productive Latin establishes the remembered linguistic guidance
+	# that can illuminate Mara's physical waystone.
+	if id=="mara" and String(choice.get("id",""))=="forest" and not spoken_latin:
+		var directions: Array=choice.get("reply",[])
+		return {"ok":true,"changed":false,
+			"message":String(directions[mini(stage(scholar),directions.size()-1)])}
 	var reward: String = String(choice.get("grants_book", ""))
 	var required_item: String = String(choice.get("requires_item", ""))
 	var market_good: String=String(choice.get("market_give",""))
@@ -226,6 +241,7 @@ func snapshot() -> Dictionary:
 		if not memories.has(id): continue
 		var record: Dictionary = memory(String(id))
 		out[id] = {"topics": record.get("topics", []).duplicate(),
+			"spoken_topics": record.get("spoken_topics", []).duplicate(),
 			"rapport": int(record.get("rapport", 0)),
 			"traded": bool(record.get("traded", false))}
 	return out
@@ -243,6 +259,19 @@ func restore(source: Dictionary) -> void:
 		for topic in record.get("topics", []):
 			if topic is String and legal.has(topic) and not valid_topics.has(topic):
 				valid_topics.append(topic)
+		# Older saves can contain a forest topic earned through English
+		# menu assistance. Never infer a Latin production event from it.
+		var legal_speech: Dictionary={}
+		for phrase in definitions[id].get("speech",[]):
+			if phrase is Dictionary:
+				legal_speech[String(phrase.get("topic",""))]=true
+		var validated_speech: Array[String]=[]
+		var stored_speech: Variant=record.get("spoken_topics",[])
+		if stored_speech is Array:
+			for phrase_topic in stored_speech:
+				if phrase_topic is String and legal_speech.has(phrase_topic) and not validated_speech.has(phrase_topic):
+					validated_speech.append(phrase_topic)
 		memories[id] = {"topics": valid_topics,
+			"spoken_topics": validated_speech,
 			"rapport": mini(6, valid_topics.size()),
 			"traded": bool(record.get("traded", false)) if id == "tomas" else false}
