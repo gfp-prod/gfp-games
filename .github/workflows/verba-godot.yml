@@ -105,6 +105,10 @@ jobs:
         run: |
           timeout 90s godot --headless --path . --script res://tests/latin_question_transfer_test.gd 2>&1 | tee /tmp/verba-latin-questions.log
           grep -q "PASS: learned reusable Latin questions report only witnessed news" /tmp/verba-latin-questions.log
+      - name: NPC-initiated Latin reply drives finite bakery transaction
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/latin_baker_reply_test.gd 2>&1 | tee /tmp/verba-baker-dialogue.log
+          grep -q "PASS: Ida asks contextual Quid fers" /tmp/verba-baker-dialogue.log
       - name: Immortal return and persistent passing time
         run: |
           timeout 90s godot --headless --path . --script res://tests/survival_loop_test.gd 2>&1 | tee /tmp/verba-survival-test.log
