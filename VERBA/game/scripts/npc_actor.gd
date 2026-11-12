@@ -559,6 +559,15 @@ func _near_work_goal() -> bool:
 	return Vector2(global_position.x-goal.x,global_position.z-goal.z).length()<2.2
 
 func _destination_for(action: String) -> Vector3:
+	# Care is a physical visit to a particular person, not work magically
+	# completed at an invisible village ledger. The usual navigation and
+	# collision rules carry the helper to their chosen patient.
+	if action=="aid" and world!=null and world.village_sim!=null:
+		var patient_id: String=world.village_sim._care_target(npc_id)
+		if not patient_id.is_empty():
+			for other in world.npcs:
+				if is_instance_valid(other) and String(other.npc_id)==patient_id:
+					return other.global_position
 	var key: String = "home"
 	match action:
 		"work": key = "work"
