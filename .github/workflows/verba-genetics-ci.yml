@@ -9,6 +9,8 @@ on:
       - "VERBA/game/scripts/world.gd"
       - "VERBA/game/scripts/world_persistence.gd"
       - "VERBA/game/tests/npc_genetics_test.gd"
+      - "VERBA/game/scripts/npc_body_morph.gd"
+      - "VERBA/game/tests/npc_morphology_test.gd"
       - ".github/workflows/verba-genetics-ci.yml"
 concurrency:
   group: verba-inheritance-${{ github.head_ref || github.ref }}
@@ -30,3 +32,7 @@ jobs:
         run: |
           timeout 55s godot --headless --path . --script res://tests/npc_genetics_test.gd 2>&1 | tee /tmp/npc-genetics.log
           grep -q "PASS: deterministic diverse founders" /tmp/npc-genetics.log
+      - name: Verify individually modeled inheritable eyes, lips, noses, cheekbones and body forms
+        run: |
+          timeout 60s godot --headless --path . --script res://tests/npc_morphology_test.gd 2>&1 | tee /tmp/npc-morphology.log
+          grep -q "PASS: individually sculpted inherited chest/bust/waist/hips" /tmp/npc-morphology.log
