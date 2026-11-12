@@ -429,22 +429,41 @@ def castle_gatehouse(g):
         else:
             stone.box(((wall["start"]+wall["stop"])*.5,2.15,wall["at"]),
                       (along,4.25,.57),3)
+        # Staggered hewn blocks instead of polygonal boulders pasted to a
+        # perfectly flat wall. Shadowed 0.05m mortar joints and slight
+        # projecting stones give genuine coursed-masonry construction.
         for course in range(8):
-            y=.32+course*.52
-            offset=.43 if course%2 else 0.0
-            segments=max(1,int(along/.98))
+            y=.32+course*.515
+            step=1.07
+            start_offset=.48 if course%2 else 0.0
+            segments=int(math.ceil(along/step))+1
             for i in range(segments):
-                run=wall["start"]+.42+offset+i*(along/segments)
-                if run>wall["stop"]-.12:continue
-                size=min(.92,wall["stop"]-run)
+                center=wall["start"]+i*step+step*.5+start_offset
+                if center<wall["start"]+.25 or center>wall["stop"]-.25:
+                    continue
+                length=min(step*R.uniform(.89,.96),
+                           2.0*(center-wall["start"]-.05),
+                           2.0*(wall["stop"]-.05-center))
+                if length<.27:continue
+                protrusion=R.uniform(.012,.055)
+                height=R.uniform(.455,.487)
+                for face_sign in [-1,1]:
+                    pigment=lichen if course in [0,1] and i%8==3 else stone
+                    offset=face_sign*(.345+protrusion*.4)
+                    if wall["axis"]=="x":
+                        pigment.box((wall["at"]+offset,y,center),
+                                   (.095+protrusion,height,length),1.4)
+                    else:
+                        pigment.box((center,y,wall["at"]+offset),
+                                   (length,height,.095+protrusion),1.4)
+        # Subtly irregular corner quoins hold the bonded walls together.
+        for end in [wall["start"]+.32,wall["stop"]-.32]:
+            for course in range(5):
+                y=.34+course*.78
                 if wall["axis"]=="x":
-                    x=wall["at"]+(1 if course%2 else -1)*.32
-                    z=run+size*.5
-                    stone.rock((x,y,z),(.14,.45,size*.94),500+course*100+i)
+                    stone.box((wall["at"],y,end),(.83,.72,.68),2)
                 else:
-                    x=run+size*.5
-                    z=wall["at"]+(1 if course%2 else -1)*.32
-                    stone.rock((x,y,z),(size*.94,.45,.14),700+course*100+i)
+                    stone.box((end,y,wall["at"]),(.68,.72,.83),2)
         # Continuous weathered crest/coping and occasional displaced blocks.
         if wall["axis"]=="x":
             stone.box((wall["at"],4.33,(wall["start"]+wall["stop"])*.5),
@@ -457,12 +476,14 @@ def castle_gatehouse(g):
     stone.box((7.45,4.47,0),(.73,.73,5.12),3)
     for side in [-1,1]:
         for i in range(5):
-            z=side*(2.55+.03*i)
-            stone.rock((7.44,.53+i*.78,z),(.76,.75,.18),3400+i+side)
-    for i in range(13):
-        z=-2.49+i*.413
-        y=4.42+.21*math.sin(i/12*math.pi)
-        stone.rock((7.45,y,z),(.63,.36,.39),3300+i)
+            z=side*2.75
+            y=.40+i*.79
+            stone.box((7.45,y,z),(.79,.69,.48),2)
+    for i in range(12):
+        z=-2.38+(i+.5)*.405
+        stone.box((7.45,4.47,z),(.81,.64,.368),1.5)
+    # Carved keystone framing the lintel, with the entire gate below open.
+    stone.box((7.45,4.64,0),(.89,.70,.46),2)
     # Four tapered actual stone towers, broken ring parapets and dark slits.
     for tx in [-7.25,7.25]:
         for tz in [-7.25,7.25]:
@@ -494,18 +515,21 @@ def castle_gatehouse(g):
                 dark.box((tx,y,tz+1.783),(.12,.56,.035))
                 stone.box((tx,y+.31,tz+1.821),(.27,.063,.068))
                 stone.box((tx,y-.31,tz+1.821),(.27,.063,.068))
-            # Heavy rim and irregular battlements, overhanging only slightly.
+            # Low mortar-backed coping with genuine merlons and narrow
+            # crenels. Earlier rock spheres looked like floating rubble.
             for a in range(16):
                 theta=2*math.pi*a/16
-                x=tx+math.cos(theta)*1.86
-                z=tz+math.sin(theta)*1.86
-                stone.rock((x,height+.06,z),(.62,.28,.62),4500+a)
+                x=tx+math.cos(theta)*1.77
+                z=tz+math.sin(theta)*1.77
+                stone.box((x,height+.08,z),(.55,.24,.55),1.2)
                 if a%3!=1:
-                    stone.rock((x,height+.45,z),(.54,.59,.56),4600+a)
-            roof.box((tx,height-.15,tz),(2.6,.045,2.6),2)
-            for i in range(5):
-                t=(i-2)*.25
-                stone.rock((tx+t,height+.54,tz+1.67),(.32,.19,.25),4700+i)
+                    stone.box((x,height+.46,z),(.49,.56,.50),1.3)
+            # A worn, central walking cap supports the parapet. No bright
+            # slate roof dish floating between towers.
+            stone.box((tx,height-.09,tz),(2.82,.12,2.82),2)
+            for i in range(4):
+                t=(i-1.5)*.35
+                lichen.rock((tx+t,height+.08,tz+1.58),(.24,.10,.19),4700+i)
     # Real archive remains enterable and properly roofed.
     # Relative archive center (-2.5,.13,0), using the original coordinates.
     ax=-2.5
