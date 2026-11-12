@@ -19,7 +19,7 @@ func _capture(world: Node3D,cam: Camera3D,actor: Node3D,
 		name: String,base: String,focus: float,distance: float) -> bool:
 	cam.global_position=actor.to_global(Vector3(.08,focus+.03,-distance))
 	cam.look_at(actor.to_global(Vector3(0,focus,0)),Vector3.UP)
-	for frame in range(16): await process_frame
+	for frame in range(3): await process_frame
 	RenderingServer.force_draw()
 	var picture: Image=root.get_texture().get_image()
 	if picture==null or picture.get_size()!=Vector2i(1280,720): return false
