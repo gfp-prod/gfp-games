@@ -403,6 +403,138 @@ def roadside_station(g):
         if 3.4<x<5.4 and abs(z)<3.0:continue
         dark.box((x,.10,z),(R.uniform(.12,.64),.007,R.uniform(.08,.48)))
 
+
+def castle_gatehouse(g):
+    """Stone-led architecture, not scaled cylinders and wall slabs.
+    Matches the existing enterable castle and archive collision hulls.
+    Keeps a >4.0m physical eastern gate and a real archive door.
+    """
+    stone,lichen,oak=g["stone"],g["lichen"],g["oak"]
+    dark,metal,plaster,roof=g["dark"],g["steel"],g["plaster"],g["rust"]
+    # Scored, chipped curtain-wall courses around the actual walkable court.
+    # Each wall uses a recessed stone core and irregular facing courses,
+    # so stone texture and mortar joints have real depth.
+    for wall in [
+        # Horizontal curtains, the opening on the eastern side stays real.
+        {"axis":"z","at":-7.45,"start":-7.8,"stop":7.8},
+        {"axis":"z","at":7.45,"start":-7.8,"stop":7.8},
+        {"axis":"x","at":-7.45,"start":-7.72,"stop":7.72},
+        {"axis":"x","at":7.45,"start":-7.72,"stop":-2.52},
+        {"axis":"x","at":7.45,"start":2.52,"stop":7.72},
+    ]:
+        along=wall["stop"]-wall["start"]
+        if wall["axis"]=="x":
+            stone.box((wall["at"],2.15,(wall["start"]+wall["stop"])*.5),
+                      (.57,4.25,along),3)
+        else:
+            stone.box(((wall["start"]+wall["stop"])*.5,2.15,wall["at"]),
+                      (along,4.25,.57),3)
+        for course in range(8):
+            y=.32+course*.52
+            offset=.43 if course%2 else 0.0
+            segments=max(1,int(along/.98))
+            for i in range(segments):
+                run=wall["start"]+.42+offset+i*(along/segments)
+                if run>wall["stop"]-.12:continue
+                size=min(.92,wall["stop"]-run)
+                if wall["axis"]=="x":
+                    x=wall["at"]+(1 if course%2 else -1)*.32
+                    z=run+size*.5
+                    stone.rock((x,y,z),(.14,.45,size*.94),500+course*100+i)
+                else:
+                    x=run+size*.5
+                    z=wall["at"]+(1 if course%2 else -1)*.32
+                    stone.rock((x,y,z),(size*.94,.45,.14),700+course*100+i)
+        # Continuous weathered crest/coping and occasional displaced blocks.
+        if wall["axis"]=="x":
+            stone.box((wall["at"],4.33,(wall["start"]+wall["stop"])*.5),
+                      (.81,.16,along),2)
+        else:
+            stone.box(((wall["start"]+wall["stop"])*.5,4.33,wall["at"]),
+                      (along,.16,.81),2)
+    # Recessed arched gate header: masonry keystone and an unmistakably open
+    # passage; no visible mesh seals the collision opening.
+    stone.box((7.45,4.47,0),(.73,.73,5.12),3)
+    for side in [-1,1]:
+        for i in range(5):
+            z=side*(2.55+.03*i)
+            stone.rock((7.44,.53+i*.78,z),(.76,.75,.18),3400+i+side)
+    for i in range(13):
+        z=-2.49+i*.413
+        y=4.42+.21*math.sin(i/12*math.pi)
+        stone.rock((7.45,y,z),(.63,.36,.39),3300+i)
+    # Four tapered actual stone towers, broken ring parapets and dark slits.
+    for tx in [-7.25,7.25]:
+        for tz in [-7.25,7.25]:
+            height=6.35 if tx<0 else 5.75
+            segments=16
+            tiers=18
+            for tier in range(tiers):
+                y0=.04+tier*(height/tiers)
+                y1=.04+(tier+1)*(height/tiers)
+                r0=1.80-.15*tier/tiers
+                r1=1.80-.15*(tier+1)/tiers
+                for a in range(segments):
+                    theta=2*math.pi*a/segments
+                    theta_next=2*math.pi*(a+1)/segments
+                    def p(angle,r,y):
+                        return (tx+math.cos(angle)*r,y,tz+math.sin(angle)*r)
+                    stone.face([
+                        p(theta,r0,y0),
+                        p(theta_next,r0,y0),
+                        p(theta_next,r1,y1),
+                        p(theta,r1,y1)
+                    ],1.0)
+                    if tier in [2,8,14] and a%4==1:
+                        lichen.rock((tx+math.cos(theta)*1.83,y1-.09,
+                                     tz+math.sin(theta)*1.83),
+                                    (.28,.17,.26),4100+tier*30+a)
+            # Black narrow arrowslits inset in existing tower geometry.
+            for y in [2.0,3.55]:
+                dark.box((tx,y,tz+1.783),(.12,.56,.035))
+                stone.box((tx,y+.31,tz+1.821),(.27,.063,.068))
+                stone.box((tx,y-.31,tz+1.821),(.27,.063,.068))
+            # Heavy rim and irregular battlements, overhanging only slightly.
+            for a in range(16):
+                theta=2*math.pi*a/16
+                x=tx+math.cos(theta)*1.86
+                z=tz+math.sin(theta)*1.86
+                stone.rock((x,height+.06,z),(.62,.28,.62),4500+a)
+                if a%3!=1:
+                    stone.rock((x,height+.45,z),(.54,.59,.56),4600+a)
+            roof.box((tx,height-.15,tz),(2.6,.045,2.6),2)
+            for i in range(5):
+                t=(i-2)*.25
+                stone.rock((tx+t,height+.54,tz+1.67),(.32,.19,.25),4700+i)
+    # Real archive remains enterable and properly roofed.
+    # Relative archive center (-2.5,.13,0), using the original coordinates.
+    ax=-2.5
+    stone.box((ax,.21,0),(5.45,.17,5.7),2)
+    plaster.box((ax-2.65,1.98,0),(.43,3.42,5.48),2)
+    for side in [-1,1]:
+        plaster.box((ax,1.98,side*2.74),(5.50,3.42,.42),2)
+        plaster.box((ax+2.65,1.98,side*2.0),(.41,3.42,1.58),2)
+    plaster.box((ax+2.65,3.25,0),(.43,.74,2.88),2)
+    # Dark moss slate eaves, cap stones and exposed structural rafters.
+    roof.box((ax,3.90,0),(6.1,.33,6.45),3)
+    dark.box((ax,4.085,0),(6.25,.055,6.56),3)
+    for z in [-2.83,2.83]:
+        oak.beam((ax-2.95,3.52,z),(ax+2.98,3.52,z),.20,.18)
+    for x in [ax-2.1,ax-.5,ax+1.3]:
+        for z in [-2.2,2.2]:
+            oak.beam((x,3.59,z),(x,3.95,z),.17,.15)
+    # Functional scribe's racks: reserve original table/collision positions.
+    for z in [-1.78,1.78]:
+        for y in [.83,1.62,2.35]:
+            oak.box((ax-1.72,y,z),(.98,.13,.51),2)
+    # Low repair scar at gate threshold, not another arbitrary glowing prop.
+    for i in range(32):
+        x=R.uniform(5.7,9.0)
+        z=R.uniform(-4.0,4.0)
+        if abs(z)<2.20 and x>7.0: continue
+        stone.rock((x,.10,z),
+                   (R.uniform(.17,.48),R.uniform(.09,.22),R.uniform(.20,.50)),5100+i)
+
 BUILDERS={
     "old_creek_footbridge":bridge,
     "old_fishing_jetty":jetty,
@@ -412,7 +544,8 @@ BUILDERS={
     "ridge_arch":ridge_arch,
     "stone_prayer_shrine":prayer_shrine,
     "cold_charcoal_kiln":charcoal_kiln,
-    "roadside_station":roadside_station
+    "roadside_station":roadside_station,
+    "castle_gatehouse":castle_gatehouse
 }
 
 def export_asset(out,name,builder):
