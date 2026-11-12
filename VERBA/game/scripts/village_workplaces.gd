@@ -5,6 +5,7 @@ extends Node3D
 const ART = preload("res://scripts/art.gd")
 const ECONOMY = preload("res://scripts/village_economy.gd")
 const WORLD_ART_UPGRADE = preload("res://scripts/world_art_upgrade.gd")
+const VILLAGE_SQUARE_ART = preload("res://scripts/village_square_art.gd")
 var world: Node3D
 var displays: Dictionary = {}
 var production_lamps: Dictionary = {}
@@ -23,6 +24,7 @@ func _ready() -> void:
 	_build_forge()
 	_build_market()
 	_install_foundry_workshops()
+	VILLAGE_SQUARE_ART.build(world,self)
 	refresh_from_economy(true)
 
 func _install_foundry_workshops() -> void:
