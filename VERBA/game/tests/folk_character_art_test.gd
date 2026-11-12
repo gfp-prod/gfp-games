@@ -46,6 +46,18 @@ func _run() -> void:
 	if bounds.size.y<.8 or bounds.size.x<.4 or bounds.size.x>.7:
 		_fail("The apron has lost plausible body proportions")
 		return
+	# Improved appearance must stay on the original articulated rig;
+	# costume geometry may not replace the moving limbs or their jobs.
+	for actor in [ida,orin]:
+		if actor.find_child("CutAndRepairedTunicPanels",true,false)==null:
+			_fail("Villager lost the tapered, textured over-garment")
+			return
+		if actor.find_child("SmallTarnishedBeltBuckle",true,false)==null:
+			_fail("Profession-specific clothing hardware was not instanced")
+			return
+		if actor.find_child("AnimatedLeftArm",true,false)==null:
+			_fail("A new costume mesh accidentally removed the original moving rig")
+			return
 	var smith_head=orin.find_child("ModeledInhabitantHead",true,false) as MeshInstance3D
 	if smith_head==null or smith_head.material_override==null or face.material_override==null:
 		_fail("Different village workers do not have modeled, shaded faces")
