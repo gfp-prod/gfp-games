@@ -1,6 +1,8 @@
 extends SceneTree
 ## Render-asset regression: preserve human proportions and the baker's
 ## identifiable working costume without changing any simulation authority.
+const FABRIC=preload("res://scripts/npc_cloth_finish.gd")
+
 func _initialize() -> void:
 	call_deferred("_run")
 
@@ -57,6 +59,43 @@ func _run() -> void:
 			return
 		if actor.find_child("AnimatedLeftArm",true,false)==null:
 			_fail("A new costume mesh accidentally removed the original moving rig")
+			return
+	# Catch the exact modeling artifact: a broad cylinder floating across
+	# the clavicles was mistakenly used as an ivory costume/trim seam.
+	# It is not required by the detachable limb rig.
+	for actor in [ida,orin]:
+		var torso: Node3D=actor.find_child("VisibleInhabitant",true,false)
+		var fitted: MeshInstance3D=actor.find_child(
+			"TaperedVillagerTunic",true,false) as MeshInstance3D
+		if torso==null or fitted==null:
+			_fail("The tested living torso is missing")
+			return
+		var dyed: StandardMaterial3D=fitted.material_override as StandardMaterial3D
+		if dyed==null or dyed.albedo_texture!=FABRIC.woven_texture():
+			_fail("Villager clothing reverted to parchment instead of woven cloth")
+			return
+		for part in torso.get_children():
+			if not (part is MeshInstance3D): continue
+			var mesh: MeshInstance3D=part as MeshInstance3D
+			if not (mesh.mesh is CylinderMesh): continue
+			var cylinder: CylinderMesh=mesh.mesh as CylinderMesh
+			if absf(mesh.position.y-1.47)<.12 and absf(mesh.position.z+.13)<.10 and cylinder.height>.36:
+				_fail("The exposed chest collarbone cylinder has returned")
+				return
+	# The petrol worker must swing its actual visible uniform sleeves,
+	# not the old medieval character model that is hidden beneath it.
+	var attendant: Node3D=null
+	for person in world.npcs:
+		if String(person.npc_id)=="juno":
+			attendant=person
+			break
+	if attendant!=null:
+		var modern: Node3D=attendant.find_child("DistinctModernAttendant",true,false)
+		if modern==null or not modern.is_ancestor_of(attendant.left_leg):
+			_fail("Roadside attendant animation drives hidden limbs")
+			return
+		if not modern.is_ancestor_of(attendant.right_arm):
+			_fail("Roadside attendant's work sleeve lost its animation joint")
 			return
 	# The previous faces were near-identical spheres with surface eyes.
 	# Regressions must retain recesses, realistic profile and role variants.
