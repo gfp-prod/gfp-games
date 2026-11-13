@@ -72,7 +72,8 @@ static func scalp_cap(face_root: Node3D, hair: Material, genome: Dictionary,
 	var part: float=GENES.value(genome,"hair_parting")
 	var width: float=lerpf(.180,.200,volume)
 	var depth: float=lerpf(.169,.185,volume)
-	var top: float=lerpf(2.044,2.077,volume)
+	# A close cropped crown rather than a high smooth egg on the skull.
+	var top: float=lerpf(2.033,2.059,volume)
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(hair)
@@ -90,9 +91,14 @@ static func scalp_cap(face_root: Node3D, hair: Material, genome: Dictionary,
 				# Place the leading rim on the forehead rather than behind
 				# the face at hairline height, and sweep it up at the temples.
 				var front: float=maxf(0.0,-sin(theta))
-				var hairline: float=1.911+.027*absf(cos(theta))-.003*front
+				var temple: float=pow(absf(cos(theta)),1.55)
+				var widow: float=exp(-pow(cos(theta)/.22,2.0))*front
+				# A rounded temple rise, irregular side-part and soft
+				# central widow's peak. Uniform horizontal rims read as
+				# wigs, even with correct mesh density and skull size.
+				var hairline: float=1.905+.043*temple-.0075*widow
 				hairline+=.009*(part-.5)*cos(theta)
-				hairline+=.0035*sin(theta*6.0+part*TAU)*front
+				hairline+=.0045*sin(theta*6.0+part*TAU)*front
 				quad.append(Vector3(
 					cos(theta)*width*circumference,
 					lerpf(hairline,top,t)+.004*(1.0-t)*sin(theta*3.0+t*5.0),
@@ -261,15 +267,22 @@ static func _back_panels(root: Node3D,main: Material,shine: Material,
 			tip_y+variation,.063,curl,x*.12)
 
 static func _side_framing(root: Node3D,main: Material,shine: Material,
-		tip_y: float,curl: float,wide: float=.047) -> void:
+		tip_y: float,curl: float,wide: float=.047,
+		long_hair: bool=false) -> void:
 	for side in [-1.0,1.0]:
 		var name: String="Left" if side<0.0 else "Right"
+		# Long loose hair falls around and BEHIND the ears into the
+		# rear hair mass. Previously two huge face-level boards hung
+		# unconnected to the actual scalp all the way to the waist.
+		var root_z: float=.126 if long_hair else .076
+		var outer_tip: float=maxf(1.69,tip_y) if long_hair else tip_y
+		var fine_tip: float=outer_tip+.058 if long_hair else tip_y+.082
 		_hair_sheet(root,"Faceted"+name+"HairFrame",main,
-			Vector3(side*.181,1.953,.076),
-			tip_y,wide*.80,curl,side*.042)
+			Vector3(side*.181,1.953,root_z),
+			outer_tip,wide*(.62 if long_hair else .80),curl,side*.023)
 		_hair_sheet(root,"Fine"+name+"HairUnderlayer",shine,
-			Vector3(side*.184,1.935,.095),
-			tip_y+.082,wide*.47,curl,side*.026)
+			Vector3(side*.184,1.935,root_z+.019),
+			fine_tip,wide*(.30 if long_hair else .47),curl,side*.017)
 
 static func _braid(root: Node3D,main: Material,highlight: Material,
 		side: float,top: Vector3,tip_y: float,curl: float) -> void:
@@ -328,11 +341,11 @@ static func finish(face_root: Node3D,person: String,genome: Dictionary,
 		"loose","wave":
 			var length_end: float=lerpf(1.47,1.29,gene_length)
 			_back_panels(root,hair,shine,length_end,curl)
-			_side_framing(root,hair,shine,length_end+.09,curl)
+			_side_framing(root,hair,shine,length_end+.09,curl,.047,true)
 			if style=="wave":
 				for side in [-1.0,1.0]:
 					_hair_sheet(root,"SinuousOverShoulder"+str(side),shine,
-						Vector3(side*.204,1.845,.011),length_end+.105,
+						Vector3(side*.204,1.845,.136),length_end+.105,
 						.031,maxf(.52,curl),side*.029)
 		"braids":
 			_back_panels(root,deep,hair,1.65,curl)
