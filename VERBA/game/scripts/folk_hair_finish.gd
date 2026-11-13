@@ -154,10 +154,48 @@ static func _hair_sheet(root: Node3D,name: String,material: Material,
 				var z: float=center_z-.012*(1.0-u*u)*lerpf(.35,1.0,flow)
 				z+=.0035*sin(u*PI*1.8+t*4.1)*t
 				corners.append(Vector3(x,lerpf(at.y,tip_y,t),z))
+			# Give each front plane a real rear surface and connected side
+			# walls. The previous single polygons looked okay head-on
+			# but vanished into hair-thin lines from the profile camera.
+			var rear: Array[Vector3]=[]
+			for p in corners:
+				var t_pos: float=clampf((at.y-p.y)/(at.y-tip_y),0.0,1.0)
+				var width_factor: float=clampf(half_width/.065,0.0,1.0)
+				var thickness: float=lerpf(.016,.049,width_factor)*(
+					.70+.30*sin(PI*t_pos))*(1.0+.15*curl)
+				rear.append(p+Vector3(0,0,thickness))
 			for k in [0,1,2,0,2,3]:
 				var p: Vector3=corners[k]
-				tool.set_uv(Vector2((p.x+.5),p.y*.9))
+				tool.set_uv(Vector2(p.x+.5,p.y*.9))
 				tool.add_vertex(p)
+			for k in [0,2,1,0,3,2]:
+				var p: Vector3=rear[k]
+				tool.set_uv(Vector2(p.x+.5,p.y*.9))
+				tool.add_vertex(p)
+			if col==0:
+				for k in [0,1,2,0,2,3]:
+					var p: Vector3=[
+						corners[0],rear[0],rear[1],corners[1]][k]
+					tool.set_uv(Vector2(p.x+.5,p.y*.9))
+					tool.add_vertex(p)
+			if col==SPANS-2:
+				for k in [0,1,2,0,2,3]:
+					var p: Vector3=[
+						corners[3],corners[2],rear[2],rear[3]][k]
+					tool.set_uv(Vector2(p.x+.5,p.y*.9))
+					tool.add_vertex(p)
+			if row==0:
+				for k in [0,1,2,0,2,3]:
+					var p: Vector3=[
+						corners[0],corners[3],rear[3],rear[0]][k]
+					tool.set_uv(Vector2(p.x+.5,p.y*.9))
+					tool.add_vertex(p)
+			if row==ROWS-2:
+				for k in [0,1,2,0,2,3]:
+					var p: Vector3=[
+						corners[1],rear[1],rear[2],corners[2]][k]
+					tool.set_uv(Vector2(p.x+.5,p.y*.9))
+					tool.add_vertex(p)
 	tool.generate_normals()
 	var panel:=MeshInstance3D.new()
 	panel.name=name
@@ -166,6 +204,7 @@ static func _hair_sheet(root: Node3D,name: String,material: Material,
 		(material as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
 	panel.material_override=material
 	panel.set_meta("sculpted_continuous_tress",true)
+	panel.set_meta("anatomical_hair_volume_shell",true)
 	panel.set_meta("hair_flow_top_to_bottom",true)
 	panel.set_meta("no_new_collision",true)
 	root.add_child(panel)
