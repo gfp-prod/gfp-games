@@ -146,7 +146,10 @@ func _ready() -> void:
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
-		arm.position=Vector3(side*.345,1.49,0)
+		# Shoulder sockets are measured from this person's inherited upper
+		# thorax. A fixed x=.345 made both sexes look broad-shouldered.
+		var socket_width: float=BODY._section(1.365,genome,sex).x
+		arm.position=Vector3(side*(.040+.88*socket_width),1.49,0)
 		# A slightly relaxed, inherited resting stance instead of two
 		# vertical mannequin rods; gait and reaching still drive rotation.x.
 		arm.rotation.z=side*lerpf(.060,.125,
@@ -154,7 +157,7 @@ func _ready() -> void:
 		figure.add_child(arm)
 		# Shoulder cap and upper sleeve have a sculpted circumference and
 		# attach to the old detachable, animated physical arm pivot.
-		COSTUME.fitted_sleeve(arm,side,genome,cloth)
+		COSTUME.fitted_sleeve(arm,side,genome,cloth,sex)
 		# Genuine elbow articulation. The longer inherited forearm and hand
 		# remain children of this original severable arm, not new body modules.
 		var forearm:=Node3D.new()
@@ -165,11 +168,13 @@ func _ready() -> void:
 		COSTUME.fitted_forearm(forearm,side,genome,cloth,skin)
 		var leg:=Node3D.new()
 		leg.name="AnimatedLeftLeg" if side<0.0 else "AnimatedRightLeg"
-		leg.position=Vector3(side*.17,.61,.015)
+		# Femoral spacing follows the *pelvis* rather than a shared template.
+		var pelvic_half_width: float=BODY._section(.78,genome,sex).x
+		leg.position=Vector3(side*.455*pelvic_half_width,.61,.015)
 		figure.add_child(leg)
 		# Genetically sized trouser and sculpted boot are mounted on this
 		# same animated, hit-detectable, independently detachable leg.
-		COSTUME.fitted_lower_leg(leg,side,genome)
+		COSTUME.fitted_lower_leg(leg,side,genome,sex)
 		var limb_arm: String="left_arm" if side<0.0 else "right_arm"
 		var limb_leg: String="left_leg" if side<0.0 else "right_leg"
 		modular_limbs[limb_arm]=arm
@@ -285,7 +290,8 @@ func _ready() -> void:
 			var side_name: String="left" if side<0.0 else "right"
 			var modern_leg:=Node3D.new()
 			modern_leg.name="ModularModern"+side_name.capitalize()+"Leg"
-			modern_leg.position=Vector3(side*.19,.70,0)
+			modern_leg.position=Vector3(side*.47*
+				BODY._section(.78,genome,sex).x,.70,0)
 			attendant.add_child(modern_leg)
 			ART.box(modern_leg,Vector3(0,-.31,0),Vector3(.27,.79,.27),denim)
 			ART.box(modern_leg,Vector3(side*.01,-.64,-.10),Vector3(.31,.15,.46),leather)
@@ -293,10 +299,11 @@ func _ready() -> void:
 			_install_limb_hitbox(modern_leg,side_name+"_leg")
 			var modern_arm:=Node3D.new()
 			modern_arm.name="ModularModern"+side_name.capitalize()+"Arm"
-			modern_arm.position=Vector3(side*.43,1.42,0)
+			modern_arm.position=Vector3(side*(.054+
+				.94*BODY._section(1.365,genome,sex).x),1.42,0)
 			attendant.add_child(modern_arm)
 			modern_arm.rotation.z=side*lerpf(.060,.125,GENES.value(genome,"shoulder_width"))
-			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt)
+			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt,sex)
 			var modern_forearm:=Node3D.new()
 			modern_forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
 			modern_forearm.position=Vector3(side*.072,-.410,-.045)
