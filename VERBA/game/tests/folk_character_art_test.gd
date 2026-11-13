@@ -652,6 +652,18 @@ func _run() -> void:
 		if sculpt==null or sculpt.mesh==null or sculpt.mesh.get_surface_count()!=1:
 			_fail("An anatomical face has regressed to disconnected prop spheres")
 			return
+		# A separate face patch, inherited nose and legacy skull occupied
+		# overlapping volume. Their dynamic self-shadowing previously
+		# turned light and dark skin alike into an opaque shadow mask.
+		var skull: MeshInstance3D=citizen.find_child(
+			"ModeledInhabitantHead",true,false) as MeshInstance3D
+		var nasal_tip: MeshInstance3D=portrait.get_node_or_null(
+			"ModeledNoseTip") as MeshInstance3D
+		for layer in [sculpt,skull,nasal_tip]:
+			if layer==null or layer.cast_shadow!=(
+					GeometryInstance3D.SHADOW_CASTING_SETTING_OFF):
+				_fail("Overlapping sculpted head layer casts black self-shadow")
+				return
 		var verts: PackedVector3Array=sculpt.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 		if verts.size()<3800:
 			_fail("The face lost its continuous high-detail cheek/eye/nose topology")
