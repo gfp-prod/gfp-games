@@ -155,8 +155,8 @@ func _run() -> void:
 		_fail("The shaped baker apron surface is missing")
 		return
 	var triangles: PackedVector3Array=apron.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	if triangles.size()<180:
-		_fail("Baker apron has too few fitted patches to follow chest anatomy")
+	if triangles.size()<3000:
+		_fail("Baker apron lost its dense anatomical loft and may float away from the chest")
 		return
 	# Prove the actual pale apron stays outside the inherited front
 	# surface, not hidden behind the worker's shirt as it was on camera.
@@ -166,8 +166,9 @@ func _run() -> void:
 		var section_width: float=genetic_body._section(v.y,ida_genome,String(world.village_sim.people["ida"]["sex"])).x
 		var angle: float=-PI*.5+asin(clampf(v.x/section_width,-.89,.89))
 		var outer_front: float=genetic_body._point(v.y,angle,ida_genome,String(world.village_sim.people["ida"]["sex"])).z
-		if v.z>outer_front-.046:
-			_fail("Baker apron is buried behind genetically modeled clothing")
+		var clearance: float=outer_front-v.z
+		if clearance<.020 or clearance>.071:
+			_fail("Baker apron is clipping or visibly floating off the torso")
 			return
 	# Vertex-only clearance missed the huge chest-colored hole: the shirt
 	# intersected the broad triangle interiors between sampled edge points.
@@ -178,8 +179,9 @@ func _run() -> void:
 		var radius: float=genetic_body._section(center.y,ida_genome,String(world.village_sim.people["ida"]["sex"])).x
 		var angle: float=-PI*.5+asin(clampf(center.x/radius,-.89,.89))
 		var front: float=genetic_body._point(center.y,angle,ida_genome,String(world.village_sim.people["ida"]["sex"])).z
-		if center.z>front-.055:
-			_fail("Baker apron triangle interior clips through the chest or waist")
+		var triangle_clearance: float=front-center.z
+		if triangle_clearance<.018 or triangle_clearance>.073:
+			_fail("Baker apron triangle interior clips or lifts off its body")
 			return
 	if not bool(apron.get_meta("drapes_over_inherited_torso",false)):
 		_fail("Baker apron lost its fitted living-body surface")
@@ -447,7 +449,7 @@ func _run() -> void:
 		_fail("The smith lost the sculpted apron mesh"); return
 	var smith_points: PackedVector3Array=smith_apron.mesh.surface_get_arrays(0)[
 		Mesh.ARRAY_VERTEX]
-	if smith_points.size()<500 or smith_apron.get_aabb().size.y<.75:
+	if smith_points.size()<2500 or smith_apron.get_aabb().size.y<.75:
 		_fail("Smith apron lacks torso-following geometry"); return
 	var smith_genome: Dictionary=world.village_sim.people["orin"]["genome"]
 	for index in range(0,smith_points.size(),3):
@@ -455,8 +457,11 @@ func _run() -> void:
 			smith_points[index+2])/3.0
 		var section: float=genetic_body._section(p.y,smith_genome,String(world.village_sim.people["orin"]["sex"])).x
 		var angle: float=-PI*.5+asin(clampf(p.x/section,-.91,.91))
-		if p.z>genetic_body._point(p.y,angle,smith_genome,String(world.village_sim.people["orin"]["sex"])).z-.05:
-			_fail("Blacksmith apron intersects its inherited torso"); return
+		var smith_front: float=genetic_body._point(p.y,angle,smith_genome,
+			String(world.village_sim.people["orin"]["sex"])).z
+		var smith_clearance: float=smith_front-p.z
+		if smith_clearance<.017 or smith_clearance>.073:
+			_fail("Blacksmith apron is clipping or floating away from inherited torso"); return
 	# Verify the *mesh* rather than a waist-taper metadata promise:
 	# a smith's chest bib should cinch at the belt instead of a slab that
 	# masks the inherited waist for every citizen.
