@@ -512,7 +512,7 @@ func _run() -> void:
 		# Ears belong to the lateral skull; the former large, round
 		# discs floated at either temple in every real Godot portrait.
 		var auricles: Array[Node]=figure.find_children(
-			"SubtleModeledEar","MeshInstance3D",true,false)
+			"SubtleModeledEar*","MeshInstance3D",true,false)
 		if auricles.size()!=2:
 			_fail("Inherited skull lost its paired ears"); return
 		for auricle in auricles:
