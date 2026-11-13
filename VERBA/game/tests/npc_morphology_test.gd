@@ -71,6 +71,36 @@ func _run() -> void:
 			man_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]):
 		_fail("Sex-linked morphology still creates identical actual mesh vertices")
 		return
+	# Facial differences must live in the sculpted continuous mesh too,
+	# not only the person's hair or hat. Inherited anatomy remains visible
+	# using a single fixed genome and identical skin, hair and expressions.
+	var female_face_root:=Node3D.new()
+	var male_face_root:=Node3D.new()
+	root.add_child(female_face_root)
+	root.add_child(male_face_root)
+	var comparable_skin:=ART.mat(GENES.skin_color(same_genome),.96)
+	var comparable_hair:=ART.mat(GENES.hair_color(same_genome),.95)
+	FACE.finish(female_face_root,"reference",comparable_skin,comparable_hair,
+		comparable_hair,same_genome,"female")
+	FACE.finish(male_face_root,"reference",comparable_skin,comparable_hair,
+		comparable_hair,same_genome,"male")
+	var female_face: MeshInstance3D=female_face_root.find_child(
+		"IndividualIntegratedFaceMesh",true,false) as MeshInstance3D
+	var male_face: MeshInstance3D=male_face_root.find_child(
+		"IndividualIntegratedFaceMesh",true,false) as MeshInstance3D
+	if female_face==null or male_face==null or female_face.mesh==null:
+		_fail("Anatomic face profile is missing its continuous sculpted mesh")
+		return
+	if female_face.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]==(
+			male_face.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]):
+		_fail("Sex-linked faces share a completely identical skull geometry")
+		return
+	var female_brow: float=FACE._depth(.075,1.824,same_genome,"female")
+	var male_brow: float=FACE._depth(.075,1.824,same_genome,"male")
+	if male_brow>=female_brow-.003:
+		_fail("The facial brow ridge ignored its anatomical variation")
+		return
+
 	if float(woman_mesh.get_meta("anatomic_shoulder_hip_ratio",9.0))>=float(
 			man_mesh.get_meta("anatomic_shoulder_hip_ratio",0.0))-.11:
 		_fail("Anatomy changes only metadata, not the visible torso surface")
