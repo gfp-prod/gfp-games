@@ -268,8 +268,9 @@ func _run() -> void:
 			# exposed an open dark hole when the camera stood above a person.
 			if not bool(sleeve.get_meta("sealed_upper_shoulder",false)):
 				_fail("Shoulder sleeve lost its skin-safe upper cloth closure"); return
-			if vertices.size()<540 or limb_bounds.size.y<.40 or (
-					limb_bounds.size.x<.125 or limb_bounds.size.x>.32):
+			if vertices.size()<540 or limb_bounds.size.y<.350 or (
+					limb_bounds.size.x<.105 or limb_bounds.size.x>.27) or (
+					limb_bounds.end.y>.079):
 				_fail("An arm reverted to a rigid one-piece cylinder"); return
 			if not sleeve.find_children("*","CollisionShape3D",true,false).is_empty():
 				_fail("Decorative sleeve added redundant physical collision"); return
@@ -444,6 +445,19 @@ func _run() -> void:
 		var angle: float=-PI*.5+asin(clampf(p.x/section,-.91,.91))
 		if p.z>genetic_body._point(p.y,angle,smith_genome,String(world.village_sim.people["orin"]["sex"])).z-.05:
 			_fail("Blacksmith apron intersects its inherited torso"); return
+	# Verify the *mesh* rather than a waist-taper metadata promise:
+	# a smith's chest bib should cinch at the belt instead of a slab that
+	# masks the inherited waist for every citizen.
+	var smith_waist: float=0.0
+	var smith_lower: float=0.0
+	for point in smith_points:
+		if absf(point.y-1.02)<.012:
+			smith_waist=maxf(smith_waist,absf(point.x))
+		if point.y<.60:
+			smith_lower=maxf(smith_lower,absf(point.x))
+	if smith_waist<=.01 or smith_lower<smith_waist*1.28:
+		_fail("Smith's apron still reads as an oversized leather rectangle")
+		return
 	# Keep the baker's original apron identity but ban the bright stiff
 	# waist rods that dominated its real first-person view.
 	var stitch: Node3D=ida.find_child("BakerCloseFittedWaistSeam",true,false)
