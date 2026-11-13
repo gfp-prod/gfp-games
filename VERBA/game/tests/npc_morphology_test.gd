@@ -421,6 +421,18 @@ func _run() -> void:
 		if not is_equal_approx(eye.scale.y,1.0) or sclera.scale!=sclera_size:
 			_fail("Blink deformed the entire eye and iris instead of the lids"); return
 		for tick in range(20): FACE.expression(figure,0.0,0.0,false,0.0)
+		var iris: MeshInstance3D=eye.get_node_or_null("InheritedIris")
+		var pupil: MeshInstance3D=eye.get_node_or_null("AnatomicalPupil")
+		if iris==null or pupil==null:
+			_fail("Eyes lost their separately movable inherited iris/pupil"); return
+		var sclera_rest: Vector3=sclera.position
+		for tick in range(20):
+			FACE.expression(figure,0.0,0.0,true,.7,Vector2(.006,-.003))
+		if iris.position.x<.004 or pupil.position.x<.004 or (
+			iris.position.distance_to(pupil.position)>.018) or (
+			sclera.position!=sclera_rest):
+			_fail("NPC eye gaze displaced the sclera or separated iris/pupil"); return
+		for tick in range(20): FACE.expression(figure,0.0,0.0,false,0.0)
 		if absf(upper.position.y-upper_rest)>.003:
 			_fail("Anatomical blink did not reopen"); return
 		var lower_lips: Node3D=mouth.get_node_or_null("ExpressionLowerLip")

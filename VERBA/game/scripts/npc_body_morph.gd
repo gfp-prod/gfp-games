@@ -89,7 +89,10 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 	# A high tube of linen formerly filled the space under the chin and
 	# looked like a disconnected turtleneck. End the cloth below the jaw;
 	# shape the shoulder over several rings instead of a flat horizontal cap.
-	return shoulder.lerp(neckline,smoothstep(1.375,1.505,y))
+	# Eased clavicle rounds the former angular cape-like shoulder
+	# without changing inherited shoulder socket sizes or limb pivots.
+	var clavicle_t: float=smoothstep(1.375,1.505,y)
+	return shoulder.lerp(neckline,pow(clavicle_t,.78))
 
 static func _point(y: float,angle: float,g: Dictionary,
 		sex: String="unspecified") -> Vector3:

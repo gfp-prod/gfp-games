@@ -413,7 +413,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		# pupil and upper/lower eyelids instead of a black flat square.
 		var eye_aperture: float=lerpf(.73,1.26,_v(g,"eye_aperture"))
 		var sclera:=ART.orb(socket,Vector3(0,0,-.004),
-			Vector3(eye_width*1.55,.031*eye_aperture,.017),
+			Vector3(eye_width*1.42,.028*eye_aperture,.015),
 			ART.mat(Color("d5cab7"),.89),12)
 		sclera.name="SmallRecessedEye"
 		var iris:=ART.orb(socket,Vector3(0,0,-.015),
@@ -432,13 +432,13 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		# stay at their anatomical sizes; compressing the entire eye made
 		# villagers look like rubber-faced dolls during conversations.
 		var upper_cover:=ART.orb(socket,
-			Vector3(0,.028*eye_aperture,-.026),
-			Vector3(eye_width*1.92,.021*eye_aperture,.015),skin,12)
+			Vector3(0,.025*eye_aperture,-.023),
+			Vector3(eye_width*1.55,.018*eye_aperture,.014),skin,12)
 		upper_cover.name="ExpressionUpperBlinkCover"
 		upper_cover.set_meta("rest_y",upper_cover.position.y)
 		var lower_cover:=ART.orb(socket,
-			Vector3(0,-.027*eye_aperture,-.026),
-			Vector3(eye_width*1.88,.019*eye_aperture,.015),skin,12)
+			Vector3(0,-.024*eye_aperture,-.023),
+			Vector3(eye_width*1.51,.017*eye_aperture,.014),skin,12)
 		lower_cover.name="ExpressionLowerBlinkCover"
 		lower_cover.set_meta("rest_y",lower_cover.position.y)
 		var brow_rig:=Node3D.new()
@@ -618,7 +618,8 @@ static func fit_skull_landmarks(figure: Node3D,g: Dictionary,
 
 
 static func expression(figure: Node3D,feel: float,blink: float=0.0,
-		speaking: bool=false,conversation_phase: float=0.0) -> void:
+		speaking: bool=false,conversation_phase: float=0.0,
+		gaze: Vector2=Vector2.ZERO) -> void:
 	var root: Node3D=figure.get_node_or_null("IndividualFaceConstruction")
 	if root==null: return
 	var emotion: float=clampf(feel,-1.0,1.0)
@@ -630,6 +631,15 @@ static func expression(figure: Node3D,feel: float,blink: float=0.0,
 			# Sclera and inherited iris keep their real dimensions even
 			# when someone blinks or narrows their eyes in distrust.
 			eye.scale.y=lerpf(eye.scale.y,1.0,.29)
+			# Independent iris and pupil look toward the listener; the white
+			# and inherited face geometry are never moved or rescaled.
+			for part_name in ["InheritedIris","AnatomicalPupil"]:
+				var moving_eye: Node3D=eye.get_node_or_null(part_name)
+				if moving_eye!=null:
+					moving_eye.position.x=lerpf(moving_eye.position.x,
+						clampf(gaze.x,-.006,.006),.22)
+					moving_eye.position.y=lerpf(moving_eye.position.y,
+						clampf(gaze.y,-.004,.004),.22)
 			var closure: float=clampf(eyelid_drop+tension*.19,0.0,1.0)
 			for lid_name in ["ExpressionUpperBlinkCover","ExpressionLowerBlinkCover"]:
 				var lid: Node3D=eye.get_node_or_null(lid_name)

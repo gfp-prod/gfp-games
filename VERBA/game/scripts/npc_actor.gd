@@ -559,12 +559,21 @@ func _process(delta: float) -> void:
 			feeling=clampf(feeling+.18,-1,1)
 		var time_in_blink: float=fposmod(motion_clock+float(posmod(npc_id.hash(),11))*.33,4.25)
 		var blink: float=clampf(1.0-absf(time_in_blink-3.72)/.13,0,1)
+		var visual_gaze:=Vector2(
+			sin(motion_clock*.39+float(posmod(npc_id.hash(),13))*.56)*.003,
+			cos(motion_clock*.23+float(posmod(npc_id.hash(),7))*.41)*.0017)
+		if world.player!=null and world.player.conversation_actor==self:
+			var toward_player: Vector3=to_local(world.player.global_position)
+			visual_gaze=Vector2(clampf(toward_player.x*.006,-.006,.006),
+				clampf((toward_player.y-1.48)*.003,-.004,.004))
 		if visual_attendant!=null:
 			PORTRAIT.expression(visual_attendant,feeling,blink,
-				world.player!=null and world.player.conversation_actor==self,motion_clock)
+				world.player!=null and world.player.conversation_actor==self,
+				motion_clock,visual_gaze)
 		else:
 			PORTRAIT.expression(visual_figure,feeling,blink,
-				world.player!=null and world.player.conversation_actor==self,motion_clock)
+				world.player!=null and world.player.conversation_actor==self,
+				motion_clock,visual_gaze)
 	anatomy_visual_elapsed+=delta
 	if anatomy_visual_elapsed>=.30:
 		anatomy_visual_elapsed=0.0
@@ -650,6 +659,7 @@ func _process(delta: float) -> void:
 		offhand=-.78
 	left_arm.rotation.x=lerpf(left_arm.rotation.x,offhand,minf(1.0,delta*8.0))
 	right_arm.rotation.x=lerpf(right_arm.rotation.x,reach,minf(1.0,delta*8.0))
+	_pose_upper_body(delta,walking,working,talking)
 	# The elbows bend in response to reaching, working and gait. They
 	# never animate an invisible or separately detachable forearm.
 	if left_forearm!=null and not limb_missing("left_arm"):
@@ -660,6 +670,30 @@ func _process(delta: float) -> void:
 		right_forearm.rotation.x=lerpf(right_forearm.rotation.x,right_bend,minf(1.0,delta*8.0))
 	if harvest_sack!=null:
 		harvest_sack.visible=phase=="delivery" and not limb_missing("right_arm")
+
+## Natural breathing, work stance and counter-rotation use only the
+## original modular arm nodes and decorative body root, never navigation.
+func _pose_upper_body(delta: float,walking: bool,
+		working: bool,talking: bool) -> void:
+	if left_arm==null or right_arm==null: return
+	var rest: float=lerpf(.072,.110,
+		GENES.value(appearance_genome,"shoulder_width"))
+	var inhale: float=sin(motion_clock*1.48+
+		float(posmod(npc_id.hash(),9))*.23)
+	var step_sway: float=sin(distance_gait_phase+.45)*.026*gait_weight
+	var idle_sway: float=inhale*.007*(1.0-gait_weight)
+	var work_opening: float=.017 if working else (.007 if talking else 0.0)
+	var blend: float=minf(1.0,delta*6.0)
+	left_arm.rotation.z=lerpf(left_arm.rotation.z,
+		-rest-work_opening+step_sway+idle_sway,blend)
+	right_arm.rotation.z=lerpf(right_arm.rotation.z,
+		rest+work_opening-step_sway-idle_sway,blend)
+	# The actor physics capsule and world-facing transform do not twist.
+	var twist: float=sin(distance_gait_phase)*.031*gait_weight if walking else 0.0
+	if visual_figure!=null:
+		visual_figure.rotation.y=lerpf(visual_figure.rotation.y,twist,blend)
+	if visual_attendant!=null:
+		visual_attendant.rotation.y=lerpf(visual_attendant.rotation.y,twist,blend)
 
 func anatomy_state() -> Dictionary:
 	if world==null or world.village_sim==null or not world.village_sim.people.has(npc_id):

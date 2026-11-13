@@ -603,6 +603,19 @@ func _run() -> void:
 		if portrait.find_children("*","StaticBody3D",true,false).size()>0:
 			_fail("An artistic face introduced unnecessary collision")
 			return
+	# Verify gait changes the actual articulated shoulders without moving
+	# physics or replacing the original independently severable arm nodes.
+	var shoulder_at_rest: float=ida.left_arm.rotation.z
+	ida.gait_weight=.9
+	ida.distance_gait_phase=PI*.30
+	ida.motion_clock=1.33
+	ida._pose_upper_body(.18,true,false,false)
+	if absf(ida.left_arm.rotation.z-shoulder_at_rest)<.002 or (
+		absf(ida.visual_figure.rotation.y)<.008):
+		_fail("NPC remains mannequin-rigid despite walking gait"); return
+	ida._pose_upper_body(.18,false,false,true)
+	if ida.modular_limbs.get("left_arm")!=ida.left_arm:
+		_fail("Procedural animation replaced the original detachable arm"); return
 	# Movement is driven by measured displacement, not a fixed walk cycle.
 	# The tested physics actor and its normal joints are retained.
 	if ida.get("visual_figure")==null or ida.get("distance_gait_phase")==null:
