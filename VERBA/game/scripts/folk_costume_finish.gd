@@ -80,7 +80,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 ## the abdomen. This shaped leather panel follows inherited torso curvature
 ## and retains the same visible name for compatible art reviews.
 static func smith_work_apron(figure: Node3D,genome: Dictionary,
-		hide: Material,leather: Material,trim: Material) -> MeshInstance3D:
+		hide: Material,leather: Material,trim: Material,
+		sex: String="unspecified") -> MeshInstance3D:
 	var existing:=figure.get_node_or_null("VisibleSmithApron") as MeshInstance3D
 	if existing!=null: return existing
 	const HEIGHT: Array[float]=[1.39,1.35,1.30,1.24,1.17,1.10,1.02,.94,.85,.76,.67,.58]
@@ -89,12 +90,12 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 	for y in HEIGHT:
 		var relative: float=clampf((1.39-y)/.81,0.0,1.0)
 		var half_width: float=lerpf(.19,.28,smoothstep(.0,1.0,relative))
-		var body_section: Vector2=BODY._section(y,genome)
+		var body_section: Vector2=BODY._section(y,genome,sex)
 		for col in range(COLS):
 			var fraction: float=float(col)/float(COLS-1)*2.0-1.0
 			var x: float=fraction*half_width
 			var a: float=-PI*.5+asin(clampf(x/body_section.x,-.91,.91))
-			var point: Vector3=BODY._point(y,a,genome)
+			var point: Vector3=BODY._point(y,a,genome,sex)
 			var drape: float=.108+.020*(1.0-fraction*fraction)
 			# Gentle cloth crease at the hem; no unmodeled box corners.
 			var wrinkle: float=.008*sin(float(col)*1.85)*relative*relative
@@ -122,9 +123,9 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 			Vector2(.205,.83)]:
 		var p_x: float=location.x
 		var p_y: float=location.y
-		var width: float=BODY._section(p_y,genome).x
+		var width: float=BODY._section(p_y,genome,sex).x
 		var angle: float=-PI*.5+asin(clampf(p_x/width,-.91,.91))
-		var face_z: float=BODY._point(p_y,angle,genome).z-.14
+		var face_z: float=BODY._point(p_y,angle,genome,sex).z-.14
 		var rivet:=ART.orb(figure,Vector3(p_x,p_y,face_z),
 			Vector3(.020,.020,.009),trim,8)
 		rivet.name="SmithApronIronRivet"
@@ -133,8 +134,8 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 	for side in [-1.0,1.0]:
 		var ring_a: float=-PI*.5+side*.72
 		var ring_b: float=-PI*.5+side*1.33
-		var a: Vector3=BODY._point(.995,ring_a,genome)
-		var b: Vector3=BODY._point(.995,ring_b,genome)
+		var a: Vector3=BODY._point(.995,ring_a,genome,sex)
+		var b: Vector3=BODY._point(.995,ring_b,genome,sex)
 		a.x*=1.07
 		a.z*=1.08
 		b.x*=1.07
@@ -146,6 +147,59 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 ## Inherited, low-poly lower-leg cloth and a wedge-soled leather boot.
 ## These are children of the existing amputatable/animated leg pivot;
 ## they never get their own collider, movement system or save identity.
+## An actual elbow and a forearm, independent from the shoulder swing.
+## Everything is still a visual child of the original arm limb; an injury
+## detaches the whole connected chain. Genetic limb ratio sets the wrist.
+static func fitted_forearm(pivot: Node3D,side: float,
+		genome: Dictionary,cloth: Material,skin: Material) -> MeshInstance3D:
+	var existing:=pivot.get_node_or_null("InheritedForearmSleeve") as MeshInstance3D
+	if existing!=null: return existing
+	var length: float=GENES.forearm_length(genome)
+	var body_depth: float=lerpf(.92,1.09,GENES.value(genome,"body_depth"))
+	var mesh_tool:=SurfaceTool.new()
+	mesh_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh_tool.set_material(cloth)
+	const LEVELS: int=8
+	const SIDES: int=14
+	for row in range(LEVELS-1):
+		for sector in range(SIDES):
+			var points: Array[Vector3]=[]
+			for pair in [[row,sector],[row+1,sector],[row+1,sector+1],[row,sector+1]]:
+				var k: int=int(pair[0])
+				var angle: float=TAU*float(pair[1])/float(SIDES)
+				var t: float=float(k)/float(LEVELS-1)
+				var y: float=lerpf(.050,-length+.067,t)
+				var taper: float=lerpf(.117,.072,smoothstep(0.0,1.0,t))
+				var bulge: float=.008*sin(PI*t)
+				points.append(Vector3(
+					side*.016*t+cos(angle)*(taper+bulge),
+					y,
+					-.012*t+sin(angle)*(taper+bulge)*body_depth))
+			for index in [0,1,2,0,2,3]:
+				var p: Vector3=points[index]
+				mesh_tool.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU, p.y*1.8))
+				mesh_tool.add_vertex(p)
+	mesh_tool.generate_normals()
+	var sleeve:=MeshInstance3D.new()
+	sleeve.name="InheritedForearmSleeve"
+	sleeve.mesh=mesh_tool.commit()
+	sleeve.material_override=cloth
+	sleeve.set_meta("detaches_with_parent_arm",true)
+	sleeve.set_meta("inherited_wrist_reach",length)
+	sleeve.set_meta("no_new_collision",true)
+	pivot.add_child(sleeve)
+	var hand:=ART.orb(pivot,Vector3(side*.016,-length,-.012),
+		Vector3(.074,.092,.075),skin,12)
+	hand.name="InheritedArticulatedHand"
+	hand.set_meta("detaches_with_parent_arm",true)
+	# Subtle wrist hem, not a wide disconnected metal cuff.
+	var seam:=ART.bone(pivot,
+		Vector3(side*.016,-length+.095,-.012),
+		Vector3(side*.016,-length+.070,-.012),
+		.077,.073,cloth,10)
+	seam.name="ForearmWristSeam"
+	return sleeve
+
 static func fitted_lower_leg(leg: Node3D,side: float,
 		genome: Dictionary) -> MeshInstance3D:
 	var existing:=leg.get_node_or_null("GeneticTrouserLeg") as MeshInstance3D
@@ -240,7 +294,7 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 
 static func dress(figure: Node3D,person: String,
 		tunic: Material,trim: Material,leather: Material,
-		genome: Dictionary={}) -> void:
+		genome: Dictionary={},sex: String="unspecified") -> void:
 	var worn:=FABRIC.worn_linen(Color("514b42"))
 	# The external work garment must follow the ACTUAL inherited waist,
 	# ribcage and hips. A fixed triangular cone previously hid all visible
@@ -255,10 +309,10 @@ static func dress(figure: Node3D,person: String,
 		for i in range(16):
 			var a: float=TAU*float(i)/16.0
 			var b: float=TAU*float(i+1)/16.0
-			var p0: Vector3=BODY._point(low,a,genome)
-			var p1: Vector3=BODY._point(high,a,genome)
-			var p2: Vector3=BODY._point(high,b,genome)
-			var p3: Vector3=BODY._point(low,b,genome)
+			var p0: Vector3=BODY._point(low,a,genome,sex)
+			var p1: Vector3=BODY._point(high,a,genome,sex)
+			var p2: Vector3=BODY._point(high,b,genome,sex)
+			var p3: Vector3=BODY._point(low,b,genome,sex)
 			for point in [p0,p1,p2,p0,p2,p3]:
 				var outward: Vector3=Vector3(point.x*1.042,point.y,
 					point.z*1.042)
@@ -274,14 +328,14 @@ static func dress(figure: Node3D,person: String,
 	for i in range(16):
 		var a: float=TAU*float(i)/16.0
 		var b: float=TAU*float(i+1)/16.0
-		var p0: Vector3=BODY._point(1.054,a,genome)
-		var p1: Vector3=BODY._point(1.054,b,genome)
+		var p0: Vector3=BODY._point(1.054,a,genome,sex)
+		var p1: Vector3=BODY._point(1.054,b,genome,sex)
 		p0.x*=1.085
 		p0.z*=1.085
 		p1.x*=1.085
 		p1.z*=1.085
 		ART.bone(figure,p0,p1,.048,.035,leather,7)
-	var front: Vector3=BODY._point(1.054,-PI*.5,genome)
+	var front: Vector3=BODY._point(1.054,-PI*.5,genome,sex)
 	var buckle:=ART.box(figure,Vector3(0,1.05,front.z*1.09-.021),
 		Vector3(.10,.08,.025),trim)
 	buckle.name="SmallTarnishedBeltBuckle"
@@ -324,9 +378,9 @@ static func dress(figure: Node3D,person: String,
 			# A narrow dark linen knot follows the inherited side waist.
 			for sign in [-1.0,1.0]:
 				var knot: Vector3=BODY._point(1.045,
-					-PI*.5+sign*1.10,genome)
+					-PI*.5+sign*1.10,genome,sex)
 				var loose_end: Vector3=BODY._point(.91,
-					-PI*.5+sign*1.18,genome)
+					-PI*.5+sign*1.18,genome,sex)
 				knot.x*=1.055
 				knot.z*=1.055
 				loose_end.x*=1.065
