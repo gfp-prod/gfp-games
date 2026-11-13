@@ -415,7 +415,9 @@ func _run() -> void:
 			"IndividualIntegratedFaceMesh",true,false) as MeshInstance3D
 		if portrait_skull==null or portrait_skull.mesh==null:
 			_fail("Eye-to-face proportion has no sculpted head"); return
-		var eye_ratio: float=sclera.get_aabb().size.x/(
+		# Mesh.get_aabb() is LOCAL geometry: the orb's visible radius
+		# lives on its node scale, so include that scale in the ratio.
+		var eye_ratio: float=(sclera.get_aabb().size.x*sclera.scale.x)/(
 			portrait_skull.get_aabb().size.x)
 		if eye_ratio<.105 or eye_ratio>.28:
 			_fail("Eye-to-head proportion is unreadable or cartoonishly oversized")
