@@ -66,6 +66,46 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary) -> void:
 	face.material_override=skin
 	root.add_child(face)
 
+static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary) -> void:
+	# Continuous skin-colored bridge below the genetically sculpted jaw.
+	# Removing a tall fabric collar without this geometry left heads floating
+	# over their shoulders in the real 1280x720 village captures.
+	# A six-ring silhouette avoids the replacement artifact of a rigid neck pipe.
+	var jaw_width: float=lerpf(.88,1.13,_v(g,"jaw_width"))
+	var depth_scale: float=lerpf(.90,1.11,_v(g,"body_depth"))
+	var heights: Array[float]=[1.445,1.485,1.525,1.565,1.605,1.655]
+	var half_widths: Array[float]=[.150,.139,.145,.156,.168,.172]
+	var half_depths: Array[float]=[.143,.134,.139,.150,.155,.147]
+	var surface:=SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface.set_material(skin)
+	for row in range(heights.size()-1):
+		for segment in range(16):
+			var a: float=TAU*float(segment)/16.0
+			var b: float=TAU*float(segment+1)/16.0
+			var corners: Array[Vector3]=[]
+			for tuple in [[row,a],[row+1,a],[row+1,b],[row,b]]:
+				var idx: int=int(tuple[0])
+				var t: float=float(idx)/float(heights.size()-1)
+				var angle: float=float(tuple[1])
+				var radius_x: float=half_widths[idx]*jaw_width
+				var radius_z: float=half_depths[idx]*depth_scale
+				var midline: float=lerpf(-.012,.030,smoothstep(.10,1.0,t))
+				corners.append(Vector3(cos(angle)*radius_x,
+					heights[idx],sin(angle)*radius_z+midline))
+			for index in [0,1,2,0,2,3]:
+				var v: Vector3=corners[index]
+				surface.set_uv(Vector2(float(segment)/16.0,v.y))
+				surface.add_vertex(v)
+	surface.generate_normals()
+	var neck:=MeshInstance3D.new()
+	neck.name="IndividualAnatomicalNeck"
+	neck.mesh=surface.commit()
+	neck.material_override=skin
+	neck.set_meta("inherited_neck_bridge",true)
+	neck.set_meta("no_new_collision",true)
+	root.add_child(neck)
+
 static func finish(figure: Node3D,person: String,skin: Material,
 		hair: Material,brow: Material,genome: Dictionary={}) -> void:
 	if figure.get_node_or_null("IndividualFaceConstruction")!=null:
@@ -79,6 +119,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	root.set_meta("genetic_face",true)
 	figure.add_child(root)
 	_integrated_face(root,skin,g)
+	_anatomical_neck(root,skin,g)
 	var eye_ink:=ART.mat(Color("201c1a"),1.0)
 	var iris_ink:=ART.mat(GENES.eye_color(g),.98)
 	var lip_ink:=ART.mat(GENES.skin_color(g).darkened(
