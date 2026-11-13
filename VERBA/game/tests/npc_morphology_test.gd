@@ -409,6 +409,23 @@ func _run() -> void:
 		var eye: Node3D=portrait.get_node("ExpressionEyeLeft")
 		var sclera: MeshInstance3D=eye.get_node("SmallRecessedEye")
 		var sclera_size: Vector3=sclera.scale
+		# At gameplay distance the feature must remain proportionate to
+		# the skull. Genetic shape survives; minuscule bead-eyes do not.
+		var portrait_skull: MeshInstance3D=figure.find_child(
+			"IndividualIntegratedFaceMesh",true,false) as MeshInstance3D
+		if portrait_skull==null or portrait_skull.mesh==null:
+			_fail("Eye-to-face proportion has no sculpted head"); return
+		var eye_ratio: float=sclera.get_aabb().size.x/(
+			portrait_skull.get_aabb().size.x)
+		if eye_ratio<.105 or eye_ratio>.28:
+			_fail("Eye-to-head proportion is unreadable or cartoonishly oversized")
+			return
+		var natural_mouth: Node3D=portrait.get_node("ExpressionMouth")
+		var upper_lip: MeshInstance3D=natural_mouth.find_child(
+			"SmallNaturalLipLine",true,false) as MeshInstance3D
+		if upper_lip==null or upper_lip.get_aabb().size.y<.009:
+			_fail("The inherited mouth is too fine to read at camera distance")
+			return
 		var face_at_socket: float=FACE._depth(
 			eye.position.x,eye.position.y,record)
 		var ocular_standoff: float=face_at_socket-(
@@ -416,7 +433,7 @@ func _run() -> void:
 		# An earlier eye rig made the face look mechanical: three bright
 		# disconnected strips floated forward of the sculpted socket.
 		if ocular_standoff<.003 or ocular_standoff>.018 or (
-				sclera.scale.x>.063):
+				sclera.scale.x<.044 or sclera.scale.x>.083):
 			_fail("Inherited eye became a protruding mechanical eyeball")
 			return
 		var upper: Node3D=eye.get_node_or_null("ExpressionUpperBlinkCover")
