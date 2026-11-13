@@ -86,6 +86,51 @@ func _run() -> void:
 		if actor.find_child("AnimatedLeftArm",true,false)==null:
 			_fail("A new costume mesh accidentally removed the original moving rig")
 			return
+	# The old movable arms were plain cylinders whose hard shoulder
+	# intersections made the bodies look assembled from spare parts.
+	# Ensure the new fitted meshes belong to the exact original limb rigs.
+	for actor in [ida,orin]:
+		for side in ["Left","Right"]:
+			var arm: Node3D=actor.find_child(
+				"Animated"+side+"Arm",true,false) as Node3D
+			var sleeve: MeshInstance3D=arm.get_node_or_null(
+				"GeneticFittedSleeve") as MeshInstance3D if arm!=null else null
+			if arm==null or sleeve==null or sleeve.mesh==null:
+				_fail("An original detachable arm has lost its fitted sleeve"); return
+			if not bool(sleeve.get_meta("old_limb_pivot_preserved",false)):
+				_fail("Decorative sleeve replaced an amputatable arm joint"); return
+			var vertices: PackedVector3Array=sleeve.mesh.surface_get_arrays(0)[
+				Mesh.ARRAY_VERTEX]
+			var limb_bounds: AABB=sleeve.get_aabb()
+			if vertices.size()<350 or limb_bounds.size.y<.45 or (
+					limb_bounds.size.x<.20 or limb_bounds.size.x>.48):
+				_fail("An arm reverted to a rigid one-piece cylinder"); return
+			if not sleeve.find_children("*","CollisionShape3D",true,false).is_empty():
+				_fail("Decorative sleeve added redundant physical collision"); return
+			var module_name: String=side.to_lower()+"_arm"
+			if actor.modular_limbs.get(module_name)!=arm:
+				_fail("Sleeve was added to a different arm than the injury rig"); return
+	# The blacksmith must have a curved work apron, not a detached
+	# rectangular chest plate. The rear cloth is not the source of truth.
+	var smith_apron: MeshInstance3D=orin.find_child(
+		"VisibleSmithApron",true,false) as MeshInstance3D
+	if smith_apron==null or not bool(
+			smith_apron.get_meta("fitted_to_inherited_torso",false)):
+		_fail("The blacksmith apron is still a featureless box"); return
+	if smith_apron.mesh is BoxMesh or smith_apron.mesh==null:
+		_fail("The smith lost the sculpted apron mesh"); return
+	var smith_points: PackedVector3Array=smith_apron.mesh.surface_get_arrays(0)[
+		Mesh.ARRAY_VERTEX]
+	if smith_points.size()<500 or smith_apron.get_aabb().size.y<.75:
+		_fail("Smith apron lacks torso-following geometry"); return
+	var smith_genome: Dictionary=world.village_sim.people["orin"]["genome"]
+	for index in range(0,smith_points.size(),3):
+		var p: Vector3=(smith_points[index]+smith_points[index+1]+
+			smith_points[index+2])/3.0
+		var section: float=genetic_body._section(p.y,smith_genome).x
+		var angle: float=-PI*.5+asin(clampf(p.x/section,-.91,.91))
+		if p.z>genetic_body._point(p.y,angle,smith_genome).z-.05:
+			_fail("Blacksmith apron intersects its inherited torso"); return
 	# Catch the exact modeling artifact: a broad cylinder floating across
 	# the clavicles was mistakenly used as an ivory costume/trim seam.
 	# It is not required by the detachable limb rig.
