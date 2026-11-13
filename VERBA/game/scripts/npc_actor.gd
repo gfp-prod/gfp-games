@@ -135,6 +135,10 @@ func _ready() -> void:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
 		arm.position=Vector3(side*.345,1.49,0)
+		# A slightly relaxed, inherited resting stance instead of two
+		# vertical mannequin rods; gait and reaching still drive rotation.x.
+		arm.rotation.z=side*lerpf(.060,.125,
+			GENES.value(genome,"shoulder_width"))
 		figure.add_child(arm)
 		# Shoulder cap and upper sleeve have a sculpted circumference and
 		# attach to the old detachable, animated physical arm pivot.
@@ -146,7 +150,7 @@ func _ready() -> void:
 		figure.add_child(leg)
 		# Genetically sized trouser and sculpted boot are mounted on this
 		# same animated, hit-detectable, independently detachable leg.
-		COSTUME.fitted_lower_leg(leg,side,genome,leather)
+		COSTUME.fitted_lower_leg(leg,side,genome)
 		var limb_arm: String="left_arm" if side<0.0 else "right_arm"
 		var limb_leg: String="left_leg" if side<0.0 else "right_leg"
 		modular_limbs[limb_arm]=arm
