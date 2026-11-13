@@ -434,8 +434,8 @@ static func _nose_facet(root: Node3D,skin: Material,g: Dictionary,
 				var width: float=nose_width*lerpf(.26,.82,flare)
 				var x: float=width*lateral
 				var tissue: float=.004+.021*exp(-pow((t-.64)/.23,2.0))
-				var z: float=_depth(x,nose_y+y,g,sex)-
-					tissue*(1.0-.57*lateral*lateral)
+				var z: float=(_depth(x,nose_y+y,g,sex)-
+					tissue*(1.0-.57*lateral*lateral))
 				quad.append(Vector3(x,y,z-front))
 			for k in [0,1,2,0,2,3]:
 				var v: Vector3=quad[k]
