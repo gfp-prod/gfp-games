@@ -53,11 +53,24 @@ func _run() -> void:
 	# Realistic average characters should not look wider than their
 	# upper torso is tall. This detects the last pass's stocky, tent-like
 	# baseline while retaining the separate feminine/masculine ratios.
-	if female_hip>.385 or male_hip>.360 or (
-			BODY._section(1.10,same_genome,"female").x>.285) or (
-			BODY._section(1.10,same_genome,"male").x>.315):
+	if female_hip>.350 or male_hip>.330 or (
+			BODY._section(1.10,same_genome,"female").x>.278) or (
+			BODY._section(1.10,same_genome,"male").x>.310):
 		_fail("Average inherited anatomy regressed to the old husky silhouette")
 		return
+	# Test vertical slenderness rather than simply shrinking all
+	# anatomy: average adults should not be shorter than their rendered
+	# body-width multiplier, even before the inherited waist sculpt.
+	for profile in ["female","male"]:
+		var proportion: Vector3=GENES.body_scale(same_genome,profile)
+		if proportion.y/proportion.x<1.045:
+			_fail("Average torso is squat despite lean geometric radii")
+			return
+		var widest_hip: float=BODY._section(.78,same_genome,profile).x
+		var hem: float=BODY._section(.61,same_genome,profile).x
+		if widest_hip-hem<.015:
+			_fail("Tunic hem still extrudes a barrel-shaped pelvis")
+			return
 	var female_shoulder: float=BODY._section(1.365,same_genome,"female").x
 	var male_shoulder: float=BODY._section(1.365,same_genome,"male").x
 	var female_waist: float=BODY._section(1.10,same_genome,"female").x
