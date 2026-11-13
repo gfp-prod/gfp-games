@@ -174,7 +174,9 @@ func _ready() -> void:
 		leg.name="AnimatedLeftLeg" if side<0.0 else "AnimatedRightLeg"
 		# Femoral spacing follows the *pelvis* rather than a shared template.
 		var pelvic_half_width: float=BODY._section(.78,genome,sex).x
-		leg.position=Vector3(side*.455*pelvic_half_width,.61,.015)
+		# Femoral heads sit at the anatomical pelvis, not at the tunic hem.
+		# Keeping the pivot at .61 shortened both legs by almost 40 cm.
+		leg.position=Vector3(side*.455*pelvic_half_width,.98,.015)
 		figure.add_child(leg)
 		# Genetically sized trouser and sculpted boot are mounted on this
 		# same animated, hit-detectable, independently detachable leg.
@@ -299,7 +301,7 @@ func _ready() -> void:
 			var modern_leg:=Node3D.new()
 			modern_leg.name="ModularModern"+side_name.capitalize()+"Leg"
 			modern_leg.position=Vector3(side*.47*
-				BODY._section(.78,genome,sex).x,.70,0)
+				BODY._section(.78,genome,sex).x,.98,0)
 			attendant.add_child(modern_leg)
 			# Jeans and ankle boots use the same inherited hip/thigh shape
 			# without introducing extra limbs or changing the physical rig.
@@ -630,10 +632,10 @@ func _install_limb_hitbox(limb: Node3D, part: String) -> void:
 	var capsule:=CapsuleShape3D.new()
 	# One capsule per arm retains the original limb identity while
 	# covering the full inherited shoulder-to-wrist reach.
-	capsule.height=1.18 if part.ends_with("_arm") else .42
+	capsule.height=1.18 if part.ends_with("_arm") else .88
 	capsule.radius=.119 if part.ends_with("_arm") else .135
 	shape.shape=capsule
-	shape.position=Vector3(0,-.57 if part.ends_with("_arm") else -.23,0)
+	shape.position=Vector3(0,-.57 if part.ends_with("_arm") else -.425,0)
 	area.add_child(shape)
 	limb_hitboxes[part]=area
 
@@ -658,9 +660,9 @@ func _drop_severed_limb(part: String) -> void:
 	var collider:=CollisionShape3D.new()
 	var capsule:=CapsuleShape3D.new()
 	capsule.radius=.12
-	capsule.height=.52
+	capsule.height=.98 if part.ends_with("leg") else .52
 	collider.shape=capsule
-	collider.position=Vector3(0,-.25,0)
+	collider.position=Vector3(0,-.45 if part.ends_with("leg") else -.25,0)
 	piece.add_child(collider)
 	piece.apply_central_impulse(Vector3(
 		-.9 if part.begins_with("left") else .9,.75,-.5))
@@ -729,7 +731,7 @@ func refresh_anatomy_visuals() -> void:
 			var side: float=-1.0 if wound.begins_with("left") else 1.0
 			var from_leg: bool=wound.ends_with("_leg")
 			blood_emitter.position=Vector3(side*(.17 if from_leg else .35),
-				.57 if from_leg else 1.43,-.035)
+				.955 if from_leg else 1.43,-.035)
 
 func _build_support_visual(anatomy: Dictionary) -> void:
 	if support_visual!=null and is_instance_valid(support_visual):
@@ -748,7 +750,7 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 	for part in ANATOMY.PARTS:
 		if not anatomy["missing"].has(part): continue
 		var side: float=-1.0 if part.begins_with("left") else 1.0
-		var joint_y: float=1.43 if part.ends_with("arm") else .57
+		var joint_y: float=1.43 if part.ends_with("arm") else .975
 		var joint_x: float=side*(.35 if part.ends_with("arm") else .17)
 		var stump: MeshInstance3D=ART.orb(support_visual,
 			Vector3(joint_x,joint_y,0),
@@ -772,10 +774,10 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 		"peg":
 			var peg_pivot:=Node3D.new()
 			peg_pivot.name="FittedPegPivot"
-			peg_pivot.position=Vector3(side*.17,.55,0)
+			peg_pivot.position=Vector3(side*.17,.96,0)
 			support_visual.add_child(peg_pivot)
 			ART.bone(peg_pivot,Vector3.ZERO,
-				Vector3(0,-.515,-.035),.11,.075,timber,10).name="FittedPegLeg"
+				Vector3(0,-.925,-.035),.11,.075,timber,10).name="FittedPegLeg"
 			ART.box(peg_pivot,Vector3(0,-.03,0),
 				Vector3(.27,.09,.27),iron)
 
