@@ -1,2 +1,2 @@
-source_sha=5301cf8ad01fabf6bbd8a58593281022c17adb08
+source_sha=6d5e03f2b830e07329e67437f54caae1623b773e
 renderer=Godot 4.5.2
