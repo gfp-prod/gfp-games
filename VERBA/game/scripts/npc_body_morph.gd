@@ -5,16 +5,17 @@ extends RefCounted
 ## wounds, clothing objects, names and saves retain their identity.
 const GENES=preload("res://scripts/npc_genetics.gd")
 const RINGS: int=16
-const HEIGHTS: Array[float]=[.49,.63,.80,.98,1.10,1.20,1.30,1.38,1.43,1.static func _section(y: float,g: Dictionary) -> Vector2:
+const HEIGHTS: Array[float]=[.49,.63,.80,.98,1.10,1.20,1.30,1.38,1.43,1.46,1.49,1.52,1.55,1.575]
+
+static func _section(y: float,g: Dictionary) -> Vector2:
 	var shoulders: float=lerpf(.89,1.16,GENES.value(g,"shoulder_width"))
 	var chest: float=lerpf(.90,1.15,GENES.value(g,"chest_width"))
 	var waist: float=lerpf(.79,1.22,GENES.value(g,"waist_width"))
 	var hips: float=lerpf(.83,1.22,GENES.value(g,"hip_width"))
 	var depth: float=lerpf(.88,1.14,GENES.value(g,"body_depth"))
 	var muscles: float=GENES.value(g,"muscle_tone")
-	# A continuous anatomical profile. The previous section jumped from
-	# full shoulder width to a tiny collar in one ring, creating a flat,
-	# rigid ledge and an exposed vertical cylinder under the head.
+	# Continuous inherited pelvis, waist, ribcage and shoulder profile.
+	# A former single upper ring pinched into a square, exposed neck pipe.
 	var pelvis:=Vector2(.390*hips,.340*depth*(.92+.11*hips))
 	var midriff:=Vector2(.314*waist+.025*(1.0-muscles),.277*depth)
 	var ribcage:=Vector2(.353*chest+.024*muscles,.322*depth)
@@ -28,13 +29,9 @@ const HEIGHTS: Array[float]=[.49,.63,.80,.98,1.10,1.20,1.30,1.38,1.43,1.static f
 		return midriff.lerp(ribcage,smoothstep(1.10,1.31,y))
 	if y<1.43:
 		return ribcage.lerp(shoulder,smoothstep(1.31,1.43,y))
-	# Several intermediate rings create a sloping trapezius/sleeve line;
-	# an inherited broad shoulder remains broad, but never becomes a
-	# hovering rectangular shelf or a tall sweater-like neck pipe.
+	# The trapezius turns toward the neckline gradually across five rings.
+	# Inherited shoulder breadth survives without floating collar geometry.
 	return shoulder.lerp(neckline,smoothstep(1.43,1.575,y))
-
-162
-	return Vector2(x,z)
 
 static func _point(y: float,angle: float,g: Dictionary) -> Vector3:
 	var section: Vector2=_section(y,g)
