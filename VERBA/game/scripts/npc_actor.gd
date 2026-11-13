@@ -102,11 +102,14 @@ func _ready() -> void:
 	var genome: Dictionary=GENES.founder(npc_id)
 	var sex: String="unspecified"
 	var stage: String="adult"
+	var age_years: float=28.0
 	if world!=null and world.village_sim!=null and world.village_sim.people.has(npc_id):
 		var record: Dictionary=world.village_sim.people[npc_id]
 		genome=record.get("genome",genome)
 		sex=String(record.get("sex","unspecified"))
 		stage=String(record.get("life_stage","adult"))
+		var birth: int=int(record.get("family",{}).get("birth_day",-365*28))
+		age_years=maxf(0.0,float(world.village_sim.current_day-birth)/365.0)
 	if not GENES.validate(genome):
 		genome=GENES.founder(npc_id)
 	set_meta("genome_traits",true)
@@ -142,7 +145,7 @@ func _ready() -> void:
 	# caps, retaining the original tested head and collision silhouette.
 	var hair:=ART.mat(GENES.hair_color(genome),.96)
 	var brow:=ART.mat(GENES.hair_color(genome).darkened(.12),.95)
-	PORTRAIT.finish(figure,npc_id,skin,hair,brow,genome,sex)
+	PORTRAIT.finish(figure,npc_id,skin,hair,brow,genome,sex,age_years)
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
@@ -347,9 +350,11 @@ func _ready() -> void:
 		peak.name="ShortAttendantVisor"
 		COSTUME.dress_attendant(attendant)
 		BODY.finish(attendant,genome,shirt,true,sex)
+		COSTUME.tailored_womenswear(attendant,npc_id,genome,sex,shirt)
 	else:
 		COSTUME.dress(figure,npc_id,cloth,trim,leather,genome,sex)
 		BODY.finish(figure,genome,cloth,false,sex)
+		COSTUME.tailored_womenswear(figure,npc_id,genome,sex,cloth)
 	# Mild-to-noticeable, inherited body dimensions. The faceted look is
 	# deliberate; we change proportions, not topology or collision IDs.
 	inherited_body_dimensions=GENES.body_scale(genome,sex)
