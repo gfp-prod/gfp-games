@@ -177,13 +177,27 @@ static func finish(face_root: Node3D,person: String,genome: Dictionary,
 			_back_panels(root,hair,deep,1.77,curl)
 			_side_framing(root,hair,shine,1.755,curl,.036)
 		"curly_crop":
-			for i in range(7):
-				var x: float=(float(i)-3.0)*.056
-				_strand(root,"TightCurlLock"+str(i),
-					hair if i%2==0 else shine,
-					Vector3(x,2.042,-.076),1.940,
-					-1.0 if i%2==0 else 1.0,
-					.046,maxf(.70,curl),.018*sin(float(i)*2.0))
+			# The seven long, identical downward locks used to form a
+			# hovering black dinner-plate over the head in the side-view QA.
+			# Sculpt small overlapping polygonal curls around a rounded crown,
+			# with inherited volume and no new physical collision bodies.
+			var density: float=lerpf(.89,1.10,
+				GENES.value(genome,"hair_volume"))
+			for row in range(3):
+				var count: int=8 if row==0 else 7 if row==1 else 5
+				var radius: float=.170-.053*float(row)
+				for i in range(count):
+					var phase: float=TAU*(float(i)+.28*float(row))/float(count)
+					var center:=Vector3(
+						cos(phase)*radius,
+						2.018+.019*float(row)+.008*sin(phase*2.7+float(row)),
+						-.024+sin(phase)*radius*.74)
+					var curl_mesh:=ART.orb(root,center,
+						Vector3(.050,.040,.048)*density,
+						shine if i%5==0 else hair,9)
+					curl_mesh.name="TightFacetedCurl"+str(row)+"_"+str(i)
+					curl_mesh.set_meta("grown_from_original_face",true)
+					curl_mesh.set_meta("no_new_collision",true)
 		_:
 			_swept_top(root,hair,deep,curl,1.0)
 			if style=="crop":
