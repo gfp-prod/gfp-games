@@ -416,7 +416,9 @@ static func _facial_ribbon(parent: Node3D,name: String,material: Material,
 			var contour: float=.0035*sin(PI*t)
 			quad.append(center+Vector3(0,side*half_height*taper,
 				-contour*(1.0-side*side*.18)))
-		for k in [0,1,2,0,2,3]:
+		# This strip is built left-to-right and bottom-to-top. A normal
+		# triangle order faces +Z (inward) and darkens the visible eyelids.
+		for k in [0,2,1,0,3,2]:
 			var v: Vector3=quad[k]
 			tool.set_uv(Vector2(v.x+.5,v.y+.5))
 			tool.add_vertex(v)
@@ -458,7 +460,9 @@ static func _fitted_lip(parent: Node3D,name: String,material: Material,
 			var relief: float=_depth(center.x,mouth_y+y,g,sex)
 			var z: float=relief-mouth_front-.007-.002*taper
 			corners.append(Vector3(center.x,y,z))
-		for k in [0,1,2,0,2,3]:
+		# The mouth's visible surface is -Z. Keep the true front-side
+		# normal rather than backface-lighting the lip as a black plate.
+		for k in [0,2,1,0,3,2]:
 			var vertex: Vector3=corners[k]
 			st.set_uv(Vector2(vertex.x+.5,vertex.y+.5))
 			st.add_vertex(vertex)
@@ -501,7 +505,12 @@ static func _fitted_eye_fold(socket: Node3D,name: String,skin: Material,
 				socket.position.y+y,g,sex)-socket.position.z
 			var z: float=face_z-(.003+.011*(1.0-out))*fade-.001
 			quad.append(Vector3(x,y,z))
-		for k in [0,1,2,0,2,3]:
+		# Upper and lower fold bands travel in opposite Y directions.
+		# Both must shade from their visible side, toward camera (-Z).
+		var winding: Array[int]=[0,1,2,0,2,3]
+		if upper:
+			winding=[0,2,1,0,3,2]
+		for k in winding:
 			var p: Vector3=quad[k]
 			st.set_uv(Vector2(p.x+.2,p.y+.1))
 			st.add_vertex(p)
@@ -537,7 +546,7 @@ static func _fitted_brow(brow_rig: Node3D,material: Material,
 			var face_z: float=_depth(brow_rig.position.x+x,
 				brow_rig.position.y+y,g,sex)-brow_rig.position.z
 			quad.append(Vector3(x,y,face_z-.006*fade-.002))
-		for k in [0,1,2,0,2,3]:
+		for k in [0,2,1,0,3,2]:
 			var p: Vector3=quad[k]
 			st.set_uv(Vector2(p.x+.2,p.y+.1))
 			st.add_vertex(p)
@@ -578,7 +587,9 @@ static func _nose_facet(root: Node3D,skin: Material,g: Dictionary,
 				var z: float=(_depth(x,nose_y+y,g,sex)-
 					tissue*(1.0-.57*lateral*lateral))
 				quad.append(Vector3(x,y,z-front))
-			for k in [0,1,2,0,2,3]:
+			# Bridge rows descend toward the tip; flip the triangles to
+			# expose the real front-facing nose surface instead of its back.
+			for k in [0,2,1,0,3,2]:
 				var v: Vector3=quad[k]
 				tool.set_uv(Vector2(v.x+.25,v.y+.25))
 				tool.add_vertex(v)
@@ -614,8 +625,9 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	_anatomical_neck(root,skin,g,sex)
 	var eye_ink:=ART.mat(Color("201c1a"),1.0)
 	var iris_ink:=ART.mat(GENES.eye_color(g),.98)
+	# Subtle vermilion contrast instead of a near-black cartoon mouth.
 	var lip_ink:=ART.mat(GENES.skin_color(g).darkened(
-		lerpf(.31,.18,_v(g,"lip_fullness"))),.99)
+		lerpf(.15,.075,_v(g,"lip_fullness"))),.99)
 	var ear_scale: float=lerpf(.70,1.33,_v(g,"ear_size"))
 	var eye_gap: float=lerpf(.068,.107,_v(g,"eye_spacing"))
 	var eye_height: float=lerpf(1.780,1.802,_v(g,"brow_height"))
@@ -756,8 +768,8 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		fullness*.27,g,sex,lip_height,mouth.position.z)
 	var open_mouth:=_facial_ribbon(mouth,"ExpressionMouthOpening",
 		ART.mat(Color("301c1c"),1),
-		Vector3(-mouth_width*.89,-.005,.004),
-		Vector3(mouth_width*.89,-.005,.004),.003)
+		Vector3(-mouth_width*.89,-.005,.013),
+		Vector3(mouth_width*.89,-.005,.013),.0022)
 	# A fine oral crease anchors the lips at rest; the old four separate
 	# thick petals read like a geometric flower rather than a mouth.
 	open_mouth.visible=true
