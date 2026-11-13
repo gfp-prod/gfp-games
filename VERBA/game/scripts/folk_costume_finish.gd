@@ -195,19 +195,92 @@ static func fitted_forearm(pivot: Node3D,side: float,
 	sleeve.set_meta("inherited_wrist_reach",length)
 	sleeve.set_meta("no_new_collision",true)
 	pivot.add_child(sleeve)
-	var hand:=ART.orb(pivot,Vector3(side*.016,-length,-.012),
-		Vector3(.070,.096,.068),skin,12)
-	hand.name="InheritedArticulatedHand"
+	# Low-poly anatomical palm instead of the old detached egg-shaped
+	# hand. The palm, fingers and thumb are all children of the original
+	# movable forearm and the entire arm remains ONE detachable limb.
+	var hand: MeshInstance3D=_modeled_hand(pivot,side,genome,skin,length)
 	hand.set_meta("detaches_with_parent_arm",true)
-	# The wrist seam shares the slender circumference of the forearm;
-	# oversized cuffs previously made this a separate blocky tube.
-	# Subtle wrist hem, not a wide disconnected metal cuff.
-	var seam:=ART.bone(pivot,
-		Vector3(side*.016,-length+.095,-.012),
-		Vector3(side*.016,-length+.070,-.012),
-		.059,.057,cloth,10)
-	seam.name="ForearmWristSeam"
 	return sleeve
+
+## Twelve-sided palm with real fingers and a thumb, all free of physics.
+## Its wrist starts INSIDE the sleeve, eliminating the old bright cuff ring.
+static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
+		skin: Material,length: float) -> MeshInstance3D:
+	var hand_scale: float=lerpf(.92,1.09,GENES.value(genome,"stature"))
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(skin)
+	const SIDES: int=12
+	var Y: Array[float]=[-length+.073,-length+.041,
+		-length-.005,-length-.045,-length-.078]
+	var WIDTH: Array[float]=[.038,.044,.050,.049,.042]
+	var DEPTH: Array[float]=[.033,.034,.033,.031,.024]
+	for row in range(Y.size()-1):
+		for sector in range(SIDES):
+			var a: float=TAU*float(sector)/float(SIDES)
+			var b: float=TAU*float(sector+1)/float(SIDES)
+			var corners: Array[Vector3]=[]
+			for pair in [[row,a],[row+1,a],[row+1,b],[row,b]]:
+				var idx: int=int(pair[0])
+				var theta: float=float(pair[1])
+				var dx: float=cos(theta)*WIDTH[idx]*hand_scale
+				var dz: float=sin(theta)*DEPTH[idx]*hand_scale
+				corners.append(Vector3(side*.016+dx,Y[idx],-.012+dz))
+			for k in [0,1,2,0,2,3]:
+				var p: Vector3=corners[k]
+				st.set_uv(Vector2(p.x*3.0,p.y*3.0))
+				st.add_vertex(p)
+	# Close the palm underneath the individual finger roots.
+	var center:=Vector3(side*.016,Y[-1],-.012)
+	for sector in range(SIDES):
+		var a: float=TAU*float(sector)/float(SIDES)
+		var b: float=TAU*float(sector+1)/float(SIDES)
+		for p in [center,
+				Vector3(center.x+cos(b)*WIDTH[-1]*hand_scale,
+					Y[-1],center.z+sin(b)*DEPTH[-1]*hand_scale),
+				Vector3(center.x+cos(a)*WIDTH[-1]*hand_scale,
+					Y[-1],center.z+sin(a)*DEPTH[-1]*hand_scale)]:
+			st.set_uv(Vector2(p.x*3.0,p.z*3.0))
+			st.add_vertex(p)
+	st.generate_normals()
+	var palm:=MeshInstance3D.new()
+	palm.name="InheritedArticulatedHand"
+	palm.mesh=st.commit()
+	palm.material_override=skin
+	palm.set_meta("anatomic_palm",true)
+	palm.set_meta("detaches_with_parent_arm",true)
+	palm.set_meta("no_new_collision",true)
+	palm.set_meta("modeled_fingers",4)
+	pivot.add_child(palm)
+	# Staggered fingertips produce a recognizable hand silhouette at
+	# conversational distance; finger scale overlaps inherited stature.
+	var lengths: Array[float]=[.062,.077,.073,.056]
+	for finger in range(4):
+		var offset: float=(float(finger)-1.5)*.022*hand_scale
+		var x: float=side*.016+offset
+		var begin:=Vector3(x,-length-.066,-.013)
+		var end:=Vector3(x+side*.003,
+			-length-.076-lengths[finger]*hand_scale,-.018)
+		var phalanx:=ART.bone(pivot,begin,end,
+			.014*hand_scale,.010*hand_scale,skin,8)
+		phalanx.name="Finger"+str(finger)+"LowPolyPhalanges"
+		phalanx.set_meta("detaches_with_parent_arm",true)
+		phalanx.set_meta("no_new_collision",true)
+	# The fifth digit projects forward and folds toward the palm; it is
+	# not an extra straight fifth vertical tube.
+	var thumb_base:=Vector3(side*.055*hand_scale,-length-.024,-.031)
+	var thumb_joint:=Vector3(side*.083*hand_scale,-length-.056,-.050)
+	var thumb_tip:=Vector3(side*.080*hand_scale,-length-.094,-.061)
+	var thumb_a:=ART.bone(pivot,thumb_base,thumb_joint,
+		.017*hand_scale,.013*hand_scale,skin,8)
+	thumb_a.name="AnatomicalThumbMetacarpal"
+	var thumb_b:=ART.bone(pivot,thumb_joint,thumb_tip,
+		.012*hand_scale,.009*hand_scale,skin,8)
+	thumb_b.name="AnatomicalThumbDistal"
+	thumb_a.set_meta("no_new_collision",true)
+	thumb_b.set_meta("no_new_collision",true)
+	return palm
+
 
 static func fitted_lower_leg(leg: Node3D,side: float,
 		genome: Dictionary,sex: String="unspecified") -> MeshInstance3D:
