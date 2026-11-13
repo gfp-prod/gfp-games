@@ -20,7 +20,7 @@ static func _depth(x: float,y: float,g: Dictionary,
 	var jaw: float=lerpf(.76,1.26,jaw_gene)
 	# Jaw shape has overlapping population averages. The inherited jaw
 	# allele can still make a broad-jawed woman or fine-boned man.
-	var jaw_factor: float=lerpf(.88,1.05,jaw_gene) if sex=="female" else (
+	var jaw_factor: float=lerpf(.815,1.035,jaw_gene) if sex=="female" else (
 		lerpf(.985,1.125,jaw_gene) if sex=="male" else 1.0)
 	jaw*=jaw_factor
 	var cheek: float=lerpf(.83,1.21,_v(g,"cheek_fullness"))
@@ -53,6 +53,17 @@ static func _depth(x: float,y: float,g: Dictionary,
 	brow_ridge*=ridge_factor
 	return shell+nose+cheeks+socket+lips+brow_ridge-.003
 
+## Width of the lower facial outline: the old portrait was a rectangular
+## front patch with jaw only affecting surface DEPTH, so the visible cheeks
+## and chin never actually narrowed.
+static func _jaw_outline(y: float,g: Dictionary,sex: String) -> float:
+	var jaw_gene: float=_v(g,"jaw_width")
+	var lower: float=1.0-smoothstep(1.66,1.83,y)
+	var taper: float=lerpf(.72,1.01,jaw_gene) if sex=="female" else (
+		lerpf(.83,1.09,jaw_gene) if sex=="male" else
+		lerpf(.82,1.06,jaw_gene))
+	return lerpf(1.0,taper,lower)
+
 static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 		sex: String="unspecified") -> void:
 	# 14*16*6 = 1344 vertices per head. This is a small mesh per
@@ -60,7 +71,7 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 	var st:=SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var fw: float=lerpf(.90,1.10,_v(g,"face_width")) * (
-		.965 if sex=="female" else 1.025 if sex=="male" else 1.0)
+		.950 if sex=="female" else 1.025 if sex=="male" else 1.0)
 	var fy: float=lerpf(.90,1.11,_v(g,"face_length")) * (
 		.985 if sex=="female" else 1.035 if sex=="male" else 1.0)
 	for yi in range(16):
@@ -69,11 +80,15 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 			var x1: float=lerpf(-.183,.183,float(xi+1)/14.0)*fw
 			var y0: float=1.77+(lerpf(1.575,1.931,float(yi)/16.0)-1.77)*fy
 			var y1: float=1.77+(lerpf(1.575,1.931,float(yi+1)/16.0)-1.77)*fy
+			var x0low: float=x0*_jaw_outline(y0,g,sex)
+			var x0high: float=x0*_jaw_outline(y1,g,sex)
+			var x1low: float=x1*_jaw_outline(y0,g,sex)
+			var x1high: float=x1*_jaw_outline(y1,g,sex)
 			var pts: Array[Vector3]=[
-				Vector3(x0,y0,_depth(x0,y0,g,sex)),
-				Vector3(x0,y1,_depth(x0,y1,g,sex)),
-				Vector3(x1,y0,_depth(x1,y0,g,sex)),
-				Vector3(x1,y1,_depth(x1,y1,g,sex))]
+				Vector3(x0low,y0,_depth(x0low,y0,g,sex)),
+				Vector3(x0high,y1,_depth(x0high,y1,g,sex)),
+				Vector3(x1low,y0,_depth(x1low,y0,g,sex)),
+				Vector3(x1high,y1,_depth(x1high,y1,g,sex))]
 			for j in [0,1,2,1,3,2]:
 				var point: Vector3=pts[j]
 				st.set_uv(Vector2((point.x+.20)*2.5,(point.y-1.54)*2.5))
@@ -83,6 +98,7 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 	face.name="IndividualIntegratedFaceMesh"
 	face.mesh=st.commit()
 	face.material_override=skin
+	face.set_meta("true_inherited_lower_jaw_silhouette",true)
 	root.add_child(face)
 
 static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary,
