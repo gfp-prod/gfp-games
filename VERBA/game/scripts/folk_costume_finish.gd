@@ -25,8 +25,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	const HEIGHT: Array[float]=[.046,.006,-.060,-.140,-.240,-.330,-.414]
 	const CX: Array[float]=[-.058,-.031,-.007,.025,.049,.065,.076]
 	const CZ: Array[float]=[-.018,-.024,-.029,-.034,-.042,-.046,-.047]
-	const RX: Array[float]=[.073,.086,.094,.090,.085,.080,.074]
-	const RZ: Array[float]=[.075,.091,.099,.100,.093,.086,.078]
+	const RX: Array[float]=[.068,.078,.086,.085,.080,.076,.072]
+	const RZ: Array[float]=[.069,.083,.091,.092,.087,.082,.076]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -176,7 +176,7 @@ static func fitted_forearm(pivot: Node3D,side: float,
 				var angle: float=TAU*float(pair[1])/float(SIDES)
 				var t: float=float(k)/float(LEVELS-1)
 				var y: float=lerpf(.050,-length+.067,t)
-				var taper: float=lerpf(.088,.066,smoothstep(0.0,1.0,t))
+				var taper: float=lerpf(.084,.064,smoothstep(0.0,1.0,t))
 				var bulge: float=.008*sin(PI*t)
 				points.append(Vector3(
 					side*.016*t+cos(angle)*(taper+bulge),
