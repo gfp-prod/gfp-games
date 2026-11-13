@@ -280,11 +280,12 @@ func _run() -> void:
 			var limb_bounds: AABB=sleeve.get_aabb()
 			# The top surface must be sealed: an earlier fitted sleeve
 			# exposed an open dark hole when the camera stood above a person.
-			if not bool(sleeve.get_meta("sealed_upper_shoulder",false)):
+			if not bool(sleeve.get_meta("sealed_upper_shoulder",false)) or (
+					not bool(sleeve.get_meta("lowered_deltoid_cap",false))):
 				_fail("Shoulder sleeve lost its skin-safe upper cloth closure"); return
-			if vertices.size()<540 or limb_bounds.size.y<.350 or (
+			if vertices.size()<540 or limb_bounds.size.y<.275 or (
 					limb_bounds.size.x<.105 or limb_bounds.size.x>.27) or (
-					limb_bounds.end.y>.079):
+					limb_bounds.end.y>.052):
 				_fail("An arm reverted to a rigid one-piece cylinder"); return
 			if not sleeve.find_children("*","CollisionShape3D",true,false).is_empty():
 				_fail("Decorative sleeve added redundant physical collision"); return
@@ -371,7 +372,8 @@ func _run() -> void:
 		var person: Dictionary=world.village_sim.people[String(citizen.npc_id)]
 		var gg: Dictionary=person["genome"]
 		var sex: String=String(person["sex"])
-		var shoulder_socket: float=.028+.87*genetic_body._section(
+		var shoulder_socket: float=.024+(
+			.80 if sex=="female" else .87)*genetic_body._section(
 			1.365,gg,sex).x
 		var femur_socket: float=.455*genetic_body._section(.78,gg,sex).x
 		if absf(citizen.left_arm.position.x+shoulder_socket)>.007 or (

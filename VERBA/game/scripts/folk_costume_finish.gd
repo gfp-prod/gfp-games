@@ -25,7 +25,12 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	# A longer rounded deltoid folds into the body from beneath the
 	# shoulder, then tapers across the biceps to the elbow. No free-standing
 	# clavicle/shoulder cylinder is needed, even when a sleeve swings.
-	const HEIGHT: Array[float]=[.052,.038,.011,-.030,-.075,-.128,-.187,-.247,-.319]
+	# The cap begins below the trapezius. Sleeve length ends just beyond
+	# the person's inherited elbow, rather than making every arm a rigid
+	# high-shouldered tube reaching well below that joint.
+	var upper_length: float=GENES.upper_arm_length(genome)
+	var HEIGHT: Array[float]=[.026,.009,-.018,-.055,-.092,-.136,
+		-.181,-.221,-upper_length-.015]
 	const CX: Array[float]=[-.032,-.023,-.008,.003,.014,.022,.031,.038,.042]
 	const CZ: Array[float]=[-.012,-.017,-.023,-.025,-.031,-.040,-.041,-.045,-.048]
 	# Use a narrow anatomical deltoid and taper, without giving every
@@ -91,6 +96,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	sleeve.set_meta("anatomic_upper_arm_radius",RX[3]*shoulder*muscle*.93)
 	sleeve.set_meta("anatomic_sex_profile",sex)
 	sleeve.set_meta("lean_shoulder_taper",true)
+	sleeve.set_meta("inherited_upper_arm_length",upper_length)
+	sleeve.set_meta("lowered_deltoid_cap",true)
 	sleeve.set_meta("underlapping_deltoid_join",true)
 	sleeve.set_meta("sealed_upper_shoulder",true)
 	sleeve.set_meta("old_limb_pivot_preserved",true)
@@ -598,10 +605,10 @@ static func dress(figure: Node3D,person: String,
 			ART.bone(figure,Vector3(-.36,.53,-.15),
 				Vector3(.34,.54,-.15),.043,.034,worn,8)
 		"orin":
-			# Tiny rivets and leather reinforcement around an existing apron.
-			for sign in [-1.0,1.0]:
-				ART.box(figure,Vector3(sign*.28,.92,-.443),
-					Vector3(.045,.045,.035),trim)
+			# The smith's fitted leather apron already adds surface-anchored
+			# rivets. Remove two obsolete cubes at z=-.443 that floated in
+			# mid-air when the cloth was drawn close to the body.
+			pass
 		"ida":
 			# Former bright rods projected far from the baker's hips.
 			# A narrow dark linen knot follows the inherited side waist.
