@@ -171,6 +171,75 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 				st.set_uv(Vector2((point.x+.20)*2.5,(point.y-1.54)*2.5))
 				st.set_normal(_outward_face_normal(point.x,point.y,g,sex))
 				st.add_vertex(point)
+	# Close the visible head around the genetically modeled front.
+	# An entire LEGACY sphere used to sit immediately behind this facial
+	# surface, causing occlusion at cheeks/chin and a pasted-on mask edge.
+	# These rear quads attach to the SAME front-mesh boundary, so there is
+	# no second shading/collision head in the actual visible character.
+	const BACK_SEGS: int=20
+	for yi in range(ROWS):
+		for seg in range(BACK_SEGS):
+			var corners: Array[Vector3]=[]
+			for pair in [[yi,seg],[yi+1,seg],
+					[yi+1,seg+1],[yi,seg+1]]:
+				var row: int=int(pair[0])
+				var theta: float=PI*float(pair[1])/float(BACK_SEGS)
+				var y: float=1.77+(lerpf(1.575,1.931,
+					float(row)/float(ROWS))-1.77)*fy
+				var width: float=.183*fw*_jaw_outline(y,g,sex)*(
+					_forehead_outline(y))
+				var x: float=-cos(theta)*width
+				var actual_y: float=_chin_edge_height(x,y)
+				var rim_z: float=_seated_face_depth(width,
+					_chin_edge_height(width,y),g,sex,fw,fy)
+				var back_z: float=.195*sqrt(maxf(.02,1.0-
+					pow((actual_y-1.77)/.245,2.0)))
+				var z: float=lerpf(rim_z,back_z,sin(theta))
+				corners.append(Vector3(x,actual_y,z))
+			# Flip rear winding from the front surface, and shade outward.
+			for k in [0,2,1,0,3,2]:
+				var v: Vector3=corners[k]
+				st.set_uv(Vector2((v.x+.25)*1.8,(v.y-1.50)*2.1))
+				st.set_normal(Vector3(v.x*.90,
+					(v.y-1.77)*.76,v.z*1.15).normalized())
+				st.add_vertex(v)
+	# Cap the exposed top and lower jaw perimeters using the same
+	# front/back vertices, not another overlapping solid sphere.
+	for upper in [false,true]:
+		var rim_points: Array[Vector3]=[]
+		var source_y: float=1.931 if upper else 1.575
+		var level_y: float=1.77+(source_y-1.77)*fy
+		var width: float=.183*fw*_jaw_outline(level_y,g,sex)*(
+			_forehead_outline(level_y))
+		for xi in range(COLS+1):
+			var x: float=lerpf(-width,width,float(xi)/float(COLS))
+			var y: float=_chin_edge_height(x,level_y)
+			rim_points.append(Vector3(x,y,
+				_seated_face_depth(x,y,g,sex,fw,fy)))
+		for seg in range(BACK_SEGS-1,0,-1):
+			var theta: float=PI*float(seg)/float(BACK_SEGS)
+			var x: float=-cos(theta)*width
+			var y: float=_chin_edge_height(x,level_y)
+			var rim_z: float=_seated_face_depth(width,
+				_chin_edge_height(width,level_y),g,sex,fw,fy)
+			var back_z: float=.195*sqrt(maxf(.02,1.0-
+					pow((y-1.77)/.245,2.0)))
+			rim_points.append(Vector3(x,y,
+					lerpf(rim_z,back_z,sin(theta))))
+		var pole: Vector3=Vector3(0,
+			2.020 if upper else 1.526,
+			.014 if upper else .035)
+		for i in range(rim_points.size()):
+			var p: Vector3=rim_points[i]
+			var q: Vector3=rim_points[(i+1)%rim_points.size()]
+			var triangle: Array[Vector3]=[
+				p,pole,q] if upper else [p,q,pole]
+			for v in triangle:
+				st.set_uv(Vector2(v.x+.25,v.z+.25))
+				var normal: Vector3=Vector3(v.x*.40,
+					1.0 if upper else -1.0,v.z*.25).normalized()
+				st.set_normal(normal)
+				st.add_vertex(v)
 	var face:=MeshInstance3D.new()
 	face.name="IndividualIntegratedFaceMesh"
 	face.mesh=st.commit()
@@ -182,6 +251,7 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 	# separate cosmetic face casting overlapping shadows like a mask.
 	face.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	face.set_meta("true_inherited_lower_jaw_silhouette",true)
+	face.set_meta("continuous_inherited_skull_volume",true)
 	root.add_child(face)
 
 static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary,
