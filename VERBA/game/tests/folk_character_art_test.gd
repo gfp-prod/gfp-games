@@ -86,6 +86,14 @@ func _run() -> void:
 		"GroomedHairStudio",true,false) as Node3D
 	if smith_style==null or smith_style.get_child_count()<3:
 		_fail("Blacksmith has no inherited male hairstyle geometry"); return
+	# Seven straight long locks used to appear as a levitating flat plate
+	# over the smith's head. Demand a real multi-height curl cluster.
+	var curl_meshes: Array[Node]=smith_style.find_children(
+		"TightFacetedCurl*","MeshInstance3D",false,false)
+	if curl_meshes.size()<18 or smith_style.find_child(
+			"TightCurlLock*",true,false)!=null:
+		_fail("Male curly crop reverted to floating rigid strands")
+		return
 	var figure=ida.find_child("VisibleInhabitant",true,false)
 	var face=ida.find_child("ModeledInhabitantHead",true,false) as MeshInstance3D
 	var robe=ida.find_child("TaperedVillagerTunic",true,false) as MeshInstance3D
