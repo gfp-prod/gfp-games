@@ -25,17 +25,20 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 	var depth: float=lerpf(.88,1.10,depth_gene)
 	var female: bool=sex=="female"
 	var male: bool=sex=="male"
+	# The shoulder is proportionally narrower than the pelvis for an
+	# average adult woman; this is expressed in the mesh and arm sockets,
+	# not by shrinking the entire body or relying on hair/costume cues.
 	# Larger adult male-average thorax/shoulder girdle and upper-body
 	# musculature; female-average greater pelvic-to-shoulder ratio and
 	# a distinct waist indentation. These are modest morph multipliers,
 	# not enforced anatomical types, and each is moderated by its genes.
-	var shoulder_factor: float=lerpf(.835,1.035,shoulder_gene) if female else (
+	var shoulder_factor: float=lerpf(.745,1.015,shoulder_gene) if female else (
 		lerpf(.985,1.115,shoulder_gene) if male else 1.0)
-	var rib_factor: float=lerpf(.885,1.025,chest_gene) if female else (
+	var rib_factor: float=lerpf(.830,1.025,chest_gene) if female else (
 		lerpf(1.010,1.115,chest_gene) if male else 1.0)
-	var waist_factor: float=lerpf(.835,1.015,waist_gene) if female else (
+	var waist_factor: float=lerpf(.800,.975,waist_gene) if female else (
 		lerpf(.990,1.090,waist_gene) if male else 1.0)
-	var hip_factor: float=lerpf(1.045,1.140,hip_gene) if female else (
+	var hip_factor: float=lerpf(1.050,1.165,hip_gene) if female else (
 		lerpf(.958,1.028,hip_gene) if male else 1.0)
 	var pelvis_depth: float=lerpf(1.005,1.065,hip_gene) if female else (
 		lerpf(.978,1.025,hip_gene) if male else 1.0)
@@ -83,12 +86,12 @@ static func _point(y: float,angle: float,g: Dictionary,
 	# inherited independently of profession, skin tone, and social role.
 	var bust: float=GENES.value(g,"bust_volume")
 	var chest_width: float=GENES.value(g,"chest_width")
-	var lobe: float=exp(-pow((absf(x)-.14*chest_width)/.135,2.0))
+	var lobe: float=exp(-pow((absf(x)-(.048+.058*chest_width))/.105,2.0))
 	var vertical: float=exp(-pow((y-1.265)/.140,2.0))
 	var facing: float=pow(maxf(0.0,-sin(angle)),2.0)
 	# Breast volume is soft tissue on an uninterrupted ribcage, not
 	# separate attached orbs. Men still have a modest pectoral contour.
-	var breast_profile: float=(.006+.118*pow(bust,1.45)) if sex=="female" else (
+	var breast_profile: float=(.018+.150*pow(bust,1.45)) if sex=="female" else (
 		.003+.025*pow(bust,1.6) if sex=="male" else .006+.09*pow(bust,1.7))
 	z-=breast_profile*vertical*lobe*facing
 	# Gluteal and greater-trochanter curves broaden the lower torso at
