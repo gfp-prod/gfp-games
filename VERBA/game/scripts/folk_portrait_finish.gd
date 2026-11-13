@@ -433,6 +433,49 @@ static func _facial_ribbon(parent: Node3D,name: String,material: Material,
 	return ribbon
 
 
+## Expression-driven lips must remain fitted to the genetically sculpted
+## facial surface. The old four planar petals all sat at the same depth,
+## producing disconnected light/dark bars on real Godot face close-ups.
+## Keep each existing expression joint and its original node name.
+static func _fitted_lip(parent: Node3D,name: String,material: Material,
+		from: Vector3,to: Vector3,half_height: float,
+		g: Dictionary,sex: String,
+		mouth_y: float,mouth_front: float) -> MeshInstance3D:
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(material)
+	const STEPS: int=14
+	for i in range(STEPS):
+		var corners: Array[Vector3]=[]
+		for pair in [[i,-1.0],[i+1,-1.0],[i+1,1.0],[i,1.0]]:
+			var t: float=float(pair[0])/float(STEPS)
+			var side: float=float(pair[1])
+			var center: Vector3=from.lerp(to,t)
+			# Almost invisible at mouth corners / cupid's central join,
+			# but full enough to be readable without the old chunky petals.
+			var taper: float=pow(maxf(0.0,sin(PI*t)),.68)
+			var y: float=center.y+side*half_height*taper
+			var relief: float=_depth(center.x,mouth_y+y,g,sex)
+			var z: float=relief-mouth_front-.007-.002*taper
+			corners.append(Vector3(center.x,y,z))
+		for k in [0,1,2,0,2,3]:
+			var vertex: Vector3=corners[k]
+			st.set_uv(Vector2(vertex.x+.5,vertex.y+.5))
+			st.add_vertex(vertex)
+	st.generate_normals()
+	if material is StandardMaterial3D:
+		(material as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
+	var lip:=MeshInstance3D.new()
+	lip.name=name
+	lip.mesh=st.commit()
+	lip.material_override=material
+	lip.set_meta("faceted_anatomical_surface",true)
+	lip.set_meta("fitted_to_inherited_mouth",true)
+	lip.set_meta("no_new_collision",true)
+	parent.add_child(lip)
+	return lip
+
+
 ## Eyelids are shaped as shallow skin folds on the ACTUAL inherited face,
 ## not horizontal strips floating ahead of the eyes. Their tapered corners
 ## disappear into the eye socket; independent blink covers still animate.
@@ -696,21 +739,21 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	mouth.set_meta("rest_corner_rise",corner_rise)
 	# Upper and lower lip bands occupy separate volumes and articulate
 	# from their own corners. Very thin lips remain truly thin.
-	var left_lip:=_facial_ribbon(left_corner,"SmallNaturalLipLine",lip_ink,
+	var left_lip:=_fitted_lip(left_corner,"SmallNaturalLipLine",lip_ink,
 		Vector3(-mouth_width,corner_rise,0),Vector3(0,cupid_rise,0),
-		fullness*.25)
-	var left_lower:=_facial_ribbon(lower_rig,"ModeledLowerLipLeft",lip_ink,
+		fullness*.36,g,sex,lip_height,mouth.position.z)
+	var left_lower:=_fitted_lip(lower_rig,"ModeledLowerLipLeft",lip_ink,
 		Vector3(-mouth_width,corner_rise-.007,0),Vector3(0,-.010,0),
-		fullness*.21)
+		fullness*.27,g,sex,lip_height,mouth.position.z)
 	var right_corner:=Node3D.new()
 	right_corner.name="ExpressionLipRight"
 	mouth.add_child(right_corner)
-	var right_lip:=_facial_ribbon(right_corner,"NaturalLipCorner",lip_ink,
+	var right_lip:=_fitted_lip(right_corner,"NaturalLipCorner",lip_ink,
 		Vector3(0,cupid_rise,0),Vector3(mouth_width,corner_rise,0),
-		fullness*.25)
-	var right_lower:=_facial_ribbon(lower_rig,"ModeledLowerLipRight",lip_ink,
+		fullness*.36,g,sex,lip_height,mouth.position.z)
+	var right_lower:=_fitted_lip(lower_rig,"ModeledLowerLipRight",lip_ink,
 		Vector3(0,-.010,0),Vector3(mouth_width,corner_rise-.007,0),
-		fullness*.21)
+		fullness*.27,g,sex,lip_height,mouth.position.z)
 	var open_mouth:=_facial_ribbon(mouth,"ExpressionMouthOpening",
 		ART.mat(Color("301c1c"),1),
 		Vector3(-mouth_width*.89,-.005,.004),
