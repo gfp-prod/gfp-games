@@ -128,14 +128,17 @@ static func _hair_sheet(root: Node3D,name: String,material: Material,
 				var t: float=float(pair[0])/float(ROWS-1)
 				var u: float=float(pair[1])/float(SPANS-1)*2.0-1.0
 				var flow: float=pow(sin(PI*t),2.0)
-				var width: float=half_width*lerpf(.53,.92,
-					smoothstep(.0,.35,t))*(1.0-.24*t)
+				# The root begins as a narrow buried tuft at the hairline,
+				# widening as it passes the temple. A broad straight upper
+				# edge made the old hair read like a glued-on paper card.
+				var width: float=half_width*lerpf(.16,.95,
+					smoothstep(.0,.23,t))*(1.0-.32*t)
 				var ripple: float=.007*curl*sin(t*TAU*1.4+u*2.1)
 				var x: float=at.x+u*width+sweep*t+ripple
 				var center_z: float=_routed_depth(at,t,tip_y,x,curl)
 				# The raised central ridge makes a continuous curved
 				# hair panel rather than a paper-flat plane.
-				var z: float=center_z-.009*(1.0-u*u)*flow
+				var z: float=center_z-.012*(1.0-u*u)*lerpf(.35,1.0,flow)
 				z+=.0035*sin(u*PI*1.8+t*4.1)*t
 				corners.append(Vector3(x,lerpf(at.y,tip_y,t),z))
 			for k in [0,1,2,0,2,3]:
@@ -253,10 +256,10 @@ static func _side_framing(root: Node3D,main: Material,shine: Material,
 	for side in [-1.0,1.0]:
 		var name: String="Left" if side<0.0 else "Right"
 		_hair_sheet(root,"Faceted"+name+"HairFrame",main,
-			Vector3(side*.195,1.972,.036),
+			Vector3(side*.169,1.972,.036),
 			tip_y,wide*.97,curl,side*.021)
 		_hair_sheet(root,"Fine"+name+"HairUnderlayer",shine,
-			Vector3(side*.202,1.943,.074),
+			Vector3(side*.178,1.943,.074),
 			tip_y+.082,wide*.64,curl,side*.010)
 
 static func _braid(root: Node3D,main: Material,highlight: Material,
