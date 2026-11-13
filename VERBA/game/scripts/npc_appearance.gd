@@ -16,30 +16,46 @@ static func build(figure: Node3D, genes: Dictionary, cloth: Material, trim: Mate
 	var style := String(genes.get("style","short"))
 	var outfit := String(genes.get("outfit","tunic"))
 	figure.scale = Vector3(1.0,h,1.0)
-	# Upper chest tapers into waist. Lower garment widens again over the hips.
-	# This replaces the shared barrel/cone torso rather than hiding it.
-	var upper := ART.cone(figure,Vector3(0,1.31,0),waist,.49,cloth,shoulder*.98,14)
-	upper.name = "TaperedVillagerTunic"
-	var pelvis := ART.cone(figure,Vector3(0,.91,0),hip,.36,cloth,waist,14)
-	pelvis.name = "AnatomicalWaistAndHips"
-	ART.bone(figure,Vector3(0,1.52,0),Vector3(0,1.61,0),.12,.11,skin,10)
-	if female:
-		# Modest clothed volume, not two exposed spheres or a broad male barrel.
-		for side in [-1.0,1.0]:
-			ART.orb(figure,Vector3(side*.11,1.30,-shoulder*.48),
-				Vector3(.19,.16,.115+float(genes.get("chest",.12))*.23),cloth,11)
-	# Body-shape-driven clothing is separate from inherited anatomy.
+
+	# Two contiguous *modeled* contours, not CylinderMesh barrel pieces.
+	# Shared join ring at y=1.20 prevents the visible circular chest seam.
+	var pelvis := _loft(figure,"AnatomicalWaistAndHips",[
+		Vector3(hip*.77,.79,.225),Vector3(hip*.98,.95,.275),
+		Vector3(hip*.88,1.08,.252),Vector3(waist*.97,1.20,.225)
+	],cloth)
+	var chest_depth := .26+float(genes.get("chest",.12))*(.32 if female else .12)
+	var upper := _loft(figure,"TaperedVillagerTunic",[
+		Vector3(waist*.97,1.20,.225),Vector3(waist*1.03,1.32,.245),
+		Vector3(shoulder*.99,1.46,chest_depth),
+		Vector3(shoulder*.92,1.55,.215),Vector3(.118,1.63,.115)
+	],cloth)
+	# Neck is a small continuous anatomical volume, not the exposed white
+	# vertical CylinderMesh protruding through the collarbone/chest.
+	var neck := ART.orb(figure,Vector3(0,1.635,0),Vector3(.108,.123,.108),skin,12)
+	neck.name = "ModeledNeck"
+	# Clothing follows the hip and waist contours, not a second cylindrical robe.
 	if outfit in ["dress","coat"]:
-		var skirt := ART.cone(figure,Vector3(0,.61,0),hip*(1.19 if outfit=="dress" else 1.07),.48,
-			cloth,hip*.99,12)
-		skirt.name = "TailoredSkirtOrCoatHem"
+		var hem := _loft(figure,"TailoredSkirtOrCoatHem",[
+			Vector3(hip*(1.12 if outfit=="dress" else 1.02),.56,.32),
+			Vector3(hip*1.08,.75,.294),Vector3(hip*.97,.96,.271)
+		],cloth)
 		if outfit=="coat":
-			ART.box(figure,Vector3(0,.81,-hip*.97),Vector3(.045,.36,.018),trim)
+			ART.box(figure,Vector3(0,.77,-.30),Vector3(.025,.31,.02),trim)
 	else:
-		ART.cone(figure,Vector3(0,.69,0),hip*.99,.20,cloth,hip*.97,12)
-	ART.bone(figure,Vector3(-waist*.98,1.10,-waist*.81),
-		Vector3(waist*.98,1.10,-waist*.81),.020,.020,trim,9)
-	var head := ART.orb(figure,Vector3(0,1.78,0),
+		_loft(figure,"TailoredTunicHem",[
+			Vector3(hip*1.03,.70,.270),Vector3(hip*.99,.84,.255),
+			Vector3(hip*.94,.96,.267)
+		],cloth)
+	ART.bone(figure,Vector3(-waist*.95,1.17,-.235),
+		Vector3(waist*.95,1.17,-.235),.014,.014,trim,9)
+	# Keep the modeled face but bring it into proportion with longer legs.
+	# Scaling around the original face center retains all eye/nose/lip alignment.
+	var head_parent := Node3D.new()
+	head_parent.name = "ProportionalFaceRig"
+	head_parent.scale = Vector3.ONE*.69
+	head_parent.position.y = 1.78*(1.0-.69)
+	figure.add_child(head_parent)
+	var head := ART.orb(head_parent,Vector3(0,1.78,0),
 		Vector3((.392 if female else .418)*face,(.475 if female else .455)*face,.355*face),skin,14)
 	head.name="ModeledInhabitantHead"
 	var hair := ART.mat(Color(String(genes.get("hair","372822"))),.96)
@@ -51,54 +67,69 @@ static func build(figure: Node3D, genes: Dictionary, cloth: Material, trim: Mate
 	var cheek_width := .18*face
 	# Actual facial volume: cheekbones, bridge and tip of the nose, lips, ears.
 	for side in [-1.0,1.0]:
-		ART.orb(figure,Vector3(side*cheek_width*.67,1.725,-.139*face),
+		ART.orb(head_parent,Vector3(side*cheek_width*.67,1.725,-.139*face),
 			Vector3(.10,.090,.075),skin,11)
-		ART.orb(figure,Vector3(side*.203*face,1.759,0),
+		ART.orb(head_parent,Vector3(side*.203*face,1.759,0),
 			Vector3(.066,.12,.075),skin,9)
-		var eyeball := ART.orb(figure,Vector3(side*.087*face,1.806,-.179*face),
+		var eyeball := ART.orb(head_parent,Vector3(side*.087*face,1.806,-.179*face),
 			Vector3(.070*eye,.048*eye,.036),sclera,12)
 		eyeball.name = "VisibleLeftEye" if side<0 else "VisibleRightEye"
-		ART.orb(figure,Vector3(side*.087*face,1.804,-.211*face),
+		ART.orb(head_parent,Vector3(side*.087*face,1.804,-.211*face),
 			Vector3(.033*eye,.037*eye,.017),iris,12)
-		ART.orb(figure,Vector3(side*.087*face,1.804,-.228*face),
+		ART.orb(head_parent,Vector3(side*.087*face,1.804,-.228*face),
 			Vector3(.017*eye,.026*eye,.010),pupil,10)
-		ART.bone(figure,Vector3(side*.042,1.872,-.185*face),
+		ART.bone(head_parent,Vector3(side*.042,1.872,-.185*face),
 			Vector3(side*.146,1.879+(brow_size-1.0)*.022,-.167*face),
 			(.009 if female else .014)*brow_size,.009*brow_size,brow,8)
-	ART.bone(figure,Vector3(0,1.84,-.169*face),
+	ART.bone(head_parent,Vector3(0,1.84,-.169*face),
 		Vector3(0,1.732,-.218*face),.038*nose,.052*nose,skin,10)
-	var nose_tip:=ART.orb(figure,Vector3(0,1.721,-.225*face),
+	var nose_tip:=ART.orb(head_parent,Vector3(0,1.721,-.225*face),
 		Vector3(.085*nose,.058,.052*nose),skin,11)
 	nose_tip.name="ModeledNoseTip"
-	var upper_lip:=ART.orb(figure,Vector3(0,1.648,-.175*face),
+	var upper_lip:=ART.orb(head_parent,Vector3(0,1.648,-.175*face),
 		Vector3(.106,.024,.026),lips,12)
 	upper_lip.name="ModeledUpperLip"
-	var lower_lip:=ART.orb(figure,Vector3(0,1.622,-.172*face),
+	var lower_lip:=ART.orb(head_parent,Vector3(0,1.622,-.172*face),
 		Vector3(.098,.019,.025),lips,12)
 	lower_lip.name="ModeledLowerLip"
 	# Styled hair genuinely changes the outline of the head.
-	_hair(figure,style,hair,face)
+	_hair(head_parent,style,hair,face)
 	if not female and int(genes.get("beard",0))>0:
-		_beard(figure,int(genes["beard"]),hair)
+		_beard(head_parent,int(genes["beard"]),hair)
 	var arms: Dictionary={}
 	var legs: Dictionary={}
+
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0 else "AnimatedRightArm"
 		arm.position=Vector3(side*(shoulder+.015),1.51,0)
 		figure.add_child(arm)
-		ART.bone(arm,Vector3.ZERO,Vector3(side*.035,-.385,-.005),(.080 if female else .115),(.071 if female else .096),cloth,10)
-		ART.orb(arm,Vector3(side*.035,-.392,-.005),Vector3(.075,.065,.071),cloth,9)
-		ART.bone(arm,Vector3(side*.035,-.385,-.005),
-			Vector3(side*.053,-.790,-.045),(.073 if female else .092),(.059 if female else .072),cloth,9)
-		ART.orb(arm,Vector3(side*.054,-.808,-.045),Vector3(.099,.129,.089),skin,11)
+		_loft(arm,"TailoredUpperArm",[
+			Vector3(.077,-.395,.079),Vector3(.10,-.24,.092),
+			Vector3((.093 if female else .122),-.025,.11),
+			Vector3((.10 if female else .128),.02,.11)
+		],cloth,10)
+		_loft(arm,"TailoredForearm",[
+			Vector3(.062,-.766,.067),Vector3(.084,-.58,.083),
+			Vector3(.079,-.395,.079)
+		],cloth,10)
+		ART.orb(arm,Vector3(0,-.786,-.035),Vector3(.095,.119,.087),skin,11)
 		var leg:=Node3D.new()
 		leg.name="AnimatedLeftLeg" if side<0 else "AnimatedRightLeg"
-		leg.position=Vector3(side*hip*.52,.76,.02)
+		leg.position=Vector3(side*hip*.53,1.0,.02)
 		figure.add_child(leg)
-		ART.bone(leg,Vector3.ZERO,Vector3(0,-.30,.005),.135,.114,leather,10)
-		ART.bone(leg,Vector3(0,-.31,.005),Vector3(0,-.63,.005),.106,.083,leather,9)
-		ART.box(leg,Vector3(0,-.67,-.09),Vector3(.22,.12,.36),leather)
+		# Longer thigh/shin with shaped knee/calf; detachable at the hip.
+		# The leg is no longer two featureless stacked cylindrical pipes.
+		_loft(leg,"AnatomicalThigh",[
+			Vector3(.109,-.46,.106),Vector3(.135,-.31,.13),
+			Vector3(.160,-.09,.161),Vector3(.155,.02,.158)
+		],leather,12)
+		_loft(leg,"AnatomicalCalf",[
+			Vector3(.080,-.88,.082),Vector3(.112,-.68,.115),
+			Vector3(.104,-.51,.105),Vector3(.109,-.46,.106)
+		],leather,12)
+		ART.orb(leg,Vector3(0,-.915,-.118),Vector3(.137,.105,.245),leather,12)
+		ART.box(leg,Vector3(0,-.965,-.116),Vector3(.248,.052,.325),leather)
 		if side<0.0:
 			arms["left"]=arm
 			legs["left"]=leg
@@ -109,6 +140,34 @@ static func build(figure: Node3D, genes: Dictionary, cloth: Material, trim: Mate
 	# limbs into the torso mesh. Removing a limb never destroys the actor.
 	return {"head":head,"left_arm":arms["left"],"right_arm":arms["right"],
 		"left_leg":legs["left"],"right_leg":legs["right"]}
+
+
+# Low-poly cross-section loft. Multiple anatomical contours share a continuous
+# skin/clothing surface instead of identical primitive cylinders. Each ring
+# specifies half-width, height, half-depth. Separate meshes preserve limb pivots.
+static func _loft(parent: Node3D, node_name: String, rings: Array[Vector3],
+		material: Material, sides: int = 12) -> MeshInstance3D:
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface.set_material(material)
+	for k in range(rings.size()-1):
+		var low: Vector3=rings[k]
+		var high: Vector3=rings[k+1]
+		for i in range(sides):
+			var a:=TAU*float(i)/float(sides)
+			var b:=TAU*float((i+1)%sides)/float(sides)
+			var lo_a:=Vector3(cos(a)*low.x,low.y,sin(a)*low.z)
+			var lo_b:=Vector3(cos(b)*low.x,low.y,sin(b)*low.z)
+			var hi_a:=Vector3(cos(a)*high.x,high.y,sin(a)*high.z)
+			var hi_b:=Vector3(cos(b)*high.x,high.y,sin(b)*high.z)
+			for v in [lo_a,hi_a,lo_b,lo_b,hi_a,hi_b]:
+				surface.add_vertex(v)
+	surface.generate_normals()
+	var result:=MeshInstance3D.new()
+	result.name=node_name
+	result.mesh=surface.commit()
+	parent.add_child(result)
+	return result
 
 static func _hair(parent: Node3D, style: String, material: Material, face: float) -> void:
 	# Hair is built from tapered locks and overlapping strands, not a huge
