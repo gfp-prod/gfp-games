@@ -725,6 +725,27 @@ func _run() -> void:
 			if visible_normals<float(normals.size())*.64:
 				_fail("Face strip backfaces away from camera: "+feature_name)
 				return
+		# Both inherited cheekbones MUST face the camera. One mirrored
+		# three-vertex facet used to have the opposite winding, and lacked
+		# lighting normals entirely; it appeared as a one-sided black
+		# bruise on the real blacksmith close-up even after beard repairs.
+		var cheek_facets: Array[Node]=portrait.find_children(
+			"InheritedCheekboneFacet","MeshInstance3D",true,false)
+		if cheek_facets.size()!=2:
+			_fail("Inherited face lost paired cheekbone contours"); return
+		for node in cheek_facets:
+			var cheek_mesh: MeshInstance3D=node as MeshInstance3D
+			var arrays: Array=cheek_mesh.mesh.surface_get_arrays(0)
+			var p: PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+			var normals: PackedVector3Array=arrays[Mesh.ARRAY_NORMAL]
+			if p.size()!=3 or normals.size()!=3:
+				_fail("Cheek facet missing actual shaded triangle"); return
+			if (p[1]-p[0]).cross(p[2]-p[0]).z>-.0001:
+				_fail("Mirrored cheek facet points into skull"); return
+			for normal in normals:
+				if normal.z>-.75:
+					_fail("Cheekbone normal shades as black under-eye scar")
+					return
 		# The last published close-ups showed a hard rectangular jaw shelf.
 		# Evaluate true face mesh: chin edges must tuck inward below cheek.
 		var widest_cheek: float=0.0
