@@ -24,6 +24,37 @@ static func woven_texture() -> ImageTexture:
 	_woven=ImageTexture.create_from_image(picture)
 	return _woven
 
+
+## One reused, subdued aged-leather grain, not the linen crosshatch. Macro
+## variation is low contrast to prevent noisy moire on an animated villager.
+static var _leather_grain: ImageTexture
+
+static func leather_texture() -> ImageTexture:
+	if _leather_grain!=null: return _leather_grain
+	var picture:=Image.create(128,128,false,Image.FORMAT_RGB8)
+	for y in range(128):
+		for x in range(128):
+			var fleck: float=float(posmod(x*73+y*31+x*y*7,173))/173.0-.5
+			var grain: float=.037*sin(float(x)*.81+float(y)*.12)
+			var weather: float=.036*sin(float(x)*.12+float(y)*.27)
+			var scar: float=-.070 if (x*13+y*7)%149<2 else 0.0
+			var tone: float=clampf(.89+fleck*.065+grain*.32+weather+scar,
+				.75,.96)
+			picture.set_pixel(x,y,Color(tone,tone*.977,tone*.955))
+	_leather_grain=ImageTexture.create_from_image(picture)
+	return _leather_grain
+
+static func worn_leather(color: Color) -> StandardMaterial3D:
+	var material:=ART.mat(color,.96)
+	material.albedo_texture=leather_texture()
+	material.uv1_triplanar=true
+	material.uv1_scale=Vector3(1.10,1.10,1.10)
+	material.metallic=0.0
+	# The leather panel faces the character and is visible in profile.
+	# Procedural surface winding can differ from the fabric sampler.
+	material.cull_mode=BaseMaterial3D.CULL_DISABLED
+	return material
+
 static func worn_linen(color: Color, roughness: float=.985) -> StandardMaterial3D:
 	var material:=ART.mat(color,roughness)
 	material.albedo_texture=woven_texture()
