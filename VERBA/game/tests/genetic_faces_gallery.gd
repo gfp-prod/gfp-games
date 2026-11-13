@@ -89,8 +89,10 @@ func _run() -> void:
 			# genetic structural differences.
 			info["mood"]=95.0 if i in [0,3,5] else (
 				18.0 if i in [1,4,6] else 50.0)
-		var focus: float=1.74
-		var dist: float=1.30
+		# A portrait has to contain the entire crown, bun or high hairstyle.
+		# Prior frames clipped Ida's hair at the top edge even at 720p.
+		var focus: float=1.85
+		var dist: float=1.64
 		if ids[i].begins_with("born_"):
 			focus=1.78*.54
 			dist=1.10
@@ -108,8 +110,10 @@ func _run() -> void:
 			return
 		# Additional full figure to prove body's inherited measurements.
 		if i in [0,1,2,3,4,7,8]:
-			var body_focus: float=.85
-			var body_distance: float=3.15
+			# Centre higher and pull back so the largest inherited
+			# bloodlines retain both their hair and boots in-frame.
+			var body_focus: float=1.10
+			var body_distance: float=3.56
 			if not await _capture(world,cam,citizen,
 					names[i]+"_whole_body",base,body_focus,body_distance):
 				_fail("Could not photograph genetically different body")
