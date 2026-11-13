@@ -16,8 +16,13 @@ func _find(world: Node3D,wanted: String) -> Node3D:
 	return null
 
 func _capture(world: Node3D,cam: Camera3D,actor: Node3D,
-		name: String,base: String,focus: float,distance: float) -> bool:
-	cam.global_position=actor.to_global(Vector3(.38,focus+.05,-distance))
+		name: String,base: String,focus: float,distance: float,
+		offset_x: float=.38) -> bool:
+	# Controlled close-up lighting reveals actual low-poly facial planes
+	# across light/dark skin without changing normal in-game scene lights.
+	var fill: OmniLight3D=cam.get_node_or_null("DiagnosticFaceFill") as OmniLight3D
+	if fill!=null: fill.visible=name.ends_with("_face_detail")
+	cam.global_position=actor.to_global(Vector3(offset_x,focus+.05,-distance))
 	cam.look_at(actor.to_global(Vector3(0,focus,0)),Vector3.UP)
 	for frame in range(2): await process_frame
 	RenderingServer.force_draw()
@@ -59,6 +64,14 @@ func _run() -> void:
 	cam.near=.04
 	cam.fov=50.0
 	cam.name="InGameGeneticsComparisonCamera"
+	var fill:=OmniLight3D.new()
+	fill.name="DiagnosticFaceFill"
+	fill.light_energy=.72
+	fill.omni_range=2.15
+	fill.shadow_enabled=false
+	fill.position=Vector3(.12,.11,-.36)
+	fill.visible=false
+	cam.add_child(fill)
 	world.add_child(cam)
 	cam.current=true
 	# For comparative anatomy pictures, move the existing physical actors
@@ -128,7 +141,7 @@ func _run() -> void:
 			if title_node!=null: title_node.visible=false
 			var head_focus: float=citizen.to_local(head.global_position).y
 			var portrait_ok: bool=await _capture(world,cam,citizen,
-					names[i]+"_face_detail",base,head_focus,1.18)
+					names[i]+"_face_detail",base,head_focus,.84,.12)
 			visual_root.rotation=prior_visual_rotation
 			visual_root.position=prior_visual_position
 			if title_node!=null: title_node.visible=prior_title_visible
