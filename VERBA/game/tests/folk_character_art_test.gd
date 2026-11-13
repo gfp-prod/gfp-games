@@ -732,7 +732,7 @@ func _run() -> void:
 		# lighting normals entirely; it appeared as a one-sided black
 		# bruise on the real blacksmith close-up even after beard repairs.
 		var cheek_facets: Array[Node]=portrait.find_children(
-			"InheritedCheekboneFacet","MeshInstance3D",true,false)
+			"InheritedCheekboneFacet*","MeshInstance3D",true,false)
 		if cheek_facets.size()!=2:
 			_fail("Inherited face lost paired cheekbone contours"); return
 		for node in cheek_facets:
