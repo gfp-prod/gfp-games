@@ -188,6 +188,46 @@ static func _hair_lock(root: Node3D,name: String,hair: Material,
 	root.add_child(strand)
 	return strand
 
+## A single layered curtain of back hair: large soft planes rather than
+## separate noodle-like cylinders. Wind-torn hem creates a dark-fantasy
+## painterly silhouette while keeping the face and ears visible.
+static func _long_hair_curtain(root: Node3D,hair: Material,
+		end_y: float,volume: float,curl: float) -> MeshInstance3D:
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(hair)
+	const ROWS: int=11
+	const COLS: int=15
+	for row in range(ROWS-1):
+		for col in range(COLS-1):
+			var corners: Array[Vector3]=[]
+			for tuple in [[row,col],[row+1,col],[row+1,col+1],[row,col+1]]:
+				var t: float=float(tuple[0])/float(ROWS-1)
+				var a: float=PI*float(tuple[1])/float(COLS-1)
+				var width: float=lerpf(.177,.268+.026*volume,
+					smoothstep(.1,.9,t))
+				var x: float=cos(a)*width
+				var z: float=lerpf(.088,.322,t)+sin(a)*.048
+				var flicker: float=.013*sin(a*5.5+t*4.4)*curl*t
+				var y: float=lerpf(1.948,end_y,t)+(
+					.016*sin(a*6.0)*pow(t,1.5))
+				corners.append(Vector3(x+flicker,y,z))
+			for k in [0,1,2,0,2,3]:
+				var p: Vector3=corners[k]
+				st.set_uv(Vector2((p.x+.28)*1.8,p.y*1.6))
+				st.add_vertex(p)
+	st.generate_normals()
+	var curtain:=MeshInstance3D.new()
+	curtain.name="HereditaryLongHairCurtain"
+	curtain.mesh=st.commit()
+	if hair is StandardMaterial3D:
+		(hair as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
+	curtain.material_override=hair
+	curtain.set_meta("no_new_collision",true)
+	curtain.set_meta("genetically_styled_length",end_y)
+	root.add_child(curtain)
+	return curtain
+
 static func _layered_hair(root: Node3D,person: String,
 		hair: Material,g: Dictionary,sex: String) -> void:
 	var shape: Dictionary=GENES.hair_profile(g,sex,person)
@@ -221,6 +261,7 @@ static func _layered_hair(root: Node3D,person: String,
 					.019,.014,ART.mat(Color("927356"),.99),8)
 				wrap.name="HairBraidTie"
 		if style in ["loose","wave"]:
+			_long_hair_curtain(root,hair,end_y-.045,volume,curl)
 			for side in [-1.0,1.0]:
 				_hair_lock(root,"SecondaryLayeredBackHair",hair,side*.092,
 					.180,end_y-.045,volume*.81,curl,true)
