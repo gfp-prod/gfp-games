@@ -20,8 +20,9 @@ static func _depth(x: float,y: float,g: Dictionary,
 	var jaw: float=lerpf(.76,1.26,jaw_gene)
 	# Jaw shape has overlapping population averages. The inherited jaw
 	# allele can still make a broad-jawed woman or fine-boned man.
-	jaw*=lerpf(.88,1.05,jaw_gene) if sex=="female" else (
+	var jaw_factor: float=lerpf(.88,1.05,jaw_gene) if sex=="female" else (
 		lerpf(.985,1.125,jaw_gene) if sex=="male" else 1.0)
+	jaw*=jaw_factor
 	var cheek: float=lerpf(.83,1.21,_v(g,"cheek_fullness"))
 	# Independent inherited jaw angle determines squareness at the chin.
 	var angle: float=lerpf(-.028,.038,_v(g,"jaw_angle"))
@@ -48,7 +49,8 @@ static func _depth(x: float,y: float,g: Dictionary,
 	# than only thickening an eyebrow strip or changing eye makeup.
 	var brow_ridge: float=-.010*exp(
 		-pow((absf(x)-.075)/.071,2.0)-pow((y-1.824)/.036,2.0))
-	brow_ridge*=.36 if sex=="female" else 1.25 if sex=="male" else 1.0
+	var ridge_factor: float=.36 if sex=="female" else 1.25 if sex=="male" else 1.0
+	brow_ridge*=ridge_factor
 	return shell+nose+cheeks+socket+lips+brow_ridge-.003
 
 static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
@@ -57,10 +59,10 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 	# genome, generated only once when a character is instantiated.
 	var st:=SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var fw: float=lerpf(.90,1.10,_v(g,"face_width"))*
-		(.965 if sex=="female" else 1.025 if sex=="male" else 1.0)
-	var fy: float=lerpf(.90,1.11,_v(g,"face_length"))*
-		(.985 if sex=="female" else 1.035 if sex=="male" else 1.0)
+	var fw: float=lerpf(.90,1.10,_v(g,"face_width")) * (
+		.965 if sex=="female" else 1.025 if sex=="male" else 1.0)
+	var fy: float=lerpf(.90,1.11,_v(g,"face_length")) * (
+		.985 if sex=="female" else 1.035 if sex=="male" else 1.0)
 	for yi in range(16):
 		for xi in range(14):
 			var x0: float=lerpf(-.183,.183,float(xi)/14.0)*fw
