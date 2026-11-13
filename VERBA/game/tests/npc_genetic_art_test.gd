@@ -37,11 +37,11 @@ func _run() -> void:
 			continue
 		var figure:=actor.find_child("VisibleInhabitant",true,false) as Node3D
 		var upper:=actor.find_child("TaperedVillagerTunic",true,false) as MeshInstance3D
-		var pelvis:=actor.find_child("AnatomicalWaistAndHips",true,false)
-		var eyes:=actor.find_child("VisibleLeftEye",true,false)
-		var nose:=actor.find_child("ModeledNoseTip",true,false)
-		var lip:=actor.find_child("ModeledUpperLip",true,false)
-		var hair:=actor.find_child("InheritedHairCrown",true,false)
+		var pelvis: Node = actor.find_child("AnatomicalWaistAndHips",true,false)
+		var eyes: Node = actor.find_child("VisibleLeftEye",true,false)
+		var nose: Node = actor.find_child("ModeledNoseTip",true,false)
+		var lip: Node = actor.find_child("ModeledUpperLip",true,false)
+		var hair: Node = actor.find_child("InheritedHairCrown",true,false)
 		if figure==null or upper==null or pelvis==null or eyes==null or nose==null or lip==null or hair==null:
 			_fail("Incomplete body/face/hair: "+actor.npc_id)
 			return
