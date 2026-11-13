@@ -143,6 +143,71 @@ static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary,
 	neck.set_meta("no_new_collision",true)
 	root.add_child(neck)
 
+## Layered hair behind the temples and ears, fitted to each inherited head.
+## Hairstyle is grooming, not a fixed sex allele. Named villagers choose
+## distinct cuts; future descendants may select longer hair independently
+## of role. The sculpted cheek, jaw and eyes remain unobscured.
+static func _layered_hair(root: Node3D,person: String,
+		hair: Material,g: Dictionary,sex: String) -> void:
+	var cut: float=0.0
+	match person:
+		"sela": cut=1.56
+		"mara": cut=1.62
+		"lena": cut=1.59
+		"nima": cut=1.54
+		"juno": cut=1.68
+		"ida": cut=0.0
+		_:
+			var volume: float=_v(g,"hair_volume")
+			if sex=="female" and volume>.44:
+				cut=lerpf(1.72,1.55,volume)
+			elif sex=="male" and volume>.89:
+				cut=1.70
+	if cut==0.0: return
+	var fullness: float=lerpf(.86,1.14,_v(g,"hair_volume"))
+	var curl: float=_v(g,"hair_curl")
+	for side in [-1.0,1.0]:
+		var tmesh:=SurfaceTool.new()
+		tmesh.begin(Mesh.PRIMITIVE_TRIANGLES)
+		tmesh.set_material(hair)
+		const RINGS: int=7
+		const SECTORS: int=12
+		for row in range(RINGS-1):
+			for sector in range(SECTORS):
+				var verts: Array[Vector3]=[]
+				for pair in [[row,sector],[row+1,sector],[row+1,sector+1],[row,sector+1]]:
+					var k: int=int(pair[0])
+					var theta: float=TAU*float(pair[1])/float(SECTORS)
+					var t: float=float(k)/float(RINGS-1)
+					var yy: float=lerpf(1.965,cut,t)
+					var thick: float=lerpf(.050,.028,smoothstep(.60,1.0,t))
+					var swing: float=.010*sin(t*TAU*(1.0+curl))
+					var cx: float=side*(.164+.022*sin(PI*t)+swing)
+					var cz: float=lerpf(.012,.048,t)
+					verts.append(Vector3(
+						cx+cos(theta)*thick*fullness,
+						yy,
+						cz+sin(theta)*(.060+.016*curl)*(1.0-.32*t)))
+				for index in [0,1,2,0,2,3]:
+					var p: Vector3=verts[index]
+					tmesh.set_uv(Vector2(float(sector)/float(SECTORS),p.y))
+					tmesh.add_vertex(p)
+		tmesh.generate_normals()
+		var lock:=MeshInstance3D.new()
+		lock.name="LayeredLeftTempleHair" if side<0.0 else "LayeredRightTempleHair"
+		lock.mesh=tmesh.commit()
+		lock.material_override=hair
+		lock.set_meta("groomed_not_sex_locked",true)
+		lock.set_meta("no_new_collision",true)
+		root.add_child(lock)
+	# The back falls behind the jaw, not across the facial features.
+	var nape:=ART.orb(root,Vector3(0,lerpf(1.84,1.75,
+		clampf((1.74-cut)/.20,0.0,1.0)),.144),
+		Vector3(.304,lerpf(.33,.45,clampf((1.74-cut)/.20,0.0,1.0)),
+		.127),hair,12)
+	nape.name="LayeredNapeHair"
+	nape.set_meta("no_new_collision",true)
+
 static func finish(figure: Node3D,person: String,skin: Material,
 		hair: Material,brow: Material,genome: Dictionary={},
 		sex: String="unspecified") -> void:
@@ -337,6 +402,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		var part:=ART.bone(root,Vector3(-.15,1.975,-.14),
 			Vector3(.11,2.011,-.14),.014,.014,brow,8)
 		part.name="InheritedHairPart"
+	_layered_hair(root,person,hair,g,sex)
 	if _v(g,"freckles")>.68:
 		for i in range(4):
 			var side: float=-1.0 if i<2 else 1.0
