@@ -347,17 +347,19 @@ static func dress(figure: Node3D,person: String,
 		var b: float=TAU*float(i+1)/16.0
 		var p0: Vector3=BODY._point(1.054,a,genome,sex)
 		var p1: Vector3=BODY._point(1.054,b,genome,sex)
-		p0.x*=1.085
-		p0.z*=1.085
-		p1.x*=1.085
-		p1.z*=1.085
-		ART.bone(figure,p0,p1,.025,.021,leather,7)
+		p0.x*=1.045
+		p0.z*=1.055
+		p1.x*=1.045
+		p1.z*=1.055
+		ART.bone(figure,p0,p1,.019,.017,leather,7)
 	var front: Vector3=BODY._point(1.054,-PI*.5,genome,sex)
-	var buckle:=ART.box(figure,Vector3(0,1.05,front.z*1.09-.021),
+	var buckle:=ART.box(figure,Vector3(0,1.05,front.z*1.05-.017),
 		Vector3(.085,.061,.020),trim)
 	buckle.name="SmallTarnishedBeltBuckle"
-	var pocket:=ART.box(figure,Vector3(.28,.91,-.20),
-		Vector3(.135,.16,.045),leather,Vector3(0,-.22,0))
+	var pocket_anchor: Vector3=BODY._point(.93,-.52,genome,sex)
+	var pocket:=ART.box(figure,
+		Vector3(pocket_anchor.x*1.06,.91,pocket_anchor.z*1.06-.034),
+		Vector3(.104,.13,.035),leather,Vector3(0,-.22,0))
 	pocket.name="WornHipPouchSeam"
 	# Removed three exposed shoulder/collar cylinders. Their helper-like
 	# ivory bars looked disconnected from the torso when the NPC turned.
@@ -370,7 +372,7 @@ static func dress(figure: Node3D,person: String,
 			# The old rigid dark wrist barrel should not be wider than
 			# the fabric directly above it.
 			ART.bone(arm,Vector3(sign*.064,-.383,-.045),
-				Vector3(sign*.076,-.418,-.047),.071,.067,leather,8)
+				Vector3(sign*.076,-.418,-.047),.056,.053,leather,8)
 		var leg: Node3D=figure.get_node_or_null(
 			"AnimatedLeftLeg" if sign<0.0 else "AnimatedRightLeg") as Node3D
 		# The inherited lower-leg shell and fitted boot already have a
