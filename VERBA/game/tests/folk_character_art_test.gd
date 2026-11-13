@@ -743,13 +743,19 @@ func _run() -> void:
 		var crown_outline: float=0.0
 		var face_y_min: float=INF
 		var face_y_max: float=-INF
+		# The combined head now includes a *rear shell and cranial caps*.
+		# Evaluate only front-facing SKIN rows. Including the crown pole
+		# at Y=2.02 made the prior forehead gate measure a zero-width
+		# apex rather than the actual inherited brow/forehead silhouette.
 		for p in verts:
+			if p.z>-.05: continue
 			face_y_min=minf(face_y_min,p.y)
 			face_y_max=maxf(face_y_max,p.y)
-		var midlevel: float=lerpf(face_y_min,face_y_max,.75)
-		var crownlevel: float=lerpf(face_y_min,face_y_max,.94)
+		var midlevel: float=lerpf(face_y_min,face_y_max,.74)
+		var crownlevel: float=lerpf(face_y_min,face_y_max,.93)
 		for p in verts:
-			if absf(p.y-midlevel)<.012:
+			if p.z>-.05: continue
+			if absf(p.y-midlevel)<.014:
 				middle_outline=maxf(middle_outline,absf(p.x))
 			if p.y>crownlevel:
 				crown_outline=maxf(crown_outline,absf(p.x))
