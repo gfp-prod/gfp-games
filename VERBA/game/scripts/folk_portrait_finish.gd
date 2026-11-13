@@ -396,7 +396,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var ear_scale: float=lerpf(.70,1.33,_v(g,"ear_size"))
 	var eye_gap: float=lerpf(.068,.113,_v(g,"eye_spacing"))
 	var eye_height: float=lerpf(1.780,1.802,_v(g,"brow_height"))
-	var eye_width: float=lerpf(.033,.055,_v(g,"eye_shape")) * (
+	var eye_width: float=lerpf(.032,.052,_v(g,"eye_shape")) * (
 		1.055 if sex=="female" else 1.0)
 	var tilt: float=lerpf(-.22,.22,_v(g,"brow_angle"))
 	for sign in [-1.0,1.0]:
@@ -404,54 +404,54 @@ static func finish(figure: Node3D,person: String,skin: Material,
 			Vector3(.065,.102,.064)*ear_scale,skin,9)
 		ear.name="SubtleModeledEar"
 		var x: float=sign*eye_gap
-		var depth: float=_depth(x,eye_height,g,sex)-.011
+		var depth: float=_depth(x,eye_height,g,sex)+.003
 		var socket:=Node3D.new()
 		socket.name="ExpressionEyeLeft" if sign<0.0 else "ExpressionEyeRight"
 		socket.position=Vector3(x,eye_height,depth)
 		root.add_child(socket)
-		# A real layered eye: recessed sclera, genetically colored iris,
+		# A real layered eye: modestly recessed sclera, inherited iris,
 		# pupil and upper/lower eyelids instead of a black flat square.
 		var eye_aperture: float=lerpf(.73,1.26,_v(g,"eye_aperture"))
-		var sclera:=ART.orb(socket,Vector3(0,0,-.004),
-			Vector3(eye_width*1.42,.028*eye_aperture,.015),
+		var sclera:=ART.orb(socket,Vector3(0,0,-.006),
+			Vector3(eye_width*1.18,.024*eye_aperture,.012),
 			ART.mat(Color("d5cab7"),.89),12)
 		sclera.name="SmallRecessedEye"
-		var iris:=ART.orb(socket,Vector3(0,0,-.015),
-			Vector3(.021,.021*eye_aperture,.008),iris_ink,12)
+		var iris:=ART.orb(socket,Vector3(0,0,-.013),
+			Vector3(eye_width*.47,.017*eye_aperture,.006),iris_ink,12)
 		iris.name="InheritedIris"
-		var pupil:=ART.orb(socket,Vector3(0,0,-.021),
-			Vector3(.010,.014*eye_aperture,.005),eye_ink,10)
+		var pupil:=ART.orb(socket,Vector3(0,0,-.018),
+			Vector3(eye_width*.23,.011*eye_aperture,.004),eye_ink,10)
 		pupil.name="AnatomicalPupil"
-		var lid:=ART.bone(socket,Vector3(-eye_width*.83,.015*eye_aperture,-.010),
-			Vector3(eye_width*.83,.015*eye_aperture,-.010),.009,.008,skin,9)
+		var lid:=ART.bone(socket,Vector3(-eye_width*.77,.013*eye_aperture,-.011),
+			Vector3(eye_width*.77,.013*eye_aperture,-.011),.006,.006,skin,9)
 		lid.name="IndividualUpperEyelid"
-		var lower_lid:=ART.bone(socket,Vector3(-eye_width*.75,-.015*eye_aperture,-.007),
-			Vector3(eye_width*.75,-.015*eye_aperture,-.007),.006,.006,skin,9)
+		var lower_lid:=ART.bone(socket,Vector3(-eye_width*.72,-.013*eye_aperture,-.010),
+			Vector3(eye_width*.72,-.013*eye_aperture,-.010),.0045,.005,skin,9)
 		lower_lid.name="AnatomicalLowerEyelid"
 		# Blink with actual moving eyelid volumes. The sclera, iris and pupil
 		# stay at their anatomical sizes; compressing the entire eye made
 		# villagers look like rubber-faced dolls during conversations.
 		var upper_cover:=ART.orb(socket,
-			Vector3(0,.025*eye_aperture,-.023),
-			Vector3(eye_width*1.55,.018*eye_aperture,.014),skin,12)
+			Vector3(0,.023*eye_aperture,-.009),
+			Vector3(eye_width*1.26,.016*eye_aperture,.011),skin,12)
 		upper_cover.name="ExpressionUpperBlinkCover"
 		upper_cover.set_meta("rest_y",upper_cover.position.y)
 		var lower_cover:=ART.orb(socket,
-			Vector3(0,-.024*eye_aperture,-.023),
-			Vector3(eye_width*1.51,.017*eye_aperture,.014),skin,12)
+			Vector3(0,-.022*eye_aperture,-.009),
+			Vector3(eye_width*1.24,.015*eye_aperture,.011),skin,12)
 		lower_cover.name="ExpressionLowerBlinkCover"
 		lower_cover.set_meta("rest_y",lower_cover.position.y)
 		var brow_rig:=Node3D.new()
 		brow_rig.name="ExpressionBrowLeft" if sign<0.0 else "ExpressionBrowRight"
-		brow_rig.position=Vector3(x,eye_height+.044,_depth(x,eye_height+.044,g,sex)-.012)
+		brow_rig.position=Vector3(x,eye_height+.038,_depth(x,eye_height+.038,g,sex)-.006)
 		root.add_child(brow_rig)
 		var feminine_brow: bool=sex=="female"
 		var brow_mesh:=ART.bone(brow_rig,
-			Vector3(-eye_width*.82,0,0),
-			Vector3(eye_width*.82,sign*tilt*.034+(
-				.006 if feminine_brow else 0.0),0),
-			.006 if feminine_brow else .008,
-			.007 if feminine_brow else .009,brow,8)
+			Vector3(-eye_width*.76,0,0),
+			Vector3(eye_width*.76,sign*tilt*.034+(
+				.004 if feminine_brow else 0.0),0),
+			.0045 if feminine_brow else .0055,
+			.0055 if feminine_brow else .0065,brow,8)
 		brow_mesh.name="InheritedBrow"
 		brow_rig.set_meta("rest_y",brow_rig.position.y)
 		brow_rig.set_meta("rest_tilt",sign*tilt*.11)
