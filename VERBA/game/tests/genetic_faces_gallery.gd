@@ -169,6 +169,11 @@ func _run() -> void:
 		# Preserve every live transform after photographing so the family
 		# proof below still depicts the undisturbed scene.
 		if i in [0,1]:
+			# Disable the actor's presentation _process only for these
+			# rig diagnostics. Otherwise three camera frames would blend the
+			# deliberately selected joint pose straight back to idle.
+			var prior_processing: bool=citizen.is_processing()
+			citizen.set_process(false)
 			var prior_root: Vector3=citizen.global_position
 			var prior_left_arm: Vector3=citizen.left_arm.rotation
 			var prior_right_arm: Vector3=citizen.right_arm.rotation
@@ -223,6 +228,7 @@ func _run() -> void:
 			citizen.gait_weight=old_gait
 			citizen.distance_gait_phase=old_phase
 			citizen.motion_clock=old_clock
+			citizen.set_process(prior_processing)
 		# Two additional authentic game-world views examine a BENT knee
 		# from an oblique angle. A static front portrait cannot prove that
 		# the foot and calf actually follow the second articulated joint.
