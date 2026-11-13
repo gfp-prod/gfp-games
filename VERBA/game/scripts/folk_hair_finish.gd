@@ -70,6 +70,7 @@ static func scalp_cap(face_root: Node3D, hair: Material, genome: Dictionary,
 	if existing!=null: return existing
 	var volume: float=GENES.value(genome,"hair_volume")
 	var part: float=GENES.value(genome,"hair_parting")
+	var curl: float=GENES.value(genome,"hair_curl")
 	var width: float=lerpf(.180,.200,volume)
 	var depth: float=lerpf(.169,.185,volume)
 	# A close cropped crown rather than a high smooth egg on the skull.
@@ -99,10 +100,18 @@ static func scalp_cap(face_root: Node3D, hair: Material, genome: Dictionary,
 				var hairline: float=1.905+.043*temple-.0075*widow
 				hairline+=.009*(part-.5)*cos(theta)
 				hairline+=.0045*sin(theta*6.0+part*TAU)*front
+				# Small continuous follicle ridges break up the bald-cap
+				# dome. They change actual low-poly silhouette and normals,
+				# never introduce individual floating hair rods.
+				var ridge: float=(.002+.0035*curl)*sin(
+					theta*9.0+t*8.0+part*TAU)*sin(PI*t)
+				var crown_wave: float=.0045*curl*sin(
+					theta*6.0+t*5.0+part*TAU)*sin(PI*t)
 				quad.append(Vector3(
-					cos(theta)*width*circumference,
-					lerpf(hairline,top,t)+.004*(1.0-t)*sin(theta*3.0+t*5.0),
-					.000+sin(theta)*depth*circumference))
+					cos(theta)*(width*circumference+ridge),
+					lerpf(hairline,top,t)+.004*(1.0-t)*sin(theta*3.0+t*5.0)+
+						crown_wave,
+					sin(theta)*(depth*circumference+ridge*.63)))
 			for k in [0,1,2,0,2,3]:
 				var p: Vector3=quad[k]
 				surface.set_uv(Vector2((p.x+.25)*2.0,(p.z+.25)*2.0))
