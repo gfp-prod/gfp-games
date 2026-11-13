@@ -287,6 +287,18 @@ func _run() -> void:
 					limb_bounds.size.x<.105 or limb_bounds.size.x>.27) or (
 					limb_bounds.end.y>.052):
 				_fail("An arm reverted to a rigid one-piece cylinder"); return
+			# Check the ACTUAL shoulder-cap vertices in local sleeve space:
+			# the previous overwide top ellipse produced a sharp triangular
+			# floating shoulder above the garment in orthographic screenshots.
+			var upper_min_x: float=INF
+			var upper_max_x: float=-INF
+			for point in vertices:
+				if point.y>=.013:
+					upper_min_x=minf(upper_min_x,point.x)
+					upper_max_x=maxf(upper_max_x,point.x)
+			if upper_min_x==INF or upper_max_x-upper_min_x>.101:
+				_fail("Shoulder cap regressed to a swollen triangular deltoid")
+				return
 			if not sleeve.find_children("*","CollisionShape3D",true,false).is_empty():
 				_fail("Decorative sleeve added redundant physical collision"); return
 			var module_name: String=side.to_lower()+"_arm"
@@ -310,6 +322,12 @@ func _run() -> void:
 				"InheritedArticulatedHand") as MeshInstance3D
 			if mesh==null or hand==null or mesh.mesh==null:
 				_fail("Arm still ends in a stub instead of a forearm and hand"); return
+			# Reject visually oversized paddle palms while keeping all
+			# individually modeled digits and original severable limb identity.
+			var palm_width: float=hand.get_aabb().size.x
+			if palm_width<.069 or palm_width>.114:
+				_fail("Individual hand reverted to an oversized mitten or tiny block")
+				return
 			if not (hand.mesh is ArrayMesh) or (
 					not bool(hand.get_meta("anatomic_palm",false))) or (
 					int(hand.get_meta("modeled_fingers",0))!=4):
