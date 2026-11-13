@@ -652,6 +652,15 @@ func _run() -> void:
 		if sculpt==null or sculpt.mesh==null or sculpt.mesh.get_surface_count()!=1:
 			_fail("An anatomical face has regressed to disconnected prop spheres")
 			return
+		# The visible skull must now be ONE continuous front/rear
+		# inherited mesh. The old SphereMesh remains solely to preserve
+		# savegame, dimension and growth references; rendering it would
+		# Z-fight against the jaw, leaving a dark mask in screenshots.
+		if not bool(sculpt.get_meta("continuous_inherited_skull_volume",false)):
+			_fail("Head regressed to a floating face patch over an orb"); return
+		var bounds: AABB=sculpt.get_aabb()
+		if bounds.size.z<.31 or bounds.size.y<.38:
+			_fail("Inherited head lacks real back-of-skull / crown volume"); return
 		# A separate face patch, inherited nose and legacy skull occupied
 		# overlapping volume. Their dynamic self-shadowing previously
 		# turned light and dark skin alike into an opaque shadow mask.
@@ -664,6 +673,9 @@ func _run() -> void:
 					GeometryInstance3D.SHADOW_CASTING_SETTING_OFF):
 				_fail("Overlapping sculpted head layer casts black self-shadow")
 				return
+		if skull.visible or not bool(skull.get_meta(
+				"hidden_legacy_skull_compatibility",false)):
+			_fail("Invisible compatibility skull is still Z-fighting"); return
 		var verts: PackedVector3Array=sculpt.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
 		if verts.size()<3800:
 			_fail("The face lost its continuous high-detail cheek/eye/nose topology")
@@ -680,7 +692,11 @@ func _run() -> void:
 		for index in range(verts.size()):
 			var point: Vector3=verts[index]
 			var normal: Vector3=face_normals[index]
-			if absf(point.x)>.13 or point.y<1.63 or point.y>1.89:
+			# Rear volume correctly has +Z and lateral facing normals.
+			# The preexisting visual-lighting gate applies ONLY to
+			# frontal skin, not the newly connected rear hemisphere.
+			if point.z>-.16 or absf(point.x)>.13 or (
+					point.y<1.63 or point.y>1.89):
 				continue
 			if normal.z>-.94:
 				_fail("Face gradients create black mask-like shading")
