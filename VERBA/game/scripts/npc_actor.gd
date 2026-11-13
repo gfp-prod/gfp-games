@@ -3,12 +3,15 @@ extends CharacterBody3D
 ## Existing authored characters retain their landmarks; village citizens
 ## physically navigate based on independent simulated economic/social actions.
 const ART = preload("res://scripts/art.gd")
+const NPC_GENETICS = preload("res://scripts/npc_genetics.gd")
+const NPC_APPEARANCE = preload("res://scripts/npc_appearance.gd")
 
 var npc_id: String = ""
 var display_name: String = ""
 var role: String = ""
 var world
 var definition: Dictionary = {}
+var inherited_genes: Dictionary = {}
 var route: NavigationAgent3D
 var current_goal: Vector3 = Vector3.ZERO
 var last_sim_action: String = ""
@@ -43,6 +46,7 @@ func is_talkable() -> bool:
 	return not npc_id.is_empty()
 
 func _ready() -> void:
+	inherited_genes = NPC_GENETICS.profile(definition)
 	if mobile:
 		collision_layer = 32
 		collision_mask = 16
@@ -51,9 +55,9 @@ func _ready() -> void:
 		physical.name = "PhysicalCitizenCollider"
 		var profile := CapsuleShape3D.new()
 		profile.radius = 0.34
-		profile.height = 1.75
+		profile.height = 1.75 * float(inherited_genes["height"])
 		physical.shape = profile
-		physical.position.y = 0.90
+		physical.position.y = profile.height * .51
 		add_child(physical)
 		route = NavigationAgent3D.new()
 		route.name = "CitizenNavigation"
@@ -66,68 +70,13 @@ func _ready() -> void:
 	add_child(figure)
 	var cloth := ART.mat(Color(String(definition.get("robe","746c60"))),.98)
 	var trim := ART.mat(Color(String(definition.get("trim","c0aa86"))),.95)
-	# A human should read as a particular person, not an identical tan
-	# mannequin re-dressed for each job.
-	var complexion: String="a98b72"
-	match npc_id:
-		"ida": complexion="b69b82"
-		"orin": complexion="8d6c57"
-		"daro": complexion="ad896b"
-		"titus": complexion="997b67"
-		"cass": complexion="c2a18a"
-		"sela": complexion="9c745e"
-		"nima": complexion="75564b"
-		"lena": complexion="bb957b"
-		"mara": complexion="b09a85"
-		_: pass
-	var skin := ART.mat(Color(complexion),.94)
+	var skin := ART.mat(Color(String(inherited_genes["skin"])),.94)
 	var leather := ART.mat(Color("463f37"),.99)
-	# A separate torso, narrower tunic hem and jointed legs replace the
-	# one-piece walking cone. Props remain on their own worker identities.
-	# Twelve-sided fitted tunic with a broad shoulder and a shaped hem:
-	# these surfaces replace the previous square torso and floating eyes.
-	var tunic:=ART.cone(figure,Vector3(0,1.24,0),.32,.73,cloth,.275,12)
-	tunic.name="TaperedVillagerTunic"
-	ART.cone(figure,Vector3(0,.79,0),.36,.58,cloth,.265,12)
-	ART.bone(figure,Vector3(0,1.45,0),Vector3(0,1.63,0),
-		.19,.16,cloth,10)
-	var head:=ART.orb(figure,Vector3(0,1.77,0),
-		Vector3(.42,.49,.39),skin,13)
-	head.name="ModeledInhabitantHead"
-	# A small cap or hair crown stays close to the skull. Face features sit
-	# against the actual front surface at -Z, never suspended in space.
-	var hair:=ART.mat(Color("3e302a"),.96)
-	ART.orb(figure,Vector3(0,1.97,.045),
-		Vector3(.44,.13,.39),hair,12)
-	var brow:=ART.mat(Color("3a3029"),.95)
-	for side in [-1.0,1.0]:
-		ART.orb(figure,Vector3(side*.083,1.79,-.191),
-			Vector3(.047,.040,.028),brow,9)
-		ART.bone(figure,Vector3(side*.047,1.841,-.189),
-			Vector3(side*.123,1.846,-.172),.012,.008,brow,7)
-	ART.orb(figure,Vector3(0,1.706,-.198),
-		Vector3(.084,.104,.075),skin,9)
-	ART.bone(figure,Vector3(-.051,1.643,-.180),
-		Vector3(.051,1.643,-.180),.009,.009,brow,7)
-	for side in [-1.0,1.0]:
-		var arm:=Node3D.new()
-		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
-		arm.position=Vector3(side*.345,1.49,0)
-		figure.add_child(arm)
-		ART.bone(arm,Vector3.ZERO,Vector3(side*.075,-.42,-.045),.116,.084,cloth,9)
-		ART.orb(arm,Vector3(side*.075,-.46,-.045),Vector3(.093,.12,.088),skin,10)
-		var leg:=Node3D.new()
-		leg.name="AnimatedLeftLeg" if side<0.0 else "AnimatedRightLeg"
-		leg.position=Vector3(side*.17,.61,.015)
-		figure.add_child(leg)
-		ART.bone(leg,Vector3.ZERO,Vector3(0,-.46,0),.115,.10,leather,8)
-		ART.box(leg,Vector3(0,-.52,-.095),Vector3(.25,.13,.42),leather)
-		if side<0.0:
-			left_arm=arm
-			left_leg=leg
-		else:
-			right_arm=arm
-			right_leg=leg
+	var anatomy: Dictionary = NPC_APPEARANCE.build(figure,inherited_genes,cloth,trim,skin,leather)
+	left_arm=anatomy["left_arm"]
+	right_arm=anatomy["right_arm"]
+	left_leg=anatomy["left_leg"]
+	right_leg=anatomy["right_leg"]
 	# Cloth mantle and a small side bag distinguish scribe from keeper.
 	ART.bone(figure,Vector3(-.34,1.48,-.14),
 		Vector3(.30,1.46,-.13),.065,.062,trim,7)
@@ -214,28 +163,13 @@ func _ready() -> void:
 			Vector3(.30,.38,.29),ART.mat(Color("c6ad78"),.98),12)
 		harvest_sack.name="CarriedHarvestPendingDelivery"
 		harvest_sack.visible=false
-	# A petrol-station attendant looks like a twentieth-century worker,
-	# not a medieval pilgrim. A slim uniform, two separate legs and a
-	# peaked cap keep the silhouette readable without an external installer.
+	# Juno now uses the same hereditary anatomy with a distinct modern
+	# coat/uniform silhouette. The old featureless duplicate mannequin is gone.
 	if npc_id=="juno":
-		figure.visible=false
-		var attendant:=Node3D.new()
-		attendant.name="DistinctModernAttendant"
-		add_child(attendant)
-		var shirt:=ART.mat(Color("5c7373"),.94)
-		var denim:=ART.mat(Color("485461"),.98)
-		var apron:=ART.mat(Color("b2a17e"),.95)
-		ART.box(attendant,Vector3(0,1.13,0),Vector3(.74,.88,.37),shirt)
-		ART.box(attendant,Vector3(0,.84,-.21),Vector3(.68,.63,.08),apron)
-		for side in [-1.0,1.0]:
-			ART.box(attendant,Vector3(side*.19,.39,0),Vector3(.27,.79,.27),denim)
-			ART.box(attendant,Vector3(side*.20,.06,-.10),Vector3(.31,.15,.46),leather)
-			ART.bone(attendant,Vector3(side*.43,1.42,0),
-				Vector3(side*.51,.99,-.06),.115,.081,shirt,10)
-			ART.orb(attendant,Vector3(side*.52,.94,-.06),Vector3(.095,.105,.084),skin,10)
-		ART.orb(attendant,Vector3(0,1.76,0),Vector3(.23,.27,.21),skin,12)
-		ART.box(attendant,Vector3(0,2.04,-.03),Vector3(.51,.15,.45),denim)
-		ART.box(attendant,Vector3(0,2.01,-.26),Vector3(.40,.052,.27),denim)
+		var uniform:=ART.mat(Color("526e70"),.92)
+		ART.box(figure,Vector3(0,1.1,-.255),Vector3(.34,.52,.035),uniform)
+		ART.box(figure,Vector3(0,2.025,-.035),Vector3(.43,.085,.41),uniform)
+		ART.box(figure,Vector3(0,2.0,-.245),Vector3(.43,.04,.21),uniform)
 	var collider := StaticBody3D.new()
 	collider.name = "LivingNPCConversationCollider"
 	collider.collision_layer = 4 if mobile else (4 | 16)
@@ -244,10 +178,10 @@ func _ready() -> void:
 	add_child(collider)
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = .43
-	capsule.height = 1.95
+	capsule.height = 1.95 * float(inherited_genes["height"])
 	var shape := CollisionShape3D.new()
 	shape.shape = capsule
-	shape.position.y = 1.0
+	shape.position.y = capsule.height*.51
 	collider.add_child(shape)
 	var title := Label3D.new()
 	title.name = "InWorldPersonName"
@@ -259,7 +193,7 @@ func _ready() -> void:
 	title.outline_size = 7
 	title.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	title.no_depth_test = false
-	title.position = Vector3(0,2.29,0)
+	title.position = Vector3(0,2.26*float(inherited_genes["height"])+.10,0)
 	add_child(title)
 	name_label=title
 
