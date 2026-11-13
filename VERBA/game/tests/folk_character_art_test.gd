@@ -32,8 +32,20 @@ func _run() -> void:
 	if not (face.mesh is SphereMesh) or face.scale.x<.38 or face.scale.y<.43:
 		_fail("Character head regressed to the tiny floating-eyes mannequin")
 		return
-	if not (robe.mesh is CylinderMesh) or (robe.mesh as CylinderMesh).radial_segments<10:
-		_fail("The fitted villager torso was replaced by a cuboid")
+	if not (robe.mesh is ArrayMesh) or robe.mesh.get_surface_count()<1:
+		_fail("The modeled torso was replaced by the old CylinderMesh barrel")
+		return
+	var neck=ida.find_child("ModeledNeck",true,false) as MeshInstance3D
+	if neck==null or neck.mesh is CylinderMesh:
+		_fail("The skin-colored chest/neck cylinder has returned")
+		return
+	var thigh=ida.find_child("AnatomicalThigh",true,false) as MeshInstance3D
+	var calf=ida.find_child("AnatomicalCalf",true,false) as MeshInstance3D
+	if thigh==null or calf==null or not (thigh.mesh is ArrayMesh) or not (calf.mesh is ArrayMesh):
+		_fail("Legs regressed to two stacked cylinders")
+		return
+	if ida.left_leg.position.y<.94 or ida.right_leg.position.y<.94:
+		_fail("NPC leg length regressed to stumpy proportions")
 		return
 	if apron.mesh==null or apron.mesh.get_surface_count()!=1:
 		_fail("The shaped baker apron surface is missing")
