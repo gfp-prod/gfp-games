@@ -25,8 +25,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	# A longer rounded deltoid folds into the body from beneath the
 	# shoulder, then tapers across the biceps to the elbow. No free-standing
 	# clavicle/shoulder cylinder is needed, even when a sleeve swings.
-	const HEIGHT: Array[float]=[.095,.061,.026,-.032,-.103,-.184,-.264,-.338,-.426]
-	const CX: Array[float]=[-.085,-.061,-.027,-.008,.015,.032,.053,.066,.073]
+	const HEIGHT: Array[float]=[.095,.061,.026,-.019,-.079,-.155,-.222,-.293,-.365]
+	const CX: Array[float]=[-.078,-.056,-.025,-.006,.014,.029,.044,.053,.060]
 	const CZ: Array[float]=[-.012,-.017,-.023,-.025,-.031,-.040,-.041,-.045,-.048]
 	# Keep a low-volume cap over the deltoid, but do not give every
 	# villager broad, perfectly round biceps. High inherited muscle still
@@ -111,7 +111,7 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 	var samples: Array[Vector3]=[]
 	for y in HEIGHT:
 		var relative: float=clampf((1.39-y)/.81,0.0,1.0)
-		var half_width: float=lerpf(.19,.28,smoothstep(.0,1.0,relative))
+		var half_width: float=lerpf(.155,.220,smoothstep(.0,1.0,relative))
 		var body_section: Vector2=BODY._section(y,genome,sex)
 		for col in range(COLS):
 			var fraction: float=float(col)/float(COLS-1)*2.0-1.0
@@ -141,8 +141,8 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 	apron.set_meta("no_new_collision",true)
 	figure.add_child(apron)
 	# Three small, surface-anchored iron rivets replace giant raised boxes.
-	for location in [Vector2(-.155,1.305),Vector2(.155,1.305),
-			Vector2(.205,.83)]:
+	for location in [Vector2(-.130,1.305),Vector2(.130,1.305),
+			Vector2(.168,.83)]:
 		var p_x: float=location.x
 		var p_y: float=location.y
 		var width: float=BODY._section(p_y,genome,sex).x
@@ -387,8 +387,8 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	# it can swing independently without a hollow black joint appearing.
 	const H: Array[float]=[.092,.019,-.075,-.186,-.297,-.402,-.476,
 		-.568,-.665,-.759,-.846]
-	const W: Array[float]=[.135,.139,.133,.123,.112,.105,.108,.112,.106,.092,.084]
-	const D: Array[float]=[.133,.138,.134,.127,.117,.108,.112,.115,.110,.098,.088]
+	const W: Array[float]=[.116,.119,.114,.105,.096,.089,.091,.095,.090,.080,.074]
+	const D: Array[float]=[.118,.123,.118,.111,.102,.095,.096,.099,.095,.087,.080]
 	const KNEE_Y: float=-.420
 	const SEGMENTS: int=16
 	var upper:=SurfaceTool.new()
@@ -632,7 +632,7 @@ static func fitted_station_apron(figure: Node3D,genome: Dictionary,
 	var existing:=figure.get_node_or_null("FittedStationWorkApron") as MeshInstance3D
 	if existing!=null: return existing
 	const HEIGHT: Array[float]=[1.40,1.35,1.29,1.19,1.10,1.02,.95,.87,.78,.67,.61]
-	const HALF_WIDTH: Array[float]=[.160,.190,.185,.180,.170,.164,.183,.207,.226,.248,.251]
+	const HALF_WIDTH: Array[float]=[.134,.159,.155,.150,.143,.138,.152,.174,.189,.206,.209]
 	const COLS: int=13
 	var source: Array[Vector3]=[]
 	for row in range(HEIGHT.size()):
@@ -723,7 +723,7 @@ static func tailored_womenswear(figure: Node3D,person: String,
 				var p: Vector3=BODY._point(maxf(y,.61),theta,genome,sex)
 				var below: float=clampf((.61-y)/maxf(.16,.61-hem_y),0.0,1.0)
 				var pleat: float=.012*sin(theta*7.0)*pow(below,1.2)
-				var fullness: float=lerpf(1.015,1.235,below)
+				var fullness: float=lerpf(1.015,1.110,below)
 				# Avoid a generic bell skirt; the waist is close-fitting,
 				# the upper hip follows anatomy, and only the hem opens.
 				p.x=p.x*fullness+cos(theta)*pleat
