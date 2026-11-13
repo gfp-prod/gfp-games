@@ -885,12 +885,22 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		var ridge_y: float=lerpf(1.727,1.773,_v(g,"cheek_height"))
 		var plane:=SurfaceTool.new()
 		plane.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var cheek_points: Array[Vector3]=[]
 		for offset in [Vector2(-.035,-.026),Vector2(.008,.022),
 				Vector2(.051,-.014)]:
 			var px: float=ridge_x+offset.x*side
 			var py: float=ridge_y+offset.y
-			plane.set_uv(Vector2(px*2.0,py*2.0))
-			plane.add_vertex(Vector3(px,py,_depth(px,py,g,sex)-.003))
+			cheek_points.append(Vector3(px,py,_depth(px,py,g,sex)-.003))
+		# Mirroring a triangle reverses its winding. The left inherited
+		# cheek used to face INTO the skull, and had NO vertex normals.
+		# Lit from the back, the colored cheek facet turned into a black
+		# tear-shaped blotch beneath the left eye (Orin's screenshot).
+		var facing: Array=[0,2,1] if side<0.0 else [0,1,2]
+		for j in facing:
+			var p: Vector3=cheek_points[j]
+			plane.set_uv(Vector2(p.x*2.0,p.y*2.0))
+			plane.set_normal(_outward_face_normal(p.x,p.y,g,sex))
+			plane.add_vertex(p)
 		var highlight:=MeshInstance3D.new()
 		highlight.name="InheritedCheekboneFacet"
 		highlight.mesh=plane.commit()
