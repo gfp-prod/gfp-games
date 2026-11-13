@@ -142,43 +142,47 @@ static func finish(figure: Node3D,person: String,
 	var rust:=FABRIC.worn_linen(Color("70484b"))
 	var dusky:=FABRIC.worn_linen(Color("4b5360"))
 	var brass:=ART.mat(Color("9d8054"),.95)
+	# A single fitted dress from COSTUME already follows the inherited
+	# pelvis. Do not stack a second opaque skirt: two overlapping shells
+	# made every woman look broad and caused z-fighting in screenshots.
+	var has_tailored: bool=figure.get_node_or_null("TailoredHereditaryDress")!=null
 	match style:
 		"apron_dress":
-			_dress_skirt(root,genome,sex,style,rust)
+			if not has_tailored: _dress_skirt(root,genome,sex,style,rust)
 			# A flour-stained front apron is already worn over the torso;
 			# narrow under-dress side gores show past the apron hem.
 			_drape(root,"BakerApronDressGore",genome,sex,bone,.175,
 				1.02,.455,.034,.012)
-			_waist_wrap(root,genome,sex,ash)
+			# Baker apron already includes tied waist strings and an apron seam.
 		"scribe_layers":
-			_dress_skirt(root,genome,sex,style,dusky)
+			if not has_tailored: _dress_skirt(root,genome,sex,style,dusky)
 			_drape(root,"ScribeInkStainedStole",genome,sex,ash,-.095,
 				1.35,.445,.067,-.007)
 			_drape(root,"ScribeFineFrontHem",genome,sex,moss,.145,
 				1.10,.530,.037,.009)
 			_waist_wrap(root,genome,sex,brass)
 		"merchant_skirt":
-			_dress_skirt(root,genome,sex,style,moss)
+			if not has_tailored: _dress_skirt(root,genome,sex,style,moss)
 			_drape(root,"MerchantLayeredOverskirt",genome,sex,rust,-.075,
 				1.08,.485,.113,.036)
 			_drape(root,"MerchantGoldSash",genome,sex,bone,.152,
 				1.15,.720,.027,.015)
 			_waist_wrap(root,genome,sex,brass)
 		"painter_smock":
-			_dress_skirt(root,genome,sex,style,ash)
+			if not has_tailored: _dress_skirt(root,genome,sex,style,ash)
 			_drape(root,"PainterPigmentedWorkSmock",genome,sex,bone,
 				.015,1.31,.625,.122,.019)
 			_drape(root,"PainterAsymmetricClothHem",genome,sex,dusky,
 				-.125,.92,.470,.061,.023)
 		"traveller_dress":
-			_dress_skirt(root,genome,sex,style,dusky)
+			if not has_tailored: _dress_skirt(root,genome,sex,style,dusky)
 			_drape(root,"TravellerCrossWrap",genome,sex,rust,-.110,
 				1.25,.655,.085,-.019)
 			_waist_wrap(root,genome,sex,brass)
 		"work_dress":
 			# Twentieth-century utility clothing over the station jeans;
 			# this is a close A-line layer, not a medieval bell skirt.
-			_dress_skirt(root,genome,sex,style,dusky)
+			if not has_tailored: _dress_skirt(root,genome,sex,style,dusky)
 			_waist_wrap(root,genome,sex,ash)
 		"guard_tunic":
 			_drape(root,"GuardWornTabard",genome,sex,dusky,
