@@ -849,6 +849,19 @@ func _run() -> void:
 			_fail("Long hairstyle disappears into clothing: "+person_name)
 			return
 		if person_name=="sela":
+			# The five decorative strands previously vanished in profile.
+			# Confirm a connected 3D hair mantle exists behind the scalp,
+			# while the inherited back hair and clothing remain separate.
+			var hair_mass: MeshInstance3D=finish.get_node_or_null(
+				"ContinuousBackHairMass") as MeshInstance3D
+			if hair_mass==null or hair_mass.mesh==null:
+				_fail("Loose hair lost its grown three-dimensional back mass"); return
+			var mass_bounds: AABB=hair_mass.get_aabb()
+			if mass_bounds.size.x<.32 or mass_bounds.size.z<.15 or (
+					mass_bounds.size.y<.35):
+				_fail("Back-of-head hair is a narrow floating profile cord"); return
+			if hair_mass.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<1900:
+				_fail("Continuous back hair is a low-detail billboard"); return
 			var temple_panel: MeshInstance3D=finish.get_node_or_null(
 				"FacetedLeftHairFrame") as MeshInstance3D
 			if temple_panel==null or temple_panel.mesh==null:
