@@ -142,7 +142,7 @@ func _ready() -> void:
 	# caps, retaining the original tested head and collision silhouette.
 	var hair:=ART.mat(GENES.hair_color(genome),.96)
 	var brow:=ART.mat(GENES.hair_color(genome).darkened(.12),.95)
-	PORTRAIT.finish(figure,npc_id,skin,hair,brow,genome)
+	PORTRAIT.finish(figure,npc_id,skin,hair,brow,genome,sex)
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
@@ -344,7 +344,7 @@ func _ready() -> void:
 	inherited_body_dimensions=GENES.body_scale(genome,sex)
 	_apply_genetic_growth()
 	if visual_attendant!=null:
-		PORTRAIT.finish(visual_attendant,npc_id,skin,hair,brow,genome)
+		PORTRAIT.finish(visual_attendant,npc_id,skin,hair,brow,genome,sex)
 	# Both face and limb models inherit the same body shape, and child
 	# models use the existing detachable body-part system.
 	refresh_anatomy_visuals()
