@@ -55,6 +55,18 @@ func _run() -> void:
 		if v.z>outer_front-.046:
 			_fail("Baker apron is buried behind genetically modeled clothing")
 			return
+	# Vertex-only clearance missed the huge chest-colored hole: the shirt
+	# intersected the broad triangle interiors between sampled edge points.
+	# Reject any apron whose triangle centers cut into the inherited torso.
+	for triangle in range(0,triangles.size(),3):
+		var center: Vector3=(triangles[triangle]+triangles[triangle+1]+
+			triangles[triangle+2])/3.0
+		var radius: float=genetic_body._section(center.y,ida_genome).x
+		var angle: float=-PI*.5+asin(clampf(center.x/radius,-.89,.89))
+		var front: float=genetic_body._point(center.y,angle,ida_genome).z
+		if center.z>front-.055:
+			_fail("Baker apron triangle interior clips through the chest or waist")
+			return
 	if not bool(apron.get_meta("drapes_over_inherited_torso",false)):
 		_fail("Baker apron lost its fitted living-body surface")
 		return
