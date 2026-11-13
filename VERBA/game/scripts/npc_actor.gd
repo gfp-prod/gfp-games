@@ -249,13 +249,9 @@ func _ready() -> void:
 				.039,.029,leather,8)
 			ART.box(staff,Vector3(0,1.02,0),Vector3(.47,.10,.09),trim)
 		"sela":
-			var purse:=ART.mat(Color("b89a61"),.93)
-			var bag:=ART.box(figure,Vector3(-.47,.73,-.23),
-				Vector3(.38,.45,.24),purse)
-			bag.name="VisibleMerchantPouch"
-			for side in [-1.0,1.0]:
-				ART.bone(figure,Vector3(-.47+side*.14,1.00,-.29),
-					Vector3(-.47+side*.14,.85,-.29),.023,.023,leather,7)
+			# The old .38 x .45 golden box floated beside her body.
+			# This compact worn-leather bag follows the inherited hip.
+			WARDROBE.merchant_satchel(figure,genome,sex)
 		"nima":
 			var instrument:=ART.orb(figure,Vector3(-.22,1.03,-.40),
 				Vector3(.28,.37,.11),ART.mat(Color("926849"),.91),12)
@@ -263,10 +259,8 @@ func _ready() -> void:
 			ART.bone(figure,Vector3(-.33,1.17,-.40),
 				Vector3(.18,1.55,-.40),.065,.053,leather,9)
 		"titus":
-			var iron:=ART.mat(Color("7d8180"),.56)
-			var shield:=ART.box(figure,Vector3(-.44,1.05,-.20),
-				Vector3(.14,.83,.54),iron)
-			shield.name="VisibleGuardShield"
+			# Muted faceted shield follows the original detachable left arm.
+			WARDROBE.guard_shield(left_arm)
 		_:
 			pass
 	# A real work-in-progress harvest sack belongs to the farmer, not to
