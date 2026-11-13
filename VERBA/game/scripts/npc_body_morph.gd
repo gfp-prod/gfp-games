@@ -5,7 +5,7 @@ extends RefCounted
 ## wounds, clothing objects, names and saves retain their identity.
 const GENES=preload("res://scripts/npc_genetics.gd")
 const RINGS: int=16
-const HEIGHTS: Array[float]=[.49,.63,.80,.98,1.10,1.20,1.30,1.38,1.43,1.46,1.49,1.52,1.55,1.575]
+const HEIGHTS: Array[float]=[.49,.63,.80,.98,1.10,1.20,1.30,1.34,1.375,1.405,1.43,1.455,1.48,1.505]
 
 static func _section(y: float,g: Dictionary) -> Vector2:
 	var shoulders: float=lerpf(.89,1.16,GENES.value(g,"shoulder_width"))
@@ -20,18 +20,19 @@ static func _section(y: float,g: Dictionary) -> Vector2:
 	var midriff:=Vector2(.314*waist+.025*(1.0-muscles),.277*depth)
 	var ribcage:=Vector2(.353*chest+.024*muscles,.322*depth)
 	var shoulder:=Vector2(.357*shoulders+.012*chest,.304*depth)
-	var neckline:=Vector2(.142,.149)
+	var neckline:=Vector2(.197,.180)
 	if y<=.78:
 		return pelvis
 	if y<1.10:
 		return pelvis.lerp(midriff,smoothstep(.78,1.10,y))
-	if y<1.31:
-		return midriff.lerp(ribcage,smoothstep(1.10,1.31,y))
-	if y<1.43:
-		return ribcage.lerp(shoulder,smoothstep(1.31,1.43,y))
-	# The trapezius turns toward the neckline gradually across five rings.
-	# Inherited shoulder breadth survives without floating collar geometry.
-	return shoulder.lerp(neckline,smoothstep(1.43,1.575,y))
+	if y<1.30:
+		return midriff.lerp(ribcage,smoothstep(1.10,1.30,y))
+	if y<1.375:
+		return ribcage.lerp(shoulder,smoothstep(1.30,1.375,y))
+	# A high tube of linen formerly filled the space under the chin and
+	# looked like a disconnected turtleneck. End the cloth below the jaw;
+	# shape the shoulder over several rings instead of a flat horizontal cap.
+	return shoulder.lerp(neckline,smoothstep(1.375,1.505,y))
 
 static func _point(y: float,angle: float,g: Dictionary) -> Vector3:
 	var section: Vector2=_section(y,g)
@@ -81,6 +82,8 @@ static func finish(root: Node3D,g: Dictionary,cloth: Material,
 		(cloth as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
 	garment.material_override=cloth
 	garment.set_meta("seamless_ribcage_waist_hips",true)
+	garment.set_meta("natural_open_neckline",true)
+	garment.set_meta("neck_termination_y",HEIGHTS[HEIGHTS.size()-1])
 	garment.set_meta("genetic_bust_shape",GENES.value(g,"bust_volume"))
 	garment.set_meta("genetic_waist_shape",GENES.value(g,"waist_width"))
 	garment.set_meta("genetic_chest_shape",GENES.value(g,"chest_width"))
