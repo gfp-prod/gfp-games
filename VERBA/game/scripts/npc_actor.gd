@@ -444,7 +444,7 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	var vertices: Array[Vector3]=[]
 	for y in HEIGHTS:
 		var t: float=clampf((1.40-y)/.85,0.0,1.0)
-		var half_width: float=lerpf(.20,.285,t)
+		var half_width: float=lerpf(.185,.260,t)
 		var torso_section: Vector2=BODY._section(y,genome,sex)
 		for col in range(COLUMNS):
 			var fraction: float=float(col)/float(COLUMNS-1)*2.0-1.0
