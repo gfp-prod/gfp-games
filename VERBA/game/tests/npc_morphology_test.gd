@@ -43,8 +43,21 @@ func _run() -> void:
 	# shoulder/pelvis or waist/pelvis ratios, the *visible* body shape is
 	# still effectively unisex, however different its height may be.
 	var same_genome: Dictionary=GENES.founder("adult-anatomy-reference",1938)
+	# Median alleles let us independently detect unintentional universal
+	# bulk without banning naturally wide-hipped or muscular bloodlines.
+	for trait in ["stature","shoulder_width","chest_width",
+			"waist_width","hip_width","body_depth","muscle_tone","bust_volume"]:
+		same_genome["alleles"][trait]=[500,500]
 	var female_hip: float=BODY._section(.80,same_genome,"female").x
 	var male_hip: float=BODY._section(.80,same_genome,"male").x
+	# Realistic average characters should not look wider than their
+	# upper torso is tall. This detects the last pass's stocky, tent-like
+	# baseline while retaining the separate feminine/masculine ratios.
+	if female_hip>.385 or male_hip>.360 or (
+			BODY._section(1.10,same_genome,"female").x>.285) or (
+			BODY._section(1.10,same_genome,"male").x>.315):
+		_fail("Average inherited anatomy regressed to the old husky silhouette")
+		return
 	var female_shoulder: float=BODY._section(1.365,same_genome,"female").x
 	var male_shoulder: float=BODY._section(1.365,same_genome,"male").x
 	var female_waist: float=BODY._section(1.10,same_genome,"female").x
