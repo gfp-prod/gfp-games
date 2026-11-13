@@ -135,6 +135,12 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 	face.name="IndividualIntegratedFaceMesh"
 	face.mesh=st.commit()
 	face.material_override=skin
+	# The nose, cheek ridge and overlapping inherited skull share this
+	# physical space. Dynamic shadows cast by the surface onto itself
+	# previously blacked out the ENTIRE lower face in true Godot frames.
+	# Retain real directional shading and world lighting, but avoid a
+	# separate cosmetic face casting overlapping shadows like a mask.
+	face.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	face.set_meta("true_inherited_lower_jaw_silhouette",true)
 	root.add_child(face)
 
@@ -625,6 +631,9 @@ static func _nose_facet(root: Node3D,skin: Material,g: Dictionary,
 	nose.mesh=tool.commit()
 	nose.position=Vector3(0,nose_y,front)
 	nose.material_override=skin
+	# The bridge is already sculpted into the continuous skin. Its
+	# overlay defines a sharper tip, not a second light-occluding skull.
+	nose.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	nose.set_meta("integrated_bridge_and_tip",true)
 	nose.set_meta("no_new_collision",true)
 	root.add_child(nose)
