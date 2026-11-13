@@ -345,7 +345,7 @@ static func _back_hair_mass(root: Node3D,material: Material,
 					var p: Vector3=corners[k]
 					st.set_uv(Vector2(p.x+.5,p.y*.8))
 					st.add_vertex(p)
-			var walls: Array[Array]=[]
+			var walls: Array=[]
 			if col==0: walls.append([face[0],rear[0],rear[1],face[1]])
 			if col==COLS-2: walls.append([face[3],face[2],rear[2],rear[3]])
 			if row==0: walls.append([face[0],face[3],rear[3],rear[0]])
@@ -359,6 +359,8 @@ static func _back_hair_mass(root: Node3D,material: Material,
 	var mass:=MeshInstance3D.new()
 	mass.name="ContinuousBackHairMass"
 	mass.mesh=st.commit()
+	if material is StandardMaterial3D:
+		(material as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
 	mass.material_override=material
 	mass.set_meta("hereditary_back_hair_volume",true)
 	mass.set_meta("inherited_hair_end",tip_y)
