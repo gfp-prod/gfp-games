@@ -89,7 +89,7 @@ static func scalp_cap(face_root: Node3D, hair: Material, genome: Dictionary,
 				hairline+=.009*(part-.5)*cos(theta)
 				quad.append(Vector3(
 					cos(theta)*width*circumference,
-					lerpf(hairline,top,t)+.004*sin(theta*3.0+t*5.0),
+					lerpf(hairline,top,t)+.004*(1.0-t)*sin(theta*3.0+t*5.0),
 					.030+sin(theta)*depth*circumference))
 			for k in [0,1,2,0,2,3]:
 				var p: Vector3=quad[k]
