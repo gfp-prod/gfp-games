@@ -592,7 +592,9 @@ static func fit_skull_landmarks(figure: Node3D,g: Dictionary,
 	var face: Node3D=figure.get_node_or_null("IndividualFaceConstruction")
 	if face==null: return
 	var dimensions: Vector3=skull_scale(g,age_years)
-	const THROAT: float=1.49
+	# Preserve a visible neck column between the clavicles and the jaw.
+	# Scaling about the lower collar gave people swallowed, shoulder-level heads.
+	const THROAT: float=1.62
 	# Body/face generators both use absolute pre-growth coordinates.
 	# Affine scaling about the THROAT marker keeps mouth, eyes, hair
 	# and skin-colored neck mutually registered. An arbitrary scale
