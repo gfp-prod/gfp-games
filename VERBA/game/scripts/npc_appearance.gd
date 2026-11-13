@@ -55,8 +55,9 @@ static func build(figure: Node3D, genes: Dictionary, cloth: Material, trim: Mate
 			Vector3(.155,.115,.096),skin,11)
 		ART.orb(figure,Vector3(side*.203*face,1.759,0),
 			Vector3(.085,.17,.10),skin,9)
-		ART.orb(figure,Vector3(side*.087*face,1.806,-.179*face),
+		var eyeball := ART.orb(figure,Vector3(side*.087*face,1.806,-.179*face),
 			Vector3(.092*eye,.067*eye,.052),sclera,12)
+		eyeball.name = "VisibleLeftEye" if side<0 else "VisibleRightEye"
 		ART.orb(figure,Vector3(side*.087*face,1.804,-.211*face),
 			Vector3(.048*eye,.052*eye,.024),iris,12)
 		ART.orb(figure,Vector3(side*.087*face,1.804,-.228*face),
@@ -66,12 +67,15 @@ static func build(figure: Node3D, genes: Dictionary, cloth: Material, trim: Mate
 			.017*brow_size,.012*brow_size,brow,8)
 	ART.bone(figure,Vector3(0,1.84,-.169*face),
 		Vector3(0,1.732,-.218*face),.050*nose,.066*nose,skin,10)
-	ART.orb(figure,Vector3(0,1.721,-.225*face),
+	var nose_tip:=ART.orb(figure,Vector3(0,1.721,-.225*face),
 		Vector3(.124*nose,.074,.079*nose),skin,11)
-	ART.orb(figure,Vector3(0,1.648,-.175*face),
+	nose_tip.name="ModeledNoseTip"
+	var upper_lip:=ART.orb(figure,Vector3(0,1.648,-.175*face),
 		Vector3(.148,.043,.049),lips,12)
-	ART.orb(figure,Vector3(0,1.622,-.172*face),
+	upper_lip.name="ModeledUpperLip"
+	var lower_lip:=ART.orb(figure,Vector3(0,1.622,-.172*face),
 		Vector3(.136,.030,.042),lips,12)
+	lower_lip.name="ModeledLowerLip"
 	# Styled hair genuinely changes the outline of the head.
 	_hair(figure,style,hair,face)
 	if not female and int(genes.get("beard",0))>0:
