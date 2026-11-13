@@ -67,20 +67,22 @@ static func _jaw_outline(y: float,g: Dictionary,sex: String) -> float:
 
 static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 		sex: String="unspecified") -> void:
-	# 14*16*6 = 1344 vertices per head. This is a small mesh per
-	# genome, generated only once when a character is instantiated.
+	# A finer continuous facial lattice lets the nose, cheeks and eye sockets
+	# share actual surface relief. Generated once for each inherited genome.
 	var st:=SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var fw: float=lerpf(.90,1.10,_v(g,"face_width")) * (
 		.950 if sex=="female" else 1.025 if sex=="male" else 1.0)
 	var fy: float=lerpf(.90,1.11,_v(g,"face_length")) * (
 		.985 if sex=="female" else 1.035 if sex=="male" else 1.0)
-	for yi in range(16):
-		for xi in range(14):
-			var x0: float=lerpf(-.183,.183,float(xi)/14.0)*fw
-			var x1: float=lerpf(-.183,.183,float(xi+1)/14.0)*fw
-			var y0: float=1.77+(lerpf(1.575,1.931,float(yi)/16.0)-1.77)*fy
-			var y1: float=1.77+(lerpf(1.575,1.931,float(yi+1)/16.0)-1.77)*fy
+	const COLS: int=24
+	const ROWS: int=28
+	for yi in range(ROWS):
+		for xi in range(COLS):
+			var x0: float=lerpf(-.183,.183,float(xi)/float(COLS))*fw
+			var x1: float=lerpf(-.183,.183,float(xi+1)/float(COLS))*fw
+			var y0: float=1.77+(lerpf(1.575,1.931,float(yi)/float(ROWS))-1.77)*fy
+			var y1: float=1.77+(lerpf(1.575,1.931,float(yi+1)/float(ROWS))-1.77)*fy
 			var x0low: float=x0*_jaw_outline(y0,g,sex)
 			var x0high: float=x0*_jaw_outline(y1,g,sex)
 			var x1low: float=x1*_jaw_outline(y0,g,sex)
@@ -412,6 +414,83 @@ static func _facial_ribbon(parent: Node3D,name: String,material: Material,
 	return ribbon
 
 
+## Eyelids are shaped as shallow skin folds on the ACTUAL inherited face,
+## not horizontal strips floating ahead of the eyes. Their tapered corners
+## disappear into the eye socket; independent blink covers still animate.
+static func _fitted_eye_fold(socket: Node3D,name: String,skin: Material,
+		g: Dictionary,sex: String,half_span: float,aperture: float,
+		upper: bool) -> MeshInstance3D:
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(skin)
+	const SEGMENTS: int=18
+	for i in range(SEGMENTS):
+		var quad: Array[Vector3]=[]
+		for pair in [[i,0.0],[i+1,0.0],[i+1,1.0],[i,1.0]]:
+			var u: float=float(pair[0])/float(SEGMENTS)*2.0-1.0
+			var out: float=float(pair[1])
+			var fade: float=pow(maxf(0.0,1.0-u*u),.72)
+			var x: float=u*half_span
+			var eye_edge: float=(.017 if upper else -.017)*aperture
+			var arch: float=(.005 if upper else -.002)*fade
+			var spread: float=(.011 if upper else -.010)*fade*out
+			var y: float=eye_edge+arch+spread
+			var face_z: float=_depth(socket.position.x+x,
+				socket.position.y+y,g,sex)-socket.position.z
+			var z: float=face_z-(.003+.011*(1.0-out))*fade-.001
+			quad.append(Vector3(x,y,z))
+		for k in [0,1,2,0,2,3]:
+			var p: Vector3=quad[k]
+			st.set_uv(Vector2(p.x+.2,p.y+.1))
+			st.add_vertex(p)
+	st.generate_normals()
+	var fold:=MeshInstance3D.new()
+	fold.name=name
+	fold.mesh=st.commit()
+	fold.material_override=skin
+	fold.set_meta("attached_to_inherited_face",true)
+	fold.set_meta("anatomical_eye_fold",true)
+	fold.set_meta("no_new_collision",true)
+	socket.add_child(fold)
+	return fold
+
+## Brows are individually groomed but their roots track the cheek and brow
+## bone under them. The existing brow rig continues to control expressions.
+static func _fitted_brow(brow_rig: Node3D,material: Material,
+		g: Dictionary,sex: String,half_span: float,
+		brow_tilt: float,half_height: float) -> MeshInstance3D:
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(material)
+	const SEGMENTS: int=18
+	for i in range(SEGMENTS):
+		var quad: Array[Vector3]=[]
+		for pair in [[i,-1.0],[i+1,-1.0],[i+1,1.0],[i,1.0]]:
+			var u: float=float(pair[0])/float(SEGMENTS)*2.0-1.0
+			var side: float=float(pair[1])
+			var fade: float=pow(maxf(0.0,1.0-u*u),.68)
+			var x: float=u*half_span
+			var y: float=brow_tilt*(u+1.0)*.5+.004*fade+
+				side*half_height*fade
+			var face_z: float=_depth(brow_rig.position.x+x,
+				brow_rig.position.y+y,g,sex)-brow_rig.position.z
+			quad.append(Vector3(x,y,face_z-.006*fade-.002))
+		for k in [0,1,2,0,2,3]:
+			var p: Vector3=quad[k]
+			st.set_uv(Vector2(p.x+.2,p.y+.1))
+			st.add_vertex(p)
+	st.generate_normals()
+	if material is StandardMaterial3D:
+		(material as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
+	var mesh:=MeshInstance3D.new()
+	mesh.name="InheritedBrow"
+	mesh.mesh=st.commit()
+	mesh.material_override=material
+	mesh.set_meta("attached_to_inherited_brow_bone",true)
+	mesh.set_meta("no_new_collision",true)
+	brow_rig.add_child(mesh)
+	return mesh
+
 ## A shallow, continuous triangular nose whose side planes rise from the
 ## existing genetic nasal bridge. No floating ball for a nose tip.
 static func _nose_facet(root: Node3D,skin: Material,g: Dictionary,
@@ -480,7 +559,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var eye_height: float=lerpf(1.780,1.802,_v(g,"brow_height"))
 	# Feature dimensions must read at the standard third-person distance.
 	# Larger eye anatomy is inherited rather than painted onto the face.
-	var eye_width: float=lerpf(.040,.064,_v(g,"eye_shape")) * (
+	var eye_width: float=lerpf(.045,.068,_v(g,"eye_shape")) * (
 		1.045 if sex=="female" else 1.0)
 	var tilt: float=lerpf(-.22,.22,_v(g,"brow_angle"))
 	for sign in [-1.0,1.0]:
@@ -506,35 +585,32 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		var pupil:=ART.orb(socket,Vector3(0,0,-.018),
 			Vector3(eye_width*.245,.012*eye_aperture,.004),eye_ink,10)
 		pupil.name="AnatomicalPupil"
-		var lid:=_facial_ribbon(socket,"IndividualUpperEyelid",skin,
-			Vector3(-eye_width*.83,.016*eye_aperture,-.011),
-			Vector3(eye_width*.83,.016*eye_aperture,-.011),.005)
-		var lower_lid:=_facial_ribbon(socket,"AnatomicalLowerEyelid",skin,
-			Vector3(-eye_width*.77,-.016*eye_aperture,-.011),
-			Vector3(eye_width*.77,-.016*eye_aperture,-.011),.004)
+		var lid:=_fitted_eye_fold(socket,"IndividualUpperEyelid",skin,
+			g,sex,eye_width*.94,eye_aperture,true)
+		var lower_lid:=_fitted_eye_fold(socket,"AnatomicalLowerEyelid",skin,
+			g,sex,eye_width*.89,eye_aperture,false)
 		# Blink with actual moving eyelid volumes. The sclera, iris and pupil
 		# stay at their anatomical sizes; compressing the entire eye made
 		# villagers look like rubber-faced dolls during conversations.
 		var upper_cover:=_facial_ribbon(socket,"ExpressionUpperBlinkCover",skin,
 			Vector3(-eye_width*.99,0,-.015),
-			Vector3(eye_width*.99,0,-.015),.019*eye_aperture)
-		upper_cover.position.y=.028*eye_aperture
+			Vector3(eye_width*.99,0,-.015),.016*eye_aperture)
+		upper_cover.position.y=.038*eye_aperture
 		upper_cover.set_meta("rest_y",upper_cover.position.y)
 		var lower_cover:=_facial_ribbon(socket,"ExpressionLowerBlinkCover",skin,
 			Vector3(-eye_width*.96,0,-.015),
-			Vector3(eye_width*.96,0,-.015),.018*eye_aperture)
-		lower_cover.position.y=-.028*eye_aperture
+			Vector3(eye_width*.96,0,-.015),.016*eye_aperture)
+		lower_cover.position.y=-.038*eye_aperture
 		lower_cover.set_meta("rest_y",lower_cover.position.y)
 		var brow_rig:=Node3D.new()
 		brow_rig.name="ExpressionBrowLeft" if sign<0.0 else "ExpressionBrowRight"
 		brow_rig.position=Vector3(x,eye_height+.048,_depth(x,eye_height+.048,g,sex)-.010)
 		root.add_child(brow_rig)
 		var feminine_brow: bool=sex=="female"
-		var brow_mesh:=_facial_ribbon(brow_rig,"InheritedBrow",brow,
-			Vector3(-eye_width*.89,0,0),
-			Vector3(eye_width*.89,sign*tilt*.038+(
-				.004 if feminine_brow else 0.0),0),
-			.007 if feminine_brow else .009)
+		var brow_mesh:=_fitted_brow(brow_rig,brow,g,sex,
+			eye_width*.94,sign*tilt*.038+(
+				.004 if feminine_brow else 0.0),
+			.008 if feminine_brow else .010)
 		brow_rig.set_meta("rest_y",brow_rig.position.y)
 		brow_rig.set_meta("rest_tilt",sign*tilt*.11)
 	# These nose pieces attach directly to the genetically sculpted face.
