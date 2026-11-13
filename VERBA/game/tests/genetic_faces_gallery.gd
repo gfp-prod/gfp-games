@@ -131,10 +131,15 @@ func _run() -> void:
 			citizen.global_position=ground_pose+Vector3(0,120.0,0)
 			cam.projection=Camera3D.PROJECTION_ORTHOGONAL
 			cam.size=2.48
-			for direction in ["front","profile"]:
+			for direction in ["front","three_quarter","profile"]:
 				if direction=="front":
 					cam.global_position=citizen.to_global(
 						Vector3(0,1.12,-4.0))
+				elif direction=="three_quarter":
+					# Equal lighting and distance: contour transitions and
+					# dress projection invisible in head-on shots must be reviewed.
+					cam.global_position=citizen.to_global(
+						Vector3(2.85,1.12,-2.85))
 				else:
 					cam.global_position=citizen.to_global(
 						Vector3(4.0,1.12,0))
@@ -208,5 +213,5 @@ func _run() -> void:
 		_fail("Actual on-map four-person bloodline photo failed")
 		return
 	print("GENETIC_FACE_FRAME: 08_ida_orin_and_children")
-	print("PASS: twenty-eight actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
+	print("PASS: thirty-one actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
 	quit(0)
