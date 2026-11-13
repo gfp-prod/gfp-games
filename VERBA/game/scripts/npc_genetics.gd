@@ -114,17 +114,19 @@ static func body_scale(g: Dictionary,sex: String="unspecified") -> Vector3:
 	# Broad overlap: a large-statured daughter can tower over a small man.
 	# Both parents transmit the actual stature alleles; sex shifts only the
 	# baseline expression and does not replace the heritable signal.
+	# A little more leg/torso height and less universal X/Z mass prevents
+	# every moderate-allele adult reading as stocky. Extremes still overlap.
 	var height_gene: float=value(g,"stature")
 	var shoulders: float=value(g,"shoulder_width")
 	var depth: float=value(g,"body_depth")
 	var female: bool=sex=="female"
-	var height: float=(.82+.34*height_gene) if female else (.90+.30*height_gene)
-	var breadth: float=lerpf(.87,1.20,shoulders)
+	var height: float=(.875+.325*height_gene) if female else (.94+.32*height_gene)
+	var breadth: float=lerpf(.87,1.14,shoulders)
 	if female:
 		# Broad-shouldered women retain their width; fine-boned women
 		# average narrower, without overriding their transmitted genes.
 		breadth*=lerpf(.945,1.012,shoulders)
-	var thickness: float=lerpf(.86,1.16,depth)
+	var thickness: float=lerpf(.88,1.11,depth)
 	if female:
 		thickness*=lerpf(.955,1.01,depth)
 	return Vector3(breadth,height,thickness)
