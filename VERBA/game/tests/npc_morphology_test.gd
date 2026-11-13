@@ -161,19 +161,37 @@ func _run() -> void:
 			return
 	var leg_stage:=Node3D.new()
 	root.add_child(leg_stage)
-	var trouser:=COSTUME.fitted_lower_leg(leg_stage,1.0,
+	var thigh:=COSTUME.fitted_lower_leg(leg_stage,1.0,
 		same_genome,"female")
-	var leg_bounds: AABB=trouser.get_aabb()
-	var boot: MeshInstance3D=leg_stage.get_node_or_null(
-		"GeneticAnkleBoot") as MeshInstance3D
-	if leg_bounds.position.y>-.80 or leg_bounds.end.y<.05 or boot==null:
-		_fail("Long articulated thigh/calf/ankle geometry was lost")
+	var upper_bounds: AABB=thigh.get_aabb()
+	var knee: Node3D=leg_stage.get_node_or_null(
+		"AnatomicalKneeHinge") as Node3D
+	if knee==null or not bool(knee.get_meta("detaches_with_original_leg",false)):
+		_fail("Shin has no knee pivot parented beneath the original leg")
 		return
-	if boot.get_aabb().position.y>-.955:
-		_fail("Boot no longer meets the physical ground")
+	var shin: MeshInstance3D=knee.get_node_or_null(
+		"InheritedCalfAndShin") as MeshInstance3D
+	var boot: MeshInstance3D=knee.get_node_or_null(
+		"GeneticAnkleBoot") as MeshInstance3D
+	if shin==null or boot==null or upper_bounds.position.y>-.46 or (
+			upper_bounds.end.y<.05):
+		_fail("Femur, hinged calf, or floor-contact boot was lost")
+		return
+	if shin.get_aabb().position.y+knee.position.y>-.83:
+		_fail("Animated shin no longer reaches the ankle")
+		return
+	if boot.get_aabb().position.y+knee.position.y>-.955:
+		_fail("Animated boot no longer meets the physical ground")
+		return
+	var toe: Vector3=Vector3(.0,-.50,-.13)
+	var before_bend: Vector3=knee.to_global(toe)
+	knee.rotation.x=.55
+	var after_bend: Vector3=knee.to_global(toe)
+	if before_bend.distance_to(after_bend)<.10:
+		_fail("Shin/boot pivot exists but cannot visibly bend")
 		return
 	if not leg_stage.find_children("*","CollisionShape3D",true,false).is_empty():
-		_fail("A visual silhouette edit added a second physical leg")
+		_fail("A second physical limb was added by knee art")
 		return
 	# Facial differences must live in the sculpted continuous mesh too,
 	# not only the person's hair or hat. Inherited anatomy remains visible
