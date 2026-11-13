@@ -121,8 +121,8 @@ func _ready() -> void:
 	var tunic:=ART.cone(figure,Vector3(0,1.125,0),.285,.56,cloth,.205,12)
 	tunic.name="TaperedVillagerTunic"
 	ART.cone(figure,Vector3(0,.79,0),.315,.52,cloth,.255,12)
-	ART.bone(figure,Vector3(0,1.45,0),Vector3(0,1.58,0),
-		.14,.115,cloth,10)
+	# Shoulder, neck opening and trapezius now come from the inherited
+	# single cloth surface. No exposed helper cylinder beneath the chin.
 	var head:=ART.orb(figure,Vector3(0,1.77,0),
 		Vector3(.42,.49,.39),skin,13)
 	head.name="ModeledInhabitantHead"
