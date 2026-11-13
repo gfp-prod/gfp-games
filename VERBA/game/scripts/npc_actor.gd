@@ -149,10 +149,10 @@ func _ready() -> void:
 		# Shoulder sockets are measured from this person's inherited upper
 		# thorax. A fixed x=.345 made both sexes look broad-shouldered.
 		var socket_width: float=BODY._section(1.365,genome,sex).x
-		arm.position=Vector3(side*(.040+.88*socket_width),1.49,0)
+		arm.position=Vector3(side*(.030+.88*socket_width),1.405,0)
 		# A slightly relaxed, inherited resting stance instead of two
 		# vertical mannequin rods; gait and reaching still drive rotation.x.
-		arm.rotation.z=side*lerpf(.060,.125,
+		arm.rotation.z=side*lerpf(.050,.090,
 			GENES.value(genome,"shoulder_width"))
 		figure.add_child(arm)
 		# Shoulder cap and upper sleeve have a sculpted circumference and
@@ -310,10 +310,10 @@ func _ready() -> void:
 			_install_limb_hitbox(modern_leg,side_name+"_leg")
 			var modern_arm:=Node3D.new()
 			modern_arm.name="ModularModern"+side_name.capitalize()+"Arm"
-			modern_arm.position=Vector3(side*(.054+
-				.94*BODY._section(1.365,genome,sex).x),1.42,0)
+			modern_arm.position=Vector3(side*(.034+
+				.91*BODY._section(1.365,genome,sex).x),1.405,0)
 			attendant.add_child(modern_arm)
-			modern_arm.rotation.z=side*lerpf(.060,.125,GENES.value(genome,"shoulder_width"))
+			modern_arm.rotation.z=side*lerpf(.050,.090,GENES.value(genome,"shoulder_width"))
 			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt,sex)
 			var modern_forearm:=Node3D.new()
 			modern_forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
