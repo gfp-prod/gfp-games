@@ -59,7 +59,10 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 		.284*depth*(.970 if female else 1.030 if male else 1.0))
 	var shoulder:=Vector2((.327*shoulders+.010*chest)*shoulder_factor,
 		.274*depth*(.975 if female else 1.035 if male else 1.0))
-	var neckline:=Vector2(.197,.180)
+	# A slender collar opening closes toward the new cranial/throat
+	# landmark. An oversized neckline left a hollow dark collar around
+	# the smaller, more realistic head.
+	var neckline:=Vector2(.155,.140)
 	if y<=.78:
 		# Do not extrude the widest hip section unchanged down to the
 		# tunic hem: that produced a rectangular, barrel-shaped skirt.
