@@ -37,7 +37,7 @@ jobs:
       - name: Photograph inherited physical faces and bodies inside Godot
         run: |
           timeout 320s xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/genetic_faces_gallery.gd 2>&1 | tee /tmp/genetic-gallery.log
-          grep -q "PASS: thirty-one actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety" /tmp/genetic-gallery.log
+          grep -q "PASS: thirty-three actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety" /tmp/genetic-gallery.log
       - name: Publish in-game body and orthographic anatomy JPEGs on review branch
         if: success() && github.event.pull_request.head.repo.full_name == github.repository && (github.head_ref == 'verba/blender-asset-foundry' || github.head_ref == 'verba/anatomical-torso-sculpt-20261113' || github.head_ref == 'verba/lean-npc-silhouette-reach-gates-20261113')
         env:
@@ -60,7 +60,9 @@ jobs:
               "10_lena_painter_orthographic_front",
               "10_lena_painter_orthographic_three_quarter",
               "10_lena_painter_orthographic_profile",
-              "02_orin_blacksmith_hand_detail"
+              "02_orin_blacksmith_hand_detail",
+              "01_ida_baker_walk_rig_pose",
+              "02_orin_blacksmith_work_rig_pose"
           ]
           output = Path("/tmp/verba-direct-npc-screens")
           output.mkdir(exist_ok=True)
