@@ -147,10 +147,11 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 ## These are children of the existing amputatable/animated leg pivot;
 ## they never get their own collider, movement system or save identity.
 static func fitted_lower_leg(leg: Node3D,side: float,
-		genome: Dictionary,leather: Material) -> MeshInstance3D:
+		genome: Dictionary) -> MeshInstance3D:
 	var existing:=leg.get_node_or_null("GeneticTrouserLeg") as MeshInstance3D
 	if existing!=null: return existing
 	var cloth:=FABRIC.worn_linen(Color("4a4b45"))
+	var boot_hide:=FABRIC.worn_leather(Color("342b26"))
 	var hip: float=lerpf(.87,1.15,GENES.value(genome,"hip_width"))
 	var depth: float=lerpf(.90,1.10,GENES.value(genome,"body_depth"))
 	const H: Array[float]=[.085,.025,-.060,-.160,-.255,-.345,-.435,-.505]
@@ -167,7 +168,7 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 			for pair in [[row,a],[row+1,a],[row+1,b],[row,b]]:
 				var i: int=int(pair[0])
 				var angle: float=float(pair[1])
-				var wrinkle: float=.007*sin(float(i)*1.6+angle*3.0)
+				var wrinkle: float=.007*sin(float(i)*1.6+angle*3.0+side*.35)
 				corners.append(Vector3(
 					cos(angle)*(W[i]*hip+wrinkle),
 					H[i],
@@ -191,7 +192,7 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	# sole sits at the original physical floor, preserving gait contact.
 	var shoemesh:=SurfaceTool.new()
 	shoemesh.begin(Mesh.PRIMITIVE_TRIANGLES)
-	shoemesh.set_material(leather)
+	shoemesh.set_material(boot_hide)
 	const SHOE_Y: Array[float]=[-.426,-.492,-.564,-.597]
 	const SHOE_W: Array[float]=[.108,.117,.144,.140]
 	const SHOE_Z: Array[float]=[-.030,-.068,-.123,-.129]
@@ -229,7 +230,8 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	var boot:=MeshInstance3D.new()
 	boot.name="GeneticAnkleBoot"
 	boot.mesh=shoemesh.commit()
-	boot.material_override=leather
+	boot.material_override=boot_hide
+	boot.set_meta("weathered_leather",true)
 	boot.set_meta("no_new_collision",true)
 	boot.set_meta("original_detachable_leg",true)
 	leg.add_child(boot)
