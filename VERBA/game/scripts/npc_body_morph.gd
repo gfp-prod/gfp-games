@@ -1,11 +1,13 @@
 extends RefCounted
 ## One closed, articulated-compatible clothing surface for an inherited
 ## ribcage, natural chest/bust volume, tapered waist and pelvic width.
+## The functional shirt ends at the high hip, leaving the articulated legs
+## visible instead of reproducing a long cylindrical robe over both knees.
 ## This is not a collider or a replacement limb: the original detachments,
 ## wounds, clothing objects, names and saves retain their identity.
 const GENES=preload("res://scripts/npc_genetics.gd")
 const RINGS: int=16
-const HEIGHTS: Array[float]=[.61,.68,.80,.98,1.10,1.20,1.30,1.34,1.375,1.405,1.43,1.455,1.48,1.505]
+const HEIGHTS: Array[float]=[.815,.85,.89,.94,.98,1.10,1.20,1.30,1.34,1.375,1.405,1.43,1.455,1.48,1.505]
 
 static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector2:
 	# Build the *same* inherited skeleton using sex-linked population
