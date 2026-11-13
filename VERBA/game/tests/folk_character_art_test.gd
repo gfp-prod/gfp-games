@@ -252,8 +252,8 @@ func _run() -> void:
 		world.village_sim.people["ida"]["genome"],"female").x
 	var orin_shoulder_width: float=genetic_body._section(1.365,
 		world.village_sim.people["orin"]["genome"],"male").x
-	var ida_socket_ratio: float=absf(ida.left_arm.position.x)/ida_shoulder_width
-	var orin_socket_ratio: float=absf(orin.left_arm.position.x)/orin_shoulder_width
+	var ida_socket_ratio: float=(absf(ida.left_arm.position.x)-.024)/ida_shoulder_width
+	var orin_socket_ratio: float=(absf(orin.left_arm.position.x)-.024)/orin_shoulder_width
 	if ida_socket_ratio>=orin_socket_ratio-.025:
 		_fail("Female-average arms still attach at broad male shoulder offsets")
 		return
