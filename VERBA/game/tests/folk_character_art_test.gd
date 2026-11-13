@@ -239,9 +239,22 @@ func _run() -> void:
 				if digit==null or digit.mesh==null:
 					_fail("Full hand is missing one of four individually modeled fingers")
 					return
+				if not (digit.mesh is ArrayMesh) or (
+						not bool(digit.get_meta("three_section_anatomical_digit",false))) or (
+						digit.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<110):
+					_fail("Anatomical fingers reverted to rigid primitive cylinders")
+					return
 			if elbow.get_node_or_null("AnatomicalThumbMetacarpal")==null or (
 					elbow.get_node_or_null("AnatomicalThumbDistal")==null):
 				_fail("Hand is missing its angled two-bone thumb")
+				return
+			if not bool(hand.get_meta("faceted_curved_digits",false)):
+				_fail("Hand reverted to four rigid fingers")
+				return
+			var thumb: MeshInstance3D=elbow.get_node(
+				"AnatomicalThumbMetacarpal") as MeshInstance3D
+			if not (thumb.mesh is ArrayMesh):
+				_fail("Thumb regressed to rigid cylinder")
 				return
 			if not hand.find_children("*","CollisionShape3D",true,false).is_empty():
 				_fail("Decorative hand added duplicate physical collision")
