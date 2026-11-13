@@ -108,12 +108,32 @@ func _run() -> void:
 		if not await _capture(world,cam,citizen,names[i],base,focus,dist):
 			_fail("Could not photograph genuine world citizen: "+ids[i])
 			return
-		# Readability and hair silhouette inspection at portrait distance.
-		# The same live NPC, genetics, actual head materials and lighting are
-		# used; only the comparison camera moves closer to the face.
+		# A head-size-aware portrait rather than a fixed-height camera.
+		# Smaller genetic statures previously ended up at the BOTTOM of the
+		# photograph; their faces were buried below sky, nametag and tools.
 		if i in [0,1,2,3,8]:
-			if not await _capture(world,cam,citizen,
-					names[i]+"_face_detail",base,1.82,.96):
+			var head: MeshInstance3D=citizen.find_child(
+				"ModeledInhabitantHead",true,false) as MeshInstance3D
+			if head==null:
+				_fail("The genuine NPC has no inherited head to photograph")
+				return
+			var old_processing: bool=citizen.is_processing()
+			var prior_visual_rotation: Vector3=visual_root.rotation
+			var prior_visual_position: Vector3=visual_root.position
+			var title_node: Node3D=citizen.name_label
+			var prior_title_visible: bool=title_node.visible if title_node!=null else false
+			citizen.set_process(false)
+			visual_root.rotation=Vector3.ZERO
+			visual_root.position.y=0.0
+			if title_node!=null: title_node.visible=false
+			var head_focus: float=citizen.to_local(head.global_position).y
+			var portrait_ok: bool=await _capture(world,cam,citizen,
+					names[i]+"_face_detail",base,head_focus,1.18)
+			visual_root.rotation=prior_visual_rotation
+			visual_root.position=prior_visual_position
+			if title_node!=null: title_node.visible=prior_title_visible
+			citizen.set_process(old_processing)
+			if not portrait_ok:
 				_fail("Could not inspect true eye, nose, lip and hair silhouette")
 				return
 		# Additional full figure to prove body's inherited measurements.
