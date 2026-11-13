@@ -10,6 +10,10 @@ on:
       - "VERBA/game/scripts/tower_construction.gd"
       - "VERBA/game/scripts/dialogue_social.gd"
       - "VERBA/game/scripts/npc_actor.gd"
+      - "VERBA/game/scripts/npc_appearance.gd"
+      - "VERBA/game/scripts/npc_genetics.gd"
+      - "VERBA/game/tests/npc_appearance_gallery.gd"
+      - "VERBA/game/tests/npc_genetic_art_test.gd"
       - "VERBA/game/data/npcs.json"
       - "VERBA/game/tests/book_visual_gallery.gd"
       - "VERBA/game/scripts/grimoire.gd"
@@ -84,6 +88,12 @@ jobs:
             --script res://tests/world_gallery.gd 2>&1 | tee visual-reports/world.log
           test "$(find visual-reports -name 'world_spawn_*.png' | wc -l)" -eq 4
           test "$(find visual-reports -name 'world_moonlight_*.png' | wc -l)" -eq 2
+      - name: Render actual fullbody and closeup NPC portraits
+        run: |
+          xvfb-run -a -s "-screen 0 1280x800x24" \
+            godot --path . --rendering-method gl_compatibility \
+            --script res://tests/npc_appearance_gallery.gd 2>&1 | tee visual-reports/npc-appearance.log
+          test "$(find visual-reports -name 'npc_*_fullbody.png' -o -name 'npc_faces_*.png' | wc -l)" -eq 4
       - name: Render actual first-person conversations
         run: |
           xvfb-run -a -s "-screen 0 1280x800x24" \
