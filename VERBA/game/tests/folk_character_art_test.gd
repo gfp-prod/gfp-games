@@ -170,10 +170,11 @@ func _run() -> void:
 		var person: Dictionary=world.village_sim.people[String(citizen.npc_id)]
 		var gg: Dictionary=person["genome"]
 		var sex: String=String(person["sex"])
-		var shoulder_socket: float=.040+.88*genetic_body._section(
+		var shoulder_socket: float=.030+.88*genetic_body._section(
 			1.365,gg,sex).x
 		var femur_socket: float=.455*genetic_body._section(.78,gg,sex).x
 		if absf(citizen.left_arm.position.x+shoulder_socket)>.007 or (
+				absf(citizen.left_arm.position.y-1.405)>.007) or (
 				absf(citizen.left_leg.position.x+femur_socket)>.007):
 			_fail("Physical joint spacing ignores inherited shoulder or pelvis")
 			return
