@@ -118,6 +118,30 @@ func _run() -> void:
 					names[i]+"_whole_body",base,body_focus,body_distance):
 				_fail("Could not photograph genetically different body")
 				return
+		# Two additional authentic game-world views examine a BENT knee
+		# from an oblique angle. A static front portrait cannot prove that
+		# the foot and calf actually follow the second articulated joint.
+		if i in [1,8]:
+			var pivot_leg: Node3D=citizen.right_leg
+			var knee_hinge: Node3D=pivot_leg.get_node_or_null(
+				"AnatomicalKneeHinge") as Node3D if pivot_leg!=null else null
+			if knee_hinge==null:
+				_fail("Expected bendable shin on full-body "+ids[i])
+				return
+			pivot_leg.rotation.x=-.36
+			knee_hinge.rotation.x=.65
+			cam.global_position=citizen.to_global(Vector3(2.9,1.48,-2.15))
+			cam.look_at(citizen.to_global(Vector3(0,1.00,0)),Vector3.UP)
+			for frame in range(3): await process_frame
+			RenderingServer.force_draw()
+			var bending: Image=root.get_texture().get_image()
+			var frame_name: String=base+"/"+names[i]+"_knee_bend.png"
+			if bending==null or bending.save_png(frame_name)!=OK:
+				_fail("Failed to photograph independently bending shin")
+				return
+			print("GENETIC_KNEE_FRAME: "+names[i]+"_knee_bend")
+			knee_hinge.rotation.x=0.0
+			pivot_leg.rotation.x=0.0
 		citizen.visible=false
 	# A final family portrait proves the same hereditary rules create
 	# related but visibly non-identical children inside the REAL landscape.
