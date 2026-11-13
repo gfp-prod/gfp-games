@@ -5,7 +5,7 @@ extends RefCounted
 ## wounds, clothing objects, names and saves retain their identity.
 const GENES=preload("res://scripts/npc_genetics.gd")
 const RINGS: int=16
-const HEIGHTS: Array[float]=[.49,.63,.80,.98,1.10,1.20,1.30,1.34,1.375,1.405,1.43,1.455,1.48,1.505]
+const HEIGHTS: Array[float]=[.61,.68,.80,.98,1.10,1.20,1.30,1.34,1.375,1.405,1.43,1.455,1.48,1.505]
 
 static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector2:
 	# Build the *same* inherited skeleton using sex-linked population
@@ -35,21 +35,21 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 		lerpf(1.010,1.115,chest_gene) if male else 1.0)
 	var waist_factor: float=lerpf(.835,1.015,waist_gene) if female else (
 		lerpf(.990,1.090,waist_gene) if male else 1.0)
-	var hip_factor: float=lerpf(1.085,1.195,hip_gene) if female else (
+	var hip_factor: float=lerpf(1.060,1.152,hip_gene) if female else (
 		lerpf(.950,1.045,hip_gene) if male else 1.0)
-	var pelvis_depth: float=lerpf(1.035,1.130,hip_gene) if female else (
+	var pelvis_depth: float=lerpf(1.020,1.092,hip_gene) if female else (
 		lerpf(.970,1.035,hip_gene) if male else 1.0)
-	var upper_muscle: float=(.012+.024*muscle_gene) if male else (
-		.004+.014*muscle_gene if female else .024*muscle_gene)
+	var upper_muscle: float=(.009+.020*muscle_gene) if male else (
+		.003+.012*muscle_gene if female else .020*muscle_gene)
 	# Distinct, continuous rings at hip crest / waist / ribs / shoulder.
-	var pelvis:=Vector2(.390*hips*hip_factor,
-		.340*depth*(.92+.11*hips)*pelvis_depth)
-	var midriff:=Vector2((.314*waist+.025*(1.0-muscle_gene))*waist_factor,
-		.277*depth*(.975 if female else 1.0))
-	var ribcage:=Vector2((.353*chest+upper_muscle)*rib_factor,
-		.322*depth*(.970 if female else 1.035 if male else 1.0))
-	var shoulder:=Vector2((.357*shoulders+.012*chest)*shoulder_factor,
-		.304*depth*(.975 if female else 1.04 if male else 1.0))
+	var pelvis:=Vector2(.320*hips*hip_factor,
+		.298*depth*(.92+.11*hips)*pelvis_depth)
+	var midriff:=Vector2((.285*waist+.017*(1.0-muscle_gene))*waist_factor,
+		.252*depth*(.975 if female else 1.0))
+	var ribcage:=Vector2((.322*chest+upper_muscle)*rib_factor,
+		.296*depth*(.970 if female else 1.035 if male else 1.0))
+	var shoulder:=Vector2((.336*shoulders+.012*chest)*shoulder_factor,
+		.281*depth*(.975 if female else 1.04 if male else 1.0))
 	var neckline:=Vector2(.197,.180)
 	if y<=.78:
 		return pelvis
@@ -89,8 +89,8 @@ static func _point(y: float,angle: float,g: Dictionary,
 	var posterior: float=pow(maxf(0.0,sin(angle)),2.0)
 	var soft_hip: float=GENES.value(g,"hip_width")
 	if sex=="female":
-		x*=1.0+(.025+.045*soft_hip)*hip_level*lateral
-		z+=(.017+.037*soft_hip)*hip_level*posterior
+		x*=1.0+(.012+.026*soft_hip)*hip_level*lateral
+		z+=(.011+.028*soft_hip)*hip_level*posterior
 	elif sex=="male":
 		x*=1.0+.011*soft_hip*hip_level*lateral
 		z+=.010*soft_hip*hip_level*posterior
@@ -132,6 +132,7 @@ static func finish(root: Node3D,g: Dictionary,cloth: Material,
 	garment.set_meta("neck_termination_y",HEIGHTS[HEIGHTS.size()-1])
 	garment.set_meta("genetic_bust_shape",GENES.value(g,"bust_volume"))
 	garment.set_meta("sex_linked_body_shape",sex)
+	garment.set_meta("lean_anatomic_proportions",true)
 	garment.set_meta("anatomic_shoulder_hip_ratio",
 		_section(1.365,g,sex).x/_section(.80,g,sex).x)
 	garment.set_meta("anatomic_waist_hip_ratio",
