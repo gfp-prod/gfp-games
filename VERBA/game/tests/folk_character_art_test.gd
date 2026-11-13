@@ -101,7 +101,9 @@ func _run() -> void:
 	# Check actual foremost roots reach the forehead below the crown.
 	var seated_curls: bool=false
 	for point in curl_vertices:
-		if absf(point.x)<.035 and point.z<-.140 and point.y<1.943:
+		# The old hairline stopped at 1.913, exposing an obvious
+		# black triangular crack between the hair and forehead.
+		if absf(point.x)<.035 and point.z<-.140 and point.y<1.902:
 			seated_curls=true
 			break
 	if not seated_curls:
