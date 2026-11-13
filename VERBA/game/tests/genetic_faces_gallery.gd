@@ -118,6 +118,32 @@ func _run() -> void:
 					names[i]+"_whole_body",base,body_focus,body_distance):
 				_fail("Could not photograph genetically different body")
 				return
+		# Model-review orthographic turnaround: strict front and profile
+		# photographs use the SAME actual in-world person and genetic meshes.
+		# Orthographic projection removes perspective distortion so we can
+		# compare head-to-stature, shoulders, hip projection and limb reach.
+		if i in [0,1,8]:
+			cam.projection=Camera3D.PROJECTION_ORTHOGONAL
+			cam.size=2.48
+			for direction in ["front","profile"]:
+				if direction=="front":
+					cam.global_position=citizen.to_global(
+						Vector3(0,1.12,-4.0))
+				else:
+					cam.global_position=citizen.to_global(
+						Vector3(4.0,1.12,0))
+				cam.look_at(citizen.to_global(
+						Vector3(0,1.03,0)),Vector3.UP)
+				for frame in range(3): await process_frame
+				RenderingServer.force_draw()
+				var anatomy_frame: Image=root.get_texture().get_image()
+				var anatomy_name: String=base+"/"+names[i]+
+					"_orthographic_"+direction+".png"
+				if anatomy_frame==null or anatomy_frame.save_png(anatomy_name)!=OK:
+					_fail("Cannot render orthographic anatomical "+direction)
+					return
+				print("GENETIC_LANDMARK_FRAME: "+anatomy_name)
+			cam.projection=Camera3D.PROJECTION_PERSPECTIVE
 		# Waist-level detail frames catch the old sphere hands and rigid
 		# wrists that are invisible in full-body game screenshots.
 		if i in [0,1,8]:
