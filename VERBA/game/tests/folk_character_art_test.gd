@@ -656,6 +656,23 @@ func _run() -> void:
 		if verts.size()<3800:
 			_fail("The face lost its continuous high-detail cheek/eye/nose topology")
 			return
+		# The real face gallery at source e7326e46 had nearly black
+		# forehead/cheeks and eye sockets, despite passing mesh checks.
+		# Protect lighting normals as well as mesh density: the smooth
+		# front-facing face must not go grazing over its visible centre.
+		var face_normals: PackedVector3Array=sculpt.mesh.surface_get_arrays(0)[
+			Mesh.ARRAY_NORMAL]
+		if face_normals.size()!=verts.size():
+			_fail("Face surface has no matching explicit lighting normals")
+			return
+		for index in range(verts.size()):
+			var point: Vector3=verts[index]
+			var normal: Vector3=face_normals[index]
+			if absf(point.x)>.13 or point.y<1.63 or point.y>1.89:
+				continue
+			if normal.z>-.94:
+				_fail("Face gradients create black mask-like shading")
+				return
 		# SurfaceTool triangle winding determines the actual light-facing
 		# normal. Previously lip, brow, nose and upper eyelid strips faced
 		# INTO the head, producing dark patches and white faceted bars in
