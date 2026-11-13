@@ -163,6 +163,20 @@ func _run() -> void:
 			genome,String(person["sex"]))
 		if citizen.inherited_body_dimensions.distance_to(expected)>.001:
 			_fail("NPC stature and frame size ignore heritable body genes"); return
+	# Shoulder joints sit at each citizen's actual rib/shoulder breadth;
+	# femoral heads sit at the inherited pelvis. A shared .345/.17 offset
+	# would erase the anatomy even though the cloth has a better shape.
+	for citizen in [ida,orin]:
+		var person: Dictionary=world.village_sim.people[String(citizen.npc_id)]
+		var gg: Dictionary=person["genome"]
+		var sex: String=String(person["sex"])
+		var shoulder_socket: float=.040+.88*genetic_body._section(
+			1.365,gg,sex).x
+		var femur_socket: float=.455*genetic_body._section(.78,gg,sex).x
+		if absf(citizen.left_arm.position.x+shoulder_socket)>.007 or (
+				absf(citizen.left_leg.position.x+femur_socket)>.007):
+			_fail("Physical joint spacing ignores inherited shoulder or pelvis")
+			return
 	# Legs must remain independently amputatable while trousers and
 	# footwear follow the inherited body rather than cubic ankle blocks.
 	for citizen in [ida,orin]:
@@ -284,6 +298,24 @@ func _run() -> void:
 		if not modern.is_ancestor_of(attendant.right_arm):
 			_fail("Roadside attendant's work sleeve lost its animation joint")
 			return
+
+		var apron: MeshInstance3D=modern.get_node_or_null(
+			"FittedStationWorkApron") as MeshInstance3D
+		var old_torso: MeshInstance3D=modern.get_node_or_null(
+			"HiddenOldStationShirtBox") as MeshInstance3D
+		var old_box: MeshInstance3D=modern.get_node_or_null(
+			"HiddenOldStationApronBox") as MeshInstance3D
+		if apron==null or apron.mesh==null or old_torso==null or old_box==null:
+			_fail("Modern work uniform lost fitted inherited clothing"); return
+		if old_torso.visible or old_box.visible or not bool(
+				apron.get_meta("contoured_to_hips_and_waist",false)):
+			_fail("Station staff still wear rigid unisex box clothing"); return
+		if apron.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<650:
+			_fail("Anatomical apron uses an oversimplified rectangle"); return
+		if String(apron.get_meta("anatomic_body_profile",""))!=(
+				String(world.village_sim.people["juno"]["sex"])):
+			_fail("Station staff's inherited physique does not reach clothing"); return
+
 	# The previous faces were near-identical spheres with surface eyes.
 	# Regressions must retain recesses, realistic profile and role variants.
 	for citizen in [ida,orin]:
