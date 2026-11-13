@@ -188,6 +188,18 @@ func _run() -> void:
 	if bounds.size.y<.8 or bounds.size.x<.4 or bounds.size.x>.7:
 		_fail("The apron has lost plausible body proportions")
 		return
+	# The baker's bib must actually taper at the waist, not just carry
+	# a metadata claim over the old full-length rectangular white slab.
+	var apron_waist: float=0.0
+	var apron_hem: float=0.0
+	for vertex in triangles:
+		if absf(vertex.y-1.055)<.012:
+			apron_waist=maxf(apron_waist,absf(vertex.x))
+		if vertex.y<.59:
+			apron_hem=maxf(apron_hem,absf(vertex.x))
+	if apron_waist<=0.0 or apron_hem<apron_waist*1.27:
+		_fail("Baker work apron reverted to a waist-obscuring rectangle")
+		return
 	# Improved appearance must stay on the original articulated rig;
 	# costume geometry may not replace the moving limbs or their jobs.
 	for actor in [ida,orin]:
