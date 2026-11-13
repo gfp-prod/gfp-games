@@ -228,6 +228,24 @@ func _run() -> void:
 				"InheritedArticulatedHand") as MeshInstance3D
 			if mesh==null or hand==null or mesh.mesh==null:
 				_fail("Arm still ends in a stub instead of a forearm and hand"); return
+			if not (hand.mesh is ArrayMesh) or (
+					not bool(hand.get_meta("anatomic_palm",false))) or (
+					int(hand.get_meta("modeled_fingers",0))!=4):
+				_fail("NPC's anatomical hand regressed to a spherical bead")
+				return
+			for finger in range(4):
+				var digit: MeshInstance3D=elbow.get_node_or_null(
+					"Finger"+str(finger)+"LowPolyPhalanges") as MeshInstance3D
+				if digit==null or digit.mesh==null:
+					_fail("Full hand is missing one of four individually modeled fingers")
+					return
+			if elbow.get_node_or_null("AnatomicalThumbMetacarpal")==null or (
+					elbow.get_node_or_null("AnatomicalThumbDistal")==null):
+				_fail("Hand is missing its angled two-bone thumb")
+				return
+			if not hand.find_children("*","CollisionShape3D",true,false).is_empty():
+				_fail("Decorative hand added duplicate physical collision")
+				return
 			if not bool(mesh.get_meta("detaches_with_parent_arm",false)):
 				_fail("Forearm does not detach with its upper arm"); return
 			var length: float=float(mesh.get_meta("inherited_wrist_reach",0.0))
