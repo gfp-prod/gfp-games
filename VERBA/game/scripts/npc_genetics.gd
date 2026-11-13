@@ -132,7 +132,7 @@ static func body_scale(g: Dictionary,sex: String="unspecified") -> Vector3:
 static func forearm_length(g: Dictionary) -> float:
 	# Use the inherited limb_ratio locus instead of arbitrary per-role
 	# or per-sex limb lengths. Stature is handled by body_scale's Y.
-	return lerpf(.335,.475,value(g,"limb_ratio"))
+	return lerpf(.375,.525,value(g,"limb_ratio"))
 
 static func child(a: Dictionary,b: Dictionary,child_id: String,salt: int=1938) -> Dictionary:
 	if not validate(a) or not validate(b): return {}
