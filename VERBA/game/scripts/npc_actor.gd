@@ -601,10 +601,10 @@ func _install_limb_hitbox(limb: Node3D, part: String) -> void:
 	limb.add_child(area)
 	var shape:=CollisionShape3D.new()
 	var capsule:=CapsuleShape3D.new()
-	capsule.height=.86 if part.ends_with("_arm") else .42
-	capsule.radius=.135
+	capsule.height=.94 if part.ends_with("_arm") else .42
+	capsule.radius=.119 if part.ends_with("_arm") else .135
 	shape.shape=capsule
-	shape.position=Vector3(0,-.42 if part.ends_with("_arm") else -.23,0)
+	shape.position=Vector3(0,-.46 if part.ends_with("_arm") else -.23,0)
 	area.add_child(shape)
 	limb_hitboxes[part]=area
 
