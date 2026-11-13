@@ -201,6 +201,9 @@ static func hair_profile(g: Dictionary,sex: String,person_id: String="") -> Dict
 	if person_id=="mara": style="braids"
 	if person_id=="sela": style="wave"
 	if person_id=="lena": style="loose"
+	if person_id=="orin": style="curly_crop"
+	if person_id=="titus": style="swept"
+	if person_id=="daro": style="shaggy"
 	return {"style":style,"length":length,"curl":curl,
 		"part":part,"volume":full}
 
