@@ -214,7 +214,7 @@ func _ready() -> void:
 	# Do not replace every citizen with the same cone-robe silhouette.
 	match npc_id:
 		"ida":
-			var flour:=ART.mat(Color("d2c4a1"),.98)
+			var flour:=FABRIC.worn_linen(Color("c9b99b"))
 			# A shaped cloth bib, a tied waist and a pocket replace the
 			# vertical white rectangle that used to obscure the whole body.
 			_make_baker_apron(figure,flour,trim,genome,sex)
@@ -462,7 +462,11 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	var vertices: Array[Vector3]=[]
 	for y in HEIGHTS:
 		var t: float=clampf((1.40-y)/.85,0.0,1.0)
-		var half_width: float=lerpf(.150,.205,t)
+		var hem_flare: float=1.0-smoothstep(.55,.92,y)
+		var waist_nip: float=exp(-pow((y-1.04)/.22,2.0))
+		# Narrow at the real waist, flare over the skirt, and keep the bib
+		# smaller than the shoulders instead of a full-height rectangle.
+		var half_width: float=.154+.052*hem_flare-.014*waist_nip
 		var torso_section: Vector2=BODY._section(y,genome,sex)
 		for col in range(COLUMNS):
 			var fraction: float=float(col)/float(COLUMNS-1)*2.0-1.0
@@ -474,7 +478,8 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 			# shirt pierced the apron, leaving a jagged brown hole.
 			# A center-weighted air gap clears the outer cloth while the
 			# panel still follows inherited body geometry.
-			var drape_gap: float=.105+.024*(1.0-absf(fraction))
+			var drape_gap: float=.082+.025*(1.0-absf(fraction))+
+				.012*hem_flare
 			vertices.append(Vector3(x,y,point.z-drape_gap))
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
