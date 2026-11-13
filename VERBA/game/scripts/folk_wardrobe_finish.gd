@@ -280,8 +280,10 @@ static func finish(figure: Node3D,person: String,
 			_waist_wrap(root,genome,sex,brass)
 		"painter_smock":
 			if not has_tailored: _dress_skirt(root,genome,sex,style,ash)
+			# A short fitted work apron reveals most of the thigh.
+			# A separate side cloth still gives it a worn, asymmetrical hem.
 			_drape(root,"PainterPigmentedWorkSmock",genome,sex,bone,
-				.015,1.31,.625,.122,.019)
+				.015,1.31,.755,.122,.019)
 			_drape(root,"PainterAsymmetricClothHem",genome,sex,dusky,
 				-.125,.92,.470,.061,.023)
 		"traveller_dress":
