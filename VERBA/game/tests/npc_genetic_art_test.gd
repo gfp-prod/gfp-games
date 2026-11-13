@@ -48,6 +48,33 @@ func _run() -> void:
 		if actor.left_arm==null or actor.right_arm==null or actor.left_leg==null or actor.right_leg==null:
 			_fail("Four independent limb pivots missing: "+actor.npc_id)
 			return
+		# Regression for the specific disappearing-body bug: every loft must
+		# face OUTWARD, so backface culling cannot hide the anatomical mesh.
+		for body_part in [upper,
+			actor.find_child("AnatomicalThigh",true,false),
+			actor.find_child("AnatomicalCalf",true,false),
+			actor.find_child("TailoredUpperArm",true,false)]:
+			if not body_part is MeshInstance3D or body_part.mesh==null:
+				_fail("Missing visible anatomical surface: "+actor.npc_id)
+				return
+			var vertices: PackedVector3Array=body_part.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+			if vertices.size()<3:
+				_fail("Empty anatomical triangle mesh: "+actor.npc_id)
+				return
+			var p0: Vector3=vertices[0]
+			var normal: Vector3=(vertices[1]-p0).cross(vertices[2]-p0)
+			var radial:=Vector3(p0.x,0.0,p0.z)
+			if normal.dot(radial)<=0.00001:
+				_fail("Inward-facing body triangles (backface culling regression): "+actor.npc_id)
+				return
+		if actor.find_child("FittedLeatherBoot",true,false)==null:
+			_fail("Independent shaped boot disappeared: "+actor.npc_id)
+			return
+		if actor.find_child("ModeledNeck",true,false) is MeshInstance3D:
+			var neck_mesh: Mesh=(actor.find_child("ModeledNeck",true,false) as MeshInstance3D).mesh
+			if neck_mesh is CylinderMesh:
+				_fail("Cylindrical collarbone/neck returned: "+actor.npc_id)
+				return
 		if actor.npc_id=="juno" and not figure.visible:
 			_fail("Modern attendant still uses the discarded duplicate mannequin")
 			return
