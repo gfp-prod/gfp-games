@@ -38,6 +38,21 @@ func _run() -> void:
 		if minf(absf(transmitted-float(parents[0])),
 				absf(transmitted-float(parents[1])))>45:
 			_fail("Child chest or face trait broke parental inheritance: "+locus); return
+	# The inherited garment must slope continuously into the neckline.
+	# A single narrow upper ring used to form a hard, oversized collar;
+	# a separate neck cylinder then made the torso appear assembled.
+	for genome in [a,b,child]:
+		var lower_shoulder: float=BODY._section(1.43,genome).x
+		var slope_midpoint: float=BODY._section(1.50,genome).x
+		var neck: float=BODY._section(1.575,genome).x
+		if not (lower_shoulder>slope_midpoint and slope_midpoint>neck):
+			_fail("Inherited neck/shoulder fabric forms a rigid ledge"); return
+		for height in [.78,1.10,1.31,1.43]:
+			var below: Vector2=BODY._section(height-.002,genome)
+			var above: Vector2=BODY._section(height+.002,genome)
+			if below.distance_to(above)>.018:
+				_fail("Genetic torso surface tears at a section boundary")
+				return
 	var figures: Array[Node3D]=[]
 	for record in [a,b,child]:
 		var figure:=Node3D.new()
