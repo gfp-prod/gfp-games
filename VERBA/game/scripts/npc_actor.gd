@@ -284,8 +284,18 @@ func _ready() -> void:
 		var shirt:=ART.mat(Color("5c7373"),.94)
 		var denim:=ART.mat(Color("485461"),.98)
 		var apron:=ART.mat(Color("b2a17e"),.95)
-		ART.box(attendant,Vector3(0,1.13,0),Vector3(.74,.88,.37),shirt)
-		ART.box(attendant,Vector3(0,.84,-.21),Vector3(.68,.63,.08),apron)
+		# This uniform used to be two large identical cuboids on every
+		# worker, concealing the genetic torso below. Keep named, hidden
+		# compatibility meshes; the fitted shirt and apron are rendered.
+		var old_shirt:=ART.box(attendant,Vector3(0,1.13,0),
+			Vector3(.74,.88,.37),shirt)
+		old_shirt.name="HiddenOldStationShirtBox"
+		old_shirt.visible=false
+		var old_apron:=ART.box(attendant,Vector3(0,.84,-.21),
+			Vector3(.68,.63,.08),apron)
+		old_apron.name="HiddenOldStationApronBox"
+		old_apron.visible=false
+		COSTUME.fitted_station_apron(attendant,genome,apron,sex)
 		for side in [-1.0,1.0]:
 			var side_name: String="left" if side<0.0 else "right"
 			var modern_leg:=Node3D.new()
@@ -293,8 +303,9 @@ func _ready() -> void:
 			modern_leg.position=Vector3(side*.47*
 				BODY._section(.78,genome,sex).x,.70,0)
 			attendant.add_child(modern_leg)
-			ART.box(modern_leg,Vector3(0,-.31,0),Vector3(.27,.79,.27),denim)
-			ART.box(modern_leg,Vector3(side*.01,-.64,-.10),Vector3(.31,.15,.46),leather)
+			# Jeans and ankle boots use the same inherited hip/thigh shape
+			# without introducing extra limbs or changing the physical rig.
+			COSTUME.fitted_lower_leg(modern_leg,side,genome,sex)
 			modular_limbs[side_name+"_leg"]=modern_leg
 			_install_limb_hitbox(modern_leg,side_name+"_leg")
 			var modern_arm:=Node3D.new()
