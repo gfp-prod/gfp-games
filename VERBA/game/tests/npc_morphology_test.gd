@@ -120,7 +120,7 @@ func _run() -> void:
 		var sleeve:=COSTUME.fitted_sleeve(arm_root,1.0,inherited,
 			ART.mat(Color("746b5b"),.97),"male")
 		var elbow:=Node3D.new()
-		elbow.position=Vector3(.044,-.283,-.040)
+		elbow.position=Vector3(.040,-GENES.upper_arm_length(inherited),-.035)
 		arm_root.add_child(elbow)
 		COSTUME.fitted_forearm(elbow,1.0,inherited,
 			ART.mat(Color("746b5b"),.97),
@@ -131,7 +131,7 @@ func _run() -> void:
 			_fail("Inherited articulated arm geometry is missing")
 			return
 		var tip: float=elbow.position.y+index_finger.get_aabb().position.y
-		if tip<-.85 or tip>-.70:
+		if tip<-.81 or tip>-.63:
 			_fail("Inherited arm fingertips extend below the thigh or are stubby")
 			return
 	# Keep inherited ratios even as we narrow the average human mesh.
