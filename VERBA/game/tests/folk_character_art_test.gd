@@ -320,11 +320,11 @@ func _run() -> void:
 					genome))>.002:
 				_fail("Arm length ignores actual inherited limb ratio"); return
 			var hand_drop: float=arm.to_local(hand.global_position).y
-			if hand_drop>-.54 or hand_drop<-.73:
+			if hand_drop>-.49 or hand_drop<-.67:
 				_fail("Fingertips are back at knee level or arms too short"); return
 			var area: Area3D=citizen.limb_hitboxes[side.to_lower()+"_arm"]
 			var capsule: CollisionShape3D=area.get_child(0) as CollisionShape3D
-			var expected_reach: float=.283+load("res://scripts/npc_genetics.gd").forearm_length(genome)+.185
+			var expected_reach: float=load("res://scripts/npc_genetics.gd").upper_arm_length(genome)+load("res://scripts/npc_genetics.gd").forearm_length(genome)+.185
 			if capsule==null or not (capsule.shape is CapsuleShape3D) or (
 					absf((capsule.shape as CapsuleShape3D).height-expected_reach)>.012):
 				_fail("Genetic arm hitbox no longer matches its real reach"); return
