@@ -38,6 +38,57 @@ func _run() -> void:
 		if minf(absf(transmitted-float(parents[0])),
 				absf(transmitted-float(parents[1])))>45:
 			_fail("Child chest or face trait broke parental inheritance: "+locus); return
+	# Compare exactly the same two-allele genome with two average adult
+	# anatomical expressions. If there is no pronounced change in the
+	# shoulder/pelvis or waist/pelvis ratios, the *visible* body shape is
+	# still effectively unisex, however different its height may be.
+	var same_genome: Dictionary=GENES.founder("adult-anatomy-reference",1938)
+	var female_hip: float=BODY._section(.80,same_genome,"female").x
+	var male_hip: float=BODY._section(.80,same_genome,"male").x
+	var female_shoulder: float=BODY._section(1.365,same_genome,"female").x
+	var male_shoulder: float=BODY._section(1.365,same_genome,"male").x
+	var female_waist: float=BODY._section(1.10,same_genome,"female").x
+	var male_waist: float=BODY._section(1.10,same_genome,"male").x
+	if female_hip<=male_hip*1.055 or female_shoulder>=male_shoulder*.985:
+		_fail("Shoulder and pelvic regions still have the same adult profiles")
+		return
+	if female_shoulder/female_hip>=male_shoulder/male_hip-.11:
+		_fail("The skeletal shoulder-to-hip proportion is visibly unisex")
+		return
+	if female_waist/female_hip>=male_waist/male_hip-.09:
+		_fail("The waist-to-pelvis taper is visually indistinguishable")
+		return
+	var female_shirt_node:=Node3D.new()
+	var male_shirt_node:=Node3D.new()
+	root.add_child(female_shirt_node)
+	root.add_child(male_shirt_node)
+	var shirt_color:=ART.mat(Color("746b5b"),.97)
+	var woman_mesh: MeshInstance3D=BODY.finish(
+		female_shirt_node,same_genome,shirt_color,false,"female")
+	var man_mesh: MeshInstance3D=BODY.finish(
+		male_shirt_node,same_genome,shirt_color,false,"male")
+	if woman_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]==(
+			man_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]):
+		_fail("Sex-linked morphology still creates identical actual mesh vertices")
+		return
+	if float(woman_mesh.get_meta("anatomic_shoulder_hip_ratio",9.0))>=float(
+			man_mesh.get_meta("anatomic_shoulder_hip_ratio",0.0))-.11:
+		_fail("Anatomy changes only metadata, not the visible torso surface")
+		return
+	# Preserve overlap between populations: unusually broad-shouldered
+	# women and narrow-framed men must still be possible via their genes.
+	var large: Dictionary=same_genome.duplicate(true)
+	var small: Dictionary=same_genome.duplicate(true)
+	for locus in ["stature","shoulder_width","chest_width","hip_width"]:
+		large["alleles"][locus]=[980,980]
+		small["alleles"][locus]=[20,20]
+	if GENES.body_scale(large,"female").y<=GENES.body_scale(small,"male").y:
+		_fail("Inherited large female bloodline cannot exceed a short male")
+		return
+	if BODY._section(1.365,large,"female").x<=BODY._section(
+			1.365,small,"male").x:
+		_fail("Female shoulder genes are overridden by a rigid sex template")
+		return
 	# The inherited garment must slope continuously into the neckline.
 	# A single narrow upper ring used to form a hard, oversized collar;
 	# a separate neck cylinder then made the torso appear assembled.
