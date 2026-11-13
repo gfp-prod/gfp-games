@@ -656,6 +656,28 @@ func _run() -> void:
 		if verts.size()<3800:
 			_fail("The face lost its continuous high-detail cheek/eye/nose topology")
 			return
+		# The last published close-ups showed a hard rectangular jaw shelf.
+		# Evaluate true face mesh: chin edges must tuck inward below cheek.
+		var widest_cheek: float=0.0
+		var bottom_chin: float=0.0
+		for vertex in verts:
+			if absf(vertex.y-1.75)<.014:
+				widest_cheek=maxf(widest_cheek,absf(vertex.x))
+			if vertex.y<1.595:
+				bottom_chin=maxf(bottom_chin,absf(vertex.x))
+		if widest_cheek<.12 or bottom_chin>=widest_cheek*.89:
+			_fail("Face returned to its flat rectangular jaw shelf"); return
+		var lip_node: Node3D=portrait.get_node_or_null("ExpressionMouth")
+		var top_lip: MeshInstance3D=lip_node.get_node_or_null(
+			"ExpressionLipLeft/SmallNaturalLipLine") as MeshInstance3D if lip_node!=null else null
+		var lower_lip: MeshInstance3D=lip_node.get_node_or_null(
+			"ExpressionLowerLip/ModeledLowerLipLeft") as MeshInstance3D if lip_node!=null else null
+		var crease: MeshInstance3D=lip_node.get_node_or_null(
+			"ExpressionMouthOpening") as MeshInstance3D if lip_node!=null else null
+		if top_lip==null or lower_lip==null or crease==null or not crease.visible:
+			_fail("Neutral face lost its thin continuous oral crease"); return
+		if top_lip.get_aabb().size.y>.034 or lower_lip.get_aabb().size.y>.031:
+			_fail("Lip masses regressed to oversized four-petal geometry"); return
 		# Verify skin-attached folds on the real inherited face, not only
 		# metadata or a decorative separate brow cylinder. Both eyes and both
 		# expression rigs must remain independently animated.
