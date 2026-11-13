@@ -4,6 +4,7 @@ extends RefCounted
 ## Face/eyes/brows/mouth are separate visual controls for expression.
 const ART=preload("res://scripts/art.gd")
 const GENES=preload("res://scripts/npc_genetics.gd")
+const HAIR=preload("res://scripts/folk_hair_finish.gd")
 
 static func _v(g: Dictionary,key: String) -> float:
 	return GENES.value(g,key)
@@ -317,6 +318,81 @@ static func _facial_hair(root: Node3D,person: String,hair: Material,
 			cheek.name=(
 				"InheritedLeftSideburn" if side<0.0 else "InheritedRightSideburn")
 
+## Low-poly facial hair follows the existing facial surface. No floating
+## beards, flat front-facing billboards, or extra facial physics. Alleles
+## determine growth and distribution; adult grooming alters style.
+static func _beard_patch(root: Node3D,name: String,mat: Material,
+		g: Dictionary,sex: String,left: float,right: float,
+		top: float,bottom: float,weight: float=1.0) -> MeshInstance3D:
+	var tool:=SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tool.set_material(mat)
+	const COLS: int=6
+	const ROWS: int=5
+	for row in range(ROWS-1):
+		for col in range(COLS-1):
+			var quad: Array[Vector3]=[]
+			for point in [[row,col],[row+1,col],[row+1,col+1],[row,col+1]]:
+				var v: float=float(point[0])/float(ROWS-1)
+				var u: float=float(point[1])/float(COLS-1)
+				# A scalloped lower edge follows the jaw and cheek planes.
+				var x: float=lerpf(left,right,u)*lerpf(1.0,.78,v)
+				var tip: float=.007*sin(float(col)*2.6)
+				var y: float=lerpf(top,bottom+tip,v)
+				var z: float=_depth(x,y,g,sex)-.007-.011*weight*v
+				quad.append(Vector3(x,y,z))
+			for i in [0,1,2,0,2,3]:
+				var p: Vector3=quad[i]
+				tool.set_uv(Vector2(p.x*3.0,p.y*2.0))
+				tool.add_vertex(p)
+	tool.generate_normals()
+	var part:=MeshInstance3D.new()
+	part.name=name
+	part.mesh=tool.commit()
+	part.material_override=mat
+	part.set_meta("no_new_collision",true)
+	part.set_meta("inherited_facial_hair",true)
+	root.add_child(part)
+	return part
+
+static func _facial_hair(root: Node3D,g: Dictionary,sex: String,
+		age_years: float=30.0) -> void:
+	var expression: Dictionary=GENES.beard_profile(g,sex,age_years)
+	var style: String=String(expression["style"])
+	root.set_meta("facial_hair_style",style)
+	root.set_meta("facial_hair_density",float(expression["density"]))
+	if style=="clean": return
+	var density: float=float(expression["density"])
+	var length: float=float(expression["length"])
+	var dark:=ART.mat(GENES.hair_color(g).darkened(.12),.99)
+	dark.cull_mode=BaseMaterial3D.CULL_DISABLED
+	var stubble:=ART.mat(GENES.hair_color(g).lerp(
+		GENES.skin_color(g),.28),.98)
+	stubble.cull_mode=BaseMaterial3D.CULL_DISABLED
+	var facial_mat: Material=stubble if style=="stubble" else dark
+	var weight: float=lerpf(.65,1.35,length)
+	if style in ["short","full","stubble","sideburns"]:
+		for side in [-1.0,1.0]:
+			var edge: float=side*.135
+			var near: float=side*.066
+			_beard_patch(root,"GeneticFacialHairCheek"+str(side),
+				facial_mat,g,sex,minf(edge,near),maxf(edge,near),
+				1.730,1.628 if style=="full" else 1.665,weight)
+	if style in ["short","full","goatee","stubble"]:
+		var chin_bottom: float=1.575 if style=="full" else (
+			1.610 if style=="short" else 1.628)
+		_beard_patch(root,"GeneticFacialHairChin",facial_mat,g,sex,
+			-.096,.096,1.660,chin_bottom,weight)
+	if style in ["moustache","short","full","goatee","stubble"]:
+		var mustache_width: float=lerpf(.050,.095,
+			float(expression["mustache"]))
+		for side in [-1.0,1.0]:
+			_beard_patch(root,"GeneticMoustache"+str(side),facial_mat,
+				g,sex,minf(0.0,side*mustache_width),
+				maxf(0.0,side*mustache_width),
+				1.693,1.680,weight*.65)
+	root.set_meta("beard_geometry_from_genes",true)
+
 static func finish(figure: Node3D,person: String,skin: Material,
 		hair: Material,brow: Material,genome: Dictionary={},
 		sex: String="unspecified",age_years: float=28.0) -> void:
@@ -511,7 +587,10 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		var part:=ART.bone(root,Vector3(-.15,1.975,-.14),
 			Vector3(.11,2.011,-.14),.014,.014,brow,8)
 		part.name="InheritedHairPart"
-	_layered_hair(root,person,hair,g,sex)
+	# Named villagers have recognisable grooming; descendants express
+	# inherited follicle properties without being forced into a profession.
+	HAIR.finish(root,person,g,sex,hair)
+	_facial_hair(root,g,sex)
 	_facial_hair(root,person,hair,g,sex,age_years)
 	if _v(g,"freckles")>.68:
 		for i in range(4):
