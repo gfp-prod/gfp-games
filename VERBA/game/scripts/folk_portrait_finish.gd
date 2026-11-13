@@ -232,8 +232,14 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 		for i in range(rim_points.size()):
 			var p: Vector3=rim_points[i]
 			var q: Vector3=rim_points[(i+1)%rim_points.size()]
-			var triangle: Array[Vector3]=[
-				p,pole,q] if upper else [p,q,pole]
+			var triangle: Array[Vector3]=[]
+			triangle.append(p)
+			if upper:
+				triangle.append(pole)
+				triangle.append(q)
+			else:
+				triangle.append(q)
+				triangle.append(pole)
 			for v in triangle:
 				st.set_uv(Vector2(v.x+.25,v.z+.25))
 				var normal: Vector3=Vector3(v.x*.40,
