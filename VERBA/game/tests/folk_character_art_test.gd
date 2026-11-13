@@ -289,6 +289,16 @@ func _run() -> void:
 			var foot_bounds: AABB=boot.get_aabb()
 			if foot_bounds.size.z<.32 or foot_bounds.size.y<.13:
 				_fail("Foot lost instep, toe or ankle volume"); return
+			# Catch the exact stubby-leg regression in actual generated vertex
+			# bounds, not only an invisible "long legs" metadata flag.
+			var pants_bounds: AABB=trousers.get_aabb()
+			if original_leg.position.y<.95 or pants_bounds.size.y<.86:
+				_fail("Femoral pivot or visible trouser length reverted to stump-legged mannequin")
+				return
+			var sole_y: float=original_leg.position.y+foot_bounds.position.y
+			if absf(sole_y-.012)>.055:
+				_fail("Full-length boot no longer contacts the actual ground")
+				return
 			if not bool(trousers.get_meta("original_detachable_leg",false)) or (
 					not bool(boot.get_meta("no_new_collision",false))):
 				_fail("Fitted leg violated modular injury/collision contract"); return
