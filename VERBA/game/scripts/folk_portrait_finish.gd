@@ -909,7 +909,11 @@ static func finish(figure: Node3D,person: String,skin: Material,
 			plane.set_normal(_outward_face_normal(p.x,p.y,g,sex))
 			plane.add_vertex(p)
 		var highlight:=MeshInstance3D.new()
-		highlight.name="InheritedCheekboneFacet"
+		# Stable distinct sibling names avoid Godot's implicit rename
+		# rules for duplicate child nodes. Keep the left canonical name
+		# for existing save/test lookups and give the other a suffix.
+		highlight.name="InheritedCheekboneFacet" if side<0.0 else (
+			"InheritedCheekboneFacetRight")
 		highlight.mesh=plane.commit()
 		highlight.material_override=cheek_tone
 		highlight.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
