@@ -106,8 +106,12 @@ static func _point(y: float,angle: float,g: Dictionary,
 	var facing: float=pow(maxf(0.0,-sin(angle)),2.0)
 	# Breast volume is soft tissue on an uninterrupted ribcage, not
 	# separate attached orbs. Men still have a modest pectoral contour.
-	var breast_profile: float=(.018+.150*pow(bust,1.45)) if sex=="female" else (
-		.003+.025*pow(bust,1.6) if sex=="male" else .006+.09*pow(bust,1.7))
+	# Preserve genuine inherited variety without turning the average
+	# everyday tunic into a rigid prow extending far beyond the ribcage.
+	# Strong alleles still create visible fullness; ordinary profiles stay
+	# integrated with the sternum and taper to the natural waist.
+	var breast_profile: float=(.012+.102*pow(bust,1.55)) if sex=="female" else (
+		.003+.025*pow(bust,1.6) if sex=="male" else .006+.077*pow(bust,1.7))
 	z-=breast_profile*vertical*lobe*facing
 	# Gluteal and greater-trochanter curves broaden the lower torso at
 	# specific heights. Clothing panels sample these very same points.
