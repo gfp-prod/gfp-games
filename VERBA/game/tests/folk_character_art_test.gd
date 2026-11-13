@@ -299,20 +299,20 @@ func _run() -> void:
 			_fail("Roadside attendant's work sleeve lost its animation joint")
 			return
 
-		var apron: MeshInstance3D=modern.get_node_or_null(
+		var station_apron: MeshInstance3D=modern.get_node_or_null(
 			"FittedStationWorkApron") as MeshInstance3D
 		var old_torso: MeshInstance3D=modern.get_node_or_null(
 			"HiddenOldStationShirtBox") as MeshInstance3D
 		var old_box: MeshInstance3D=modern.get_node_or_null(
 			"HiddenOldStationApronBox") as MeshInstance3D
-		if apron==null or apron.mesh==null or old_torso==null or old_box==null:
+		if station_apron==null or station_apron.mesh==null or old_torso==null or old_box==null:
 			_fail("Modern work uniform lost fitted inherited clothing"); return
 		if old_torso.visible or old_box.visible or not bool(
-				apron.get_meta("contoured_to_hips_and_waist",false)):
+				station_apron.get_meta("contoured_to_hips_and_waist",false)):
 			_fail("Station staff still wear rigid unisex box clothing"); return
-		if apron.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<650:
+		if station_apron.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<650:
 			_fail("Anatomical apron uses an oversimplified rectangle"); return
-		if String(apron.get_meta("anatomic_body_profile",""))!=(
+		if String(station_apron.get_meta("anatomic_body_profile",""))!=(
 				String(world.village_sim.people["juno"]["sex"])):
 			_fail("Station staff's inherited physique does not reach clothing"); return
 
