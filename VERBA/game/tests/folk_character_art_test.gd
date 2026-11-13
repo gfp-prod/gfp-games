@@ -273,10 +273,14 @@ func _run() -> void:
 				side.to_lower()+"_leg") as Node3D
 			var trousers: MeshInstance3D=original_leg.get_node_or_null(
 				"GeneticTrouserLeg") as MeshInstance3D if original_leg!=null else null
-			var boot: MeshInstance3D=original_leg.get_node_or_null(
-				"GeneticAnkleBoot") as MeshInstance3D if original_leg!=null else null
-			if original_leg==null or trousers==null or boot==null:
-				_fail("Old cuboid boots or one-piece leg cylinders returned"); return
+			var knee: Node3D=original_leg.get_node_or_null(
+				"AnatomicalKneeHinge") as Node3D if original_leg!=null else null
+			var calf: MeshInstance3D=knee.get_node_or_null(
+				"InheritedCalfAndShin") as MeshInstance3D if knee!=null else null
+			var boot: MeshInstance3D=knee.get_node_or_null(
+				"GeneticAnkleBoot") as MeshInstance3D if knee!=null else null
+			if original_leg==null or trousers==null or knee==null or calf==null or boot==null:
+				_fail("Original severable leg lost its knee, shin or attached boot"); return
 			if trousers.mesh==null or boot.mesh==null or (
 					trousers.mesh is CylinderMesh or boot.mesh is BoxMesh):
 				_fail("Fitted leg geometry was replaced by primitive shapes"); return
@@ -292,10 +296,12 @@ func _run() -> void:
 			# Catch the exact stubby-leg regression in actual generated vertex
 			# bounds, not only an invisible "long legs" metadata flag.
 			var pants_bounds: AABB=trousers.get_aabb()
-			if original_leg.position.y<.95 or pants_bounds.size.y<.86:
-				_fail("Femoral pivot or visible trouser length reverted to stump-legged mannequin")
+			if original_leg.position.y<.95 or pants_bounds.size.y<.52 or (
+					knee.position.y>-.39 or
+					calf.get_aabb().position.y+knee.position.y>-.82):
+				_fail("Femur, shin or anatomical knee reverted to a short rigid cylinder")
 				return
-			var sole_y: float=original_leg.position.y+foot_bounds.position.y
+			var sole_y: float=original_leg.position.y+knee.position.y+foot_bounds.position.y
 			if absf(sole_y-.012)>.055:
 				_fail("Full-length boot no longer contacts the actual ground")
 				return
