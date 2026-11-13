@@ -141,8 +141,11 @@ func _run() -> void:
 			if not bool(trousers.get_meta("original_detachable_leg",false)) or (
 					not bool(boot.get_meta("no_new_collision",false))):
 				_fail("Fitted leg violated modular injury/collision contract"); return
-			if not original_leg.find_children("*","CollisionShape3D",true,false).is_empty():
-				_fail("Visual leg added a second physical collision shape"); return
+			# The existing limb hitbox is deliberately physical. Only the
+			# NEW art meshes must be collision-free.
+			if not trousers.find_children("*","CollisionShape3D",true,false).is_empty() or (
+					not boot.find_children("*","CollisionShape3D",true,false).is_empty()):
+				_fail("Decorative leg geometry added redundant collision"); return
 	# The blacksmith must have a curved work apron, not a detached
 	# rectangular chest plate. The rear cloth is not the source of truth.
 	var smith_apron: MeshInstance3D=orin.find_child(
