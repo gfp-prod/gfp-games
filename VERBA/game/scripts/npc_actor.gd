@@ -222,9 +222,7 @@ func _ready() -> void:
 			# A shaped cloth bib, a tied waist and a pocket replace the
 			# vertical white rectangle that used to obscure the whole body.
 			_make_baker_apron(figure,flour,trim,genome,sex)
-			var bonnet:=ART.orb(figure,Vector3(0,1.989,.025),
-				Vector3(.46,.24,.40),flour,12)
-			bonnet.name="VisibleBakerBonnet"
+			var bonnet:=_make_baker_headscarf(figure,flour,genome)
 			# Avoid two unsupported ivory rods sticking out beside the face.
 			# The bonnet silhouette is readable without fake face-hanging bones.
 		"orin":
@@ -454,6 +452,47 @@ func _apply_genetic_growth() -> void:
 		visual_attendant.scale=shape
 	_fit_growth_colliders(shape)
 	last_body_age_day=world.village_sim.current_day
+
+## Cloth fitted to the skull, not a pale mushroom-shaped SphereMesh.
+## The inherited width/volume changes its crown while the work headscarf
+## remains a distinct garment; no hair or injury rig is replaced.
+func _make_baker_headscarf(parent: Node3D,flour: Material,
+		genome: Dictionary) -> MeshInstance3D:
+	var tool:=SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tool.set_material(flour)
+	var width: float=lerpf(.183,.208,GENES.value(genome,"hair_volume"))
+	var depth: float=lerpf(.155,.174,GENES.value(genome,"hair_volume"))
+	const SEGMENTS: int=20
+	const RINGS: int=9
+	for row in range(RINGS-1):
+		for seg in range(SEGMENTS):
+			var quad: Array[Vector3]=[]
+			for pair in [[row,seg],[row+1,seg],[row+1,seg+1],[row,seg+1]]:
+				var t: float=float(pair[0])/float(RINGS-1)
+				var a: float=TAU*float(pair[1])/float(SEGMENTS)
+				var radius: float=pow(maxf(.0,1.0-t*t),.73)
+				var rim_y: float=1.945+.014*maxf(.0,-sin(a))+
+					.007*absf(cos(a))
+				var y: float=lerpf(rim_y,2.059,t)+
+					.003*(1.0-t)*sin(4.0*a)
+				quad.append(Vector3(cos(a)*width*radius,
+					y-1.989,sin(a)*depth*radius))
+			for k in [0,1,2,0,2,3]:
+				var v: Vector3=quad[k]
+				tool.set_uv(Vector2(v.x+.3,v.y+.25))
+				tool.add_vertex(v)
+	tool.generate_normals()
+	var cloth:=MeshInstance3D.new()
+	cloth.name="VisibleBakerBonnet"
+	cloth.mesh=tool.commit()
+	cloth.position=Vector3(0,1.989,.025)
+	cloth.material_override=flour
+	cloth.set_meta("head_fitted_work_headscarf",true)
+	cloth.set_meta("no_new_collision",true)
+	parent.add_child(cloth)
+	return cloth
+
 
 func _make_baker_apron(parent: Node3D, fabric: Material,
 		tie: Material, genome: Dictionary, sex: String) -> void:
