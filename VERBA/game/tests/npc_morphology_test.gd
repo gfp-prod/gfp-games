@@ -19,6 +19,41 @@ func _run() -> void:
 	var child: Dictionary=GENES.child(a,b,"born_0001")
 	if not GENES.validate(a) or not GENES.validate(b) or not GENES.validate(child):
 		_fail("Expanded genome is invalid") ; return
+	# Facial-hair growth is a true two-parent genotype, not a name or
+	# costume lookup. The face must create different 3D facial surfaces
+	# from the same loci without a second physical head/hitbox.
+	var dense: Dictionary=a.duplicate(true)
+	for locus in ["facial_hair_density","facial_hair_length",
+			"facial_hair_pattern","mustache_weight","sideburn_weight"]:
+		dense["alleles"][locus]=[940,940]
+	var shaved: Dictionary=dense.duplicate(true)
+	shaved["alleles"]["facial_hair_density"]=[30,30]
+	if GENES.beard_profile(dense,"male",30.0)["style"]=="clean":
+		_fail("Dominant inherited facial hair alleles never grow a beard")
+		return
+	if GENES.beard_profile(shaved,"male",30.0)["style"]!="clean":
+		_fail("Facial hair density did not suppress beard growth")
+		return
+	if GENES.beard_profile(dense,"male",9.0)["style"]!="clean":
+		_fail("Child with adult facial hair genotype grew an adult beard")
+		return
+	var beard_root:=Node3D.new()
+	root.add_child(beard_root)
+	var dark_hair:=ART.mat(GENES.hair_color(dense),.97)
+	FACE.finish(beard_root,"portrait_reference",
+		ART.mat(GENES.skin_color(dense),.96),dark_hair,dark_hair,
+		dense,"male")
+	var beard_geometry: MeshInstance3D=beard_root.find_child(
+		"GeneticFacialHairChin",true,false) as MeshInstance3D
+	if beard_geometry==null or beard_geometry.mesh==null:
+		_fail("Inherited facial hair has no actual low-poly beard geometry")
+		return
+	if beard_geometry.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<70:
+		_fail("Beard regressed to an unsupported billboard or empty mesh")
+		return
+	if beard_geometry.find_children("*","CollisionShape3D",true,false).size()>0:
+		_fail("Facial hair incorrectly adds a new physical collision")
+		return
 	# The first 28 inherited alleles are exactly those from the prior game.
 	var legacy: Dictionary=a.duplicate(true)
 	legacy["version"]=1
