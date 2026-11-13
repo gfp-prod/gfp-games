@@ -222,9 +222,13 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 		lerpf(.970,1.070,GENES.value(genome,"muscle_tone"))
 		if sex=="male" else 1.0)
 	var depth: float=lerpf(.90,1.10,GENES.value(genome,"body_depth"))
-	const H: Array[float]=[.085,.025,-.060,-.160,-.255,-.345,-.435,-.505]
-	const W: Array[float]=[.127,.130,.125,.119,.112,.108,.104,.102]
-	const D: Array[float]=[.133,.131,.128,.120,.114,.110,.105,.102]
+	# The old 0.59m trouser and 0.60m boot stack made grown adults
+	# look like children with stunted legs. Model a full femur, knee,
+	# calf and ankle below the TRUE pelvic pivot (~0.98m).
+	# This preserves the same four physical, detachable limb identities.
+	const H: Array[float]=[.075,.015,-.075,-.200,-.340,-.490,-.650,-.820]
+	const W: Array[float]=[.144,.145,.142,.135,.122,.113,.100,.087]
+	const D: Array[float]=[.144,.145,.141,.130,.120,.111,.100,.091]
 	var tube:=SurfaceTool.new()
 	tube.begin(Mesh.PRIMITIVE_TRIANGLES)
 	tube.set_material(cloth)
@@ -254,6 +258,7 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	trousers.set_meta("inherited_hip_width",GENES.value(genome,"hip_width"))
 	trousers.set_meta("anatomic_thigh_factor",thigh_factor)
 	trousers.set_meta("lean_leg_taper",true)
+	trousers.set_meta("full_length_hip_to_ankle",true)
 	trousers.set_meta("anatomic_sex_profile",sex)
 	trousers.set_meta("no_new_collision",true)
 	leg.add_child(trousers)
@@ -264,7 +269,9 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	var shoemesh:=SurfaceTool.new()
 	shoemesh.begin(Mesh.PRIMITIVE_TRIANGLES)
 	shoemesh.set_material(boot_hide)
-	const SHOE_Y: Array[float]=[-.426,-.492,-.564,-.597]
+	# Ankle and sole now meet the physical ground after the leg pivot
+	# was raised to the proper femoral-head height.
+	const SHOE_Y: Array[float]=[-.748,-.830,-.921,-.968]
 	const SHOE_W: Array[float]=[.092,.102,.124,.123]
 	const SHOE_Z: Array[float]=[-.030,-.068,-.123,-.129]
 	const SHOE_D: Array[float]=[.101,.119,.176,.177]
