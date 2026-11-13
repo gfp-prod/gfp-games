@@ -67,6 +67,14 @@ func _run() -> void:
 			_fail("Inherited ribcage, waist and hips were not modeled"); return
 		if body.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<600:
 			_fail("Body reverted to one primitive cone"); return
+		# The upper cloth must actually stop below the face. Sampling a
+		# theoretical _section alone never detected the visible high collar.
+		var body_vertices: PackedVector3Array=body.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+		var top_y: float=-INF
+		for vertex in body_vertices:
+			top_y=maxf(top_y,vertex.y)
+		if top_y>1.515 or not bool(body.get_meta("natural_open_neckline",false)):
+			_fail("A tall fabric cylinder has returned underneath the jaw"); return
 		var expected: Array[String]=[
 			"IndividualIntegratedFaceMesh","SmallRecessedEye","InheritedIris",
 			"AnatomicalPupil","IndividualUpperEyelid",
