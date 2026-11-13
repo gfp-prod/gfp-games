@@ -658,8 +658,9 @@ func _run() -> void:
 		# Z-fight against the jaw, leaving a dark mask in screenshots.
 		if not bool(sculpt.get_meta("continuous_inherited_skull_volume",false)):
 			_fail("Head regressed to a floating face patch over an orb"); return
-		var bounds: AABB=sculpt.get_aabb()
-		if bounds.size.z<.31 or bounds.size.y<.38:
+		var unified_skull_extent: AABB=sculpt.get_aabb()
+		if unified_skull_extent.size.z<.31 or (
+				unified_skull_extent.size.y<.38):
 			_fail("Inherited head lacks real back-of-skull / crown volume"); return
 		# A separate face patch, inherited nose and legacy skull occupied
 		# overlapping volume. Their dynamic self-shadowing previously
