@@ -136,20 +136,22 @@ static func body_scale(g: Dictionary,sex: String="unspecified") -> Vector3:
 	var depth: float=value(g,"body_depth")
 	var female: bool=sex=="female"
 	var height: float=(.875+.325*height_gene) if female else (.94+.32*height_gene)
-	var breadth: float=lerpf(.87,1.14,shoulders)
+	var breadth: float=lerpf(.855,1.095,shoulders)
 	if female:
 		# Broad-shouldered women retain their width; fine-boned women
 		# average narrower, without overriding their transmitted genes.
 		breadth*=lerpf(.945,1.012,shoulders)
-	var thickness: float=lerpf(.88,1.11,depth)
+	var thickness: float=lerpf(.855,1.085,depth)
 	if female:
 		thickness*=lerpf(.955,1.01,depth)
 	return Vector3(breadth,height,thickness)
 
 static func forearm_length(g: Dictionary) -> float:
-	# Use the inherited limb_ratio locus instead of arbitrary per-role
-	# or per-sex limb lengths. Stature is handled by body_scale's Y.
-	return lerpf(.475,.635,value(g,"limb_ratio"))
+	# The original 0.475–0.635 lower-arm span, added to the 0.41
+	# upper arm and full hands, put fingertips at knee height. Restore a
+	# human elbow-to-wrist ratio while still expressing inherited reach.
+	# Stature is handled by body_scale's Y; limb_ratio remains heritable.
+	return lerpf(.350,.490,value(g,"limb_ratio"))
 
 ## Potential for facial hair is inherited by all, but normally expressed
 ## by adult male phenotypes. Individual genetic variation is broad.
