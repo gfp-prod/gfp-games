@@ -187,7 +187,7 @@ func _ready() -> void:
 			# Avoid two unsupported ivory rods sticking out beside the face.
 			# The bonnet silhouette is readable without fake face-hanging bones.
 		"orin":
-			var hide:=ART.mat(Color("775b42"),.99)
+			var hide:=FABRIC.worn_leather(Color("775b42"))
 			var metal:=ART.mat(Color("737e81"),.52)
 			# Shaped leather hangs in front of the actual inherited torso.
 			# Retain original occupational identity and arm-mounted hammer.
@@ -430,8 +430,11 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	apron.set_meta("drapes_over_inherited_torso",true)
 	parent.add_child(apron)
 	var waist_front: float=BODY._point(1.04,-PI*.5,genome).z-.155
-	ART.bone(parent,Vector3(-.35,1.04,waist_front),
-		Vector3(.35,1.04,waist_front),.025,.025,tie,8)
+	# A stitched waist seam, not a broad yellow bar projecting across
+	# the entire abdomen.
+	var stitch:=ART.bone(parent,Vector3(-.20,1.04,waist_front),
+		Vector3(.20,1.04,waist_front),.013,.013,tie,8)
+	stitch.name="BakerCloseFittedWaistSeam"
 	var pocket_z: float=BODY._point(.75,-PI*.5,genome).z-.152
 	var pocket:=ART.box(parent,Vector3(-.08,.75,pocket_z),
 		Vector3(.17,.14,.022),fabric)
