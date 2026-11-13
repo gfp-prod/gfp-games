@@ -388,9 +388,9 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	# top and waist lets the physical ribcage and bust protrude through
 	# the flat apron, creating a giant brown hole in the actual render.
 	# A genuine conformal surface follows inherited chest/waist/hips
-	# at 8 heights and 5 lateral points, without introducing colliders.
-	const COLUMNS: int=5
-	const HEIGHTS: Array[float]=[1.40,1.35,1.29,1.24,1.17,1.08,.93,.77,.64,.55]
+	# across many sampled heights and lateral points, without new colliders.
+	const COLUMNS: int=11
+	const HEIGHTS: Array[float]=[1.40,1.365,1.33,1.29,1.255,1.22,1.17,1.11,1.055,.99,.93,.84,.77,.70,.64,.55]
 	var vertices: Array[Vector3]=[]
 	for y in HEIGHTS:
 		var t: float=clampf((1.40-y)/.85,0.0,1.0)
@@ -401,9 +401,13 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 			var x: float=half_width*fraction
 			var angle: float=-PI*.5+asin(clampf(x/torso_section.x,-.89,.89))
 			var point: Vector3=BODY._point(y,angle,genome)
-			# Keep the cloth off the curved belly/bust at *every* row
-			# and undercut the outside of the 4.2%-wider outer tunic.
-			vertices.append(Vector3(x,y,point.z-.080))
+			# Dense sampling follows the convex bust and lower ribs. The
+			# old five-column panel cut across the curved chest: the opaque
+			# shirt pierced the apron, leaving a jagged brown hole.
+			# A center-weighted air gap clears the outer cloth while the
+			# panel still follows inherited body geometry.
+			var drape_gap: float=.105+.024*(1.0-absf(fraction))
+			vertices.append(Vector3(x,y,point.z-drape_gap))
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(fabric)
@@ -425,10 +429,10 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	apron.material_override=fabric
 	apron.set_meta("drapes_over_inherited_torso",true)
 	parent.add_child(apron)
-	var waist_front: float=BODY._point(1.04,-PI*.5,genome).z-.07
+	var waist_front: float=BODY._point(1.04,-PI*.5,genome).z-.155
 	ART.bone(parent,Vector3(-.35,1.04,waist_front),
 		Vector3(.35,1.04,waist_front),.025,.025,tie,8)
-	var pocket_z: float=BODY._point(.75,-PI*.5,genome).z-.077
+	var pocket_z: float=BODY._point(.75,-PI*.5,genome).z-.152
 	var pocket:=ART.box(parent,Vector3(-.08,.75,pocket_z),
 		Vector3(.17,.14,.022),fabric)
 	pocket.name="BakerWorkPocket"
