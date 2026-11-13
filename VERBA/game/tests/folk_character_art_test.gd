@@ -838,6 +838,26 @@ func _run() -> void:
 				lowest_temple=minf(lowest_temple,v.y)
 			if lowest_temple<1.66:
 				_fail("Loose side fringe became a hanging cardboard plank"); return
+			# A front-facing hair sheet disappears edge-on. Verify actual
+			# three-dimensional thickness at the MIDDLE of the strand, not
+			# a marker that claims to have solid geometry.
+			for hair_panel in [temple_panel,strand]:
+				var vertices: PackedVector3Array=hair_panel.mesh.surface_get_arrays(0)[
+					Mesh.ARRAY_VERTEX]
+				var top_y: float=-1000.0
+				var low_y: float=1000.0
+				for v in vertices:
+					top_y=maxf(top_y,v.y)
+					low_y=minf(low_y,v.y)
+				var middle_y: float=lerpf(top_y,low_y,.52)
+				var backmost: float=-1000.0
+				var foremost: float=1000.0
+				for v in vertices:
+					if absf(v.y-middle_y)<.055:
+						backmost=maxf(backmost,v.z)
+						foremost=minf(foremost,v.z)
+				if backmost-foremost<.022:
+					_fail("Hair is still a paper-thin floating polygon"); return
 		if finish.find_children("*","CollisionShape3D",true,false).size()>0:
 			_fail("Grooming added a new body collision or blocked limb severance")
 			return
