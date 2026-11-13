@@ -118,6 +118,13 @@ func _run() -> void:
 					names[i]+"_whole_body",base,body_focus,body_distance):
 				_fail("Could not photograph genetically different body")
 				return
+		# Waist-level detail frames catch the old sphere hands and rigid
+		# wrists that are invisible in full-body game screenshots.
+		if i in [0,1,8]:
+			if not await _capture(world,cam,citizen,
+					names[i]+"_hand_detail",base,.62,1.25):
+				_fail("Could not photograph modeled wrists and fingers")
+				return
 		# Two additional authentic game-world views examine a BENT knee
 		# from an oblique angle. A static front portrait cannot prove that
 		# the foot and calf actually follow the second articulated joint.
