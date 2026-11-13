@@ -114,6 +114,35 @@ func _run() -> void:
 			var module_name: String=side.to_lower()+"_arm"
 			if actor.modular_limbs.get(module_name)!=arm:
 				_fail("Sleeve was added to a different arm than the injury rig"); return
+	# Legs must remain independently amputatable while trousers and
+	# footwear follow the inherited body rather than cubic ankle blocks.
+	for citizen in [ida,orin]:
+		for side in ["Left","Right"]:
+			var original_leg: Node3D=citizen.modular_limbs.get(
+				side.to_lower()+"_leg") as Node3D
+			var trousers: MeshInstance3D=original_leg.get_node_or_null(
+				"GeneticTrouserLeg") as MeshInstance3D if original_leg!=null else null
+			var boot: MeshInstance3D=original_leg.get_node_or_null(
+				"GeneticAnkleBoot") as MeshInstance3D if original_leg!=null else null
+			if original_leg==null or trousers==null or boot==null:
+				_fail("Old cuboid boots or one-piece leg cylinders returned"); return
+			if trousers.mesh==null or boot.mesh==null or (
+					trousers.mesh is CylinderMesh or boot.mesh is BoxMesh):
+				_fail("Fitted leg geometry was replaced by primitive shapes"); return
+			var trouser_vertices: PackedVector3Array=trousers.mesh.surface_get_arrays(0)[
+				Mesh.ARRAY_VERTEX]
+			var boot_vertices: PackedVector3Array=boot.mesh.surface_get_arrays(0)[
+				Mesh.ARRAY_VERTEX]
+			if trouser_vertices.size()<500 or boot_vertices.size()<250:
+				_fail("Leg or boot lost its faceted inherited silhouettes"); return
+			var foot_bounds: AABB=boot.get_aabb()
+			if foot_bounds.size.z<.32 or foot_bounds.size.y<.13:
+				_fail("Foot lost instep, toe or ankle volume"); return
+			if not bool(trousers.get_meta("original_detachable_leg",false)) or (
+					not bool(boot.get_meta("no_new_collision",false))):
+				_fail("Fitted leg violated modular injury/collision contract"); return
+			if not original_leg.find_children("*","CollisionShape3D",true,false).is_empty():
+				_fail("Visual leg added a second physical collision shape"); return
 	# The blacksmith must have a curved work apron, not a detached
 	# rectangular chest plate. The rear cloth is not the source of truth.
 	var smith_apron: MeshInstance3D=orin.find_child(
