@@ -55,6 +55,39 @@ func _run() -> void:
 	if beard_geometry.find_children("*","CollisionShape3D",true,false).size()>0:
 		_fail("Facial hair incorrectly adds a new physical collision")
 		return
+	# The old full beard began directly beneath the eyeballs and
+	# independently cast shadows into one cheek. Keep a sculpted
+	# jawline beard, not an arbitrary black eye patch.
+	var cheek_beards: Array[Node]=beard_root.find_children(
+		"GeneticFacialHairCheek*","MeshInstance3D",true,false)
+	if cheek_beards.size()!=2:
+		_fail("Heritable facial hair lost its two cheek regions"); return
+	for cheek in cheek_beards:
+		var panel: MeshInstance3D=cheek as MeshInstance3D
+		if panel.cast_shadow!=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			_fail("Decorative beard creates mask-like cheek shadow"); return
+		var beard_pts: PackedVector3Array=panel.mesh.surface_get_arrays(0)[
+			Mesh.ARRAY_VERTEX]
+		for p in beard_pts:
+			if p.y>1.715:
+				_fail("Beard grows into the inherited lower eyelid"); return
+	# The genetically sculpted face must meet the ORIGINAL skull at the
+	# temples without a floating cardboard mask edge, across head sizes.
+	var face_mesh: MeshInstance3D=beard_root.find_child(
+		"IndividualIntegratedFaceMesh",true,false) as MeshInstance3D
+	if face_mesh==null or face_mesh.mesh==null:
+		_fail("Continuous inherited face mesh has disappeared"); return
+	var face_pts: PackedVector3Array=face_mesh.mesh.surface_get_arrays(0)[
+		Mesh.ARRAY_VERTEX]
+	var seated_points: int=0
+	for p in face_pts:
+		if absf(p.y-1.77)>.032 or absf(p.x)<.13:
+			continue
+		if absf(p.z-(FACE._skull_front_depth(p.x,p.y)-.005))<.013:
+			seated_points+=1
+	if seated_points<8:
+		_fail("Inherited face sides no longer blend into the original skull")
+		return
 	# The first 28 inherited alleles are exactly those from the prior game.
 	var legacy: Dictionary=a.duplicate(true)
 	legacy["version"]=1
