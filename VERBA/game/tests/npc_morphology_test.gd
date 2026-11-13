@@ -503,6 +503,25 @@ func _run() -> void:
 				sclera.scale.x<.044 or sclera.scale.x>.083):
 			_fail("Inherited eye became a protruding mechanical eyeball")
 			return
+		# An inherited eye must be an almond inside its socket, not a
+		# luminous circular bead below the eyebrow. These aspect bounds
+		# leave the normal genetic ranges fully available.
+		var visible_eye_aspect: float=sclera.scale.y/sclera.scale.x
+		if visible_eye_aspect<.19 or visible_eye_aspect>.56:
+			_fail("Genetic eye is a protruding round doll eye"); return
+		# Ears belong to the lateral skull; the former large, round
+		# discs floated at either temple in every real Godot portrait.
+		var auricles: Array[Node]=figure.find_children(
+			"SubtleModeledEar","MeshInstance3D",true,false)
+		if auricles.size()!=2:
+			_fail("Inherited skull lost its paired ears"); return
+		for auricle in auricles:
+			var ear_mesh: MeshInstance3D=auricle as MeshInstance3D
+			if ear_mesh.scale.z/ear_mesh.scale.x>.91 or (
+					absf(ear_mesh.position.x)<.185 or (
+					absf(ear_mesh.position.x)>.215)):
+				_fail("Ear detached from skull as a rounded side disc")
+				return
 		var upper: Node3D=eye.get_node_or_null("ExpressionUpperBlinkCover")
 		var lower_lid: Node3D=eye.get_node_or_null("ExpressionLowerBlinkCover")
 		if upper==null or lower_lid==null:
