@@ -25,8 +25,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	const HEIGHT: Array[float]=[.046,.006,-.060,-.140,-.240,-.330,-.414]
 	const CX: Array[float]=[-.058,-.031,-.007,.025,.049,.065,.076]
 	const CZ: Array[float]=[-.018,-.024,-.029,-.034,-.042,-.046,-.047]
-	const RX: Array[float]=[.068,.078,.086,.085,.080,.076,.072]
-	const RZ: Array[float]=[.069,.083,.091,.092,.087,.082,.076]
+	const RX: Array[float]=[.067,.072,.079,.076,.070,.066,.062]
+	const RZ: Array[float]=[.069,.078,.083,.086,.083,.076,.071]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -226,9 +226,9 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	# look like children with stunted legs. Model a full femur, knee,
 	# calf and ankle below the TRUE pelvic pivot (~0.98m).
 	# This preserves the same four physical, detachable limb identities.
-	const H: Array[float]=[.075,.015,-.075,-.200,-.340,-.490,-.650,-.820]
-	const W: Array[float]=[.144,.145,.142,.135,.122,.113,.100,.087]
-	const D: Array[float]=[.144,.145,.141,.130,.120,.111,.100,.091]
+	const H: Array[float]=[.075,.015,-.075,-.200,-.315,-.400,-.490,-.570,-.660,-.740,-.820]
+	const W: Array[float]=[.136,.141,.137,.127,.117,.109,.115,.112,.099,.092,.087]
+	const D: Array[float]=[.140,.143,.138,.128,.116,.109,.118,.116,.104,.094,.089]
 	var tube:=SurfaceTool.new()
 	tube.begin(Mesh.PRIMITIVE_TRIANGLES)
 	tube.set_material(cloth)
@@ -474,12 +474,12 @@ static func tailored_womenswear(figure: Node3D,person: String,
 	var style: String="field_dress"
 	var hem_y: float=.34
 	match person:
-		"ida": style="baker_apron_dress"; hem_y=.39
-		"mara": style="scribe_gown"; hem_y=.205
-		"sela": style="layered_merchant_skirt"; hem_y=.255
-		"lena": style="painter_smock"; hem_y=.44
-		"juno": style="attendant_work_dress"; hem_y=.49
-		_: hem_y=lerpf(.23,.47,GENES.value(genome,"hair_style"))
+		"ida": style="baker_apron_dress"; hem_y=.51
+		"mara": style="scribe_gown"; hem_y=.38
+		"sela": style="layered_merchant_skirt"; hem_y=.54
+		"lena": style="painter_smock"; hem_y=.68
+		"juno": style="attendant_work_dress"; hem_y=.78
+		_: hem_y=lerpf(.39,.66,GENES.value(genome,"hair_style"))
 	var trim_color: Color=Color("574138")
 	var skirt_color: Color=Color("56534c")
 	match style:
@@ -501,6 +501,8 @@ static func tailored_womenswear(figure: Node3D,person: String,
 	for level in [1.07,.995,.91,.835,.73,.61,.51,.41,.33]:
 		if float(level)>hem_y+.001: rows.append(float(level))
 	rows.append(hem_y)
+	# The high-hip tunic exposes the original weight-bearing femurs;
+	# optional tailored skirts remain distinct garments and lengths.
 	# No visible torus at the waist; continuity in the fitted cloth
 	# is more important than adding more extraneous belts.
 	for row in range(rows.size()-1):
