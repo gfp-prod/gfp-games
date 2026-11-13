@@ -83,11 +83,20 @@ func _run() -> void:
 			"SmallNaturalLipLine","ModeledLowerLipLeft",
 			"NaturalLipCorner","ModeledLowerLipRight",
 			"ExpressionBrowLeft","ExpressionBrowRight",
-			"InheritedChestWaistHipCloth"]
+			"InheritedChestWaistHipCloth","IndividualAnatomicalNeck"]
 		for name in expected:
 			if figure.find_child(name,true,false)==null:
 				_fail("New face or torso is missing real 3D geometry: "+name)
 				return
+		var neck: MeshInstance3D=figure.find_child(
+			"IndividualAnatomicalNeck",true,false) as MeshInstance3D
+		if neck==null or neck.mesh==null or not bool(
+				neck.get_meta("inherited_neck_bridge",false)):
+			_fail("Face has a floating chin without anatomical neck geometry"); return
+		var neck_bounds: AABB=neck.get_aabb()
+		if neck_bounds.position.y>1.46 or neck_bounds.end.y<1.64 or (
+				neck_bounds.size.x<.24 or neck_bounds.size.x>.45):
+			_fail("Neck bridge does not meet jaw and open garment"); return
 		if not figure.find_children("*","CollisionShape3D",true,false).is_empty():
 			_fail("Decorative anatomy replaced modular-limb physics"); return
 		var portrait: Node3D=figure.get_node("IndividualFaceConstruction")
