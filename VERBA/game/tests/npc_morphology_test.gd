@@ -425,9 +425,31 @@ func _run() -> void:
 		var natural_mouth: Node3D=portrait.get_node("ExpressionMouth")
 		var upper_lip: MeshInstance3D=natural_mouth.find_child(
 			"SmallNaturalLipLine",true,false) as MeshInstance3D
-		if upper_lip==null or upper_lip.get_aabb().size.y<.009:
-			_fail("The inherited mouth is too fine to read at camera distance")
+		var lower_lip: MeshInstance3D=natural_mouth.find_child(
+			"ModeledLowerLipLeft",true,false) as MeshInstance3D
+		var mouth_crease: MeshInstance3D=natural_mouth.get_node_or_null(
+			"ExpressionMouthOpening") as MeshInstance3D
+		# A natural mouth is read as upper + lower vermilion + a thin
+		# aperture, not by forcing the top lip alone to be a fat plank.
+		if upper_lip==null or lower_lip==null or mouth_crease==null:
+			_fail("The inherited mouth lacks its lip or oral crease mesh")
 			return
+		if upper_lip.get_aabb().size.y<.005 or (
+				lower_lip.get_aabb().size.y<.004) or (
+				upper_lip.get_aabb().size.x<.032) or (
+				not mouth_crease.visible) or (
+				mouth_crease.get_aabb().size.x<.045):
+			_fail("The inherited mouth is not readable at camera distance")
+			return
+		# The colored lip is embedded in the inherited face surface. An
+		# old constant-depth mouth created four visibly floating petals.
+		for p in upper_lip.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+			var face_z: float=FACE._depth(p.x,
+				natural_mouth.position.y+p.y,record)
+			var protrusion: float=face_z-(natural_mouth.position.z+p.z)
+			if protrusion<.004 or protrusion>.015:
+				_fail("Lip surface has detached from its genetic face")
+				return
 		if upper_lip.mesh is CylinderMesh or not bool(upper_lip.get_meta(
 				"faceted_anatomical_surface",false)):
 			_fail("Mouth is still composed of attached cylindrical bars")
