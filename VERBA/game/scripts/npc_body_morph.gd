@@ -6,8 +6,14 @@ extends RefCounted
 ## This is not a collider or a replacement limb: the original detachments,
 ## wounds, clothing objects, names and saves retain their identity.
 const GENES=preload("res://scripts/npc_genetics.gd")
-const RINGS: int=16
-const HEIGHTS: Array[float]=[.815,.85,.89,.94,.98,1.10,1.20,1.30,1.34,1.375,1.405,1.43,1.455,1.48,1.505]
+# More supporting rings where the ribs turn into the deltoids and neck.
+# A few large, evenly spaced rings made human torsos resemble barrel-shaped
+# cylinders and gave the shoulders a hard step in profile. This is still a
+# modest, single low-poly cloth mesh with the same detachable arm sockets.
+const RINGS: int=24
+const HEIGHTS: Array[float]=[.815,.85,.89,.94,.98,1.04,1.10,1.16,
+	1.20,1.24,1.28,1.30,1.325,1.34,1.355,1.375,1.395,
+	1.42,1.445,1.465,1.48,1.495,1.505]
 
 static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector2:
 	# Build the *same* inherited skeleton using sex-linked population
@@ -111,6 +117,31 @@ static func _point(y: float,angle: float,g: Dictionary,
 	elif sex=="male":
 		x*=1.0+.011*soft_hip*hip_level*lateral
 		z+=.010*soft_hip*hip_level*posterior
+	# Sculpt the ribcage and waist in THREE dimensions, not just in the
+	# left/right silhouette. Every prior ring was an oval extrusion: the
+	# back had no scapulae, sternum and lumbar hollow, so a turned figure
+	# resembled a pipe even when its waist and pelvis were correctly sized.
+	# All relief stays small relative to the underlying inherited bones.
+	var front: float=pow(maxf(0.0,-sin(angle)),2.0)
+	var back: float=pow(maxf(0.0,sin(angle)),2.0)
+	var sternum_level: float=exp(-pow((y-1.355)/.118,2.0))
+	var sternum_center: float=exp(-pow(x/.125,2.0))
+	z-=.010*sternum_level*sternum_center*front
+	# Posterior shoulder-blade lobes have no equivalent on the front.
+	# Their relief fades to zero around the waist and at the collar.
+	var scapula_level: float=exp(-pow((y-1.315)/.115,2.0))
+	var scapula_lobe: float=exp(-pow((absf(x)-.168)/.088,2.0))
+	z+=.017*scapula_level*scapula_lobe*back
+	var lumbar_level: float=exp(-pow((y-1.045)/.145,2.0))
+	z-=.009*lumbar_level*exp(-pow(x/.105,2.0))*back
+	# The oblique flank recedes at the waist while retaining broad hips
+	# for those with the inherited width. These small contours do not
+	# replace sex-linked averages with a single forced body template.
+	var oblique_level: float=exp(-pow((y-1.105)/.130,2.0))
+	var waist_inheritance: float=GENES.value(g,"waist_width")
+	x*=1.0-(.017+.013*(1.0-waist_inheritance))*oblique_level*lateral
+	var abdomen_level: float=exp(-pow((y-1.035)/.185,2.0))
+	z-=(.004+.009*waist_inheritance)*abdomen_level*front
 	return Vector3(x,y,z)
 
 static func finish(root: Node3D,g: Dictionary,cloth: Material,
