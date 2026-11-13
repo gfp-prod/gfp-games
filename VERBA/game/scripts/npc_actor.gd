@@ -146,6 +146,11 @@ func _ready() -> void:
 	var head:=ART.orb(figure,Vector3(0,1.77,0),
 		Vector3(.42,.49,.39),skin,13)
 	head.name="ModeledInhabitantHead"
+	# The genetic front and rear skull now form one continuous visible
+	# mesh. The old SphereMesh remains for compatibility/calibration
+	# but must not Z-fight against the new face or its sculpted seams.
+	head.visible=false
+	head.set_meta("hidden_legacy_skull_compatibility",true)
 	# Preserve the legacy skull for back-of-head silhouette, original
 	# figure calibration and save compatibility, but never allow this
 	# overlapping orb to project a fake face-mask shadow onto the
@@ -352,6 +357,8 @@ func _ready() -> void:
 		var modern_head:=ART.orb(attendant,Vector3(0,1.76,0),
 			Vector3(.42,.49,.39),skin,12)
 		modern_head.name="ModernGeneticHead"
+		modern_head.visible=false
+		modern_head.set_meta("hidden_legacy_skull_compatibility",true)
 		modern_head.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		# The former two huge head-level boxes became a floating roof in
 		# close-up. A close crown and shallow visor preserve the station
