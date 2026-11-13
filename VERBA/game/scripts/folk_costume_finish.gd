@@ -143,6 +143,99 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 		tie.name="SmithApronSideTie"
 	return apron
 
+## Inherited, low-poly lower-leg cloth and a wedge-soled leather boot.
+## These are children of the existing amputatable/animated leg pivot;
+## they never get their own collider, movement system or save identity.
+static func fitted_lower_leg(leg: Node3D,side: float,
+		genome: Dictionary,leather: Material) -> MeshInstance3D:
+	var existing:=leg.get_node_or_null("GeneticTrouserLeg") as MeshInstance3D
+	if existing!=null: return existing
+	var cloth:=FABRIC.worn_linen(Color("4a4b45"))
+	var hip: float=lerpf(.87,1.15,GENES.value(genome,"hip_width"))
+	var depth: float=lerpf(.90,1.10,GENES.value(genome,"body_depth"))
+	const H: Array[float]=[.085,.025,-.060,-.160,-.255,-.345,-.435,-.505]
+	const W: Array[float]=[.149,.152,.145,.136,.128,.120,.114,.108]
+	const D: Array[float]=[.151,.149,.143,.130,.121,.116,.113,.112]
+	var tube:=SurfaceTool.new()
+	tube.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tube.set_material(cloth)
+	for row in range(H.size()-1):
+		for segment in range(14):
+			var a: float=TAU*float(segment)/14.0
+			var b: float=TAU*float(segment+1)/14.0
+			var corners: Array[Vector3]=[]
+			for pair in [[row,a],[row+1,a],[row+1,b],[row,b]]:
+				var i: int=int(pair[0])
+				var angle: float=float(pair[1])
+				var wrinkle: float=.007*sin(float(i)*1.6+angle*3.0)
+				corners.append(Vector3(
+					cos(angle)*(W[i]*hip+wrinkle),
+					H[i],
+					sin(angle)*D[i]*depth + .010*sin(float(i)*.58)))
+			for index in [0,1,2,0,2,3]:
+				var p: Vector3=corners[index]
+				tube.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU,p.y*1.55))
+				tube.add_vertex(p)
+	tube.generate_normals()
+	var trousers:=MeshInstance3D.new()
+	trousers.name="GeneticTrouserLeg"
+	trousers.mesh=tube.commit()
+	trousers.material_override=cloth
+	trousers.set_meta("original_detachable_leg",true)
+	trousers.set_meta("inherited_hip_width",GENES.value(genome,"hip_width"))
+	trousers.set_meta("no_new_collision",true)
+	leg.add_child(trousers)
+
+	# The old cube boots floated beneath cylindrical calves. A dedicated
+	# leather shoe has an ankle, a sloping instep and a broad toe. Its
+	# sole sits at the original physical floor, preserving gait contact.
+	var shoemesh:=SurfaceTool.new()
+	shoemesh.begin(Mesh.PRIMITIVE_TRIANGLES)
+	shoemesh.set_material(leather)
+	const SHOE_Y: Array[float]=[-.426,-.492,-.564,-.597]
+	const SHOE_W: Array[float]=[.108,.117,.144,.140]
+	const SHOE_Z: Array[float]=[-.030,-.068,-.123,-.129]
+	const SHOE_D: Array[float]=[.111,.139,.215,.216]
+	for row in range(SHOE_Y.size()-1):
+		for segment in range(12):
+			var a: float=TAU*float(segment)/12.0
+			var b: float=TAU*float(segment+1)/12.0
+			var vertices: Array[Vector3]=[]
+			for pair in [[row,a],[row+1,a],[row+1,b],[row,b]]:
+				var idx: int=int(pair[0])
+				var angle: float=float(pair[1])
+				vertices.append(Vector3(
+					cos(angle)*SHOE_W[idx],
+					SHOE_Y[idx],
+					SHOE_Z[idx]+sin(angle)*SHOE_D[idx]))
+			for index in [0,1,2,0,2,3]:
+				var p: Vector3=vertices[index]
+				shoemesh.set_uv(Vector2(p.x*1.6,p.z*1.6))
+				shoemesh.add_vertex(p)
+	# Close the sole so low camera angles never see a hollow boot.
+	var sole_center:=Vector3(0,SHOE_Y[SHOE_Y.size()-1],
+		SHOE_Z[SHOE_Z.size()-1])
+	for segment in range(12):
+		var a: float=TAU*float(segment)/12.0
+		var b: float=TAU*float(segment+1)/12.0
+		var rim_a:=Vector3(cos(a)*SHOE_W[3],SHOE_Y[3],
+			SHOE_Z[3]+sin(a)*SHOE_D[3])
+		var rim_b:=Vector3(cos(b)*SHOE_W[3],SHOE_Y[3],
+			SHOE_Z[3]+sin(b)*SHOE_D[3])
+		for p in [sole_center,rim_b,rim_a]:
+			shoemesh.set_uv(Vector2(p.x,p.z))
+			shoemesh.add_vertex(p)
+	shoemesh.generate_normals()
+	var boot:=MeshInstance3D.new()
+	boot.name="GeneticAnkleBoot"
+	boot.mesh=shoemesh.commit()
+	boot.material_override=leather
+	boot.set_meta("no_new_collision",true)
+	boot.set_meta("original_detachable_leg",true)
+	leg.add_child(boot)
+	return trousers
+
+
 static func dress(figure: Node3D,person: String,
 		tunic: Material,trim: Material,leather: Material,
 		genome: Dictionary={}) -> void:
@@ -207,9 +300,8 @@ static func dress(figure: Node3D,person: String,
 				Vector3(sign*.076,-.418,-.047),.089,.084,leather,8)
 		var leg: Node3D=figure.get_node_or_null(
 			"AnimatedLeftLeg" if sign<0.0 else "AnimatedRightLeg") as Node3D
-		if leg!=null:
-			ART.box(leg,Vector3(0,-.385,-.02),
-				Vector3(.245,.16,.260),worn)
+		# The inherited lower-leg shell and fitted boot already have a
+		# tapered ankle; adding another cuff box would recreate stacked cubes.
 	# Dye variation belongs to the profession, not to a random rainbow.
 	match person:
 		"mara":
