@@ -105,11 +105,13 @@ func _run() -> void:
 	# Realistic average characters should not look wider than their
 	# upper torso is tall. This detects the last pass's stocky, tent-like
 	# baseline while retaining the separate feminine/masculine ratios.
-	if female_hip>.350 or male_hip>.330 or (
-			BODY._section(1.10,same_genome,"female").x>.278) or (
-			BODY._section(1.10,same_genome,"male").x>.310):
+	if female_hip>.297 or male_hip>.281 or (
+			BODY._section(1.10,same_genome,"female").x>.221) or (
+			BODY._section(1.10,same_genome,"male").x>.260):
 		_fail("Average inherited anatomy regressed to the old husky silhouette")
 		return
+	# Keep inherited ratios even as we narrow the average human mesh.
+	# A broad bloodline remains broad by genotype, not by clothing.
 	# Test vertical slenderness rather than simply shrinking all
 	# anatomy: average adults should not be shorter than their rendered
 	# body-width multiplier, even before the inherited waist sculpt.
