@@ -719,6 +719,18 @@ func _run() -> void:
 				bottom_chin=maxf(bottom_chin,absf(vertex.x))
 		if widest_cheek<.12 or bottom_chin>=widest_cheek*.89:
 			_fail("Face returned to its flat rectangular jaw shelf"); return
+		# At eyebrow height the mesh remains broad, but its forehead
+		# corners must roll inward under the crown. A full-width straight
+		# top edge is the rectangular mask visible in real close-ups.
+		var middle_outline: float=0.0
+		var crown_outline: float=0.0
+		for p in verts:
+			if absf(p.y-1.840)<.009:
+				middle_outline=maxf(middle_outline,absf(p.x))
+			if p.y>1.918:
+				crown_outline=maxf(crown_outline,absf(p.x))
+		if middle_outline<.12 or crown_outline>=middle_outline*.94:
+			_fail("Inherited forehead did not curve into the skull"); return
 		var lip_node: Node3D=portrait.get_node_or_null("ExpressionMouth")
 		var top_lip: MeshInstance3D=lip_node.get_node_or_null(
 			"ExpressionLipLeft/SmallNaturalLipLine") as MeshInstance3D if lip_node!=null else null
