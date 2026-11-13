@@ -117,9 +117,11 @@ static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary,
 	# The clavicle bridge must NOT be a straight pipe above the shirt.
 	# It is buried at its base beneath the garment, narrows beneath
 	# the throat, then opens naturally into the individual jaw.
+	# The anterior neck narrows under the jaw, then disappears into
+	# the skull. Earlier widening at the top left an obvious bare pipe.
 	var heights: Array[float]=[1.445,1.485,1.525,1.565,1.605,1.655]
-	var half_widths: Array[float]=[.132,.120,.108,.096,.110,.145]
-	var half_depths: Array[float]=[.121,.116,.108,.102,.116,.142]
+	var half_widths: Array[float]=[.132,.119,.100,.088,.096,.119]
+	var half_depths: Array[float]=[.121,.112,.098,.096,.104,.126]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(skin)
@@ -134,9 +136,13 @@ static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary,
 				var angle: float=float(tuple[1])
 				var radius_x: float=half_widths[idx]*jaw_width
 				var radius_z: float=half_depths[idx]*depth_scale
-				var midline: float=lerpf(-.010,.021,smoothstep(.10,1.0,t))
+				var midline: float=lerpf(-.014,.012,smoothstep(.10,1.0,t))
+				# The front muscles form two subtle tapering planes, not
+				# another pair of cylindrical neck props. Preserve back volume.
+				var front: float=maxf(0.0,-sin(angle))
+				var tendon: float=.0055*front*pow(absf(cos(angle)),1.5)*sin(PI*t)
 				corners.append(Vector3(cos(angle)*radius_x,
-					heights[idx],sin(angle)*radius_z+midline))
+					heights[idx],sin(angle)*radius_z+midline-tendon))
 			for index in [0,1,2,0,2,3]:
 				var v: Vector3=corners[index]
 				surface.set_uv(Vector2(float(segment)/16.0,v.y))
