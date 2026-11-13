@@ -89,13 +89,27 @@ static func _drape(root: Node3D,name: String,genome: Dictionary,
 				var t: float=float(r)/float(ROWS-1)
 				var y: float=lerpf(from_y,to_y,t)
 				var ww: float=half_width+flare*t
+				# The painter's apron follows the actual waist, then falls
+				# away into separately hanging lower cloth panels. A fixed-width
+				# rectangle previously concealed every inherited body curve.
+				var painter_apron: bool=name=="PainterPigmentedWorkSmock"
+				var cinch: float=exp(-pow((y-1.06)/.155,2.0))
+				var lower_flare: float=1.0-smoothstep(.67,.97,y)
+				if painter_apron:
+					ww=ww*(1.0-.27*cinch)+.023*lower_flare
 				var x: float=offset+u*ww
 				var base: Vector2=BODY._section(maxf(.79,y),genome,sex)
 				var a: float=-PI*.5+asin(clampf(x/base.x,-.95,.95))
 				var p: Vector3=BODY._point(maxf(.79,y),a,genome,sex)
 				var z: float=p.z-.045-.014*t*t
 				var wrinkle: float=.013*sin(float(rc[1])*2.0)*t*t
-				quad.append(Vector3(x,y+.008*sin(u*PI)*t,z-wrinkle))
+				var hem_wave: float=0.0
+				if painter_apron:
+					# Diagonal worn hem and loose fabric folds, without any
+					# torso-shaped plastic cylinder over the pelvis.
+					hem_wave=.028*pow(t,6.0)*sin(u*2.1+.40)
+					z+=.010*cinch-.012*lower_flare
+				quad.append(Vector3(x,y+hem_wave+.008*sin(u*PI)*t,z-wrinkle))
 			for k in [0,1,2,0,2,3]:
 				var pt: Vector3=quad[k]
 				st.set_uv(Vector2(pt.x*2.2,pt.y*1.6))
@@ -108,6 +122,8 @@ static func _drape(root: Node3D,name: String,genome: Dictionary,
 		(material as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
 	piece.material_override=material
 	piece.set_meta("no_new_collision",true)
+	if name=="PainterPigmentedWorkSmock":
+		piece.set_meta("genetic_waist_fitted_apron",true)
 	root.add_child(piece)
 
 static func _waist_wrap(root: Node3D,genome: Dictionary,
