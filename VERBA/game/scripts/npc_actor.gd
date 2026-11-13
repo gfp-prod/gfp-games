@@ -243,7 +243,9 @@ func _ready() -> void:
 			var brim:=ART.cone(figure,Vector3(0,2.02,0),.49,.075,
 				straw,.41,14)
 			brim.name="VisibleFarmerHat"
-			ART.cone(figure,Vector3(0,2.14,0),.29,.23,straw,.21,12)
+			var farmer_crown:=ART.cone(figure,Vector3(0,2.14,0),
+				.29,.23,straw,.21,12)
+			farmer_crown.name="VisibleFarmerCrown"
 			var staff:=Node3D.new()
 			staff.name="VisibleFarmerRake"
 			staff.position=Vector3(-.08,-GENES.forearm_length(genome)+.065,-.08)
@@ -362,6 +364,12 @@ func _ready() -> void:
 	_apply_genetic_growth()
 	if visual_attendant!=null:
 		PORTRAIT.finish(visual_attendant,npc_id,skin,hair,brow,genome,sex,age_years)
+	# Figure drawing proportions are expressed in an isolated visual
+	# skull module. Eyes, nose, hair and headwear stay registered to the
+	# neck as the adult/child cranial ratio changes. Physics stays intact.
+	PORTRAIT.fit_skull_landmarks(figure,genome,age_years)
+	if visual_attendant!=null:
+		PORTRAIT.fit_skull_landmarks(visual_attendant,genome,age_years)
 	# Both face and limb models inherit the same body shape, and child
 	# models use the existing detachable body-part system.
 	refresh_anatomy_visuals()
