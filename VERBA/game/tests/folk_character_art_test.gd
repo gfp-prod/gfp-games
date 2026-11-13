@@ -737,6 +737,10 @@ func _run() -> void:
 			_fail("Inherited face lost paired cheekbone contours"); return
 		for node in cheek_facets:
 			var cheek_mesh: MeshInstance3D=node as MeshInstance3D
+			if cheek_mesh.visible or not bool(cheek_mesh.get_meta(
+					"integrated_cheekbone_no_overlay",false)):
+				_fail("Duplicate cheek overlay is creating a dark Z-fighting bruise")
+				return
 			var arrays: Array=cheek_mesh.mesh.surface_get_arrays(0)
 			var p: PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
 			var normals: PackedVector3Array=arrays[Mesh.ARRAY_NORMAL]
