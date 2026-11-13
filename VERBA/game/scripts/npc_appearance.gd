@@ -23,15 +23,15 @@ static func build(figure: Node3D, genes: Dictionary, cloth: Material, trim: Mate
 		Vector3(hip*.77,.79,.225),Vector3(hip*.98,.95,.275),
 		Vector3(hip*.88,1.08,.252),Vector3(waist*.97,1.20,.225)
 	],cloth)
-	var chest_depth := .26+float(genes.get("chest",.12))*(.32 if female else .12)
+	var chest_depth := .245+float(genes.get("chest",.12))*(.33 if female else .12)
 	var upper := _loft(figure,"TaperedVillagerTunic",[
-		Vector3(waist*.97,1.20,.225),Vector3(waist*1.03,1.32,.245),
-		Vector3(shoulder*.99,1.46,chest_depth),
-		Vector3(shoulder*.92,1.55,.215),Vector3(.118,1.63,.115)
+		Vector3(waist*.97,1.20,.225),Vector3(waist*1.03,1.32,.238),
+		Vector3(shoulder*.97,1.44,chest_depth),
+		Vector3(shoulder*.90,1.54,.216),Vector3(.110,1.625,.108)
 	],cloth)
 	# Neck is a small continuous anatomical volume, not the exposed white
 	# vertical CylinderMesh protruding through the collarbone/chest.
-	var neck := ART.orb(figure,Vector3(0,1.635,0),Vector3(.108,.123,.108),skin,12)
+	var neck := ART.orb(figure,Vector3(0,1.645,.018),Vector3(.094,.103,.092),skin,12)
 	neck.name = "ModeledNeck"
 	# Clothing follows the hip and waist contours, not a second cylindrical robe.
 	if outfit in ["dress","coat"]:
@@ -96,40 +96,58 @@ static func build(figure: Node3D, genes: Dictionary, cloth: Material, trim: Mate
 	_hair(head_parent,style,hair,face)
 	if not female and int(genes.get("beard",0))>0:
 		_beard(head_parent,int(genes["beard"]),hair)
+	# Cloth trousers should remain readable against dark leather boots; the
+	# previous implementation made every leg a featureless dark leather tube.
+	var cloth_color := Color("6b665e")
+	if cloth is StandardMaterial3D:
+		cloth_color = (cloth as StandardMaterial3D).albedo_color
+	var trousers := ART.mat(cloth_color.darkened(.24),.99)
 	var arms: Dictionary={}
 	var legs: Dictionary={}
 
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0 else "AnimatedRightArm"
-		arm.position=Vector3(side*(shoulder+.015),1.51,0)
+		arm.position=Vector3(side*(shoulder+.022),1.51,0)
 		figure.add_child(arm)
+		# Shoulder is narrow enough to disappear into the upper chest.
+		# Gradual sleeve and wrist tapers avoid the old huge squared guards.
 		_loft(arm,"TailoredUpperArm",[
-			Vector3(.077,-.395,.079),Vector3(.10,-.24,.092),
-			Vector3((.093 if female else .122),-.025,.11),
-			Vector3((.10 if female else .128),.02,.11)
-		],cloth,10)
+			Vector3(.084,-.385,.087),Vector3(.095,-.235,.092),
+			Vector3((.097 if female else .116),-.085,.102),
+			Vector3((.091 if female else .114),.025,.102)
+		],cloth,12)
 		_loft(arm,"TailoredForearm",[
-			Vector3(.062,-.766,.067),Vector3(.084,-.58,.083),
-			Vector3(.079,-.395,.079)
-		],cloth,10)
-		ART.orb(arm,Vector3(0,-.786,-.035),Vector3(.095,.119,.087),skin,11)
+			Vector3(.065,-.750,.068),Vector3(.079,-.590,.082),
+			Vector3(.083,-.385,.087)
+		],cloth,12)
+		var hand:=ART.orb(arm,Vector3(0,-.810,-.022),
+			Vector3(.078,.103,.083),skin,12)
+		hand.name="AnatomicalHand"
 		var leg:=Node3D.new()
 		leg.name="AnimatedLeftLeg" if side<0 else "AnimatedRightLeg"
-		leg.position=Vector3(side*hip*.53,1.0,.02)
+		leg.position=Vector3(side*hip*.51,1.025,.012)
 		figure.add_child(leg)
-		# Longer thigh/shin with shaped knee/calf; detachable at the hip.
-		# The leg is no longer two featureless stacked cylindrical pipes.
+		# The upper legs tuck into the hips, then taper into real knees and
+		# calves. They remain individually detachable at their own pivots.
 		_loft(leg,"AnatomicalThigh",[
-			Vector3(.109,-.46,.106),Vector3(.135,-.31,.13),
-			Vector3(.160,-.09,.161),Vector3(.155,.02,.158)
-		],leather,12)
+			Vector3(.104,-.505,.102),Vector3(.119,-.405,.115),
+			Vector3(.141,-.255,.139),Vector3(.153,-.075,.151),
+			Vector3(.148,.025,.148)
+		],trousers,12)
 		_loft(leg,"AnatomicalCalf",[
-			Vector3(.080,-.88,.082),Vector3(.112,-.68,.115),
-			Vector3(.104,-.51,.105),Vector3(.109,-.46,.106)
+			Vector3(.074,-.870,.076),Vector3(.095,-.730,.097),
+			Vector3(.111,-.635,.113),Vector3(.107,-.505,.105)
+		],trousers,12)
+		# Leather has a separate shaped boot, not the same material as
+		# the whole leg or an exposed round cylinder at the knee.
+		_loft(leg,"FittedLeatherBoot",[
+			Vector3(.088,-.936,.096),Vector3(.099,-.842,.102),
+			Vector3(.097,-.747,.101)
 		],leather,12)
-		ART.orb(leg,Vector3(0,-.915,-.118),Vector3(.137,.105,.245),leather,12)
-		ART.box(leg,Vector3(0,-.965,-.116),Vector3(.248,.052,.325),leather)
+		var boot:=ART.orb(leg,Vector3(0,-.929,-.105),
+			Vector3(.123,.087,.215),leather,12)
+		boot.name="AnatomicalBootToe"
 		if side<0.0:
 			arms["left"]=arm
 			legs["left"]=leg
@@ -160,7 +178,11 @@ static func _loft(parent: Node3D, node_name: String, rings: Array[Vector3],
 			var lo_b:=Vector3(cos(b)*low.x,low.y,sin(b)*low.z)
 			var hi_a:=Vector3(cos(a)*high.x,high.y,sin(a)*high.z)
 			var hi_b:=Vector3(cos(b)*high.x,high.y,sin(b)*high.z)
-			for v in [lo_a,lo_b,hi_a,lo_b,hi_b,hi_a]:
+			# From outside the body the surface must face OUTWARD.
+			# The earlier order was clockwise viewed from the exterior:
+			# backface culling made the anatomical body disappear, leaving
+			# collars and primitive role props sticking through its silhouette.
+			for v in [lo_a,hi_a,lo_b,lo_b,hi_a,hi_b]:
 				surface.add_vertex(v)
 	surface.generate_normals()
 	var result:=MeshInstance3D.new()
