@@ -242,51 +242,45 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	# Both use the same inherited leg dimensions. The lower section
 	# overlaps slightly inside its upper neighbor at the patella.
 	for row in range(H.size()-1):
-		if row==5 or row<5 or row>5:
-			var surface: SurfaceTool=upper if row<=5 else lower
-			# The shin begins at ring 5 and runs into the thigh;
-			# ring 5 on the lower surface must be included as overlap.
-			if row==5:
-				pass
-			for segment in range(SEGMENTS):
-				var a: float=TAU*float(segment)/float(SEGMENTS)
-				var b: float=TAU*float(segment+1)/float(SEGMENTS)
-				var corners: Array[Vector3]=[]
-				for pair in [[row,a],[row+1,a],[row+1,b],[row,b]]:
-					var i: int=int(pair[0])
-					var angle: float=float(pair[1])
-					var wrinkle: float=.005*sin(float(i)*1.6+angle*3.0+side*.35)
-					var width: float=W[i]*mass*thigh_factor+wrinkle
-					var profile: float=D[i]*depth*lerpf(1.0,thigh_factor,.55)
-					var calf: float=1.0+.013*sin(float(i)*1.3)
-					var p:=Vector3(cos(angle)*width,
-						H[i],sin(angle)*profile*calf+.008*sin(float(i)*.53))
-					if row>5: p.y-=KNEE_Y
-					corners.append(p)
-				for index in [0,1,2,0,2,3]:
-					var p: Vector3=corners[index]
-					surface.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU,p.y*1.55))
-					surface.add_vertex(p)
+		var surface: SurfaceTool=upper if row<=5 else lower
+		for segment in range(SEGMENTS):
+			var a: float=TAU*float(segment)/float(SEGMENTS)
+			var b: float=TAU*float(segment+1)/float(SEGMENTS)
+			var corners: Array[Vector3]=[]
+			for pair in [[row,a],[row+1,a],[row+1,b],[row,b]]:
+				var i: int=int(pair[0])
+				var angle: float=float(pair[1])
+				var wrinkle: float=.005*sin(float(i)*1.6+angle*3.0+side*.35)
+				var width: float=W[i]*mass*thigh_factor+wrinkle
+				var profile: float=D[i]*depth*lerpf(1.0,thigh_factor,.55)
+				var calf: float=1.0+.013*sin(float(i)*1.3)
+				var p:=Vector3(cos(angle)*width,
+					H[i],sin(angle)*profile*calf+.008*sin(float(i)*.53))
+				if row>5: p.y-=KNEE_Y
+				corners.append(p)
+			for index in [0,1,2,0,2,3]:
+				var p: Vector3=corners[index]
+				surface.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU,p.y*1.55))
+				surface.add_vertex(p)
 	# The first shin ring is tucked into the thigh, avoiding a bright
 	# detached-looking upper/lower cylinder seam in straight stance.
 	# It follows the same underlying knee pivot and inherited radius.
 	for segment in range(SEGMENTS):
 		var a: float=TAU*float(segment)/float(SEGMENTS)
 		var b: float=TAU*float(segment+1)/float(SEGMENTS)
-		for angle_pair in [[a,b]]:
-			var points: Array[Vector3]=[]
-			for entry in [[5,a],[6,a],[6,b],[5,b]]:
-				var i: int=int(entry[0])
-				var theta: float=float(entry[1])
-				var radius_factor: float=.945
-				points.append(Vector3(
-					cos(theta)*(W[i]*mass*thigh_factor)*radius_factor,
-					H[i]-KNEE_Y,
-					sin(theta)*D[i]*depth*radius_factor))
-			for index in [0,1,2,0,2,3]:
-				var p: Vector3=points[index]
-				lower.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU,p.y*1.55))
-				lower.add_vertex(p)
+		var points: Array[Vector3]=[]
+		for entry in [[5,a],[6,a],[6,b],[5,b]]:
+			var i: int=int(entry[0])
+			var theta: float=float(entry[1])
+			var radius_factor: float=.945
+			points.append(Vector3(
+				cos(theta)*(W[i]*mass*thigh_factor)*radius_factor,
+				H[i]-KNEE_Y,
+				sin(theta)*D[i]*depth*radius_factor))
+		for index in [0,1,2,0,2,3]:
+			var p: Vector3=points[index]
+			lower.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU,p.y*1.55))
+			lower.add_vertex(p)
 	upper.generate_normals()
 	lower.generate_normals()
 	var trousers:=MeshInstance3D.new()
@@ -354,6 +348,7 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	boot.name="GeneticAnkleBoot"
 	boot.mesh=shoemesh.commit()
 	boot.material_override=boot_hide
+	boot.set_meta("weathered_leather",true)
 	boot.set_meta("original_detachable_leg",true)
 	boot.set_meta("no_new_collision",true)
 	knee.add_child(boot)
