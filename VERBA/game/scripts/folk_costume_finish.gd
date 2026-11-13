@@ -13,11 +13,15 @@ const GENES=preload("res://scripts/npc_genetics.gd")
 ## Do not add new bones or physical limbs: the old modular arm node still owns
 ## hit detection, swing, severing, loading and social-care state.
 static func fitted_sleeve(arm: Node3D,sign: float,
-		genome: Dictionary,cloth: Material) -> MeshInstance3D:
+		genome: Dictionary,cloth: Material,
+		sex: String="unspecified") -> MeshInstance3D:
 	var existing:=arm.get_node_or_null("GeneticFittedSleeve") as MeshInstance3D
 	if existing!=null: return existing
 	var shoulder: float=lerpf(.87,1.17,GENES.value(genome,"shoulder_width"))
-	var muscle: float=lerpf(.91,1.10,GENES.value(genome,"muscle_tone"))
+	var muscle_gene: float=GENES.value(genome,"muscle_tone")
+	var muscle: float=lerpf(.86,1.04,muscle_gene) if sex=="female" else (
+		lerpf(.98,1.13,muscle_gene) if sex=="male" else
+		lerpf(.91,1.10,muscle_gene))
 	const HEIGHT: Array[float]=[.046,.006,-.060,-.140,-.240,-.330,-.414]
 	const CX: Array[float]=[-.058,-.031,-.007,.025,.049,.065,.076]
 	const CZ: Array[float]=[-.018,-.024,-.029,-.034,-.042,-.046,-.047]
@@ -70,6 +74,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	sleeve.mesh=surface.commit()
 	sleeve.material_override=cloth
 	sleeve.set_meta("inherits_shoulder",true)
+	sleeve.set_meta("anatomic_upper_arm_radius",RX[3]*shoulder*muscle)
+	sleeve.set_meta("anatomic_sex_profile",sex)
 	sleeve.set_meta("sealed_upper_shoulder",true)
 	sleeve.set_meta("old_limb_pivot_preserved",true)
 	sleeve.set_meta("no_new_collision",true)
@@ -201,12 +207,19 @@ static func fitted_forearm(pivot: Node3D,side: float,
 	return sleeve
 
 static func fitted_lower_leg(leg: Node3D,side: float,
-		genome: Dictionary) -> MeshInstance3D:
+		genome: Dictionary,sex: String="unspecified") -> MeshInstance3D:
 	var existing:=leg.get_node_or_null("GeneticTrouserLeg") as MeshInstance3D
 	if existing!=null: return existing
 	var cloth:=FABRIC.worn_linen(Color("4a4b45"))
 	var boot_hide:=FABRIC.worn_leather(Color("342b26"))
-	var hip: float=lerpf(.87,1.15,GENES.value(genome,"hip_width"))
+	var hip_gene: float=GENES.value(genome,"hip_width")
+	var hip: float=lerpf(.87,1.15,hip_gene)
+	# Weight-bearing thigh shape follows the pelvic/leg mass ratio.
+	# At the same height females average relatively greater lower-body
+	# mass, while strong muscles or large male hips can overlap.
+	var thigh_factor: float=lerpf(1.035,1.155,hip_gene) if sex=="female" else (
+		lerpf(.965,1.075,GENES.value(genome,"muscle_tone"))
+		if sex=="male" else 1.0)
 	var depth: float=lerpf(.90,1.10,GENES.value(genome,"body_depth"))
 	const H: Array[float]=[.085,.025,-.060,-.160,-.255,-.345,-.435,-.505]
 	const W: Array[float]=[.149,.152,.145,.136,.128,.120,.114,.108]
@@ -224,9 +237,9 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 				var angle: float=float(pair[1])
 				var wrinkle: float=.007*sin(float(i)*1.6+angle*3.0+side*.35)
 				corners.append(Vector3(
-					cos(angle)*(W[i]*hip+wrinkle),
+					cos(angle)*(W[i]*hip*thigh_factor+wrinkle),
 					H[i],
-					sin(angle)*D[i]*depth + .010*sin(float(i)*.58)))
+					sin(angle)*D[i]*depth*lerpf(1.0,thigh_factor,.6) + .010*sin(float(i)*.58)))
 			for index in [0,1,2,0,2,3]:
 				var p: Vector3=corners[index]
 				tube.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU,p.y*1.55))
@@ -238,6 +251,8 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	trousers.material_override=cloth
 	trousers.set_meta("original_detachable_leg",true)
 	trousers.set_meta("inherited_hip_width",GENES.value(genome,"hip_width"))
+	trousers.set_meta("anatomic_thigh_factor",thigh_factor)
+	trousers.set_meta("anatomic_sex_profile",sex)
 	trousers.set_meta("no_new_collision",true)
 	leg.add_child(trousers)
 
