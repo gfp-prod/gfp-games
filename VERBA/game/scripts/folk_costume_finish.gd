@@ -25,8 +25,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	const HEIGHT: Array[float]=[.046,.006,-.060,-.140,-.240,-.330,-.414]
 	const CX: Array[float]=[-.058,-.031,-.007,.025,.049,.065,.076]
 	const CZ: Array[float]=[-.018,-.024,-.029,-.034,-.042,-.046,-.047]
-	const RX: Array[float]=[.086,.106,.112,.109,.101,.094,.085]
-	const RZ: Array[float]=[.090,.112,.118,.116,.109,.099,.088]
+	const RX: Array[float]=[.073,.086,.094,.090,.085,.080,.074]
+	const RZ: Array[float]=[.075,.091,.099,.100,.093,.086,.078]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -76,6 +76,7 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	sleeve.set_meta("inherits_shoulder",true)
 	sleeve.set_meta("anatomic_upper_arm_radius",RX[3]*shoulder*muscle)
 	sleeve.set_meta("anatomic_sex_profile",sex)
+	sleeve.set_meta("lean_shoulder_taper",true)
 	sleeve.set_meta("sealed_upper_shoulder",true)
 	sleeve.set_meta("old_limb_pivot_preserved",true)
 	sleeve.set_meta("no_new_collision",true)
@@ -175,7 +176,7 @@ static func fitted_forearm(pivot: Node3D,side: float,
 				var angle: float=TAU*float(pair[1])/float(SIDES)
 				var t: float=float(k)/float(LEVELS-1)
 				var y: float=lerpf(.050,-length+.067,t)
-				var taper: float=lerpf(.103,.072,smoothstep(0.0,1.0,t))
+				var taper: float=lerpf(.088,.066,smoothstep(0.0,1.0,t))
 				var bulge: float=.008*sin(PI*t)
 				points.append(Vector3(
 					side*.016*t+cos(angle)*(taper+bulge),
@@ -217,13 +218,13 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	# Weight-bearing thigh shape follows the pelvic/leg mass ratio.
 	# At the same height females average relatively greater lower-body
 	# mass, while strong muscles or large male hips can overlap.
-	var thigh_factor: float=lerpf(1.035,1.155,hip_gene) if sex=="female" else (
-		lerpf(.965,1.075,GENES.value(genome,"muscle_tone"))
+	var thigh_factor: float=lerpf(1.025,1.110,hip_gene) if sex=="female" else (
+		lerpf(.970,1.070,GENES.value(genome,"muscle_tone"))
 		if sex=="male" else 1.0)
 	var depth: float=lerpf(.90,1.10,GENES.value(genome,"body_depth"))
 	const H: Array[float]=[.085,.025,-.060,-.160,-.255,-.345,-.435,-.505]
-	const W: Array[float]=[.149,.152,.145,.136,.128,.120,.114,.108]
-	const D: Array[float]=[.151,.149,.143,.130,.121,.116,.113,.112]
+	const W: Array[float]=[.127,.130,.125,.119,.112,.108,.104,.102]
+	const D: Array[float]=[.133,.131,.128,.120,.114,.110,.105,.102]
 	var tube:=SurfaceTool.new()
 	tube.begin(Mesh.PRIMITIVE_TRIANGLES)
 	tube.set_material(cloth)
@@ -252,6 +253,7 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	trousers.set_meta("original_detachable_leg",true)
 	trousers.set_meta("inherited_hip_width",GENES.value(genome,"hip_width"))
 	trousers.set_meta("anatomic_thigh_factor",thigh_factor)
+	trousers.set_meta("lean_leg_taper",true)
 	trousers.set_meta("anatomic_sex_profile",sex)
 	trousers.set_meta("no_new_collision",true)
 	leg.add_child(trousers)
@@ -263,9 +265,9 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	shoemesh.begin(Mesh.PRIMITIVE_TRIANGLES)
 	shoemesh.set_material(boot_hide)
 	const SHOE_Y: Array[float]=[-.426,-.492,-.564,-.597]
-	const SHOE_W: Array[float]=[.108,.117,.144,.140]
+	const SHOE_W: Array[float]=[.092,.102,.124,.123]
 	const SHOE_Z: Array[float]=[-.030,-.068,-.123,-.129]
-	const SHOE_D: Array[float]=[.111,.139,.215,.216]
+	const SHOE_D: Array[float]=[.101,.119,.176,.177]
 	for row in range(SHOE_Y.size()-1):
 		for segment in range(12):
 			var a: float=TAU*float(segment)/12.0
@@ -317,7 +319,7 @@ static func dress(figure: Node3D,person: String,
 	var hem:=SurfaceTool.new()
 	hem.begin(Mesh.PRIMITIVE_TRIANGLES)
 	hem.set_material(tunic)
-	var levels: Array[float]=[.49,.65,.83,.98,1.17,1.24]
+	var levels: Array[float]=[.61,.70,.83,.98,1.17,1.24]
 	for j in range(levels.size()-1):
 		var low: float=levels[j]
 		var high: float=levels[j+1]
@@ -349,10 +351,10 @@ static func dress(figure: Node3D,person: String,
 		p0.z*=1.085
 		p1.x*=1.085
 		p1.z*=1.085
-		ART.bone(figure,p0,p1,.048,.035,leather,7)
+		ART.bone(figure,p0,p1,.025,.021,leather,7)
 	var front: Vector3=BODY._point(1.054,-PI*.5,genome,sex)
 	var buckle:=ART.box(figure,Vector3(0,1.05,front.z*1.09-.021),
-		Vector3(.10,.08,.025),trim)
+		Vector3(.085,.061,.020),trim)
 	buckle.name="SmallTarnishedBeltBuckle"
 	var pocket:=ART.box(figure,Vector3(.28,.91,-.20),
 		Vector3(.135,.16,.045),leather,Vector3(0,-.22,0))
@@ -368,7 +370,7 @@ static func dress(figure: Node3D,person: String,
 			# The old rigid dark wrist barrel should not be wider than
 			# the fabric directly above it.
 			ART.bone(arm,Vector3(sign*.064,-.383,-.045),
-				Vector3(sign*.076,-.418,-.047),.089,.084,leather,8)
+				Vector3(sign*.076,-.418,-.047),.071,.067,leather,8)
 		var leg: Node3D=figure.get_node_or_null(
 			"AnimatedLeftLeg" if sign<0.0 else "AnimatedRightLeg") as Node3D
 		# The inherited lower-leg shell and fitted boot already have a
