@@ -166,7 +166,7 @@ func _ready() -> void:
 		# remain children of this original severable arm, not new body modules.
 		var forearm:=Node3D.new()
 		forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-		forearm.position=Vector3(side*.058,-.410,-.045)
+		forearm.position=Vector3(side*.049,-.330,-.040)
 		forearm.rotation.x=.16
 		forearm.rotation.z=-side*.10
 		arm.add_child(forearm)
@@ -320,7 +320,7 @@ func _ready() -> void:
 			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt,sex)
 			var modern_forearm:=Node3D.new()
 			modern_forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-			modern_forearm.position=Vector3(side*.058,-.410,-.045)
+			modern_forearm.position=Vector3(side*.049,-.330,-.040)
 			modern_forearm.rotation.x=.16
 			modern_forearm.rotation.z=-side*.10
 			modern_arm.add_child(modern_forearm)
@@ -458,7 +458,7 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	var vertices: Array[Vector3]=[]
 	for y in HEIGHTS:
 		var t: float=clampf((1.40-y)/.85,0.0,1.0)
-		var half_width: float=lerpf(.185,.260,t)
+		var half_width: float=lerpf(.150,.205,t)
 		var torso_section: Vector2=BODY._section(y,genome,sex)
 		for col in range(COLUMNS):
 			var fraction: float=float(col)/float(COLUMNS-1)*2.0-1.0
@@ -496,8 +496,8 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	var waist_front: float=BODY._point(1.04,-PI*.5,genome,sex).z-.155
 	# A stitched waist seam, not a broad yellow bar projecting across
 	# the entire abdomen.
-	var stitch:=ART.bone(parent,Vector3(-.20,1.04,waist_front),
-		Vector3(.20,1.04,waist_front),.013,.013,tie,8)
+	var stitch:=ART.bone(parent,Vector3(-.16,1.04,waist_front),
+		Vector3(.16,1.04,waist_front),.013,.013,tie,8)
 	stitch.name="BakerCloseFittedWaistSeam"
 	var pocket_z: float=BODY._point(.75,-PI*.5,genome,sex).z-.152
 	var pocket:=ART.box(parent,Vector3(-.08,.75,pocket_z),
@@ -657,10 +657,10 @@ func _install_limb_hitbox(limb: Node3D, part: String) -> void:
 	var capsule:=CapsuleShape3D.new()
 	# One capsule per arm retains the original limb identity while
 	# covering the full inherited shoulder-to-wrist reach.
-	capsule.height=1.18 if part.ends_with("_arm") else .88
-	capsule.radius=.119 if part.ends_with("_arm") else .135
+	capsule.height=.995 if part.ends_with("_arm") else .88
+	capsule.radius=.088 if part.ends_with("_arm") else .124
 	shape.shape=capsule
-	shape.position=Vector3(0,-.57 if part.ends_with("_arm") else -.425,0)
+	shape.position=Vector3(0,-.435 if part.ends_with("_arm") else -.425,0)
 	area.add_child(shape)
 	limb_hitboxes[part]=area
 
