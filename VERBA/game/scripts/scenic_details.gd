@@ -99,17 +99,17 @@ static func _bridge_handrope_mesh() -> ArrayMesh:
 
 
 static func _wildflower_mesh() -> ArrayMesh:
-	# Each bloom is true 3D; five modest petals, 2 slender leaves and stem.
+	# Small, low-saturation wildflowers: meadow details, never giant luminous stars.
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for petal in range(5):
 		var a: float = TAU*float(petal)/5.0
-		var outward: Vector3 = Vector3(cos(a),.24,sin(a))
+		var outward: Vector3 = Vector3(cos(a),.15,sin(a))
 		var lateral: Vector3 = Vector3(-outward.z,0,outward.x)
-		var center: Vector3 = Vector3(0,.29,0)
-		var point: Vector3 = center+outward*.095
-		for v in [center-lateral*.018,center+lateral*.018,point]:
-			st.set_color(Color("d1c3aa").lerp(Color("a6a9b0"),float(petal)/7.0))
+		var center: Vector3 = Vector3(0,.205,0)
+		var point: Vector3 = center+outward*.072
+		for v in [center-lateral*.027,center+lateral*.027,point]:
+			st.set_color(Color("a7aa8d").lerp(Color("969783"),float(petal)/7.0))
 			st.add_vertex(v)
 	# A slender, green triangular stem and two pointed leaves.
 	for v in [Vector3(-.014,0,0),Vector3(.014,0,0),
@@ -136,7 +136,7 @@ static func _add_botanical_clusters(world: Node3D,root: Node3D) -> void:
 	scatter.transform_format=MultiMesh.TRANSFORM_3D
 	scatter.use_colors=true
 	scatter.mesh=mesh
-	scatter.instance_count=420
+	scatter.instance_count=320
 	var rng := RandomNumberGenerator.new()
 	rng.seed=778833
 	var places: Array[Vector2] = [
@@ -150,12 +150,12 @@ static func _add_botanical_clusters(world: Node3D,root: Node3D) -> void:
 		var radius: float = sqrt(rng.randf())*rng.randf_range(.7,3.5)
 		var x: float = anchor.x+cos(angle)*radius
 		var z: float = anchor.y+sin(angle)*radius
-		var t: float = rng.randf_range(.68,1.4)
+		var t: float = rng.randf_range(.39,.79)
 		var yaw: float = rng.randf_range(0,TAU)
 		var transform := Transform3D(Basis(Vector3.UP,yaw).scaled(Vector3.ONE*t),
 			Vector3(x,world.height_at(x,z)+.024,z))
 		scatter.set_instance_transform(i,transform)
-		scatter.set_instance_color(i,Color("e2d6bc").lerp(Color("9aa5ba"),rng.randf_range(.0,.35)))
+		scatter.set_instance_color(i,Color("7b8468").lerp(Color("a19a7d"),rng.randf_range(.0,.30)))
 	var flowers := MultiMeshInstance3D.new()
 	flowers.name="QuietMeadowFlowers"
 	flowers.multimesh=scatter

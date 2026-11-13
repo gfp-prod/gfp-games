@@ -1,0 +1,85 @@
+name: VERBA genetic face and bloodline world screenshots
+on:
+  pull_request:
+    paths:
+      - "VERBA/game/scripts/npc_genetics.gd"
+      - "VERBA/game/scripts/folk_portrait_finish.gd"
+      - "VERBA/game/scripts/npc_actor.gd"
+      - "VERBA/game/scripts/npc_body_morph.gd"
+      - "VERBA/game/scripts/folk_costume_finish.gd"
+      - "VERBA/game/scripts/village_sim.gd"
+      - "VERBA/game/scripts/world.gd"
+      - "VERBA/game/tests/genetic_faces_gallery.gd"
+      - ".github/workflows/verba-genetic-gallery.yml"
+permissions:
+  contents: write
+
+concurrency:
+  group: verba-genetic-gallery-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  true-world-faces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Import real source, visuals and world models
+        run: |
+          godot --headless --path . --editor --import --quit 2>&1 | tee /tmp/gene-import.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:' /tmp/gene-import.log; then exit 1; fi
+      - name: Photograph inherited physical faces and bodies inside Godot
+        run: |
+          timeout 320s xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/genetic_faces_gallery.gd 2>&1 | tee /tmp/genetic-gallery.log
+          grep -q "PASS: seventeen actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety" /tmp/genetic-gallery.log
+      - name: Publish five direct-view gameplay JPEGs on the active review branch
+        if: success() && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'verba/blender-asset-foundry'
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          sources = [
+              "01_ida_baker_whole_body", "02_orin_blacksmith_whole_body",
+              "03_mara_scribe_whole_body", "04_sela_merchant_whole_body",
+              "08_ida_orin_and_children"
+          ]
+          output = Path("/tmp/verba-direct-npc-screens")
+          output.mkdir(exist_ok=True)
+          for name in sources:
+              source = Path("tests/genetic_faces") / (name + ".png")
+              if not source.is_file():
+                  raise FileNotFoundError(f"Missing genuine Godot frame: {source}")
+              image = Image.open(source).convert("RGB")
+              image.thumbnail((960, 540), Image.Resampling.LANCZOS)
+              image.save(output / (name + ".jpg"), "JPEG",
+                         quality=83, optimize=True, progressive=True)
+          PY
+          git fetch --quiet origin "+refs/heads/${GITHUB_HEAD_REF}:refs/remotes/origin/${GITHUB_HEAD_REF}"
+          if [ "$(git rev-parse "origin/${GITHUB_HEAD_REF}")" != "${PR_HEAD_SHA}" ]; then
+            echo "Review branch has advanced: do not publish stale screenshots"
+            exit 0
+          fi
+          git checkout -B "${GITHUB_HEAD_REF}" "origin/${GITHUB_HEAD_REF}"
+          mkdir -p docs/npc_review
+          cp /tmp/verba-direct-npc-screens/*.jpg docs/npc_review/
+          git add docs/npc_review/*.jpg
+          git diff --cached --quiet && exit 0
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "VERBA visual proof: publish five actual in-game NPC screenshots"
+          git push origin "HEAD:refs/heads/${GITHUB_HEAD_REF}"
+      - name: Upload individual actual game screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verba-heritable-npc-faces-and-bodies
+          path: VERBA/game/tests/genetic_faces/*.png
+          if-no-files-found: warn
+          retention-days: 30

@@ -155,6 +155,156 @@ func _run() -> void:
 		_fail("Navigation was not expanded with the terrain")
 		return
 
+	# Distant photographic ridge landscape must conceal the former square
+	# world's sky void, but must never extend the game collision/save map.
+	var horizon: Node3D=world.get_node_or_null("DistantVisualHorizon") as Node3D
+	if horizon==null or not bool(horizon.get_meta("visual_only",false)):
+		_fail("The far horizon returned to blank sky beyond the terrain square")
+		return
+	var far_ground: MeshInstance3D=horizon.get_node_or_null("BeyondTheWalkableVale") as MeshInstance3D
+	if far_ground==null or far_ground.mesh==null:
+		_fail("The seamless visual-only ridge does not exist")
+		return
+	var far_bounds: AABB=far_ground.mesh.get_aabb()
+	if far_bounds.size.x<800.0 or far_bounds.size.z<800.0:
+		_fail("The distant horizon doesn't cover the visible map edges")
+		return
+	if horizon.find_children("*","StaticBody3D",true,false).size()>0:
+		_fail("Visual horizon improperly introduced inaccessible collision")
+		return
+
+	# The cottage-to-lake art milestone is a complete passage, not
+	# a scattering of unrelated props. All features are visual or retain
+	# separately authored, tangible geometry without any new save ID.
+	var journey: Node3D=world.get_node_or_null("HermitageToStillwaterArtPass") as Node3D
+	if journey==null or not bool(journey.get_meta("decoration_only",false)):
+		_fail("The hermitage-to-lake composition was not built")
+		return
+	var woodline: Node3D=journey.get_node_or_null("VariedTreeEdgeAndSmallGroves") as Node3D
+	if woodline==null or int(woodline.get_meta("imported_tree_count",0))<12:
+		_fail("The lake road still has an empty forest edge")
+		return
+	for entry in [
+		{"name":"CottageFernEdge","minimum":400},
+		{"name":"ShadedForestUnderstory","minimum":650},
+		{"name":"LakeMarginTussocks","minimum":600},
+		{"name":"RuttedTrackPebbleAndGravelMargins","minimum":1200},
+		{"name":"UnevenWetMossAndSiltShore","minimum":400}
+	]:
+		var group: MultiMeshInstance3D=journey.find_child(
+			String(entry["name"]),true,false) as MultiMeshInstance3D
+		if group==null or group.multimesh==null or group.multimesh.instance_count<int(entry["minimum"]):
+			_fail("Missing authored ground-cover layer: "+String(entry["name"]))
+			return
+	var worn: MeshInstance3D=world.get_node_or_null(
+		"OuterValeRegionalLandmarks/LongTrackToStillwater/RuttedWalkableFootpath") as MeshInstance3D
+	if worn==null or not (worn.material_override is ShaderMaterial):
+		_fail("The lake path lost its photographed, softly blended track material")
+		return
+	if (worn.material_override as ShaderMaterial).shader.resource_path != "res://assets/materials/worn_lake_track.gdshader":
+		_fail("The lake path returned to flat, sharply edged brown")
+		return
+	if journey.find_child("BrokenHermitageFieldstoneGardenBoundary",true,false)==null:
+		_fail("Cottage landscaping is disconnected from its approach")
+		return
+
+	# A functioning market requires connected pedestrian geometry, but no
+	# loose decorative stones may alter NPC work, collisions or save IDs.
+	var village: Node3D=world.get_node_or_null("VillageWorkingDistrict") as Node3D
+	var village_walk: Node3D=village.get_node_or_null("ArtDirectedVillageApproaches") as Node3D if village!=null else null
+	if village_walk==null or bool(village_walk.get_meta("simulation_or_collisions_modified",true)):
+		_fail("Village landscaping either disappeared or changed live simulation")
+		return
+	var pavers: MultiMeshInstance3D=village_walk.get_node_or_null(
+		"StaggeredSettledVillagePathStones") as MultiMeshInstance3D
+	if pavers==null or pavers.multimesh==null or pavers.multimesh.instance_count<40:
+		_fail("Bakery, market and smith are still disconnected on a bare green sheet")
+		return
+	if village_walk.find_children("*","StaticBody3D",true,false).size()>0:
+		_fail("Non-physical village paving blocks working citizens")
+		return
+	if village.get_node_or_null("IdaStoneBakery")==null or village.get_node_or_null("OrinBlacksmithForge")==null:
+		_fail("Village art replaced real worksite identities")
+		return
+
+	# First-person screenshot review caught a real defect: vernacular
+	# houses were embedded in the ungraded valley slope. A textured model
+	# isn't accepted if its footprint isn't actually level in the HEIGHTFIELD
+	# used for collision, flora and player navigation.
+	if ResourceLoader.exists("res://assets/models/foundry/village_hearth_house.glb"):
+		var real_homes: Node3D=world.get_node_or_null("PhysicalVillageHomesteads") as Node3D
+		if real_homes==null or int(real_homes.get_meta("authored_homestead_count",0))!=2:
+			_fail("Real house GLB is available but the two village houses are absent")
+			return
+		for center in [Vector2(-7.5,34.0),Vector2(30.0,33.5)]:
+			var foundation_y: float=world.height_at(center.x,center.y)
+			for dx in [-2.9,0.0,2.9]:
+				for dz in [-3.05,0.0,3.05]:
+					if absf(world.height_at(center.x+dx,center.y+dz)-foundation_y)>.09:
+						_fail("Vernacular house sits on a cliff/uneven terrain: "+
+							str(center)+" at "+str(Vector2(dx,dz)))
+						return
+
+	# Three *existing* citizens now have a reason to use real homesteads.
+	# The village's already married farmer/merchant pair share one dwelling;
+	# the builder visits the stonecutter's. These are physical porch goals
+	# outside the blocking wall footprint, not new NPC IDs, jobs or saves.
+	if ResourceLoader.exists("res://assets/models/foundry/village_hearth_house.glb"):
+		var residences: Array[Dictionary]=[
+			{"id":"brin","house":"StonecutterHouse","side":1.25},
+			{"id":"daro","house":"MillwardHouse","side":-1.25},
+			{"id":"sela","house":"MillwardHouse","side":1.25}
+		]
+		for residence in residences:
+			var citizen: Node3D=null
+			for candidate in world.npcs:
+				if String(candidate.npc_id)==String(residence["id"]):
+					citizen=candidate as Node3D
+					break
+			var house: Node3D=world.get_node_or_null(
+				"PhysicalVillageHomesteads/"+String(residence["house"])) as Node3D
+			if citizen==null or house==null:
+				_fail("Existing citizen or real home was lost: "+String(residence["id"]))
+				return
+			var visit: Vector3=citizen.call("_destination_for","rest")
+			var entrance: Vector3=house.to_global(Vector3(float(residence["side"]),0,-4.35))
+			# An individual tree may occupy the ideal porch tile. In that
+			# case the citizen must approach a nearby safe doorstep, not clip
+			# through a trunk or wander back to a remote spawn location.
+			if Vector2(visit.x,visit.z).distance_to(Vector2(entrance.x,entrance.z))>2.25:
+				_fail("Rest sends "+String(residence["id"])+" far from their real house")
+				return
+			if not NAV.traversable(world,visit.x,visit.z):
+				_fail("Resident's porch lies inside blocked house/stream navigation: "+String(residence["id"]))
+				return
+			var workplace: Vector3=citizen.call("_destination_for","work")
+			if Vector2(visit.x,visit.z).distance_to(Vector2(workplace.x,workplace.z))<4.0:
+				_fail("Residential destination overwrote the real workplace: "+String(residence["id"]))
+				return
+
+	# Domestic lighting is a real day/night reaction, not permanent neon
+	# or an unsaved second time source. It must be reversible on the same
+	# in-game clock used by the sun and village simulation.
+	if ResourceLoader.exists("res://assets/models/foundry/village_hearth_house.glb"):
+		var homes_for_lighting: Node3D=world.get_node_or_null("PhysicalVillageHomesteads") as Node3D
+		if homes_for_lighting==null:
+			_fail("Real homes disappeared before atmosphere inspection")
+			return
+		world._update_day_night_art(.9)
+		for house_name in ["StonecutterHouse","MillwardHouse"]:
+			var lamp: OmniLight3D=homes_for_lighting.get_node_or_null(
+				house_name+"/WarmHearthWindowBounce") as OmniLight3D
+			if lamp==null or lamp.light_energy<.5 or lamp.omni_range<4.0:
+				_fail("Domestic hearth does not visibly warm after dusk: "+house_name)
+				return
+		world._update_day_night_art(0.0)
+		for house_name in ["StonecutterHouse","MillwardHouse"]:
+			var lamp: OmniLight3D=homes_for_lighting.get_node_or_null(
+				house_name+"/WarmHearthWindowBounce") as OmniLight3D
+			if lamp==null or lamp.light_energy>.01:
+				_fail("Domestic hearth remains glaringly lit at noon: "+house_name)
+				return
+
 	# Existing structures and academic simulation survive untouched.
 	if world.get_node_or_null("HermitCottage")==null or not world.scholar.books.has("de_herbis"):
 		_fail("Visual expansion destroyed the original learning loop")

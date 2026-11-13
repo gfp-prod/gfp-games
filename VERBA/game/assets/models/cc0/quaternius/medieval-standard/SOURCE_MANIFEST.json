@@ -1,0 +1,153 @@
+{
+  "schema": "verba-quaternius-standard-v1",
+  "original_artist": "Quaternius",
+  "original_pack": "Medieval Village MegaKit Standard (the genuinely free subset)",
+  "license": "CC0-1.0",
+  "original_pack_page": "https://quaternius.com/packs/medievalvillagemegakit.html",
+  "mirror_repo": "J-Ponzo/gltf-medieval-village-megakit",
+  "pinned_source_commit": "21104b4045261c28fc312360841ed1a7b0ac8782",
+  "note": "Free Standard only, NOT paid Pro/Source. Original exported glTF with reduced 1K surface maps.",
+  "models": [
+    {
+      "model": "WindowShutters_Wide_Flat_Open.gltf",
+      "repo_revision": "21104b4045261c28fc312360841ed1a7b0ac8782",
+      "file_sha256": "af66b3955894e35a88f63743984d82cf692ba4c0c00166f790ae337f50a1e240",
+      "meshes": 1,
+      "materials": 1,
+      "animations": 0,
+      "images": [
+        "T_WoodTrim_Normal.png",
+        "T_WoodTrim_BaseColor.png",
+        "T_WoodTrim_Roughness.png"
+      ]
+    },
+    {
+      "model": "Stairs_Exterior_Straight.gltf",
+      "repo_revision": "21104b4045261c28fc312360841ed1a7b0ac8782",
+      "file_sha256": "6fc0e396d3441eb06d451690bb50244b047f8d73e9d1ff61c429fb5c46e9e3c7",
+      "meshes": 1,
+      "materials": 2,
+      "animations": 0,
+      "images": [
+        "T_RockTrim_Normal.png",
+        "T_RockTrim_BaseColor.png",
+        "T_RockTrim_ORM.png",
+        "T_Brick_Normal.png",
+        "T_Brick_BaseColor.png",
+        "T_Brick_Roughness.png"
+      ]
+    },
+    {
+      "model": "Wall_Arch.gltf",
+      "repo_revision": "21104b4045261c28fc312360841ed1a7b0ac8782",
+      "file_sha256": "4038e91fdd2ddbe2bcd098e34ccf401d5a40e9912fb75239a7a5acb202e476ce",
+      "meshes": 1,
+      "materials": 1,
+      "animations": 0,
+      "images": [
+        "T_WoodTrim_Normal.png",
+        "T_WoodTrim_BaseColor.png",
+        "T_WoodTrim_Roughness.png"
+      ]
+    },
+    {
+      "model": "Prop_Chimney.gltf",
+      "repo_revision": "21104b4045261c28fc312360841ed1a7b0ac8782",
+      "file_sha256": "eeda2bd328baa49ce2260b2df1f0280db4ebc3752fa784371b2da5752697c3ba",
+      "meshes": 1,
+      "materials": 2,
+      "animations": 0,
+      "images": [
+        "T_RockTrim_Normal.png",
+        "T_RockTrim_BaseColor.png",
+        "T_RockTrim_ORM.png",
+        "T_Brick_Normal.png",
+        "T_Brick_BaseColor.png",
+        "T_Brick_Roughness.png"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "file": "T_Brick_BaseColor.png",
+      "original_sha256": "5515f57e61767838f53f4b9e25aa83b1382ad345ff6b446482718b5140c33813",
+      "baked_sha256": "dfcc3f22f0700b28b48b352487ebccf4cce9c45607d77c09febfe0efd8f07546",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "file": "T_Brick_Normal.png",
+      "original_sha256": "6349f1fb3eed9985e6f969c1de04b9e92490020a12ba19a44b96ea808fb27c1a",
+      "baked_sha256": "0ce2c233da977c0b0b8dba6f720d42395f14f3e350a84baebf699f08fb765985",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "file": "T_Brick_Roughness.png",
+      "original_sha256": "981e7a4f8e3119749b2fb3d557e3d0ba0551e75a39b467cff0a3a948a9392716",
+      "baked_sha256": "13fee0a6a8d8cf087205929027c25ef56203a38d97155217072a1784b3a419cd",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "file": "T_RockTrim_BaseColor.png",
+      "original_sha256": "aa571cd612091a8f4c95393f8f938bd6e5d47a8cdfd9c896b60a4b37903e2c7c",
+      "baked_sha256": "2c39ee7bbb836e4c04955626df0147ca29e83deef7c3c9fa49c5a1c9be3f0faf",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "file": "T_RockTrim_Normal.png",
+      "original_sha256": "f93f82f7e69aa0bf1900f8ab3f252390f091b771f0b84a345c5fefb0f0155cd3",
+      "baked_sha256": "e84330160b6569fd6fd1b2bce4fcad9d66547ca0d2625a14bf502ed3dd76f57c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "file": "T_RockTrim_ORM.png",
+      "original_sha256": "5287dd9a4e9fb7423af8d8440a8de8bdb8910f9f37ba148f619a6eddf58d5bc8",
+      "baked_sha256": "9a7be17a22ed7a41dc08e5fdc54f36571139314667833da63a9cb339bdcad4e0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "file": "T_WoodTrim_BaseColor.png",
+      "original_sha256": "a59f410b07a9bc5f0664df3ba7a2c1e37acffc7979795911f3fc8730ab60e33e",
+      "baked_sha256": "206a1da8ba3339cd3b22df3b0b4f8347c302f0d7652b6c1cbb12e9bbbfb7b4fe",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "file": "T_WoodTrim_Normal.png",
+      "original_sha256": "5847623e4ed6c206e59f32d1718ee75dcb2b49a1d55ede7ef70a254739caf4a8",
+      "baked_sha256": "d172cdcd9efce9866c733f93b30918408745ccb3086df50c4791acb3c878c909",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "file": "T_WoodTrim_Roughness.png",
+      "original_sha256": "e888464fd4199d458d8cf39e00fa07d56f8a0bcb658aa03b4a7c95d466ceefa3",
+      "baked_sha256": "3462399807c040de9444df6b88910d9aedb0b8b62a6b04c87beb99ac0ca56f0b",
+      "size": [
+        1024,
+        1024
+      ]
+    }
+  ]
+}

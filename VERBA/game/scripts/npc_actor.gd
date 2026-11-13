@@ -3,6 +3,22 @@ extends CharacterBody3D
 ## Existing authored characters retain their landmarks; village citizens
 ## physically navigate based on independent simulated economic/social actions.
 const ART = preload("res://scripts/art.gd")
+const COSTUME = preload("res://scripts/folk_costume_finish.gd")
+const WARDROBE = preload("res://scripts/folk_wardrobe_finish.gd")
+const PORTRAIT = preload("res://scripts/folk_portrait_finish.gd")
+const BODY = preload("res://scripts/npc_body_morph.gd")
+const FABRIC = preload("res://scripts/npc_cloth_finish.gd")
+const ANATOMY = preload("res://scripts/npc_anatomy.gd")
+const GENES = preload("res://scripts/npc_genetics.gd")
+const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
+# Reuse existing villagers and the two physically enterable houses.
+# This has no effect on save IDs, simulated spouses or work locations.
+# Residents approach off-center so they do not block the front doorway.
+const PHYSICAL_HOME_APPROACHES := {
+	"brin": {"house":"StonecutterHouse","x":1.25},
+	"daro": {"house":"MillwardHouse","x":-1.25},
+	"sela": {"house":"MillwardHouse","x":1.25}
+}
 
 var npc_id: String = ""
 var display_name: String = ""
@@ -18,12 +34,28 @@ var mobile: bool = false
 var name_label: Label3D
 var left_arm: Node3D
 var right_arm: Node3D
+var left_forearm: Node3D
+var right_forearm: Node3D
 var left_leg: Node3D
 var right_leg: Node3D
 var harvest_sack: Node3D
 var motion_clock: float = 0.0
+var visual_figure: Node3D
+var visual_attendant: Node3D
+var previous_footstep_position: Vector3=Vector3.ZERO
+var has_footstep_origin: bool=false
+var distance_gait_phase: float=0.0
+var gait_weight: float=0.0
 var work_dwell: float = 0.0
 var active_work_token: String = ""
+var modular_limbs: Dictionary={}
+var limb_hitboxes: Dictionary={}
+var anatomy_visual_signature: String=""
+var blood_emitter: CPUParticles3D
+var support_visual: Node3D
+var anatomy_visual_elapsed: float=0.0
+var inherited_body_dimensions: Vector3=Vector3.ONE
+var last_body_age_day: int=-999999
 
 func setup(owner_world: Node3D, data: Dictionary) -> void:
 	world = owner_world
@@ -64,91 +96,115 @@ func _ready() -> void:
 	var figure := Node3D.new()
 	figure.name = "VisibleInhabitant"
 	add_child(figure)
-	var cloth := ART.mat(Color(String(definition.get("robe","746c60"))),.98)
-	# Worn linen uses the same bundled fiber grain as the study vellum,
-	# tinted per profession rather than perfectly smooth plastic robes.
-	cloth.albedo_texture=load("res://assets/textures/authored/aged_vellum.png")
-	cloth.uv1_triplanar=true
-	cloth.uv1_scale=Vector3(2.0,2.0,2.0)
+	visual_figure=figure
+	# Profession-specific dye on one coherent, coarse woven cloth. Do not
+	# use the aged parchment texture for clothing or a glossy material.
+	var cloth := FABRIC.worn_linen(Color(String(definition.get("robe","746c60"))))
+	var genome: Dictionary=GENES.founder(npc_id)
+	var sex: String="unspecified"
+	var stage: String="adult"
+	var age_years: float=28.0
+	if world!=null and world.village_sim!=null and world.village_sim.people.has(npc_id):
+		var record: Dictionary=world.village_sim.people[npc_id]
+		genome=record.get("genome",genome)
+		sex=String(record.get("sex","unspecified"))
+		stage=String(record.get("life_stage","adult"))
+		var birth: int=int(record.get("family",{}).get("birth_day",-365*28))
+		age_years=maxf(0.0,float(world.village_sim.current_day-birth)/365.0)
+	if not GENES.validate(genome):
+		genome=GENES.founder(npc_id)
+	set_meta("genome_traits",true)
+	set_meta("body_sex",sex)
+	set_meta("bloodline_generation",
+		int(world.village_sim.people[npc_id]["family"].get("generation",0)) if
+		world!=null and world.village_sim!=null and world.village_sim.people.has(npc_id) else 0)
 	var trim := ART.mat(Color(String(definition.get("trim","c0aa86"))),.95)
 	# A human should read as a particular person, not an identical tan
 	# mannequin re-dressed for each job.
-	var complexion: String="a98b72"
-	match npc_id:
-		"ida": complexion="b69b82"
-		"orin": complexion="8d6c57"
-		"daro": complexion="ad896b"
-		"titus": complexion="997b67"
-		"cass": complexion="c2a18a"
-		"sela": complexion="9c745e"
-		"nima": complexion="75564b"
-		"lena": complexion="bb957b"
-		"mara": complexion="b09a85"
-		_: pass
-	var skin := ART.mat(Color(complexion),.94)
+	var skin := ART.mat(GENES.skin_color(genome),.96)
 	var leather := ART.mat(Color("463f37"),.99)
 	# A separate torso, narrower tunic hem and jointed legs replace the
 	# one-piece walking cone. Props remain on their own worker identities.
 	# Twelve-sided fitted tunic with a broad shoulder and a shaped hem:
 	# these surfaces replace the previous square torso and floating eyes.
-	var tunic:=ART.cone(figure,Vector3(0,1.24,0),.32,.73,cloth,.275,12)
+	# Hide the obsolete fixed cone shells that cover inherited waist,
+	# hips and torso geometry. Retain nodes temporarily for old scene
+	# references; the visible clothes come from fitted BODY and COSTUME.
+	var tunic:=ART.cone(figure,Vector3(0,1.125,0),.285,.56,cloth,.205,12)
 	tunic.name="TaperedVillagerTunic"
-	ART.cone(figure,Vector3(0,.79,0),.36,.58,cloth,.265,12)
-	ART.bone(figure,Vector3(0,1.45,0),Vector3(0,1.63,0),
-		.19,.16,cloth,10)
+	tunic.visible=false
+	tunic.set_meta("legacy_hidden_by_genetic_torso",true)
+	var old_lower_tunic:=ART.cone(figure,Vector3(0,.79,0),.315,.52,cloth,.255,12)
+	old_lower_tunic.name="LegacyLowerTunicHidden"
+	old_lower_tunic.visible=false
+	# Shoulder, neck opening and trapezius now come from the inherited
+	# single cloth surface. No exposed helper cylinder beneath the chin.
 	var head:=ART.orb(figure,Vector3(0,1.77,0),
 		Vector3(.42,.49,.39),skin,13)
 	head.name="ModeledInhabitantHead"
-	# A small cap or hair crown stays close to the skull. Face features sit
-	# against the actual front surface at -Z, never suspended in space.
-	var hair:=ART.mat(Color("3e302a"),.96)
-	ART.orb(figure,Vector3(0,1.97,.045),
-		Vector3(.44,.13,.39),hair,12)
-	var brow:=ART.mat(Color("3a3029"),.95)
-	for side in [-1.0,1.0]:
-		# Eyes sit deep under the brow as narrow shadowed slits. The former
-		# spherical beads made every villager resemble a child's doll.
-		ART.box(figure,Vector3(side*.083,1.789,-.195),
-			Vector3(.065,.018,.010),brow,Vector3(0,side*.08,0))
-		ART.bone(figure,Vector3(side*.041,1.829,-.180),
-			Vector3(side*.123,1.834,-.163),.013,.010,brow,7)
-	ART.orb(figure,Vector3(0,1.704,-.198),
-		Vector3(.070,.090,.069),skin,9)
-	ART.bone(figure,Vector3(-.051,1.643,-.180),
-		Vector3(.051,1.643,-.180),.009,.009,brow,7)
+	# Individual anatomy replaces the floating eyes and identical hair
+	# caps, retaining the original tested head and collision silhouette.
+	var hair:=ART.mat(GENES.hair_color(genome),.96)
+	var brow:=ART.mat(GENES.hair_color(genome).darkened(.12),.95)
+	PORTRAIT.finish(figure,npc_id,skin,hair,brow,genome,sex,age_years)
 	for side in [-1.0,1.0]:
 		var arm:=Node3D.new()
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
-		arm.position=Vector3(side*.345,1.49,0)
+		# Shoulder sockets are measured from this person's inherited upper
+		# thorax. A fixed x=.345 made both sexes look broad-shouldered.
+		var socket_width: float=BODY._section(1.365,genome,sex).x
+		arm.position=Vector3(side*(.030+.88*socket_width),1.405,0)
+		# A slightly relaxed, inherited resting stance instead of two
+		# vertical mannequin rods; gait and reaching still drive rotation.x.
+		arm.rotation.z=side*lerpf(.095,.145,
+			GENES.value(genome,"shoulder_width"))
 		figure.add_child(arm)
-		ART.bone(arm,Vector3.ZERO,Vector3(side*.075,-.42,-.045),.116,.084,cloth,9)
-		ART.orb(arm,Vector3(side*.075,-.46,-.045),Vector3(.093,.12,.088),skin,10)
+		# Shoulder cap and upper sleeve have a sculpted circumference and
+		# attach to the old detachable, animated physical arm pivot.
+		COSTUME.fitted_sleeve(arm,side,genome,cloth,sex)
+		# Genuine elbow articulation. The longer inherited forearm and hand
+		# remain children of this original severable arm, not new body modules.
+		var forearm:=Node3D.new()
+		forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
+		forearm.position=Vector3(side*.058,-.410,-.045)
+		forearm.rotation.x=.16
+		forearm.rotation.z=-side*.10
+		arm.add_child(forearm)
+		COSTUME.fitted_forearm(forearm,side,genome,cloth,skin)
 		var leg:=Node3D.new()
 		leg.name="AnimatedLeftLeg" if side<0.0 else "AnimatedRightLeg"
-		leg.position=Vector3(side*.17,.61,.015)
+		# Femoral spacing follows the *pelvis* rather than a shared template.
+		var pelvic_half_width: float=BODY._section(.78,genome,sex).x
+		# Femoral heads sit at the anatomical pelvis, not at the tunic hem.
+		# Keeping the pivot at .61 shortened both legs by almost 40 cm.
+		leg.position=Vector3(side*.455*pelvic_half_width,.98,.015)
 		figure.add_child(leg)
-		ART.bone(leg,Vector3.ZERO,Vector3(0,-.46,0),.115,.10,leather,8)
-		ART.box(leg,Vector3(0,-.52,-.095),Vector3(.25,.13,.42),leather)
+		# Genetically sized trouser and sculpted boot are mounted on this
+		# same animated, hit-detectable, independently detachable leg.
+		COSTUME.fitted_lower_leg(leg,side,genome,sex)
+		var limb_arm: String="left_arm" if side<0.0 else "right_arm"
+		var limb_leg: String="left_leg" if side<0.0 else "right_leg"
+		modular_limbs[limb_arm]=arm
+		modular_limbs[limb_leg]=leg
+		_install_limb_hitbox(arm,limb_arm)
+		_install_limb_hitbox(leg,limb_leg)
 		if side<0.0:
 			left_arm=arm
+			left_forearm=forearm
 			left_leg=leg
 		else:
 			right_arm=arm
+			right_forearm=forearm
 			right_leg=leg
-	# Cloth mantle and a small side bag distinguish scribe from keeper.
-	ART.bone(figure,Vector3(-.34,1.48,-.14),
-		Vector3(.30,1.46,-.13),.065,.062,trim,7)
+	# Keep the scribe's distinct staff; other professions already have
+	# their own fitted belt pouch in COSTUME.dress. The former universal
+	# oversized box-and-strap satchel hung in the same place on every
+	# villager, intersected sleeves, and obscured the aprons in game views.
 	if npc_id == "mara":
 		ART.bone(figure,Vector3(-.54,.15,.12),
 			Vector3(-.48,2.43,.16),.048,.037,leather,8)
 		ART.orb(figure,Vector3(-.48,2.44,.16),
 			Vector3(.075,.09,.071),trim,9)
-	else:
-		ART.box(figure,Vector3(.46,.89,.18),
-			Vector3(.26,.38,.21),leather,
-			Vector3(0,-.22,-.11))
-		ART.bone(figure,Vector3(-.12,1.47,.04),
-			Vector3(.50,.99,.17),.052,.045,trim,7)
 	# Role identity belongs to the person: the same figure carries these
 	# tools whether travelling, trading or standing at the workplace.
 	# Do not replace every citizen with the same cone-robe silhouette.
@@ -157,50 +213,50 @@ func _ready() -> void:
 			var flour:=ART.mat(Color("d2c4a1"),.98)
 			# A shaped cloth bib, a tied waist and a pocket replace the
 			# vertical white rectangle that used to obscure the whole body.
-			_make_baker_apron(figure,flour,trim)
+			_make_baker_apron(figure,flour,trim,genome,sex)
 			var bonnet:=ART.orb(figure,Vector3(0,1.989,.025),
 				Vector3(.46,.24,.40),flour,12)
 			bonnet.name="VisibleBakerBonnet"
-			ART.bone(figure,Vector3(-.22,1.94,-.08),
-				Vector3(-.20,1.75,-.10),.037,.022,flour,8)
-			ART.bone(figure,Vector3(.22,1.94,-.08),
-				Vector3(.20,1.75,-.10),.037,.022,flour,8)
+			# Avoid two unsupported ivory rods sticking out beside the face.
+			# The bonnet silhouette is readable without fake face-hanging bones.
 		"orin":
-			var hide:=ART.mat(Color("775b42"),.99)
+			var hide:=FABRIC.worn_leather(Color("775b42"))
 			var metal:=ART.mat(Color("737e81"),.52)
-			var apron:=ART.box(figure,Vector3(0,.98,-.35),
-				Vector3(.65,1.08,.13),hide)
-			apron.name="VisibleSmithApron"
-			ART.box(figure,Vector3(0,.71,-.42),
-				Vector3(.61,.13,.18),leather)
+			# Shaped leather hangs in front of the actual inherited torso.
+			# Retain original occupational identity and arm-mounted hammer.
+			COSTUME.smith_work_apron(figure,genome,hide,leather,metal,sex)
 			var hammer:=Node3D.new()
 			hammer.name="VisibleSmithHammer"
-			hammer.position=Vector3(.105,-.44,-.16)
-			right_arm.add_child(hammer)
-			ART.bone(hammer,Vector3(0,-.33,0),
-				Vector3(0,.31,0),.048,.036,leather,8)
-			ART.box(hammer,Vector3(0,.27,0),Vector3(.41,.17,.23),metal)
+			# A work hammer hangs by the wrist at rest. The previous
+			# giant bright rectangular head sat near eye height, reading
+			# as a floating white bar across the first-person view.
+			hammer.position=Vector3(.015,-GENES.forearm_length(genome)+.08,-.012)
+			right_forearm.add_child(hammer)
+			var handle:=ART.bone(hammer,Vector3(0,-.20,0),
+				Vector3(0,.12,0),.031,.027,leather,8)
+			handle.name="SmithHammerTimberHandle"
+			var head_mesh:=ART.box(hammer,Vector3(0,-.15,0),
+				Vector3(.24,.13,.14),metal)
+			head_mesh.name="SmithHammerWorkingHead"
 		"daro":
 			var straw:=ART.mat(Color("b8a477"),.99)
 			var brim:=ART.cone(figure,Vector3(0,2.02,0),.49,.075,
 				straw,.41,14)
 			brim.name="VisibleFarmerHat"
-			ART.cone(figure,Vector3(0,2.14,0),.29,.23,straw,.21,12)
+			var farmer_crown:=ART.cone(figure,Vector3(0,2.14,0),
+				.29,.23,straw,.21,12)
+			farmer_crown.name="VisibleFarmerCrown"
 			var staff:=Node3D.new()
 			staff.name="VisibleFarmerRake"
-			staff.position=Vector3(-.19,-.52,-.11)
-			left_arm.add_child(staff)
+			staff.position=Vector3(-.08,-GENES.forearm_length(genome)+.065,-.08)
+			left_forearm.add_child(staff)
 			ART.bone(staff,Vector3(0,-.77,0),Vector3(0,1.03,0),
 				.039,.029,leather,8)
 			ART.box(staff,Vector3(0,1.02,0),Vector3(.47,.10,.09),trim)
 		"sela":
-			var purse:=ART.mat(Color("b89a61"),.93)
-			var bag:=ART.box(figure,Vector3(-.47,.73,-.23),
-				Vector3(.38,.45,.24),purse)
-			bag.name="VisibleMerchantPouch"
-			for side in [-1.0,1.0]:
-				ART.bone(figure,Vector3(-.47+side*.14,1.00,-.29),
-					Vector3(-.47+side*.14,.85,-.29),.023,.023,leather,7)
+			# The old .38 x .45 golden box floated beside her body.
+			# This compact worn-leather bag follows the inherited hip.
+			WARDROBE.merchant_satchel(figure,genome,sex)
 		"nima":
 			var instrument:=ART.orb(figure,Vector3(-.22,1.03,-.40),
 				Vector3(.28,.37,.11),ART.mat(Color("926849"),.91),12)
@@ -208,10 +264,8 @@ func _ready() -> void:
 			ART.bone(figure,Vector3(-.33,1.17,-.40),
 				Vector3(.18,1.55,-.40),.065,.053,leather,9)
 		"titus":
-			var iron:=ART.mat(Color("7d8180"),.56)
-			var shield:=ART.box(figure,Vector3(-.44,1.05,-.20),
-				Vector3(.14,.83,.54),iron)
-			shield.name="VisibleGuardShield"
+			# Muted faceted shield follows the original detachable left arm.
+			WARDROBE.guard_shield(left_arm)
 		_:
 			pass
 	# A real work-in-progress harvest sack belongs to the farmer, not to
@@ -229,20 +283,96 @@ func _ready() -> void:
 		var attendant:=Node3D.new()
 		attendant.name="DistinctModernAttendant"
 		add_child(attendant)
+		visual_attendant=attendant
 		var shirt:=ART.mat(Color("5c7373"),.94)
 		var denim:=ART.mat(Color("485461"),.98)
 		var apron:=ART.mat(Color("b2a17e"),.95)
-		ART.box(attendant,Vector3(0,1.13,0),Vector3(.74,.88,.37),shirt)
-		ART.box(attendant,Vector3(0,.84,-.21),Vector3(.68,.63,.08),apron)
+		# This uniform used to be two large identical cuboids on every
+		# worker, concealing the genetic torso below. Keep named, hidden
+		# compatibility meshes; the fitted shirt and apron are rendered.
+		var old_shirt:=ART.box(attendant,Vector3(0,1.13,0),
+			Vector3(.74,.88,.37),shirt)
+		old_shirt.name="HiddenOldStationShirtBox"
+		old_shirt.visible=false
+		var old_apron:=ART.box(attendant,Vector3(0,.84,-.21),
+			Vector3(.68,.63,.08),apron)
+		old_apron.name="HiddenOldStationApronBox"
+		old_apron.visible=false
+		COSTUME.fitted_station_apron(attendant,genome,apron,sex)
 		for side in [-1.0,1.0]:
-			ART.box(attendant,Vector3(side*.19,.39,0),Vector3(.27,.79,.27),denim)
-			ART.box(attendant,Vector3(side*.20,.06,-.10),Vector3(.31,.15,.46),leather)
-			ART.bone(attendant,Vector3(side*.43,1.42,0),
-				Vector3(side*.51,.99,-.06),.115,.081,shirt,10)
-			ART.orb(attendant,Vector3(side*.52,.94,-.06),Vector3(.095,.105,.084),skin,10)
-		ART.orb(attendant,Vector3(0,1.76,0),Vector3(.23,.27,.21),skin,12)
-		ART.box(attendant,Vector3(0,2.04,-.03),Vector3(.51,.15,.45),denim)
-		ART.box(attendant,Vector3(0,2.01,-.26),Vector3(.40,.052,.27),denim)
+			var side_name: String="left" if side<0.0 else "right"
+			var modern_leg:=Node3D.new()
+			modern_leg.name="ModularModern"+side_name.capitalize()+"Leg"
+			modern_leg.position=Vector3(side*.47*
+				BODY._section(.78,genome,sex).x,.98,0)
+			attendant.add_child(modern_leg)
+			# Jeans and ankle boots use the same inherited hip/thigh shape
+			# without introducing extra limbs or changing the physical rig.
+			COSTUME.fitted_lower_leg(modern_leg,side,genome,sex)
+			modular_limbs[side_name+"_leg"]=modern_leg
+			_install_limb_hitbox(modern_leg,side_name+"_leg")
+			var modern_arm:=Node3D.new()
+			modern_arm.name="ModularModern"+side_name.capitalize()+"Arm"
+			modern_arm.position=Vector3(side*(.034+
+				.91*BODY._section(1.365,genome,sex).x),1.405,0)
+			attendant.add_child(modern_arm)
+			modern_arm.rotation.z=side*lerpf(.095,.145,GENES.value(genome,"shoulder_width"))
+			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt,sex)
+			var modern_forearm:=Node3D.new()
+			modern_forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
+			modern_forearm.position=Vector3(side*.058,-.410,-.045)
+			modern_forearm.rotation.x=.16
+			modern_forearm.rotation.z=-side*.10
+			modern_arm.add_child(modern_forearm)
+			COSTUME.fitted_forearm(modern_forearm,side,genome,shirt,skin)
+			modular_limbs[side_name+"_arm"]=modern_arm
+			_install_limb_hitbox(modern_arm,side_name+"_arm")
+			# The real visible uniform limbs must receive gait and arm-swing,
+			# not the hidden medieval base rig underneath them.
+			if side<0.0:
+				left_arm=modern_arm
+				left_forearm=modern_forearm
+				left_leg=modern_leg
+			else:
+				right_arm=modern_arm
+				right_forearm=modern_forearm
+				right_leg=modern_leg
+		var modern_head:=ART.orb(attendant,Vector3(0,1.76,0),
+			Vector3(.42,.49,.39),skin,12)
+		modern_head.name="ModernGeneticHead"
+		# The former two huge head-level boxes became a floating roof in
+		# close-up. A close crown and shallow visor preserve the station
+		# worker's hat without hiding the genetic face beneath it.
+		var crown:=ART.box(attendant,Vector3(0,2.040,-.015),
+			Vector3(.43,.105,.34),denim)
+		crown.name="FittedAttendantCapCrown"
+		var peak:=ART.box(attendant,Vector3(0,2.018,-.207),
+			Vector3(.34,.025,.13),denim)
+		peak.name="ShortAttendantVisor"
+		COSTUME.dress_attendant(attendant)
+		BODY.finish(attendant,genome,shirt,true,sex)
+		COSTUME.tailored_womenswear(attendant,npc_id,genome,sex,shirt)
+		WARDROBE.finish(attendant,npc_id,genome,sex)
+	else:
+		COSTUME.dress(figure,npc_id,cloth,trim,leather,genome,sex)
+		BODY.finish(figure,genome,cloth,false,sex)
+		COSTUME.tailored_womenswear(figure,npc_id,genome,sex,cloth)
+		WARDROBE.finish(figure,npc_id,genome,sex)
+	# Mild-to-noticeable, inherited body dimensions. The faceted look is
+	# deliberate; we change proportions, not topology or collision IDs.
+	inherited_body_dimensions=GENES.body_scale(genome,sex)
+	_apply_genetic_growth()
+	if visual_attendant!=null:
+		PORTRAIT.finish(visual_attendant,npc_id,skin,hair,brow,genome,sex,age_years)
+	# Figure drawing proportions are expressed in an isolated visual
+	# skull module. Eyes, nose, hair and headwear stay registered to the
+	# neck as the adult/child cranial ratio changes. Physics stays intact.
+	PORTRAIT.fit_skull_landmarks(figure,genome,age_years)
+	if visual_attendant!=null:
+		PORTRAIT.fit_skull_landmarks(visual_attendant,genome,age_years)
+	# Both face and limb models inherit the same body shape, and child
+	# models use the existing detachable body-part system.
+	refresh_anatomy_visuals()
 	var collider := StaticBody3D.new()
 	collider.name = "LivingNPCConversationCollider"
 	collider.collision_layer = 4 if mobile else (4 | 16)
@@ -253,6 +383,7 @@ func _ready() -> void:
 	capsule.radius = .43
 	capsule.height = 1.95
 	var shape := CollisionShape3D.new()
+	shape.name="LivingInteractionCapsule"
 	shape.shape = capsule
 	shape.position.y = 1.0
 	collider.add_child(shape)
@@ -269,37 +400,111 @@ func _ready() -> void:
 	title.position = Vector3(0,2.29,0)
 	add_child(title)
 	name_label=title
+	# Conversation target and navigation hit volume must match the
+	# actual inherited growth stage, including newborn villagers.
+	_apply_genetic_growth()
 
-func _make_baker_apron(parent: Node3D, fabric: Material, tie: Material) -> void:
-	# A front-facing trapezoidal cloth panel follows shoulders, waist, hem.
-	# Its surface normal points toward the player (-Z); it does not add
-	# collision to a character whose collider already works.
-	# Three cross-sectional columns curve the cloth around a real torso,
-	# keeping the bottom hem from disappearing inside the flared tunic.
-	var vertices: Array[Vector3]=[
-		Vector3(-.20,1.41,-.265),Vector3(0,1.41,-.34),Vector3(.20,1.41,-.265),
-		Vector3(-.24,1.04,-.285),Vector3(0,1.04,-.39),Vector3(.24,1.04,-.285),
-		Vector3(-.285,.55,-.248),Vector3(0,.55,-.415),Vector3(.285,.55,-.248)]
+func _fit_growth_colliders(physical_scale: Vector3) -> void:
+	# Scale ONLY the capsule dimensions; nonuniform CollisionShape3D
+	# transforms produce unreliable physics in Godot. The original
+	# collider nodes, collision layers and hitbox identities survive.
+	var walker: CollisionShape3D=get_node_or_null(
+		"PhysicalCitizenCollider") as CollisionShape3D
+	if walker!=null and walker.shape is CapsuleShape3D:
+		var capsule: CapsuleShape3D=walker.shape as CapsuleShape3D
+		capsule.radius=clampf(.34*physical_scale.x,.23,.45)
+		capsule.height=maxf(1.75*physical_scale.y,2.0*capsule.radius+.05)
+		walker.position.y=.90*physical_scale.y
+	var conversation: CollisionShape3D=get_node_or_null(
+		"LivingNPCConversationCollider/LivingInteractionCapsule") as CollisionShape3D
+	if conversation!=null and conversation.shape is CapsuleShape3D:
+		var target: CapsuleShape3D=conversation.shape as CapsuleShape3D
+		target.radius=clampf(.43*physical_scale.x,.24,.53)
+		target.height=maxf(1.95*physical_scale.y,2.0*target.radius+.05)
+		conversation.position.y=1.0*physical_scale.y
+	if name_label!=null:
+		name_label.position.y=2.29*physical_scale.y
+
+func _apply_genetic_growth() -> void:
+	# Juveniles physically grow toward their own inherited adult body
+	# proportions over calendar years; there is no 18th-birthday pop.
+	if world==null or world.village_sim==null or not world.village_sim.people.has(npc_id):
+		return
+	var person: Dictionary=world.village_sim.people[npc_id]
+	var age_days: int=maxi(0,world.village_sim.current_day-int(person["family"]["birth_day"]))
+	var years_progress: float=clampf(float(age_days)/(18.0*365.0),0.0,1.0)
+	var growth: float=pow(years_progress,.74)
+	var shape: Vector3=inherited_body_dimensions
+	if String(person.get("life_stage","adult"))=="child":
+		shape.x*=lerpf(.67,1.0,growth)
+		shape.y*=lerpf(.54,1.0,growth)
+		shape.z*=lerpf(.73,1.0,growth)
+	if visual_figure!=null:
+		visual_figure.scale=shape
+	if visual_attendant!=null:
+		visual_attendant.scale=shape
+	_fit_growth_colliders(shape)
+	last_body_age_day=world.village_sim.current_day
+
+func _make_baker_apron(parent: Node3D, fabric: Material,
+		tie: Material, genome: Dictionary, sex: String) -> void:
+	# The chest has its own anatomical curve. Sampling only at the
+	# top and waist lets the physical ribcage and bust protrude through
+	# the flat apron, creating a giant brown hole in the actual render.
+	# A genuine conformal surface follows inherited chest/waist/hips
+	# across many sampled heights and lateral points, without new colliders.
+	const COLUMNS: int=11
+	const HEIGHTS: Array[float]=[1.40,1.365,1.33,1.29,1.255,1.22,1.17,1.11,1.055,.99,.93,.84,.77,.70,.64,.55]
+	var vertices: Array[Vector3]=[]
+	for y in HEIGHTS:
+		var t: float=clampf((1.40-y)/.85,0.0,1.0)
+		var half_width: float=lerpf(.185,.260,t)
+		var torso_section: Vector2=BODY._section(y,genome,sex)
+		for col in range(COLUMNS):
+			var fraction: float=float(col)/float(COLUMNS-1)*2.0-1.0
+			var x: float=half_width*fraction
+			var angle: float=-PI*.5+asin(clampf(x/torso_section.x,-.89,.89))
+			var point: Vector3=BODY._point(y,angle,genome,sex)
+			# Dense sampling follows the convex bust and lower ribs. The
+			# old five-column panel cut across the curved chest: the opaque
+			# shirt pierced the apron, leaving a jagged brown hole.
+			# A center-weighted air gap clears the outer cloth while the
+			# panel still follows inherited body geometry.
+			var drape_gap: float=.105+.024*(1.0-absf(fraction))
+			vertices.append(Vector3(x,y,point.z-drape_gap))
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(fabric)
-	for row in range(2):
-		for column in range(2):
-			var i: int=row*3+column
-			for j in [i,i+1,i+3,i+1,i+4,i+3]:
+	for row in range(HEIGHTS.size()-1):
+		for column in range(COLUMNS-1):
+			var i: int=row*COLUMNS+column
+			for j in [i,i+1,i+COLUMNS,i+1,i+COLUMNS+1,i+COLUMNS]:
+				surface.set_uv(Vector2(vertices[j].x+.5,vertices[j].y))
 				surface.add_vertex(vertices[j])
 	surface.generate_normals()
 	var apron:=MeshInstance3D.new()
 	apron.name="VisibleBakerApron"
 	apron.mesh=surface.commit()
+	# A single-sided facing can disappear at oblique close-up camera angles.
+	# Protect the apron on both sides; the cream fabric itself carries its
+	# visible color rather than borrowing the dark undergarment material.
+	if fabric is StandardMaterial3D:
+		(fabric as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
+	apron.material_override=fabric
+	apron.set_meta("drapes_over_inherited_torso",true)
 	parent.add_child(apron)
-	ART.bone(parent,Vector3(-.35,1.04,-.33),
-		Vector3(.35,1.04,-.33),.028,.028,tie,8)
-	var pocket:=ART.box(parent,Vector3(-.08,.75,-.419),
+	var waist_front: float=BODY._point(1.04,-PI*.5,genome,sex).z-.155
+	# A stitched waist seam, not a broad yellow bar projecting across
+	# the entire abdomen.
+	var stitch:=ART.bone(parent,Vector3(-.20,1.04,waist_front),
+		Vector3(.20,1.04,waist_front),.013,.013,tie,8)
+	stitch.name="BakerCloseFittedWaistSeam"
+	var pocket_z: float=BODY._point(.75,-PI*.5,genome,sex).z-.152
+	var pocket:=ART.box(parent,Vector3(-.08,.75,pocket_z),
 		Vector3(.17,.14,.022),fabric)
 	pocket.name="BakerWorkPocket"
-	ART.bone(parent,Vector3(-.17,.83,-.424),
-		Vector3(.01,.83,-.424),.009,.009,tie,7)
+	ART.bone(parent,Vector3(-.17,.83,pocket_z-.011),
+		Vector3(.01,.83,pocket_z-.011),.009,.009,tie,7)
 
 func _process(delta: float) -> void:
 	# World labels are discovery aids, not floating billboards visible across
@@ -318,14 +523,95 @@ func _process(delta: float) -> void:
 		if toward.length_squared()>.05:
 			rotation.y=lerp_angle(rotation.y,atan2(-toward.x,-toward.z),minf(1.0,delta*8.0))
 	if left_arm==null or world==null or world.village_sim==null: return
+	if last_body_age_day!=world.village_sim.current_day:
+		_apply_genetic_growth()
+	# Facial animation reacts to the person's own mood and memories of
+	# the player, without changing any inherited genetic trait.
+	var me: Dictionary=world.village_sim.people.get(npc_id,{})
+	if not me.is_empty():
+		var opinion: float=float(me["trust"].get("wizard",0.0))
+		var feeling: float=clampf((float(me["mood"])-50.0)/75.0+opinion*.009,-1,1)
+		if world.player!=null and world.player.conversation_actor==self:
+			feeling=clampf(feeling+.18,-1,1)
+		var time_in_blink: float=fposmod(motion_clock+float(posmod(npc_id.hash(),11))*.33,4.25)
+		var blink: float=clampf(1.0-absf(time_in_blink-3.72)/.13,0,1)
+		if visual_attendant!=null:
+			PORTRAIT.expression(visual_attendant,feeling,blink,
+				world.player!=null and world.player.conversation_actor==self,motion_clock)
+		else:
+			PORTRAIT.expression(visual_figure,feeling,blink,
+				world.player!=null and world.player.conversation_actor==self,motion_clock)
+	anatomy_visual_elapsed+=delta
+	if anatomy_visual_elapsed>=.30:
+		anatomy_visual_elapsed=0.0
+		refresh_anatomy_visuals()
 	motion_clock+=delta
 	var order: Dictionary=world.village_sim.work_orders.get(npc_id,{})
 	var phase: String=String(order.get("phase",""))
-	var walking: bool=mobile and Vector2(velocity.x,velocity.z).length()>.20
+	# Drive gait from actual world displacement, never just an animation
+	# clock. Feet no longer keep cycling while a villager hits a wall or
+	# stands in conversation. Teleports/save loads do not advance gait.
+	if not has_footstep_origin:
+		previous_footstep_position=global_position
+		has_footstep_origin=true
+	var traveled: float=Vector2(global_position.x-previous_footstep_position.x,
+		global_position.z-previous_footstep_position.z).length()
+	previous_footstep_position=global_position
+	var talking: bool=world.player!=null and world.player.conversation_actor==self
+	var walking: bool=mobile and not talking and traveled>.002 and traveled<.38
+	if walking:
+		distance_gait_phase+=traveled*8.3
+		gait_weight=move_toward(gait_weight,1.0,delta*7.0)
+	else:
+		gait_weight=move_toward(gait_weight,0.0,delta*7.0)
 	var working: bool=not order.is_empty() and phase=="labor" and _near_work_goal()
-	var stride: float=sin(motion_clock*8.0)*.42 if walking else 0.0
-	left_leg.rotation.x=lerpf(left_leg.rotation.x,stride,minf(1.0,delta*9.0))
-	right_leg.rotation.x=lerpf(right_leg.rotation.x,-stride,minf(1.0,delta*9.0))
+	var body: Dictionary=anatomy_state()
+	var missing_left_leg: bool=body["missing"].has("left_leg")
+	var missing_right_leg: bool=body["missing"].has("right_leg")
+	var limping: bool=missing_left_leg or missing_right_leg
+	# A peg makes contact with the ground on a slower, uneven stride.
+	# No injury: preserve the baseline distance-driven walk exactly.
+	var stride: float=sin(distance_gait_phase)*(.31 if limping else .44)*gait_weight
+	# A quiet breathing/sway pass animates only visual mesh roots; the
+	# CharacterBody3D, ray collider, navigation and saved positions do not bob.
+	if visual_figure!=null:
+		var breath: float=sin(motion_clock*1.78+float(absi(npc_id.hash())%7))*.010
+		var foot_lift: float=absf(sin(distance_gait_phase))*(.012 if limping else .028)*gait_weight
+		visual_figure.position.y=breath+foot_lift
+		# Lean toward the remaining leg or fitted aid; no hopping
+		# oscillation on an amputated leg's invisible animation bone.
+		var lean: float=(.060 if missing_left_leg else (-.060 if missing_right_leg else 0.0))
+		visual_figure.rotation.z=lean*gait_weight+sin(distance_gait_phase)*(.026 if limping else .016)*gait_weight
+	if visual_attendant!=null:
+		visual_attendant.position.y=sin(motion_clock*1.55)*.008
+	if left_leg!=null and not missing_left_leg:
+		left_leg.rotation.x=lerpf(left_leg.rotation.x,stride,minf(1.0,delta*9.0))
+	if right_leg!=null and not missing_right_leg:
+		right_leg.rotation.x=lerpf(right_leg.rotation.x,-stride,minf(1.0,delta*9.0))
+	# Knees flex only as each foot enters recovery. The shin, boot, and
+	# ankle travel together underneath the original detachable leg.
+	# Never flex the missing limb or play a full walk cycle while stopped.
+	if left_leg!=null and not missing_left_leg:
+		var knee_left: Node3D=left_leg.get_node_or_null("AnatomicalKneeHinge") as Node3D
+		if knee_left!=null:
+			var left_recovery: float=maxf(0.0,-sin(distance_gait_phase))
+			knee_left.rotation.x=lerpf(knee_left.rotation.x,
+				.54*left_recovery*gait_weight,minf(1.0,delta*9.0))
+	if right_leg!=null and not missing_right_leg:
+		var knee_right: Node3D=right_leg.get_node_or_null("AnatomicalKneeHinge") as Node3D
+		if knee_right!=null:
+			var right_recovery: float=maxf(0.0,sin(distance_gait_phase))
+			knee_right.rotation.x=lerpf(knee_right.rotation.x,
+				.54*right_recovery*gait_weight,minf(1.0,delta*9.0))
+	if support_visual!=null and is_instance_valid(support_visual):
+		var peg: Node3D=support_visual.get_node_or_null("FittedPegPivot") as Node3D
+		if peg!=null:
+			peg.rotation.x=lerpf(peg.rotation.x,
+				(-stride*.70 if missing_left_leg else stride*.70),minf(1.0,delta*8.0))
+		var crutch: Node3D=support_visual.get_node_or_null("WalkingCrutchPivot") as Node3D
+		if crutch!=null:
+			crutch.rotation.x=lerpf(crutch.rotation.x,
+				-stride*.22,minf(1.0,delta*7.0))
 	var reach: float=0.0
 	var offhand: float=0.0
 	if working:
@@ -340,8 +626,185 @@ func _process(delta: float) -> void:
 		offhand=-.78
 	left_arm.rotation.x=lerpf(left_arm.rotation.x,offhand,minf(1.0,delta*8.0))
 	right_arm.rotation.x=lerpf(right_arm.rotation.x,reach,minf(1.0,delta*8.0))
+	# The elbows bend in response to reaching, working and gait. They
+	# never animate an invisible or separately detachable forearm.
+	if left_forearm!=null and not limb_missing("left_arm"):
+		var left_bend: float=.16+maxf(0.0,-offhand)*.28+absf(stride)*.20
+		left_forearm.rotation.x=lerpf(left_forearm.rotation.x,left_bend,minf(1.0,delta*8.0))
+	if right_forearm!=null and not limb_missing("right_arm"):
+		var right_bend: float=.16+maxf(0.0,-reach)*.32+absf(stride)*.20
+		right_forearm.rotation.x=lerpf(right_forearm.rotation.x,right_bend,minf(1.0,delta*8.0))
 	if harvest_sack!=null:
-		harvest_sack.visible=phase=="delivery"
+		harvest_sack.visible=phase=="delivery" and not limb_missing("right_arm")
+
+func anatomy_state() -> Dictionary:
+	if world==null or world.village_sim==null or not world.village_sim.people.has(npc_id):
+		return ANATOMY.new_state()
+	return world.village_sim.people[npc_id]["anatomy"]
+
+func limb_missing(part: String) -> bool:
+	return anatomy_state()["missing"].has(part)
+
+func _install_limb_hitbox(limb: Node3D, part: String) -> void:
+	var area:=Area3D.new()
+	area.name="Hitbox_"+part
+	area.collision_layer=4
+	area.collision_mask=0
+	area.set_meta("npc_ref",self)
+	area.set_meta("hit_limb",part)
+	limb.add_child(area)
+	var shape:=CollisionShape3D.new()
+	var capsule:=CapsuleShape3D.new()
+	# One capsule per arm retains the original limb identity while
+	# covering the full inherited shoulder-to-wrist reach.
+	capsule.height=1.18 if part.ends_with("_arm") else .88
+	capsule.radius=.119 if part.ends_with("_arm") else .135
+	shape.shape=capsule
+	shape.position=Vector3(0,-.57 if part.ends_with("_arm") else -.425,0)
+	area.add_child(shape)
+	limb_hitboxes[part]=area
+
+func _drop_severed_limb(part: String) -> void:
+	if not modular_limbs.has(part) or world==null: return
+	var source: Node3D=modular_limbs[part]
+	var piece:=RigidBody3D.new()
+	piece.name="Detached_"+npc_id+"_"+part
+	piece.collision_layer=8
+	piece.collision_mask=16
+	piece.mass=1.25 if part.ends_with("leg") else .65
+	world.add_child(piece)
+	piece.global_position=source.global_position
+	piece.global_rotation=source.global_rotation
+	var mesh_clone: Node3D=source.duplicate()
+	mesh_clone.name="SeparatedPhysicalAnatomy"
+	mesh_clone.position=Vector3.ZERO
+	mesh_clone.rotation=Vector3.ZERO
+	for area in mesh_clone.find_children("*","Area3D",true,false):
+		area.queue_free()
+	piece.add_child(mesh_clone)
+	var collider:=CollisionShape3D.new()
+	var capsule:=CapsuleShape3D.new()
+	capsule.radius=.12
+	capsule.height=.98 if part.ends_with("leg") else .52
+	collider.shape=capsule
+	collider.position=Vector3(0,-.45 if part.ends_with("leg") else -.25,0)
+	piece.add_child(collider)
+	piece.apply_central_impulse(Vector3(
+		-.9 if part.begins_with("left") else .9,.75,-.5))
+	# Separated remains a real finite-lived rigid body. Person status is
+	# authoritative and permanent; this loose physics object is not a
+	# second simulation citizen or something resurrected by loading.
+	var timer:=get_tree().create_timer(75.0)
+	timer.timeout.connect(func() -> void:
+		if is_instance_valid(piece): piece.queue_free())
+
+func strike_limb(part: String, force: float, attacker: String="wizard") -> Dictionary:
+	if part not in ANATOMY.PARTS or world==null or world.village_sim==null:
+		return {"ok":false,"severed":false}
+	var observers: Array=[]
+	if world.has_method("physical_witnesses_of"):
+		observers=world.physical_witnesses_of(self,attacker)
+	var result: Dictionary=world.village_sim.injure_person(
+		npc_id,part,force,attacker,observers)
+	if not bool(result.get("ok",false)): return result
+	if bool(result.get("severed",false)):
+		_drop_severed_limb(part)
+	refresh_anatomy_visuals()
+	return result
+
+func refresh_anatomy_visuals() -> void:
+	if world==null or world.village_sim==null: return
+	var anatomy: Dictionary=anatomy_state()
+	if not ANATOMY.validate(anatomy): return
+	var signature: String=str(anatomy["missing"])+":"+str(anatomy["bandaged"])+":"+str(anatomy["support"])
+	for part in ANATOMY.PARTS:
+		if modular_limbs.has(part):
+			(modular_limbs[part] as Node3D).visible=not anatomy["missing"].has(part)
+		if limb_hitboxes.has(part):
+			(limb_hitboxes[part] as Area3D).collision_layer=(
+				0 if anatomy["missing"].has(part) else 4)
+	if signature!=anatomy_visual_signature:
+		anatomy_visual_signature=signature
+		_build_support_visual(anatomy)
+	var flow: float=float(anatomy["bleeding"])
+	if flow>.25 and blood_emitter==null:
+		blood_emitter=CPUParticles3D.new()
+		blood_emitter.name="ActualWoundBloodParticles"
+		blood_emitter.amount=25
+		blood_emitter.lifetime=1.05
+		blood_emitter.emission_shape=CPUParticles3D.EMISSION_SHAPE_SPHERE
+		blood_emitter.emission_sphere_radius=.07
+		blood_emitter.direction=Vector3(.15,.25,0)
+		blood_emitter.spread=63.0
+		blood_emitter.gravity=Vector3(0,-7.5,0)
+		blood_emitter.initial_velocity_min=.25
+		blood_emitter.initial_velocity_max=1.45
+		blood_emitter.color=Color("681f20")
+		var globule:=SphereMesh.new()
+		globule.radius=.018
+		globule.height=.035
+		blood_emitter.mesh=globule
+		add_child(blood_emitter)
+	if blood_emitter!=null:
+		# Blood comes from the actual injured joint, not a generic point
+		# around the character's stomach. Bandaging visibly stops drops.
+		blood_emitter.emitting=flow>.45 and not bool(anatomy["bandaged"])
+		var wound: String=String(anatomy.get("last_hit_part",""))
+		if wound.is_empty() and anatomy["missing"].size()>0:
+			wound=String(anatomy["missing"][0])
+		if wound in ANATOMY.PARTS:
+			var side: float=-1.0 if wound.begins_with("left") else 1.0
+			var from_leg: bool=wound.ends_with("_leg")
+			blood_emitter.position=Vector3(side*(.17 if from_leg else .35),
+				.955 if from_leg else 1.43,-.035)
+
+func _build_support_visual(anatomy: Dictionary) -> void:
+	if support_visual!=null and is_instance_valid(support_visual):
+		support_visual.queue_free()
+	support_visual=Node3D.new()
+	support_visual.name="AnatomicalAftercareVisuals"
+	# Keep support on the same visual root; ambient breathing must not
+	# leave a crutch behind in the world while its person sways.
+	var root: Node3D=visual_attendant if visual_attendant!=null else visual_figure
+	if root==null: return
+	root.add_child(support_visual)
+	var linen:=ART.mat(Color("aba090"),.99)
+	var wound:=ART.mat(Color("6f2927"),.98)
+	var timber:=ART.mat(Color("62503c"),.99)
+	var iron:=ART.mat(Color("5d5c55"),.86)
+	for part in ANATOMY.PARTS:
+		if not anatomy["missing"].has(part): continue
+		var side: float=-1.0 if part.begins_with("left") else 1.0
+		var joint_y: float=1.43 if part.ends_with("arm") else .975
+		var joint_x: float=side*(.35 if part.ends_with("arm") else .17)
+		var stump: MeshInstance3D=ART.orb(support_visual,
+			Vector3(joint_x,joint_y,0),
+			Vector3(.19,.13,.19),linen if anatomy["bandaged"] else wound,10)
+		stump.name="DetachableJoint_"+part
+	if not ANATOMY.needs_support(anatomy): return
+	var lost_left: bool=anatomy["missing"].has("left_leg")
+	var side: float=-1.0 if lost_left else 1.0
+	match String(anatomy["support"]):
+		"crutch":
+			var crutch_pivot:=Node3D.new()
+			crutch_pivot.name="WalkingCrutchPivot"
+			crutch_pivot.position=Vector3(side*.45,1.28,-.08)
+			support_visual.add_child(crutch_pivot)
+			ART.bone(crutch_pivot,Vector3.ZERO,
+				Vector3(side*.17,-1.25,-.01),.052,.039,timber,8).name="BuiltWalkingCrutch"
+			ART.bone(crutch_pivot,Vector3(-side*.10,-.11,0),
+				Vector3(side*.10,-.11,0),.033,.033,linen,8)
+			ART.bone(crutch_pivot,Vector3(-side*.08,-.40,0),
+				Vector3(side*.09,-.40,0),.033,.027,timber,8)
+		"peg":
+			var peg_pivot:=Node3D.new()
+			peg_pivot.name="FittedPegPivot"
+			peg_pivot.position=Vector3(side*.17,.96,0)
+			support_visual.add_child(peg_pivot)
+			ART.bone(peg_pivot,Vector3.ZERO,
+				Vector3(0,-.925,-.035),.11,.075,timber,10).name="FittedPegLeg"
+			ART.box(peg_pivot,Vector3(0,-.03,0),
+				Vector3(.27,.09,.27),iron)
 
 func _near_work_goal() -> bool:
 	if world==null or npc_id.is_empty(): return false
@@ -349,10 +812,42 @@ func _near_work_goal() -> bool:
 	return Vector2(global_position.x-goal.x,global_position.z-goal.z).length()<2.2
 
 func _destination_for(action: String) -> Vector3:
+	# Care is a physical visit to a particular person, not work magically
+	# completed at an invisible village ledger. The usual navigation and
+	# collision rules carry the helper to their chosen patient.
+	if action=="aid" and world!=null and world.village_sim!=null:
+		var patient_id: String=world.village_sim._care_target(npc_id)
+		if not patient_id.is_empty():
+			for other in world.npcs:
+				if is_instance_valid(other) and String(other.npc_id)==patient_id:
+					return other.global_position
 	var key: String = "home"
 	match action:
 		"work": key = "work"
 		"socialize", "court", "investigate": key = "market"
+	# Only after the Blender house is present can a resident's home be
+	# the real, navigable porch. Without the optional asset use the original
+	# authored home coordinates; never create an invisible goal in bare builds.
+	if key=="home" and PHYSICAL_HOME_APPROACHES.has(npc_id):
+		var residence: Dictionary=PHYSICAL_HOME_APPROACHES[npc_id]
+		var building: Node3D=world.get_node_or_null(
+			"PhysicalVillageHomesteads/"+String(residence["house"])) as Node3D
+		if building!=null and building.get_node_or_null("BlenderAuthoredVernacularHouse")!=null:
+			# Tree growth and the planted village garden can make one precise
+			# porch tile unavailable. Sample short, side-stepped approaches
+			# against the SAME navigation law used to build the real nav mesh.
+			# The first candidate preserves each resident's own side.
+			for nudge in [
+				Vector2.ZERO,Vector2(.95,-.45),Vector2(-.95,-.45),
+				Vector2(1.4,-1.1),Vector2(-1.4,-1.1)
+			]:
+				var threshold: Vector3=building.to_global(Vector3(
+					float(residence["x"])+nudge.x,0.0,-4.35+nudge.y))
+				if NAV_BUILDER.traversable(world,threshold.x,threshold.z):
+					return Vector3(threshold.x,
+						world.height_at(threshold.x,threshold.z)+.1,threshold.z)
+			# If all porch approaches are impassable in a saved/modified
+			# landscape, the original authored home remains the safe goal.
 	# Work faces the actual crop plot, oven approach or anvil, not a generic
 	# point in the middle of the old market. Deliveries go to the grain cart.
 	if action=="work":
@@ -416,8 +911,10 @@ func _physics_process(delta: float) -> void:
 			var along: Vector3 = Vector3(-normal.z,0.0,normal.x)
 			if along.dot(move_dir)<0.0: along = -along
 			move_dir = along.normalized()
-	velocity.x = move_dir.x * 1.55
-	velocity.z = move_dir.z * 1.55
+	var anatomy: Dictionary=anatomy_state()
+	var movement: float=ANATOMY.locomotion(anatomy)
+	velocity.x = move_dir.x * 1.55 * movement
+	velocity.z = move_dir.z * 1.55 * movement
 	if is_on_floor(): velocity.y = -0.1
 	else: velocity.y -= 16.0*delta
 	move_and_slide()

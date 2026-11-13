@@ -1,0 +1,802 @@
+{
+  "schema": "verba-cc0-import-v1",
+  "original_creator": "Kenney / Poly Haven",
+  "license": "All items CC0-1.0, see specific original source pages",
+  "mirror_immutable_commit": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+  "data": [
+    {
+      "kind": "model",
+      "family": "retro-fantasy",
+      "filename": "barrels.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "08d0e7c637f2a9c5dd52e42b3255bd70b8ebb3ab",
+      "sha256": "c5e86e2415bf194f011e9ca85875dca7869d163cca1b93780bbb0aaaefac0660",
+      "size": 63196,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-fantasy-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-fantasy/barrels.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 2,
+        "external_images": [
+          "Textures/barrel.png",
+          "Textures/planks.png"
+        ]
+      }
+    },
+    {
+      "kind": "model",
+      "family": "retro-fantasy",
+      "filename": "column-damaged.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "bf911a325517aab3343ad9ba52bebd0e66d4d0b3",
+      "sha256": "fd3e2101ae29b35fe3c8b22b1ff80213e4903f7b50d45f5be4dd47b3e65a6147",
+      "size": 7728,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-fantasy-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-fantasy/column-damaged.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 2,
+        "external_images": [
+          "Textures/cobblestoneAlternative.png",
+          "Textures/cobblestone.png"
+        ]
+      }
+    },
+    {
+      "kind": "model",
+      "family": "retro-fantasy",
+      "filename": "detail-crate-ropes.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "38153f8f5e920a02b9e2c60b7a64a2d91d333df8",
+      "sha256": "88408437f365a77e9a3dcd287893f2ebd16d1a5719fbf4309f9b6f53fbc8e31f",
+      "size": 11052,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-fantasy-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-fantasy/detail-crate-ropes.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 2,
+        "external_images": [
+          "Textures/barrel.png",
+          "Textures/details.png"
+        ]
+      }
+    },
+    {
+      "kind": "model",
+      "family": "retro-fantasy",
+      "filename": "detail-crate.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "6d5d96e5d11c6b5aa5fee4c54242678ce596534e",
+      "sha256": "45f31f44bb71d111c99e87176688db1954d8b6c12f96fd357a20cfc499de3d77",
+      "size": 4176,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-fantasy-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-fantasy/detail-crate.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 1,
+        "external_images": [
+          "Textures/barrel.png"
+        ]
+      }
+    },
+    {
+      "kind": "model",
+      "family": "retro-fantasy",
+      "filename": "ladder.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "6dd4968d0d38b836785c2e2591a577245246adfa",
+      "sha256": "0e3c2f0083edf66d7a56f61fe2f2f8538bc37223e51028b9e27ebe616bac9e79",
+      "size": 14512,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-fantasy-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-fantasy/ladder.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 1,
+        "external_images": [
+          "Textures/planks.png"
+        ]
+      }
+    },
+    {
+      "kind": "model",
+      "family": "retro-fantasy",
+      "filename": "stairs-stone.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "0ea750ccf55605b3a11c8a8958858ea34116c936",
+      "sha256": "4d041d5bc2d75675dabccafe8c89a508627bb26ed5ec6b9339f46c3195605b4d",
+      "size": 20312,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-fantasy-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-fantasy/stairs-stone.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 3,
+        "external_images": [
+          "Textures/cobblestone.png",
+          "Textures/planks.png",
+          "Textures/cobblestoneAlternative.png"
+        ]
+      }
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "barrel.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "b5d19e6e9f911f654c932a9f34e255962a73d8391615445358a1294047e0f248",
+      "size": 4537
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "cobblestone.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "bffea8f7dfe0329788dae519c8aaa0846164e0e8cb4132a3c481bf30957d13b6",
+      "size": 5013
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "cobblestoneAlternative.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "57b2f91522f414bc082a0b88ecf1bae1369e9dcd351f963b89860cec8f5f8cd1",
+      "size": 5013
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "cobblestonePainted.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "15c07820e53c4313268b348b8c25519d6071eff8e38dd81c8e74d66eaee637df",
+      "size": 4990
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "details.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "fe56f757fbf3474bf95a93005d1f496d77544cce57ef9453be9c681d5f0a11e0",
+      "size": 3169
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "fence.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "2ba99a396911067fc477db083a576e67fe444e42253b98d9dff63b9562498a3c",
+      "size": 2948
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "planks.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "1da26c7f5094b1164b22b7b8c63baf1a824ef9845ab0f6bef0ee6d59f31a6a0f",
+      "size": 5050
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "roof.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "11998cb91833281d7c8e99f01a4c17f12efc4d614e974a61e4247cb4806c665b",
+      "size": 4894
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "tree.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "1145994a113949eea9a51ea013d5fcf8462aeb01065fa3a7323abb2dbdd97e78",
+      "size": 3362
+    },
+    {
+      "kind": "texture",
+      "family": "retro-fantasy",
+      "filename": "water.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "66505659777dfe136b5685336380663198a934ee583c9112ba540e093f0b0def",
+      "size": 5002
+    },
+    {
+      "kind": "model",
+      "family": "retro-urban",
+      "filename": "detail-barrier-strong-damaged.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "babd1171f3152d61987921cad2c0a80f7db6f61f",
+      "sha256": "bc14280b2ac6c4df26e0bdc8ab2f25b789170bf2b030d34fc9953c1e41413487",
+      "size": 5136,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-urban-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-urban/detail-barrier-strong-damaged.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 1,
+        "external_images": [
+          "Textures/concrete.png"
+        ]
+      }
+    },
+    {
+      "kind": "model",
+      "family": "retro-urban",
+      "filename": "detail-bricks-type-a.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "7e39b4d567780ba400d155dbf3c5bd2ddc4c4522",
+      "sha256": "17ac348d9ef0049dc2fe3508fe7e6156ce7fb47f42e662d825731639fb221b56",
+      "size": 9200,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-urban-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-urban/detail-bricks-type-a.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 1,
+        "external_images": [
+          "Textures/concrete.png"
+        ]
+      }
+    },
+    {
+      "kind": "model",
+      "family": "retro-urban",
+      "filename": "detail-cables-type-a.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "211524e37cf9fab3258381e7cb9b1d9018b0cbd8",
+      "sha256": "4cbac18e8b595cdcae10fe20f6c06c260eb0b8e5433b2028c56e46f9157b6d88",
+      "size": 2152,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-urban-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-urban/detail-cables-type-a.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 1,
+        "external_images": [
+          "Textures/signs.png"
+        ]
+      }
+    },
+    {
+      "kind": "model",
+      "family": "retro-urban",
+      "filename": "detail-dumpster-closed.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "12db8e174cd3f0da9e101433502d7955c228f7be",
+      "sha256": "c2b54e446c95fa413929793f3d89cb0176077fa29e4a449dc03cada558bd07d9",
+      "size": 5056,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-urban-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-urban/detail-dumpster-closed.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 3,
+        "external_images": [
+          "Textures/metal_wall.png",
+          "Textures/wall.png",
+          "Textures/roof.png"
+        ]
+      }
+    },
+    {
+      "kind": "model",
+      "family": "retro-urban",
+      "filename": "pallet.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "69db3352973a45a9c189e134afd0c449c9a6be6f",
+      "sha256": "1844660dfffda177d42efc35db47c22e7476f991737f4c35f6b5fbaf0d2ccf8b",
+      "size": 10044,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/retro-urban-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/retro-urban/pallet.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 1,
+        "external_images": [
+          "Textures/planks.png"
+        ]
+      }
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "asphalt.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "911dec63cacab6252ab5ae2a02ee9b9fa62f980faaa815e0b6abb8ec61d16925",
+      "size": 4104
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "bars.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "960c907c1f0bffa1de5fd4c3e690eac41e3e5907815be09aab17feae4bfebfea",
+      "size": 2309
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "concrete.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "3431cb462e8f8c120d29c23fa06e730ae488fceeb3e8d86945724675ff2be294",
+      "size": 5018
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "dirt.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "ffba913266008f95b2ab329683a30726d1d4aadaf7aec80aa98e7375aea3f255",
+      "size": 5018
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "doors.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "8c5b729739cde0c9eae9f62ffe4acd194bbdba99cdd83e628bc638f0a45acf8d",
+      "size": 4381
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "grass.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "7030542f6c0b1a599f9074b941c5fccdde7abb40149fb311d188b4aba97576e4",
+      "size": 4932
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "metal.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "3893724d52a5788341345e16319fb8f5f7182d588b5d5b2babf577176ca3d701",
+      "size": 4930
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "metal_wall.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "2700c58f6063520dd447ea6addc9477898bf4e0924b2ab6eb63b4340f36526c5",
+      "size": 4773
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "planks.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "1da26c7f5094b1164b22b7b8c63baf1a824ef9845ab0f6bef0ee6d59f31a6a0f",
+      "size": 5050
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "rock.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "784c232b801df12e868cc4a9239784051841e3ade3f076b7e96096d480d8ae9e",
+      "size": 5016
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "roof.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "50a09bac9a57a1732af6b6e4de0192efaba3627a997e0b1dc5fc1c1c6369acd6",
+      "size": 4836
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "roof_plates.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "a4cd8f77250ba871728567a1f9af2f234d9bfa07456bc48a2c991847555f6faf",
+      "size": 4887
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "signs.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "050cfc96da08cd2af9575c66c3c75f0cbb1f888bb72533d70aaaaf14f99bb08c",
+      "size": 1715
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "tiles.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "6bb08a68e1bc92d9bb4ad6427e71dcd4abb71bdf10f1add5f8c47e25c7f8b313",
+      "size": 4948
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "treeA.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "8445833d6aef70e984bc8beae80389f407fe7caf556d4909da965e8919e36b0a",
+      "size": 3291
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "treeB.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "51f87841b583de065c6a20252289f77827b1c6d1102a5a87b9511c49c17dd7b4",
+      "size": 2439
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "truck.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "8723c1749ed288288e3f2e6657a73fae7bc181406ee3734904d3e1ff5483f18e",
+      "size": 12536
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "truck_alien.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "950f4dcefecb6cd848d3f01ddd08bdef2b4948966c80980a70db71d05e01790c",
+      "size": 11927
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "wall.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "18dc996f37c4ac4510d09e6cb505c1decbd249d15108d0bfe6efdbd489425690",
+      "size": 4518
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "wall_garage.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "ffb88c17f3497e8d3991cef4ac081743fafe91236cfd96d84ca0ccc2980dce56",
+      "size": 4556
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "wall_lines.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "322d198d1ff4ce006c7029eee416ba96a981ba080756f829110ac8c34faa00f2",
+      "size": 4725
+    },
+    {
+      "kind": "texture",
+      "family": "retro-urban",
+      "filename": "windows.png",
+      "origin": "Kenney CC0 via immutable mirror 3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "sha256": "9a99b16d1caa9b08dfd72eb74ac624b546df89ed6fcfefabe2e4a0933f632a42",
+      "size": 4464
+    },
+    {
+      "kind": "model",
+      "family": "furniture",
+      "filename": "bedSingle.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "eb79d7ae7cb9a69dc8e27c5c37db72e6759ce0a0",
+      "sha256": "ca00c63f9a12da3138d902b2f5f18e0360fb6e8a5ac42ccb4bc3f185724b65d1",
+      "size": 18636,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/furniture-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/furniture/bedSingle.glb",
+      "geometry": {
+        "meshes": 3,
+        "nodes": 3,
+        "images": 0,
+        "external_images": []
+      }
+    },
+    {
+      "kind": "model",
+      "family": "furniture",
+      "filename": "bookcaseOpen.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "9a0cce7691e94277f3409719e9e68c910c25aa2c",
+      "sha256": "750702218d68c062b15dfef6ab06a4014d1cfa8bd05f02e57c53b7e13bec157c",
+      "size": 18020,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/furniture-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/furniture/bookcaseOpen.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 0,
+        "external_images": []
+      }
+    },
+    {
+      "kind": "model",
+      "family": "furniture",
+      "filename": "books.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "615aaa9632cf1b262c257f2cb7c208a6f199ab84",
+      "sha256": "b8dc56e5d29f6fc1f4727fccb1b9642627fee9942c48060a00034e98df02701c",
+      "size": 6864,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/furniture-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/furniture/books.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 0,
+        "external_images": []
+      }
+    },
+    {
+      "kind": "model",
+      "family": "furniture",
+      "filename": "chair.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "2d57af4fef2a32910e3af9283d1e45f177068d63",
+      "sha256": "c8a11eec93e89e31250ba91afc1b8d56c3bec7ae86640fd1239f595ff4180883",
+      "size": 10756,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/furniture-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/furniture/chair.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 0,
+        "external_images": []
+      }
+    },
+    {
+      "kind": "model",
+      "family": "furniture",
+      "filename": "table.glb",
+      "repo_revision": "3694c6879e487c108f55677be7dd2ca75b07cc3b",
+      "git_blob_sha": "8add1baf8a97bd813524a441c947a9e1457f4b13",
+      "sha256": "ff1a94498d023957f4bc3ff6f55a7a82977d336dbf01a573b3364f03afe5ff61",
+      "size": 8196,
+      "original_publisher": "Kenney",
+      "original_license": "CC0-1.0",
+      "publisher_page": "https://kenney.nl/assets/furniture-kit",
+      "mirror_url": "https://raw.githubusercontent.com/shorepine/kenney/3694c6879e487c108f55677be7dd2ca75b07cc3b/3d/furniture/table.glb",
+      "geometry": {
+        "meshes": 1,
+        "nodes": 1,
+        "images": 0,
+        "external_images": []
+      }
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "weathered_planks",
+      "channel": "diffuse",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/weathered_planks",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_planks/weathered_planks_diff_1k.jpg",
+      "raw_sha256": "01c9a372cfd7a7bf471b59c2458ed3ccecc93448aebf7ba0cc5b3b5b6ed24349",
+      "saved_sha256": "9e39591fd1899da8a4f262bc01be5235df56ab8698fc10e95cbaf5cbd20d726e",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/weathered_planks_diffuse.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "weathered_planks",
+      "channel": "normal",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/weathered_planks",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/weathered_planks/weathered_planks_nor_gl_1k.png",
+      "raw_sha256": "29a0a65faa6f06a733a0dcb8f5854fa62b9850aaae05aa11566a17703f4e38fc",
+      "saved_sha256": "863b0c9af39d4afe0627e85ed030388cbf0b9719be88371e32ddf2b1fb8435f0",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/weathered_planks_normal.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "weathered_planks",
+      "channel": "rough",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/weathered_planks",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/weathered_planks/weathered_planks_rough_1k.png",
+      "raw_sha256": "b8cb3b4f3707cd203bda6022a7a8ee881d529ca801fa4f06426c6efe024c8389",
+      "saved_sha256": "0e5fc490cce8b9d294ecda0eda1a1cc0b1c95216ae9f979712bd4aec99170914",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/weathered_planks_rough.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "mossy_cobblestone",
+      "channel": "diffuse",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/mossy_cobblestone",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_cobblestone/mossy_cobblestone_diff_1k.jpg",
+      "raw_sha256": "105d6209ff99952ca316e814eebf06c1c3cb244da62184137a97e29aee74b7d7",
+      "saved_sha256": "b8f63a2722c7fba73f2eb2518b56e204a3bdbe7c38c1cdd7e0126c970bf69d42",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/mossy_cobblestone_diffuse.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "mossy_cobblestone",
+      "channel": "normal",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/mossy_cobblestone",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/mossy_cobblestone/mossy_cobblestone_nor_gl_1k.png",
+      "raw_sha256": "fefa3f1d39d4d18c03fe7c628c79ad5b8c8a6755ab942e99703555dd186dfdb8",
+      "saved_sha256": "f52cf883efaee294616091f81adba141037c39b416e5b8e4f16821f5e7e8a52b",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/mossy_cobblestone_normal.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "mossy_cobblestone",
+      "channel": "rough",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/mossy_cobblestone",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/mossy_cobblestone/mossy_cobblestone_rough_1k.png",
+      "raw_sha256": "5268d445b16562e097d5c31d6724a5c9933e58dde890d6b94fefc7d7518e7f7c",
+      "saved_sha256": "75c04c488aba1deca496b68843b3723b670945c2a0288064c7fc1ead1967a386",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/mossy_cobblestone_rough.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "damaged_plaster",
+      "channel": "diffuse",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/damaged_plaster",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/damaged_plaster/damaged_plaster_diff_1k.jpg",
+      "raw_sha256": "391649dbb391c978b0d95cdd2351617fe3b7a577e432b94171208e576c9b2c63",
+      "saved_sha256": "604a31586cb612252ec53c98238251a44b418f809e393796277fbed146c547f5",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/damaged_plaster_diffuse.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "damaged_plaster",
+      "channel": "normal",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/damaged_plaster",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/damaged_plaster/damaged_plaster_nor_gl_1k.png",
+      "raw_sha256": "55f76ae67891f578c9c6defed9b449cce82dbea3ad5a38684ecb2fbb9122d38b",
+      "saved_sha256": "c989f40e9d1d4d57b16e212d95b82757a816d0a8d26fb07438050bcde12f65ca",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/damaged_plaster_normal.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "damaged_plaster",
+      "channel": "rough",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/damaged_plaster",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/damaged_plaster/damaged_plaster_rough_1k.png",
+      "raw_sha256": "f5a110f6b2240c667cce2d881da632afe58ec679295bbb18580649beffffa119",
+      "saved_sha256": "c98a86e4558781ad0abe9c23ea463ac000cf38d25f2db7860e73661a1224ff46",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/damaged_plaster_rough.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "mossy_rock",
+      "channel": "diffuse",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/mossy_rock",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/mossy_rock/mossy_rock_diff_1k.jpg",
+      "raw_sha256": "4dbf37f1b0465c9c8914213163923be159716f5b97fb6946437b6c5e143ef540",
+      "saved_sha256": "39d11c72b6a45f85badafa476127b7b3f20d4bbb205e1c246d97a61575d409c6",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/mossy_rock_diffuse.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "mossy_rock",
+      "channel": "normal",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/mossy_rock",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/mossy_rock/mossy_rock_nor_gl_1k.png",
+      "raw_sha256": "08b01ee4387e4bb3433f901c62acc40d4be8d6d4a481e5fb508400cb4664d82e",
+      "saved_sha256": "20206800b3a8f55c5f864ea14f5937b82142687d996ea35737e3a54bcfed1a47",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/mossy_rock_normal.png"
+    },
+    {
+      "kind": "pbr",
+      "family": "polyhaven",
+      "id": "mossy_rock",
+      "channel": "rough",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/mossy_rock",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/mossy_rock/mossy_rock_rough_1k.png",
+      "raw_sha256": "ed620db809bf72088bc4b5d6dbc48298256a4997a51aca929a54c1824301e9c5",
+      "saved_sha256": "0b6c2dfb25178d4b2929cea62cf1567f2b74aee06c5785167d8a323bc39c9658",
+      "resolution": [
+        1024,
+        1024
+      ],
+      "saved_path": "assets/textures/cc0/polyhaven/mossy_rock_rough.png"
+    }
+  ],
+  "warning": "No material/mesh silently replaces a hero asset; Godot scene review required."
+}

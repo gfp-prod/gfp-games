@@ -61,12 +61,20 @@ static func _road(world,root: Node3D) -> void:
 		[Vector2(0,26),Vector2(6,19),Vector2(10,11),Vector2(7,-3),
 			Vector2(5,-19),Vector2(4,-35)]
 	]
-	var path: StandardMaterial3D=world.textured("res://assets/textures/earth_path.png",Color("948977"))
+	# Both historic pedestrian roads blend into the existing 256m soil:
+	# the old pale fabric-like stripe overwhelmed the new village buildings.
+	# This uses the same physically grounded trail shader as Stillwater,
+	# with a darker, more mineral pigment only in the village and pass.
+	var path:=ShaderMaterial.new()
+	path.shader=load("res://assets/materials/worn_lake_track.gdshader")
+	path.set_shader_parameter("path_photograph",
+		load("res://assets/textures/real/earth_path_diffuse.jpg"))
+	path.set_shader_parameter("river_silt",
+		load("res://assets/textures/real/river_silt_diffuse.jpg"))
+	path.set_shader_parameter("soil_tint",Vector3(.42,.48,.43))
 	var asphalt:=ShaderMaterial.new()
 	asphalt.shader=load("res://assets/materials/aged_road.gdshader")
 	asphalt.set_shader_parameter("road_stone",load("res://assets/textures/real/stone_diffuse.jpg"))
-	path.roughness=1.0
-	path.cull_mode=BaseMaterial3D.CULL_DISABLED
 	for index in range(tracks.size()):
 		var points: Array=tracks[index]
 		var mesh_tool:=SurfaceTool.new()

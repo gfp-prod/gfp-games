@@ -117,6 +117,18 @@ static func dress_player(player) -> void:
 	if player.guide_panel!=null:
 		player.guide_panel.add_theme_stylebox_override("panel",frame("help"))
 		_grained(player.guide_panel)
+		# The first-day field notes belong to the same carved-iron typography
+		# as Latin conversation and the physical grimoire. Keep the text
+		# accessible and compact at 720p instead of an unrelated bright HUD.
+		for child in player.guide_panel.find_children("*","Label",true,false):
+			var sheet: Label=child as Label
+			if sheet==null: continue
+			var major: bool=sheet.text.begins_with("V E R B A")
+			label(sheet,"title" if major else "hint")
+			if major:
+				sheet.add_theme_color_override("font_color",Color("c1a07a"))
+			else:
+				sheet.add_theme_color_override("font_color",Color("d6cab3"))
 	if player.interaction_plate!=null:
 		player.interaction_plate.add_theme_stylebox_override("panel",frame("small"))
 		_grained(player.interaction_plate)

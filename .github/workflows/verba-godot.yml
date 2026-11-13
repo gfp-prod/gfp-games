@@ -37,6 +37,10 @@ jobs:
         run: godot --headless --path . --editor --import --quit
       - name: World smoke
         run: godot --headless --path . --script res://tests/smoke_test.gd
+      - name: Diagnose tall portrait occluder meshes in the real cast
+        run: |
+          timeout 90s godot --headless --path . --script res://tests/diagnose_genetic_meshes.gd 2>&1 | tee /tmp/mesh-diagnostic.log
+          grep -q "PASS: inspected exceptional full-body mesh extents" /tmp/mesh-diagnostic.log
       - name: Village seeded adversarial regression
         run: godot --headless --path . --script res://tests/village_sim_test.gd
       - name: Resource economy and simulation inspector
@@ -115,6 +119,10 @@ jobs:
           grep -q "PASS: learned reusable Latin questions report only witnessed news" /tmp/verba-latin-questions.log
       - name: Shaped faces, tapered villager clothes and baker work silhouette
         run: godot --headless --path . --script res://tests/folk_character_art_test.gd
+      - name: Modular limbs, persistent wounds, relationships and resource-limited voluntary aid
+        run: |
+          timeout 120s godot --headless --path . --script res://tests/modular_anatomy_care_test.gd 2>&1 | tee /tmp/verba-anatomy-care.log
+          grep -q "PASS: four physical limb modules" /tmp/verba-anatomy-care.log
       - name: NPC-initiated Latin reply drives finite bakery transaction
         run: |
           timeout 90s godot --headless --path . --script res://tests/latin_baker_reply_test.gd 2>&1 | tee /tmp/verba-baker-dialogue.log

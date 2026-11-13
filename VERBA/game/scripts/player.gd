@@ -57,6 +57,7 @@ var conversation_buffer: String = ""
 var build_mode: bool = false
 var build_kind: String = "floor"
 var build_face: int = 0
+var tool_strike_cooldown: float=0.0
 
 
 func _ready() -> void:
@@ -404,7 +405,7 @@ func refresh_conversation() -> void:
 	if conversation_listening:
 		conversation_footer.text = "> " + conversation_buffer + "▌\nEnter: speak    Esc: stop writing"
 	else:
-		conversation_footer.text = "Enter: speak Latin    1–6 respond    Esc / E leave"
+		conversation_footer.text = "Enter: speak Latin    1–7 respond    Esc / E leave"
 	conversation_panel.visible = true
 
 func choose_conversation_option(index: int) -> Dictionary:
@@ -444,6 +445,10 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index==MOUSE_BUTTON_LEFT and event.pressed and build_mode and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
 			place_tower_piece()
+			get_viewport().set_input_as_handled()
+			return
+		if event.button_index==MOUSE_BUTTON_LEFT and event.pressed and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED and held_type=="tools" and not typing and not book.open and conversation_actor==null and not build_mode:
+			swing_tool_at_limb()
 			get_viewport().set_input_as_handled()
 			return
 		if event.button_index==MOUSE_BUTTON_LEFT and event.pressed and Input.mouse_mode!=Input.MOUSE_MODE_CAPTURED:
@@ -493,7 +498,7 @@ func _input(event: InputEvent) -> void:
 			refresh_conversation()
 		elif event.keycode in [KEY_ESCAPE,KEY_E]:
 			end_conversation()
-		elif event.keycode >= KEY_1 and event.keycode <= KEY_6:
+		elif event.keycode >= KEY_1 and event.keycode <= KEY_9:
 			choose_conversation_option(event.keycode-KEY_1)
 		get_viewport().set_input_as_handled()
 		return
@@ -615,6 +620,7 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	damage_immunity = maxf(0.0,damage_immunity-delta)
+	tool_strike_cooldown=maxf(0.0,tool_strike_cooldown-delta)
 	if damage_immunity <= 0.0 and health < max_health:
 		# Slow natural recovery gives herbs a reason to matter.
 		health = minf(max_health,health+delta*.045)
@@ -739,6 +745,39 @@ func look_hit(distance: float=18.0) -> Dictionary:
 			if body.has_meta(meta_key): entity=body.get_meta(meta_key);break
 		if entity==null and body.has_meta("workplace_kind"): entity=body
 	return {"position":hit["position"],"entity":entity}
+
+func swing_tool_at_limb() -> Dictionary:
+	# Close actual hits with a work tool. Detachable limb Area3Ds are
+	# targetable independently; walls occlude strikes.
+	if held_type!="tools" or tool_strike_cooldown>0.0 or world==null:
+		return {"ok":false}
+	tool_strike_cooldown=.65
+	var origin: Vector3=camera.global_position
+	var target: Vector3=origin-camera.global_transform.basis.z*2.55
+	var ray:=PhysicsRayQueryParameters3D.create(origin,target,4|16,[get_rid()])
+	ray.collide_with_areas=true
+	var hit: Dictionary=get_world_3d().direct_space_state.intersect_ray(ray)
+	if hit.is_empty(): return {"ok":false}
+	var collider: Object=hit.get("collider",null)
+	if collider==null or not collider.has_meta("npc_ref"): return {"ok":false}
+	var actor: Node3D=collider.get_meta("npc_ref") as Node3D
+	if actor==null or not actor.has_method("strike_limb"): return {"ok":false}
+	var part: String=String(collider.get_meta("hit_limb",""))
+	if part.is_empty():
+		# The existing conversation capsule sometimes intercepts the limb.
+		# Only an off-center strike reaches its corresponding body part.
+		var local: Vector3=actor.to_local(hit["position"])
+		if absf(local.x)<.225: return {"ok":false}
+		if local.y>1.00 and local.y<1.52:
+			part="left_arm" if local.x<0.0 else "right_arm"
+		elif local.y<.78 and local.y>.12:
+			part="left_leg" if local.x<0.0 else "right_leg"
+		else: return {"ok":false}
+	var result: Dictionary=actor.strike_limb(part,17.0,"wizard")
+	if bool(result.get("ok",false)):
+		say_world("A terrible blow strikes the "+part.replace("_"," ")+".",
+			hit["position"]+Vector3.UP*.15,Color("b67c73"))
+	return result
 
 func interact() -> void:
 	var r=look_hit(4.0)

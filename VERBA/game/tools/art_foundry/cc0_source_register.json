@@ -1,0 +1,189 @@
+{
+  "schema": "verba-cc0-source-register-v1",
+  "art_rule": "Free, commercially reusable, reproducibly imported; preserve Godot physics and save identity. Grade materials to VERBA's weathered painterly retro style.",
+  "packs": [
+    {
+      "id": "kenney_retro_fantasy",
+      "publisher": "Kenney",
+      "title": "Retro Fantasy Kit",
+      "page": "https://kenney.nl/assets/retro-fantasy-kit",
+      "url": "https://kenney.nl/media/pages/assets/retro-fantasy-kit/cf3f41b752-1774770658/kenney_retro-fantasy-kit.zip",
+      "format": "zip",
+      "license": "CC0-1.0",
+      "direct_verified_by": "Original Kenney download link",
+      "sha256": "d3462b453018d0d150406d85af3c4ae1322ceef8f1754c4eb4e6355adfeaab0f",
+      "priority": 1,
+      "target": "Castle, wall segments, village silhouettes. Low-res PSX geometry; always inspect before swapping",
+      "max_zip_mb": 12
+    },
+    {
+      "id": "kenney_retro_textures_fantasy",
+      "publisher": "Kenney",
+      "title": "Retro Textures Fantasy",
+      "page": "https://kenney.nl/assets/retro-textures-fantasy",
+      "url": "https://kenney.nl/media/pages/assets/retro-textures-fantasy/db459aee90-1774770433/kenney_retro-textures-fantasy.zip",
+      "format": "zip",
+      "license": "CC0-1.0",
+      "priority": 1,
+      "target": "115 pixel-era plaster, stone, roof, beam, soil texture sources",
+      "max_zip_mb": 12
+    },
+    {
+      "id": "kenney_retro_urban",
+      "publisher": "Kenney",
+      "title": "Retro Urban Kit",
+      "page": "https://kenney.nl/assets/retro-urban-kit",
+      "url": "https://kenney.nl/media/pages/assets/retro-urban-kit/8314d4db22-1738147509/kenney_retro-urban-kit.zip",
+      "format": "zip",
+      "license": "CC0-1.0",
+      "priority": 2,
+      "target": "Roadside gas station storefront/forecourt variants and exterior props",
+      "max_zip_mb": 12
+    }
+  ],
+  "materials": [
+    {
+      "id": "weathered_planks",
+      "provider": "Poly Haven",
+      "page": "https://polyhaven.com/a/weathered_planks",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/weathered_planks",
+      "priority": 1,
+      "target": "Cottage timber, market stall, creek bridge, door planking",
+      "channels": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ]
+    },
+    {
+      "id": "mossy_cobblestone",
+      "provider": "Poly Haven",
+      "page": "https://polyhaven.com/a/mossy_cobblestone",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/mossy_cobblestone",
+      "priority": 1,
+      "target": "Village paving, garden edging, castle paths",
+      "channels": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ]
+    },
+    {
+      "id": "damaged_plaster",
+      "provider": "Poly Haven",
+      "page": "https://polyhaven.com/a/damaged_plaster",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/damaged_plaster",
+      "priority": 1,
+      "target": "Aged cottage walls, bakery facade and miller's house",
+      "channels": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ]
+    },
+    {
+      "id": "mossy_rock",
+      "provider": "Poly Haven",
+      "page": "https://polyhaven.com/a/mossy_rock",
+      "license": "CC0-1.0",
+      "api": "https://api.polyhaven.com/files/mossy_rock",
+      "priority": 2,
+      "target": "Lake shore, forest ruin footings, standing stones",
+      "channels": [
+        "Diffuse",
+        "nor_gl",
+        "Rough"
+      ]
+    }
+  ],
+  "browse_only": [
+    {
+      "id": "quaternius_medieval_village",
+      "title": "Quaternius Medieval Village MegaKit",
+      "page": "https://quaternius.com/packs/medievalvillagemegakit.html",
+      "license": "CC0-1.0",
+      "free_limit": "Free Standard tier ~60–70% of advertised 304 models; paid source/Pro tier not required",
+      "target": "Replace blocky assembly with snapped wall, door, roof, window and stair pieces"
+    },
+    {
+      "id": "quaternius_fantasy_props",
+      "title": "Quaternius Fantasy Props MegaKit",
+      "page": "https://quaternius.com/packs/fantasypropsmegakit.html",
+      "license": "CC0-1.0",
+      "free_limit": "Free Standard tier ~60–70% of advertised 211 models",
+      "target": "Diegetic grimoire/book, kitchen, market produce, tools, potions, furniture"
+    },
+    {
+      "id": "quaternius_nature",
+      "title": "Quaternius Stylized Nature MegaKit",
+      "page": "https://quaternius.com/packs/stylizednaturemegakit.html",
+      "license": "CC0-1.0",
+      "free_limit": "Free Standard tier ~60–70% of 116 models",
+      "target": "Tree silhouette variety, river stones, ferns and lake reeds; recolor"
+    },
+    {
+      "id": "quaternius_universal_animation",
+      "title": "Quaternius Universal Animation Library",
+      "page": "https://quaternius.com/packs/universalanimationlibrary.html",
+      "license": "CC0-1.0",
+      "free_limit": "Free Standard tier ~60–70% of 120+ motions; retarget required",
+      "target": "Villager walk/idle, gestures, combat/mob movement"
+    },
+    {
+      "id": "kenney_fantasy_town",
+      "title": "Kenney Fantasy Town Kit",
+      "page": "https://kenney.nl/assets/fantasy-town-kit",
+      "license": "CC0-1.0",
+      "free_limit": "160 3D models free",
+      "target": "Modular town backup kit and silhouette prototypes"
+    },
+    {
+      "id": "kenney_furniture",
+      "title": "Kenney Furniture Kit",
+      "page": "https://kenney.nl/assets/furniture-kit",
+      "license": "CC0-1.0",
+      "free_limit": "140 3D models free",
+      "target": "Tables, beds, chairs and shelving for enterable houses"
+    },
+    {
+      "id": "kenney_nature",
+      "title": "Kenney Nature Kit",
+      "page": "https://kenney.nl/assets/nature-kit",
+      "license": "CC0-1.0",
+      "free_limit": "330 3D files free",
+      "target": "Simple distant LOD flora and rock silhouettes"
+    },
+    {
+      "id": "ambientcg",
+      "title": "ambientCG PBR surface library",
+      "page": "https://ambientcg.com/",
+      "license": "CC0-1.0",
+      "free_limit": "Download resolutions chosen per material",
+      "target": "Sand, dirt, cracked brick, iron, plaster, ground and weathered paving"
+    },
+    {
+      "id": "poly_pizza",
+      "title": "Poly Pizza",
+      "page": "https://poly.pizza/",
+      "license": "CC0-1.0 or CC-BY per model",
+      "free_limit": "Only select and record per-model CC0 license for automatic use",
+      "target": "Occasional distinctive props; avoid unverified CC-BY geometry"
+    }
+  ],
+  "safety": {
+    "offline_build_only": true,
+    "no_runtime_network": true,
+    "automatic_pack_fetch_domains": [
+      "kenney.nl"
+    ],
+    "automatic_material_metadata_domains": [
+      "api.polyhaven.com"
+    ],
+    "thumbnails_only": "Do not auto-replace approved game meshes with external pack imports",
+    "default_1k_images": true,
+    "credit": "Kenney / Poly Haven — CC0. API-based scout powered by Poly Haven."
+  }
+}

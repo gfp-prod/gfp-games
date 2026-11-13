@@ -52,14 +52,18 @@ func _capture() -> void:
 		{"name":"14_cracked_forecourt","eye":Vector2(-90.4,86.9),"look":Vector2(-99.4,78.0)},
 		{"name":"15_muddy_lake_bank","eye":Vector2(60,-75),"look":Vector2(66,-66)},
 		{"name":"16_weathered_orchard","eye":Vector2(100,5),"look":Vector2(102,-4)},
-		{"name":"17_road_and_fence","eye":Vector2(-72,67),"look":Vector2(-84,71)}
+		{"name":"17_road_and_fence","eye":Vector2(-72,67),"look":Vector2(-84,71)},
+		{"name":"18_hermitage_gate","eye":Vector2(26.7,13.7),"look":Vector2(29,8)},
+		{"name":"19_woodland_worn_track","eye":Vector2(32,-11),"look":Vector2(39,-28)},
+		{"name":"20_fallen_oak_and_shrubs","eye":Vector2(36,-22),"look":Vector2(43,-26)},
+		{"name":"21_arrival_at_stillwater","eye":Vector2(52,-49),"look":Vector2(61,-60)}
 	]
 	for view in views:
 		var eye: Vector2=view["eye"]
 		var target: Vector2=view["look"]
 		director.global_position=Vector3(eye.x,world.height_at(eye.x,eye.y)+1.65,eye.y)
 		director.look_at(Vector3(target.x,world.height_at(target.x,target.y)+1.40,target.y),Vector3.UP)
-		for i in range(4): await process_frame
+		for i in range(2): await process_frame
 		if not _frame(directory,String(view["name"])):
 			return
 	# All screen-based screenshots use the actual player's camera and
@@ -114,5 +118,5 @@ func _capture() -> void:
 	for i in range(45): await process_frame
 	if not _frame(directory,"13_worn_physical_grimoire"):
 		return
-	print("PASS: seventeen real 1280x720 world and UI images show weathered 256m terrain, lake, station, ruins, roads and manuscript")
+	print("PASS: twenty-one real 1280x720 world and UI images show weathered 256m terrain, lake, station, ruins, roads and manuscript")
 	quit(0)

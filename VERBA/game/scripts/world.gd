@@ -15,6 +15,10 @@ const SOCIAL = preload("res://scripts/dialogue_social.gd")
 const VILLAGE_SIM = preload("res://scripts/village_sim.gd")
 const WORLD_CALENDAR = preload("res://scripts/world_calendar.gd")
 const VILLAGE_WORKPLACES = preload("res://scripts/village_workplaces.gd")
+const VILLAGE_HOMESTEADS = preload("res://scripts/village_homesteads.gd")
+const CC0_PACK_ART = preload("res://scripts/cc0_pack_art.gd")
+const QUATERNIUS_STANDARD_ART = preload("res://scripts/quaternius_standard_art.gd")
+const QUATERNIUS_STANDARD = preload("res://scripts/quaternius_modular_art.gd")
 const SIM_LAB = preload("res://scripts/simulation_lab.gd")
 const NPC_ACTOR = preload("res://scripts/npc_actor.gd")
 const CONSTRUCTION = preload("res://scripts/tower_construction.gd")
@@ -23,11 +27,15 @@ const NAV_BUILDER = preload("res://scripts/navigation_builder.gd")
 const EXTERNAL_ART = preload("res://scripts/external_art.gd")
 const STORYBOOK_HOUSE = preload("res://scripts/storybook_house.gd")
 const LANDMARK_TREE = preload("res://scripts/landmark_tree.gd")
+const TREE_PALETTE = preload("res://scripts/tree_palette.gd")
 const WORLD_PERSIST = preload("res://scripts/world_persistence.gd")
 const STRANGE_ROAD = preload("res://scripts/strange_road.gd")
 const LATIN_WAYSTONE = preload("res://scripts/latin_waystone.gd")
 const WORLD_REGIONS = preload("res://scripts/world_regions.gd")
+const DISTANT_HORIZON = preload("res://scripts/distant_horizon.gd")
 const WORLD_EXPANSION = preload("res://scripts/world_expansion.gd")
+const HERMITAGE_LAKE_ART = preload("res://scripts/hermitage_lake_art.gd")
+const WORLD_ART_UPGRADE = preload("res://scripts/world_art_upgrade.gd")
 const WORLD_WEATHERING = preload("res://scripts/world_weathering.gd")
 const MATERIAL_EXCHANGE = preload("res://scripts/material_exchange.gd")
 var player
@@ -98,6 +106,9 @@ func _ready() -> void:
 	setup_materials()
 	setup_atmosphere()
 	build_terrain()
+	# Visual landscape continues past the 256m collision map without
+	# changing player boundaries, simulation seeds or saved world geography.
+	DISTANT_HORIZON.build(self)
 	# The road is blended into the terrain atlas offline; no floating road mesh.
 	build_landmarks()
 	STRANGE_ROAD.build(self)
@@ -115,6 +126,22 @@ func _ready() -> void:
 	WORLD_EXPANSION.build(self)
 	# History belongs to the landscape, not to a floating decoration layer.
 	WORLD_WEATHERING.build(self)
+	# Close-range environmental composition, separate from saved flora entities.
+	HERMITAGE_LAKE_ART.build(self)
+	# Blender Foundry replaces only scenery visuals; old collision and saves survive.
+	WORLD_ART_UPGRADE.apply(self)
+	# Two open-doored, physical vernacular homes are built before navigation,
+	# so AI agents see their real masonry rather than invisible geometry.
+	VILLAGE_HOMESTEADS.build(self)
+	# Source-verified small retro props; geometry-only additions, made before
+	# navigation and never linked to NPC inventory or spell/save IDs.
+	CC0_PACK_ART.build(self)
+	# Public-domain Medieval Village Standard modules are optional; the
+	# original gameplay world remains intact until their proven import exists.
+	QUATERNIUS_STANDARD_ART.build(self)
+	# Real free Quaternius Standard modules: door-adjacent shutters, stairs,
+	# and old stone village threshold. Missing assets simply leave original art.
+	QUATERNIUS_STANDARD.build(self)
 	FOLIAGE.populate_grass(self)
 	FOLIAGE.populate_ferns(self)
 	FOLIAGE.populate_litter(self)
@@ -160,6 +187,86 @@ func populate_social_npcs() -> void:
 		actor.setup(self,social.npc(String(key)))
 		add_child(actor)
 		npcs.append(actor)
+
+# A living bloodline extends the existing population and the physical
+# scene. Descendants receive unique permanent IDs and authored generic
+# dialogue rather than stealing another character's identity or lines.
+func _descendant_definition(person_id: String) -> Dictionary:
+	if village_sim==null or not village_sim.people.has(person_id): return {}
+	var person: Dictionary=village_sim.people[person_id]
+	var parents: Array=person["family"]["parents"]
+	if parents.is_empty(): return {}
+	var parent_id: String=String(parents[0])
+	var template: Dictionary=social.npc(parent_id)
+	if template.is_empty(): return {}
+	var old_place: Array=template.get("home",template.get("position",[7.0,17.0]))
+	var source_position: Array=template.get("position",old_place)
+	var serial: int=int(person_id.trim_prefix("born_"))
+	var place: Array=[float(source_position[0])+float(posmod(serial,3)-1)*1.2,
+		float(source_position[1])+float(posmod(serial,4)-2)*.85]
+	var label: String=String(person.get("display_name","Child"))
+	var role_name: String="Young villager" if String(person["life_stage"])=="child" else "Villager"
+	return {"id":person_id,"name":label,"role":role_name,
+		"position":place,"home":old_place,
+		"work":template.get("work",old_place),
+		"market":template.get("market",[11.0,13.0]),
+		"yaw":float(template.get("yaw",0.0)),
+		"robe":template.get("robe","746c60"),
+		"trim":template.get("trim","bba68b"),
+		"intro":[
+			"Salve. I am "+label+". My family has lived in the vale.",
+			"Salve, viator. I am still learning the old words.",
+			"Salve. Words and kinship both outlast us."],
+		"choices":[
+			{"id":"greeting","text":["Say hello.","Salve.","Salve, amice."],
+				"reply":["Salve.","Salve, viator.","Salve."]},
+			{"id":"family","text":["Ask about your family.","Quae est familia tua?","Quae est familia tua?"],
+				"reply":["My kin live here in the valley.",
+					"Familia mea hic habitat. My family lives here.",
+					"Familia mea hic habitat."]}]}
+
+func sync_bloodline_population() -> void:
+	if village_sim==null or social==null: return
+	# Save rollback can remove a recently created descendant; don't leave
+	# a duplicate orphan actor or dialogue identity in the world.
+	for actor in npcs.duplicate():
+		if not is_instance_valid(actor): continue
+		var actor_id: String=String(actor.npc_id)
+		if actor_id.begins_with("born_") and not village_sim.people.has(actor_id):
+			npcs.erase(actor)
+			social.definitions.erase(actor_id)
+			remove_child(actor)
+			actor.queue_free()
+	for id in village_sim.people:
+		var person_id: String=String(id)
+		if not person_id.begins_with("born_"): continue
+		var present: bool=false
+		for actor in npcs:
+			if is_instance_valid(actor) and String(actor.npc_id)==person_id:
+				present=true
+				break
+		if present: continue
+		var definition: Dictionary=_descendant_definition(person_id)
+		if definition.is_empty(): continue
+		social.definitions[person_id]=definition
+		var new_actor=NPC_ACTOR.new()
+		new_actor.setup(self,definition)
+		add_child(new_actor)
+		npcs.append(new_actor)
+
+func birth_child(parent_a_id: String,parent_b_id: String,
+		child_name: String="") -> Dictionary:
+	if village_sim==null: return {"ok":false,"reason":"village is not ready"}
+	var created: Dictionary=village_sim.create_child(
+		parent_a_id,parent_b_id,child_name)
+	if bool(created.get("ok",false)):
+		sync_bloodline_population()
+		if DisplayServer.get_name()!="headless": save_world()
+	return created
+
+func family_tree(person_id: String) -> Dictionary:
+	if village_sim==null: return {}
+	return village_sim.bloodline(person_id)
 
 func harvest_resource(source: Node3D) -> Dictionary:
 	# A small sustainable starter loop: salvage existing cut logs and
@@ -247,6 +354,70 @@ func cycle_familiar_order() -> Dictionary:
 		save_world()
 	return {"ok":true,"message":"Familiar: " + familiar_mode}
 
+# Relationships can only react to an injury after the villager has had
+# an opportunity to perceive it. Walls, geographic separation and identities
+# still matter; save files carry observed memories, not omniscience.
+func _npc_can_see(a: Node3D, b: Node3D, radius: float=7.8) -> bool:
+	if a==null or b==null or a==b: return false
+	if a.global_position.distance_to(b.global_position)>radius: return false
+	var origin: Vector3=a.global_position+Vector3.UP*1.4
+	var target: Vector3=b.global_position+Vector3.UP*1.1
+	var ray:=PhysicsRayQueryParameters3D.create(origin,target,16)
+	var obstruction: Dictionary=get_world_3d().direct_space_state.intersect_ray(ray)
+	return obstruction.is_empty()
+
+func physical_witnesses_of(patient: Node3D, source_id: String="") -> Array:
+	var witnesses: Array=[]
+	for observer in npcs:
+		if not is_instance_valid(observer) or observer==patient: continue
+		if not _npc_can_see(observer,patient): continue
+		# A bystander can see somebody bleeding without having seen who
+		# hurt or treated them. Do not award reputation for unseen acts.
+		if source_id=="wizard" and player!=null:
+			if not _npc_can_see(observer,player): continue
+		elif not source_id.is_empty() and source_id!="environment":
+			var culprit: Node3D=null
+			for person in npcs:
+				if is_instance_valid(person) and String(person.npc_id)==source_id:
+					culprit=person
+					break
+			if culprit!=null and not _npc_can_see(observer,culprit):
+				continue
+		witnesses.append(String(observer.npc_id))
+	return witnesses
+
+func _refresh_neighbor_care() -> void:
+	if village_sim==null: return
+	village_sim.nearby_care.clear()
+	village_sim.care_contact.clear()
+	for person in npcs:
+		if not is_instance_valid(person): continue
+		var helper: String=String(person.npc_id)
+		if not village_sim.people.has(helper): continue
+		if not bool(village_sim.people[helper]["alive"]): continue
+		var visible: Array=[]
+		var reachable: Array=[]
+		for injured in npcs:
+			if not is_instance_valid(injured) or injured==person: continue
+			var target: String=String(injured.npc_id)
+			if not village_sim.people.has(target): continue
+			if not bool(village_sim.people[target]["alive"]): continue
+			if not _npc_can_see(person,injured): continue
+			var body: Dictionary=village_sim.people[target]["anatomy"]
+			if not body["missing"].is_empty() or float(body["bleeding"])>.2:
+				visible.append(target)
+				# Observing injury is not the same as standing close
+				# enough to wrap a wound or fit a prosthetic.
+				if person.global_position.distance_to(injured.global_position)<=2.35:
+					reachable.append(target)
+				village_sim.observe_wound(target,[helper])
+		if not visible.is_empty():
+			visible.sort()
+			village_sim.nearby_care[helper]=visible
+		if not reachable.is_empty():
+			reachable.sort()
+			village_sim.care_contact[helper]=reachable
+
 func skip_days(count: int) -> void:
 	# Developer-only calendar acceleration uses the SAME daily transition as
 	# real play. Work remains bounded; no fake fast-forward currency is minted.
@@ -254,7 +425,9 @@ func skip_days(count: int) -> void:
 		world_calendar.advance_days(1)
 		if village_sim!=null:
 			village_sim.advance_day(world_calendar.day)
-			for j in range(4): village_sim.step()
+			for j in range(4):
+				_refresh_neighbor_care()
+				village_sim.step()
 	if workplaces!=null: workplaces.refresh_from_economy(true)
 
 func save_world() -> bool:
@@ -308,27 +481,27 @@ func setup_atmosphere() -> void:
 	e.background_mode=Environment.BG_SKY
 	var sky:=Sky.new()
 	var s:=ProceduralSkyMaterial.new()
-	s.sky_top_color=Color("82969b")
-	s.sky_horizon_color=Color("c9c0b0")
-	s.ground_bottom_color=Color("42574c")
-	s.ground_horizon_color=Color("9fa9a0")
+	s.sky_top_color=Color("68818b")
+	s.sky_horizon_color=Color("a4a99f")
+	s.ground_bottom_color=Color("405347")
+	s.ground_horizon_color=Color("85958b")
 	s.use_debanding=true
 	sky.sky_material=s
 	e.sky=sky
 	e.ambient_light_source=Environment.AMBIENT_SOURCE_SKY
 	e.reflected_light_source=Environment.REFLECTION_SOURCE_BG
-	e.ambient_light_energy=.51
+	e.ambient_light_energy=.44
 	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
 	e.fog_enabled=true
-	e.fog_light_color=Color("b6bcb2")
-	e.fog_density=.0048
-	e.fog_sky_affect=.16
+	e.fog_light_color=Color("8a9b95")
+	e.fog_density=.0032
+	e.fog_sky_affect=.12
 	ambient.environment=e
 	add_child(ambient)
 	light_node=DirectionalLight3D.new()
 	light_node.name="LowAutumnSun"
-	light_node.light_color=Color("e8ddcc")
-	light_node.light_energy=.88
+	light_node.light_color=Color("e9dac2")
+	light_node.light_energy=.82
 	light_node.shadow_enabled=true
 	light_node.rotation_degrees=Vector3(-35,32,-10)
 	add_child(light_node)
@@ -338,15 +511,24 @@ func _update_day_night_art(night_value: float) -> void:
 	var env: Environment = ambient.environment
 	var sky: ProceduralSkyMaterial = env.sky.sky_material as ProceduralSkyMaterial
 	if sky != null:
-		sky.sky_top_color = Color("82969b").lerp(Color("1c2d3d"),night_value)
-		sky.sky_horizon_color = Color("c9c0b0").lerp(Color("3c4957"),night_value)
-		sky.ground_bottom_color = Color("42574c").lerp(Color("172c30"),night_value)
-		sky.ground_horizon_color = Color("9fa9a0").lerp(Color("2c4548"),night_value)
-	env.ambient_light_energy = lerpf(.51,.15,night_value)
-	env.fog_light_color = Color("b6bcb2").lerp(Color("3a4c56"),night_value)
-	env.fog_density = lerpf(.0048,.0084,night_value)
-	light_node.light_color=Color("e8ddcc").lerp(Color("a4bcd2"),night_value)
-	light_node.light_energy=lerpf(.88,.20,night_value)
+		sky.sky_top_color = Color("68818b").lerp(Color("1c2d3d"),night_value)
+		sky.sky_horizon_color = Color("a4a99f").lerp(Color("3c4957"),night_value)
+		sky.ground_bottom_color = Color("405347").lerp(Color("172c30"),night_value)
+		sky.ground_horizon_color = Color("85958b").lerp(Color("2c4548"),night_value)
+	env.ambient_light_energy = lerpf(.44,.15,night_value)
+	env.fog_light_color = Color("8a9b95").lerp(Color("3a4c56"),night_value)
+	env.fog_density = lerpf(.0032,.0086,night_value)
+	light_node.light_color=Color("e9dac2").lerp(Color("a4bcd2"),night_value)
+	# Two genuine homes glow at dusk, using the same sky/night state.
+	# No separate clock, light controller, save field or runtime asset fetch.
+	var homes: Node3D=get_node_or_null("PhysicalVillageHomesteads") as Node3D
+	if homes!=null:
+		for house in homes.get_children():
+			var hearth: OmniLight3D=house.get_node_or_null(
+				"WarmHearthWindowBounce") as OmniLight3D
+			if hearth!=null:
+				hearth.light_energy=lerpf(0.0,.78,night_value)
+	light_node.light_energy=lerpf(.82,.20,night_value)
 
 func stream_x(z: float) -> float:
 	return -20.0+4.4*sin(z*.075)+1.7*sin(z*.21)
@@ -357,6 +539,19 @@ func stream_x(z: float) -> float:
 func height_at(x: float,z: float) -> float:
 	var raw: float = _raw_height_at(x,z)
 	raw = WORLD_REGIONS.lake_height(self,x,z,raw)
+	# The new village houses must be on actual levelled foundations. The
+	# first visual review exposed houses perched on severe uneven cliffs:
+	# the original terrain was never graded where the new footprint stood.
+	# Keep the terrain + collision heights equal to the real house foundation,
+	# blend them back to the surrounding hills over roughly four metres.
+	# Don't sculpt invisible pads in a clean checkout without house assets.
+	if ResourceLoader.exists(VILLAGE_HOMESTEADS.SOURCE):
+		for center in [Vector2(-7.5,34.0),Vector2(30.0,33.5)]:
+			var delta: Vector2=Vector2(x,z)-center
+			var footprint: float=maxf(absf(delta.x)/3.45,absf(delta.y)/3.65)
+			if footprint<2.15:
+				var pad_center: float=_raw_height_at(center.x,center.y)
+				raw=lerpf(raw,pad_center,1.0-smoothstep(1.0,2.15,footprint))
 	# Two small intentionally levelled authored sites. The surrounding hills
 	# blend back over 4–5 metres; no hovering floors or invisible terrain seams.
 	# Non-overlapping graded pads: the original broad falloffs merged two
@@ -836,6 +1031,8 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 			source_name="BirchTree_1.gltf" if r.randf()<0.5 else "BirchTree_3.gltf"
 			target_height=7.1
 	var path: String="res://assets/models/cc0/nature/"+source_name
+	if kind == "dead" and ResourceLoader.exists("res://assets/models/foundry/dead_ash_tree.glb"):
+		path="res://assets/models/foundry/dead_ash_tree.glb"
 	var attached: bool = false
 	if kind == "willow":
 		LANDMARK_TREE.decorate(node)
@@ -843,35 +1040,14 @@ func spawn_tree(p: Vector3,kind: String,scale_factor: float=1.0) -> Node3D:
 	else:
 		attached = EXTERNAL_ART.attach_scaled(node,path,target_height)
 	if attached and kind != "dead":
-		# Quaternius alpha foliage is excellent geometry but its raw neon
-		# yellow/salmon palette looked too toy-like in our actual Godot footage.
-		# Preserve UVs, bark and opacity while tinting leaf surfaces only.
-		var imported: Node3D = node.get_node_or_null("CC0ImportedArt") as Node3D
-		if imported != null:
-			var leaf_tint: Color = Color("647c69") if kind != "autumn" else Color("806b5a")
-			# Autumn is a varied amber/olive canopy, not the same salmon pink
-			# copied thirty times along the ridge. Preserve a few rust accents.
-			if kind == "autumn":
-				var variation: float = r.randf()
-				if variation < .30:
-					leaf_tint = Color("6c7d60")
-				elif variation < .61:
-					leaf_tint = Color("937455")
-				elif variation < .86:
-					leaf_tint = Color("866965")
-				else:
-					leaf_tint = Color("998266")
-			else:
-				leaf_tint = leaf_tint.lerp(Color("899b87"),r.randf_range(.0,.48))
-			for member in imported.find_children("*","MeshInstance3D",true,false):
-				var part: MeshInstance3D = member as MeshInstance3D
-				if part == null or part.mesh == null: continue
-				for surface_id in range(part.mesh.get_surface_count()):
-					var source_material: Material = part.mesh.surface_get_material(surface_id)
-					if source_material is StandardMaterial3D and (surface_id == 1 or String(source_material.resource_name).to_lower().contains("leav")):
-						var new_mat: StandardMaterial3D = source_material.duplicate() as StandardMaterial3D
-						new_mat.albedo_color = source_material.albedo_color * leaf_tint
-						part.set_surface_override_material(surface_id,new_mat)
+		# The library leaves have salmon/yellow pigment baked into the images.
+		# Old material tint multiplication could not remove it. Restore the
+		# original silhouette and alpha using a cached, luminance-preserving
+		# painterly recolor. Never touch geometry, collisions or flora IDs.
+		var imported: Node3D=node.get_node_or_null("CC0ImportedArt") as Node3D
+		if imported!=null:
+			var palette_variant: int=absi(int(p.x*13.7+p.z*9.31)) % (4 if kind=="autumn" else 3)
+			TREE_PALETTE.dress_tree(imported,kind,palette_variant)
 	if not attached:
 		# Keep a solid landmark rather than fake orange canopy blobs or
 		# thousands of loose rectangular procedural leaves.
@@ -1314,7 +1490,9 @@ func _process(delta: float) -> void:
 	if village_elapsed >= 10.0 and village_sim != null:
 		var steps: int = mini(6,int(village_elapsed/10.0))
 		village_elapsed -= float(steps)*10.0
-		for i in range(steps): village_sim.step()
+		for i in range(steps):
+			_refresh_neighbor_care()
+			village_sim.step()
 	ecology_timer += delta
 	if ecology_timer >= .5:
 		var elapsed:float=ecology_timer

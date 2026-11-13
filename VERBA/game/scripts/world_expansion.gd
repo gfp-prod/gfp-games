@@ -88,34 +88,88 @@ static func _lake(world,root: Node3D) -> void:
 	_reed_beds(world,water)
 	_shore_rock_batches(world,water)
 
+static func _reed_triangle(tool: SurfaceTool, a: Vector3, b: Vector3,
+		c: Vector3, color: Color) -> void:
+	tool.set_color(color)
+	tool.set_uv(Vector2(0,1))
+	tool.add_vertex(a)
+	tool.set_color(color.lightened(.045))
+	tool.set_uv(Vector2(.5,0))
+	tool.add_vertex(b)
+	tool.set_color(color.darkened(.07))
+	tool.set_uv(Vector2(1,1))
+	tool.add_vertex(c)
+
+static func _reed_cluster_mesh() -> ArrayMesh:
+	# Three genuinely bent reed stems and six individual leaves per patch.
+	# One batched mesh, not hundreds of pale cylinder spikes.
+	var tool:=SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for stem_index in range(3):
+		var a: float=TAU*float(stem_index)/3.0+.37
+		var direction:=Vector3(cos(a),0,sin(a))
+		var lateral:=Vector3(-sin(a),0,cos(a))
+		var origin:=direction*(.13+.045*float(stem_index%2))
+		var height: float=.86+.13*float(stem_index%3)
+		var green:=Color("768970").lerp(Color("a69d72"),float(stem_index)*.18)
+		for i in range(5):
+			var t0: float=float(i)/5.0
+			var t1: float=float(i+1)/5.0
+			var base:=Vector3(origin.x,-.43,origin.z)
+			var p0:=base+Vector3(direction.x*.22*t0*t0,
+				height*t0,direction.z*.22*t0*t0)
+			var p1:=base+Vector3(direction.x*.22*t1*t1,
+				height*t1,direction.z*.22*t1*t1)
+			var w0: float=.027*(1.0-t0*.77)
+			var w1: float=.027*(1.0-t1*.77)
+			_reed_triangle(tool,p0-lateral*w0,p1-lateral*w1,p0+lateral*w0,green)
+			_reed_triangle(tool,p0+lateral*w0,p1-lateral*w1,p1+lateral*w1,green)
+		for leaf_index in range(2):
+			var side: float=-1.0 if leaf_index==0 else 1.0
+			var start:=Vector3(origin.x,-.43+height*.19,origin.z)
+			var point:=start+direction*.27*side+Vector3.UP*.29
+			var tip:=start+direction*(.58+.13*float(stem_index))*side+Vector3.UP*.17
+			var width:=lateral*.067
+			_reed_triangle(tool,start,point+width,tip,green.darkened(.09))
+			_reed_triangle(tool,start,tip,point-width,green)
+		# A modest dark seed head on older stems; not every reed gets one.
+		if stem_index!=1:
+			var tip_y: float=-.43+height
+			var top:=origin+direction*.23+Vector3.UP*tip_y
+			_reed_triangle(tool,top-lateral*.022,top+Vector3.UP*.115,
+				top+lateral*.022,Color("81775c"))
+	tool.generate_normals()
+	return tool.commit()
+
 static func _reed_beds(world,root: Node3D) -> void:
-	var reed:=CylinderMesh.new()
-	reed.top_radius=.007
-	reed.bottom_radius=.026
-	reed.height=1.0
-	reed.radial_segments=5
-	var moss:=ART.mat(Color("7e8970"),.97)
+	var reed_mesh:=_reed_cluster_mesh()
+	var moss:=ART.mat(Color("b6b9a4"),.98)
+	moss.vertex_color_use_as_albedo=true
+	moss.cull_mode=BaseMaterial3D.CULL_DISABLED
+	moss.texture_filter=BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	var mm:=MultiMesh.new()
 	mm.transform_format=MultiMesh.TRANSFORM_3D
 	mm.use_colors=true
-	mm.mesh=reed
-	mm.instance_count=460
+	mm.mesh=reed_mesh
+	# Each instance contains three organically offset stems.
+	mm.instance_count=270
 	var rng:=RandomNumberGenerator.new()
 	rng.seed=715003
 	for i in range(mm.instance_count):
 		var angle: float=rng.randf_range(0.0,TAU)
-		var spread: float=rng.randf_range(.92,1.19)
+		var spread: float=rng.randf_range(.95,1.21)
 		var x: float=REGIONS.LAKE.x+cos(angle)*REGIONS.LAKE_RADII.x*spread
 		var z: float=REGIONS.LAKE.y+sin(angle)*REGIONS.LAKE_RADII.y*spread
-		var h: float=rng.randf_range(.60,1.7)
-		var basis:=Basis(Vector3.UP,rng.randf_range(-.16,.16)).scaled(
-			Vector3(rng.randf_range(.8,1.25),h,rng.randf_range(.8,1.25)))
+		var h: float=rng.randf_range(.57,1.35)
+		var size: float=rng.randf_range(.74,1.18)
+		var basis:=Basis(Vector3.UP,rng.randf_range(0.0,TAU)).scaled(
+			Vector3(size,h,size))
 		var y: float=maxf(world.height_at(x,z),world.lake_water_level-.5)
 		mm.set_instance_transform(i,Transform3D(basis,Vector3(x,y+h*.43,z)))
-		mm.set_instance_color(i,Color("7c886d").lerp(Color("b29b70"),
-			rng.randf_range(.0,.80)))
+		mm.set_instance_color(i,Color("819276").lerp(Color("b0a07b"),
+			rng.randf_range(.0,.32)))
 	var stems:=MultiMeshInstance3D.new()
-	stems.name="ReedsAlongIrregularLakeShore"
+	stems.name="BentReedClumpsAlongIrregularLakeShore"
 	stems.multimesh=mm
 	stems.material_override=moss
 	root.add_child(stems)
@@ -155,8 +209,12 @@ static func _lake_road(world,root: Node3D) -> void:
 	var route: Array[Vector2]=[
 		Vector2(16,18),Vector2(27,3),Vector2(32,-16),Vector2(39,-32),
 		Vector2(48,-44),Vector2(57,-56),Vector2(58.5,-60)]
-	var gravel: Material=world.textured("res://assets/textures/real/earth_path_diffuse.jpg",
-		Color("625f54"))
+	var gravel:=ShaderMaterial.new()
+	gravel.shader=load("res://assets/materials/worn_lake_track.gdshader")
+	gravel.set_shader_parameter("path_photograph",
+		load("res://assets/textures/real/earth_path_diffuse.jpg"))
+	gravel.set_shader_parameter("river_silt",
+		load("res://assets/textures/real/river_silt_diffuse.jpg"))
 	var path:=Node3D.new()
 	path.name="LongTrackToStillwater"
 	root.add_child(path)

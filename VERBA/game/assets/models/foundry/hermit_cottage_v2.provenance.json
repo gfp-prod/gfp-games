@@ -1,0 +1,31 @@
+{
+  "asset_id": "hermit_cottage_v2",
+  "model": "assets/models/foundry/hermit_cottage_v2.glb",
+  "authoring_file": "hermit_cottage_v2.blend",
+  "source_script": "tools/art_foundry/forge_cottage.py",
+  "blender": "5.0.1",
+  "units": "meters",
+  "scale": "one Blender meter = one Godot meter",
+  "door_local": {
+    "x": -0.69,
+    "z": 2.55
+  },
+  "mesh_count": 8,
+  "faces": 4386,
+  "textures": {
+    "cottage_plaster_diffuse.jpg": "8b561f102577e8043f73c71381d5594e2e4264e8d682b2de34bc349880308170",
+    "cottage_roof_diffuse.jpg": "5eab9ca967af6dd6aa0d96dfff492ffd8fc45b055c9e6727f4309624d1fc1ed0",
+    "cottage_wood_diffuse.jpg": "03c05c66791b68a5ccb0b905841730e6cf5f44c7981e67f539284f59ff1650b4",
+    "earth_path_diffuse.jpg": "8030f8dfec86db22717202b279a6615495b0e8b55e8529ee65d917da573c7a46",
+    "moss_diffuse.jpg": "54924a782ca37761ae0b34f5bd1786cfaaa3552ace3068bc8bb71eda3217e6fe",
+    "stone_diffuse.jpg": "da2186d9dc81ebad865de3ff59b8d950cc414f9e32d1b52249daf37c3478a29a"
+  },
+  "license": "Original scripted geometry; bundled Poly Haven CC0 images",
+  "camera_views": [
+    "01_front_entry",
+    "02_riverside_side",
+    "03_moss_slate_roof",
+    "04_back_and_chimney"
+  ],
+  "glb_sha256": "2f733db3c749ede67df010853b499973319f85cea1a5a7569796e46acfb8ec4a"
+}
