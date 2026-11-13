@@ -225,10 +225,12 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_material(skin)
 	const SIDES: int=12
-	var Y: Array[float]=[-length+.073,-length+.041,
-		-length-.005,-length-.045,-length-.078]
-	var WIDTH: Array[float]=[.038,.044,.050,.049,.042]
-	var DEPTH: Array[float]=[.033,.034,.033,.031,.024]
+	# A wrist that flows into the sleeve, broadening over metacarpals
+	# then flattening at the knuckles. No rectangular palm or hand bead.
+	var Y: Array[float]=[-length+.073,-length+.048,
+		-length-.004,-length-.035,-length-.060,-length-.075]
+	var WIDTH: Array[float]=[.036,.038,.046,.051,.049,.044]
+	var DEPTH: Array[float]=[.032,.032,.031,.028,.025,.022]
 	for row in range(Y.size()-1):
 		for sector in range(SIDES):
 			var a: float=TAU*float(sector)/float(SIDES)
@@ -266,6 +268,7 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 	palm.set_meta("detaches_with_parent_arm",true)
 	palm.set_meta("no_new_collision",true)
 	palm.set_meta("modeled_fingers",4)
+	palm.set_meta("faceted_curved_digits",true)
 	pivot.add_child(palm)
 	# Staggered fingertips produce a recognizable hand silhouette at
 	# conversational distance; finger scale overlaps inherited stature.
@@ -276,9 +279,15 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 		var begin:=Vector3(x,-length-.066,-.013)
 		var end:=Vector3(x+side*.003,
 			-length-.076-lengths[finger]*hand_scale,-.018)
-		var phalanx:=ART.bone(pivot,begin,end,
-			.014*hand_scale,.010*hand_scale,skin,8)
-		phalanx.name="Finger"+str(finger)+"LowPolyPhalanges"
+		# A three-section finger: rounded knuckle, small flexed middle,
+		# narrow distal tip. Previous cylinders made every hand a comb.
+		var flex: Vector3=begin.lerp(end,.52)+Vector3(
+			.003*side,-.001,-.008)
+		var phalanx: MeshInstance3D=_digit_loft(pivot,
+			"Finger"+str(finger)+"LowPolyPhalanges",skin,
+			[begin,flex,end],
+			[Vector2(.0105,.010),Vector2(.0086,.009),
+				Vector2(.0045,.0050)])
 		phalanx.set_meta("detaches_with_parent_arm",true)
 		phalanx.set_meta("no_new_collision",true)
 	# The fifth digit projects forward and folds toward the palm; it is
@@ -286,15 +295,59 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 	var thumb_base:=Vector3(side*.055*hand_scale,-length-.024,-.031)
 	var thumb_joint:=Vector3(side*.083*hand_scale,-length-.056,-.050)
 	var thumb_tip:=Vector3(side*.080*hand_scale,-length-.094,-.061)
-	var thumb_a:=ART.bone(pivot,thumb_base,thumb_joint,
-		.017*hand_scale,.013*hand_scale,skin,8)
-	thumb_a.name="AnatomicalThumbMetacarpal"
-	var thumb_b:=ART.bone(pivot,thumb_joint,thumb_tip,
-		.012*hand_scale,.009*hand_scale,skin,8)
-	thumb_b.name="AnatomicalThumbDistal"
+	var thumb_a: MeshInstance3D=_digit_loft(pivot,
+		"AnatomicalThumbMetacarpal",skin,
+		[thumb_base,thumb_base.lerp(thumb_joint,.54),thumb_joint],
+		[Vector2(.017,.015),Vector2(.014,.013),Vector2(.011,.010)])
+	var thumb_b: MeshInstance3D=_digit_loft(pivot,
+		"AnatomicalThumbDistal",skin,
+		[thumb_joint,thumb_joint.lerp(thumb_tip,.53),thumb_tip],
+		[Vector2(.011,.010),Vector2(.009,.008),Vector2(.004,.004)])
 	thumb_a.set_meta("no_new_collision",true)
 	thumb_b.set_meta("no_new_collision",true)
 	return palm
+
+
+## Curved, tapered digit; no CylinderMesh or additional physics bone.
+## At low-poly resolution each knuckle, joint and rounded tip changes
+## silhouette instead of attaching a straight stick to the palm.
+static func _digit_loft(parent: Node3D,part_name: String,skin: Material,
+		joints: Array,radii: Array) -> MeshInstance3D:
+	const FACETS: int=10
+	var tool:=SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tool.set_material(skin)
+	for row in range(joints.size()-1):
+		for sector in range(FACETS):
+			var corners: Array[Vector3]=[]
+			for item in [[row,sector],[row+1,sector],
+					[row+1,sector+1],[row,sector+1]]:
+				var idx: int=int(item[0])
+				var theta: float=TAU*float(item[1])/float(FACETS)
+				var previous: int=maxi(idx-1,0)
+				var following: int=mini(idx+1,joints.size()-1)
+				var axis: Vector3=(Vector3(joints[following])-
+					Vector3(joints[previous])).normalized()
+				var width_axis: Vector3=Vector3.FORWARD.cross(axis).normalized()
+				var depth_axis: Vector3=axis.cross(width_axis).normalized()
+				var r: Vector2=radii[idx]
+				corners.append(Vector3(joints[idx])+
+					width_axis*cos(theta)*r.x+
+					depth_axis*sin(theta)*r.y)
+			for k in [0,1,2,0,2,3]:
+				var p: Vector3=corners[k]
+				tool.set_uv(Vector2(p.x*3.0,p.y*3.0))
+				tool.add_vertex(p)
+	tool.generate_normals()
+	var finger:=MeshInstance3D.new()
+	finger.name=part_name
+	finger.mesh=tool.commit()
+	finger.material_override=skin
+	finger.set_meta("detaches_with_parent_arm",true)
+	finger.set_meta("three_section_anatomical_digit",true)
+	finger.set_meta("no_new_collision",true)
+	parent.add_child(finger)
+	return finger
 
 
 static func fitted_lower_leg(leg: Node3D,side: float,
