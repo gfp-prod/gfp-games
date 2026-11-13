@@ -75,6 +75,8 @@ jobs:
         run: bash tests/godot_guard.sh res://tests/scholar_progression_test.gd
       - name: Full in-world Latin book discovery and casting loop
         run: bash tests/godot_guard.sh res://tests/book_world_loop_test.gd
+      - name: Stable character genetics and outward-facing anatomical mesh regression
+        run: bash tests/godot_guard.sh res://tests/npc_genetic_art_test.gd
       - name: Physical NPC conversation, Latin progression, trade and persistence
         run: bash tests/godot_guard.sh res://tests/social_dialogue_test.gd
       - name: Living familiar choice, Latin commands and saved companion identity
