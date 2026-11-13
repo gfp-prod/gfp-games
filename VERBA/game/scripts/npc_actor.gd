@@ -136,7 +136,9 @@ func _ready() -> void:
 		arm.name="AnimatedLeftArm" if side<0.0 else "AnimatedRightArm"
 		arm.position=Vector3(side*.345,1.49,0)
 		figure.add_child(arm)
-		ART.bone(arm,Vector3.ZERO,Vector3(side*.075,-.42,-.045),.116,.084,cloth,9)
+		# Shoulder cap and upper sleeve have a sculpted circumference and
+		# attach to the old detachable, animated physical arm pivot.
+		COSTUME.fitted_sleeve(arm,side,genome,cloth)
 		ART.orb(arm,Vector3(side*.075,-.46,-.045),Vector3(.093,.12,.088),skin,10)
 		var leg:=Node3D.new()
 		leg.name="AnimatedLeftLeg" if side<0.0 else "AnimatedRightLeg"
@@ -187,11 +189,9 @@ func _ready() -> void:
 		"orin":
 			var hide:=ART.mat(Color("775b42"),.99)
 			var metal:=ART.mat(Color("737e81"),.52)
-			var apron:=ART.box(figure,Vector3(0,.98,-.35),
-				Vector3(.65,1.08,.13),hide)
-			apron.name="VisibleSmithApron"
-			ART.box(figure,Vector3(0,.71,-.42),
-				Vector3(.61,.13,.18),leather)
+			# Shaped leather hangs in front of the actual inherited torso.
+			# Retain original occupational identity and arm-mounted hammer.
+			COSTUME.smith_work_apron(figure,genome,hide,leather,metal)
 			var hammer:=Node3D.new()
 			hammer.name="VisibleSmithHammer"
 			hammer.position=Vector3(.105,-.44,-.16)
