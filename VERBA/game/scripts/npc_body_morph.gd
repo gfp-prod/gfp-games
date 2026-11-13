@@ -6,8 +6,14 @@ extends RefCounted
 ## This is not a collider or a replacement limb: the original detachments,
 ## wounds, clothing objects, names and saves retain their identity.
 const GENES=preload("res://scripts/npc_genetics.gd")
-const RINGS: int=16
-const HEIGHTS: Array[float]=[.815,.85,.89,.94,.98,1.10,1.20,1.30,1.34,1.375,1.405,1.43,1.455,1.48,1.505]
+# More supporting rings where the ribs turn into the deltoids and neck.
+# A few large, evenly spaced rings made human torsos resemble barrel-shaped
+# cylinders and gave the shoulders a hard step in profile. This is still a
+# modest, single low-poly cloth mesh with the same detachable arm sockets.
+const RINGS: int=24
+const HEIGHTS: Array[float]=[.815,.85,.89,.94,.98,1.04,1.10,1.16,
+	1.20,1.24,1.28,1.30,1.325,1.34,1.355,1.375,1.395,
+	1.42,1.445,1.465,1.48,1.495,1.505]
 
 static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector2:
 	# Build the *same* inherited skeleton using sex-linked population
@@ -49,20 +55,22 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 	# Lean baseline, not low-detail anatomy: the original last pass
 	# multiplied pelvic width with soft-tissue width and overall X scale,
 	# making nearly every resident broad even with moderate alleles.
-	# Preserve shape RATIOS and high-allele broad physiques.
+	# Preserve shape RATIOS and high-allele broad physiques. The current
+	# average half-widths are deliberately lean; broadness must come from
+	# inherited muscle/frame loci, not a huge default mannequin torso.
 	# Distinct, continuous rings at hip crest / waist / ribs / shoulder.
-	var pelvis:=Vector2(.302*hips*hip_factor,
-		.282*depth*(.92+.11*hips)*pelvis_depth)
-	var midriff:=Vector2((.277*waist+.016*(1.0-muscle_gene))*waist_factor,
-		.246*depth*(.975 if female else 1.0))
-	var ribcage:=Vector2((.314*chest+upper_muscle)*rib_factor,
-		.284*depth*(.970 if female else 1.030 if male else 1.0))
-	var shoulder:=Vector2((.327*shoulders+.010*chest)*shoulder_factor,
-		.274*depth*(.975 if female else 1.035 if male else 1.0))
+	var pelvis:=Vector2(.255*hips*hip_factor,
+		.249*depth*(.92+.11*hips)*pelvis_depth)
+	var midriff:=Vector2((.235*waist+.010*(1.0-muscle_gene))*waist_factor,
+		.222*depth*(.975 if female else 1.0))
+	var ribcage:=Vector2((.269*chest+upper_muscle*.65)*rib_factor,
+		.256*depth*(.970 if female else 1.030 if male else 1.0))
+	var shoulder:=Vector2((.283*shoulders+.008*chest)*shoulder_factor,
+		.246*depth*(.975 if female else 1.035 if male else 1.0))
 	# A slender collar opening closes toward the new cranial/throat
 	# landmark. An oversized neckline left a hollow dark collar around
 	# the smaller, more realistic head.
-	var neckline:=Vector2(.155,.140)
+	var neckline:=Vector2(.148,.134)
 	if y<=.78:
 		# Do not extrude the widest hip section unchanged down to the
 		# tunic hem: that produced a rectangular, barrel-shaped skirt.
@@ -111,6 +119,31 @@ static func _point(y: float,angle: float,g: Dictionary,
 	elif sex=="male":
 		x*=1.0+.011*soft_hip*hip_level*lateral
 		z+=.010*soft_hip*hip_level*posterior
+	# Sculpt the ribcage and waist in THREE dimensions, not just in the
+	# left/right silhouette. Every prior ring was an oval extrusion: the
+	# back had no scapulae, sternum and lumbar hollow, so a turned figure
+	# resembled a pipe even when its waist and pelvis were correctly sized.
+	# All relief stays small relative to the underlying inherited bones.
+	var front: float=pow(maxf(0.0,-sin(angle)),2.0)
+	var back: float=pow(maxf(0.0,sin(angle)),2.0)
+	var sternum_level: float=exp(-pow((y-1.355)/.118,2.0))
+	var sternum_center: float=exp(-pow(x/.125,2.0))
+	z-=.010*sternum_level*sternum_center*front
+	# Posterior shoulder-blade lobes have no equivalent on the front.
+	# Their relief fades to zero around the waist and at the collar.
+	var scapula_level: float=exp(-pow((y-1.315)/.115,2.0))
+	var scapula_lobe: float=exp(-pow((absf(x)-.168)/.088,2.0))
+	z+=.017*scapula_level*scapula_lobe*back
+	var lumbar_level: float=exp(-pow((y-1.045)/.145,2.0))
+	z-=.009*lumbar_level*exp(-pow(x/.105,2.0))*back
+	# The oblique flank recedes at the waist while retaining broad hips
+	# for those with the inherited width. These small contours do not
+	# replace sex-linked averages with a single forced body template.
+	var oblique_level: float=exp(-pow((y-1.105)/.130,2.0))
+	var waist_inheritance: float=GENES.value(g,"waist_width")
+	x*=1.0-(.017+.013*(1.0-waist_inheritance))*oblique_level*lateral
+	var abdomen_level: float=exp(-pow((y-1.035)/.185,2.0))
+	z-=(.004+.009*waist_inheritance)*abdomen_level*front
 	return Vector3(x,y,z)
 
 static func finish(root: Node3D,g: Dictionary,cloth: Material,

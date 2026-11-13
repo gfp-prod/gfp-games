@@ -105,11 +105,13 @@ func _run() -> void:
 	# Realistic average characters should not look wider than their
 	# upper torso is tall. This detects the last pass's stocky, tent-like
 	# baseline while retaining the separate feminine/masculine ratios.
-	if female_hip>.350 or male_hip>.330 or (
-			BODY._section(1.10,same_genome,"female").x>.278) or (
-			BODY._section(1.10,same_genome,"male").x>.310):
+	if female_hip>.297 or male_hip>.281 or (
+			BODY._section(1.10,same_genome,"female").x>.221) or (
+			BODY._section(1.10,same_genome,"male").x>.260):
 		_fail("Average inherited anatomy regressed to the old husky silhouette")
 		return
+	# Keep inherited ratios even as we narrow the average human mesh.
+	# A broad bloodline remains broad by genotype, not by clothing.
 	# Test vertical slenderness rather than simply shrinking all
 	# anatomy: average adults should not be shorter than their rendered
 	# body-width multiplier, even before the inherited waist sculpt.
@@ -149,6 +151,42 @@ func _run() -> void:
 			man_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]):
 		_fail("Sex-linked morphology still creates identical actual mesh vertices")
 		return
+	# Silhouette-only waist ratios are not enough: the last models still
+	# looked like featureless oval cylinders from three-quarter angles.
+	# Compare the finished front/back/side contour to each inherited oval.
+	# The checks use one fixed median bloodline and independent sexes.
+	for sex_profile in ["female","male"]:
+		var front_rib: Vector3=BODY._point(1.355,-PI*.5,
+			same_genome,sex_profile)
+		var front_oval: float=BODY._section(1.355,
+			same_genome,sex_profile).y
+		if front_rib.z>=-front_oval-.008:
+			_fail("No sternum projection: torso still a cylindrical ribcage")
+			return
+		var blade_angle: float=PI*.33
+		var upper_back: Vector3=BODY._point(1.315,blade_angle,
+			same_genome,sex_profile)
+		var plain_back: float=sin(blade_angle)*BODY._section(
+			1.315,same_genome,sex_profile).y
+		if upper_back.z<=plain_back+.006:
+			_fail("Scapula is absent from the actual three-quarter back")
+			return
+		var flank: Vector3=BODY._point(1.105,0.0,
+			same_genome,sex_profile)
+		var oval_waist: float=BODY._section(1.105,
+			same_genome,sex_profile).x
+		if flank.x>=oval_waist-.004:
+			_fail("Oblique waist never interrupts cylindrical side profile")
+			return
+	# Increased density is concentrated at real contour transitions, not
+	# spread indiscriminately across a massive primitive torso.
+	for finished in [woman_mesh,man_mesh]:
+		var arrays: Array=finished.mesh.surface_get_arrays(0)
+		var vertices: PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+		var normals: PackedVector3Array=arrays[Mesh.ARRAY_NORMAL]
+		if vertices.size()<2800 or vertices.size()!=normals.size():
+			_fail("Torso sculpt lost the support rings or normals")
+			return
 	# A past art pass hid the full femur under a single cylindrical robe,
 	# even while the leg code and its unit tests passed. Verify the ACTUAL
 	# generated shirt vertices and the length of the same severable leg mesh.
