@@ -63,7 +63,16 @@ static func _jaw_outline(y: float,g: Dictionary,sex: String) -> float:
 	var taper: float=lerpf(.72,1.01,jaw_gene) if sex=="female" else (
 		lerpf(.83,1.09,jaw_gene) if sex=="male" else
 		lerpf(.82,1.06,jaw_gene))
-	return lerpf(1.0,taper,lower)
+	# A broad jaw is not a perfectly rectangular chin: even robust
+	# inherited mandibles curve inward toward the central chin.
+	var chin_rounding: float=lerpf(.73,1.0,smoothstep(1.575,1.675,y))
+	return lerpf(1.0,taper,lower)*chin_rounding
+
+static func _chin_edge_height(x: float,y: float) -> float:
+	# The facial shell used to end as a horizontal shelf. Curve the side
+	# boundary toward a central chin rather than a rectangular mask.
+	var bottom: float=1.0-smoothstep(1.575,1.69,y)
+	return y+.025*pow(clampf(absf(x)/.183,0.0,1.0),2.0)*bottom
 
 static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 		sex: String="unspecified") -> void:
@@ -88,10 +97,14 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 			var x1low: float=x1*_jaw_outline(y0,g,sex)
 			var x1high: float=x1*_jaw_outline(y1,g,sex)
 			var pts: Array[Vector3]=[
-				Vector3(x0low,y0,_depth(x0low,y0,g,sex)),
-				Vector3(x0high,y1,_depth(x0high,y1,g,sex)),
-				Vector3(x1low,y0,_depth(x1low,y0,g,sex)),
-				Vector3(x1high,y1,_depth(x1high,y1,g,sex))]
+				Vector3(x0low,_chin_edge_height(x0low,y0),
+					_depth(x0low,_chin_edge_height(x0low,y0),g,sex)),
+				Vector3(x0high,_chin_edge_height(x0high,y1),
+					_depth(x0high,_chin_edge_height(x0high,y1),g,sex)),
+				Vector3(x1low,_chin_edge_height(x1low,y0),
+					_depth(x1low,_chin_edge_height(x1low,y0),g,sex)),
+				Vector3(x1high,_chin_edge_height(x1high,y1),
+					_depth(x1high,_chin_edge_height(x1high,y1),g,sex))]
 			for j in [0,1,2,1,3,2]:
 				var point: Vector3=pts[j]
 				st.set_uv(Vector2((point.x+.20)*2.5,(point.y-1.54)*2.5))
@@ -677,32 +690,35 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	# alleles lift the neutral mouth corners and Cupid's bow; low alleles
 	# produce a flatter, downturned mouth. Expressions animate these
 	# inherited shapes rather than replacing them with generic lips.
-	var cupid_rise: float=lerpf(.004,.016,_v(g,"lip_curve"))
-	var corner_rise: float=lerpf(-.011,.009,_v(g,"lip_curve"))
+	var cupid_rise: float=lerpf(.002,.009,_v(g,"lip_curve"))
+	var corner_rise: float=lerpf(-.006,.005,_v(g,"lip_curve"))
 	mouth.set_meta("rest_cupid_rise",cupid_rise)
 	mouth.set_meta("rest_corner_rise",corner_rise)
 	# Upper and lower lip bands occupy separate volumes and articulate
 	# from their own corners. Very thin lips remain truly thin.
 	var left_lip:=_facial_ribbon(left_corner,"SmallNaturalLipLine",lip_ink,
 		Vector3(-mouth_width,corner_rise,0),Vector3(0,cupid_rise,0),
-		fullness*.58)
+		fullness*.25)
 	var left_lower:=_facial_ribbon(lower_rig,"ModeledLowerLipLeft",lip_ink,
 		Vector3(-mouth_width,corner_rise-.007,0),Vector3(0,-.010,0),
-		fullness*.45)
+		fullness*.21)
 	var right_corner:=Node3D.new()
 	right_corner.name="ExpressionLipRight"
 	mouth.add_child(right_corner)
 	var right_lip:=_facial_ribbon(right_corner,"NaturalLipCorner",lip_ink,
 		Vector3(0,cupid_rise,0),Vector3(mouth_width,corner_rise,0),
-		fullness*.58)
+		fullness*.25)
 	var right_lower:=_facial_ribbon(lower_rig,"ModeledLowerLipRight",lip_ink,
 		Vector3(0,-.010,0),Vector3(mouth_width,corner_rise-.007,0),
-		fullness*.45)
+		fullness*.21)
 	var open_mouth:=_facial_ribbon(mouth,"ExpressionMouthOpening",
 		ART.mat(Color("301c1c"),1),
-		Vector3(-mouth_width*.81,-.005,.004),
-		Vector3(mouth_width*.81,-.005,.004),.005)
-	open_mouth.visible=false
+		Vector3(-mouth_width*.89,-.005,.004),
+		Vector3(mouth_width*.89,-.005,.004),.003)
+	# A fine oral crease anchors the lips at rest; the old four separate
+	# thick petals read like a geometric flower rather than a mouth.
+	open_mouth.visible=true
+	open_mouth.scale.y=.36
 	# Connected scalp shell follows each inherited skull and natural
 	# hairline. A huge flattened spherical cap used to resemble a helmet.
 	var scalp: MeshInstance3D=HAIR.scalp_cap(root,hair,g,person)
@@ -823,8 +839,8 @@ static func expression(figure: Node3D,feel: float,blink: float=0.0,
 		if opening_mesh!=null:
 			var syllable: float=absf(sin(conversation_phase*7.5))
 			var talking: bool=speaking and syllable>.38
-			opening_mesh.visible=talking or emotion<-.64
-			opening_mesh.scale.y=lerpf(.7,2.5,syllable) if talking else .6+absf(emotion)*2.0
+			opening_mesh.visible=true
+			opening_mesh.scale.y=lerpf(.7,2.5,syllable) if talking else .36+maxf(0.0,-emotion)*1.1
 			# Only the lower lip moves with a spoken syllable. The mouth
 			# aperture follows it; the face, teeth and nose remain still.
 			var lower: Node3D=mouth.get_node_or_null("ExpressionLowerLip")
