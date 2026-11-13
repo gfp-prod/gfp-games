@@ -46,12 +46,31 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 				surface.set_uv(Vector2(
 					(float(segment)+float(j%3)*.35)/14.0,p.y*1.6))
 				surface.add_vertex(p)
+	# First-person views from above revealed a hollow ring at the shoulder.
+	# Seal the upper aperture with a subtle inward-domed cloth cap; this
+	# shares the same material, articulation and detachable limb identity.
+	# A separate cylinder/collarbone would only recreate the old problem.
+	var top_radius_x: float=RX[0]*shoulder*muscle
+	var top_radius_z: float=RZ[0]*lerpf(.92,1.12,
+		GENES.value(genome,"body_depth"))
+	var dome_center:=Vector3(sign*CX[0],HEIGHT[0]+.022,CZ[0])
+	for segment in range(14):
+		var a: float=TAU*float(segment)/14.0
+		var b: float=TAU*float(segment+1)/14.0
+		var rim_a:=Vector3(sign*CX[0]+cos(a)*top_radius_x,
+			HEIGHT[0],CZ[0]+sin(a)*top_radius_z)
+		var rim_b:=Vector3(sign*CX[0]+cos(b)*top_radius_x,
+			HEIGHT[0],CZ[0]+sin(b)*top_radius_z)
+		for point in [dome_center,rim_a,rim_b]:
+			surface.set_uv(Vector2(point.x*1.6,point.z*1.6))
+			surface.add_vertex(point)
 	surface.generate_normals()
 	var sleeve:=MeshInstance3D.new()
 	sleeve.name="GeneticFittedSleeve"
 	sleeve.mesh=surface.commit()
 	sleeve.material_override=cloth
 	sleeve.set_meta("inherits_shoulder",true)
+	sleeve.set_meta("sealed_upper_shoulder",true)
 	sleeve.set_meta("old_limb_pivot_preserved",true)
 	sleeve.set_meta("no_new_collision",true)
 	arm.add_child(sleeve)
