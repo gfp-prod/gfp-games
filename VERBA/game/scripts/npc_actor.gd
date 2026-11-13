@@ -55,6 +55,8 @@ var blood_emitter: CPUParticles3D
 var support_visual: Node3D
 var anatomy_visual_elapsed: float=0.0
 var inherited_body_dimensions: Vector3=Vector3.ONE
+var appearance_genome: Dictionary={}
+var appearance_sex: String="unspecified"
 var last_body_age_day: int=-999999
 
 func setup(owner_world: Node3D, data: Dictionary) -> void:
@@ -113,6 +115,8 @@ func _ready() -> void:
 		age_years=maxf(0.0,float(world.village_sim.current_day-birth)/365.0)
 	if not GENES.validate(genome):
 		genome=GENES.founder(npc_id)
+	appearance_genome=genome
+	appearance_sex=sex
 	set_meta("genome_traits",true)
 	set_meta("body_sex",sex)
 	set_meta("bloodline_generation",
@@ -657,7 +661,7 @@ func _install_limb_hitbox(limb: Node3D, part: String) -> void:
 	var capsule:=CapsuleShape3D.new()
 	# One capsule per arm retains the original limb identity while
 	# covering the full inherited shoulder-to-wrist reach.
-	var arm_reach: float=.283+GENES.forearm_length(genome)+.185
+	var arm_reach: float=.283+GENES.forearm_length(appearance_genome)+.185
 	capsule.height=arm_reach if part.ends_with("_arm") else .88
 	capsule.radius=.072 if part.ends_with("_arm") else .124
 	shape.shape=capsule
@@ -777,7 +781,7 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 		if not anatomy["missing"].has(part): continue
 		var side: float=-1.0 if part.begins_with("left") else 1.0
 		var joint_y: float=1.43 if part.ends_with("arm") else .975
-		var joint_x: float=side*((.028+.87*BODY._section(1.365,genome,sex).x) if part.ends_with("arm") else .17)
+		var joint_x: float=side*((.028+.87*BODY._section(1.365,appearance_genome,appearance_sex).x) if part.ends_with("arm") else .17)
 		var stump: MeshInstance3D=ART.orb(support_visual,
 			Vector3(joint_x,joint_y,0),
 			Vector3(.19,.13,.19),linen if anatomy["bandaged"] else wound,10)
