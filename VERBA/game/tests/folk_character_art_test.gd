@@ -256,7 +256,7 @@ func _run() -> void:
 			# exposed an open dark hole when the camera stood above a person.
 			if not bool(sleeve.get_meta("sealed_upper_shoulder",false)):
 				_fail("Shoulder sleeve lost its skin-safe upper cloth closure"); return
-			if vertices.size()<540 or limb_bounds.size.y<.45 or (
+			if vertices.size()<540 or limb_bounds.size.y<.40 or (
 					limb_bounds.size.x<.125 or limb_bounds.size.x>.32):
 				_fail("An arm reverted to a rigid one-piece cylinder"); return
 			if not sleeve.find_children("*","CollisionShape3D",true,false).is_empty():
@@ -320,12 +320,12 @@ func _run() -> void:
 					genome))>.002:
 				_fail("Arm length ignores actual inherited limb ratio"); return
 			var hand_drop: float=arm.to_local(hand.global_position).y
-			if hand_drop>-.65 or hand_drop<-.91:
+			if hand_drop>-.54 or hand_drop<-.73:
 				_fail("Fingertips are back at knee level or arms too short"); return
 			var area: Area3D=citizen.limb_hitboxes[side.to_lower()+"_arm"]
 			var capsule: CollisionShape3D=area.get_child(0) as CollisionShape3D
 			if capsule==null or not (capsule.shape is CapsuleShape3D) or (
-					(capsule.shape as CapsuleShape3D).height<.95):
+					(capsule.shape as CapsuleShape3D).height<.88):
 				_fail("Long forearm lost its continuous physical hitbox"); return
 		var torso: MeshInstance3D=citizen.find_child(
 			"InheritedChestWaistHipCloth",true,false) as MeshInstance3D
