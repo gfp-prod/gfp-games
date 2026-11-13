@@ -22,11 +22,14 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	var muscle: float=lerpf(.78,.97,muscle_gene) if sex=="female" else (
 		lerpf(.98,1.13,muscle_gene) if sex=="male" else
 		lerpf(.91,1.10,muscle_gene))
-	const HEIGHT: Array[float]=[.046,.006,-.060,-.140,-.240,-.330,-.414]
-	const CX: Array[float]=[-.058,-.031,-.007,.025,.049,.065,.076]
-	const CZ: Array[float]=[-.018,-.024,-.029,-.034,-.042,-.046,-.047]
-	const RX: Array[float]=[.067,.072,.079,.076,.070,.066,.062]
-	const RZ: Array[float]=[.069,.078,.083,.086,.083,.076,.071]
+	# A longer rounded deltoid folds into the body from beneath the
+	# shoulder, then tapers across the biceps to the elbow. No free-standing
+	# clavicle/shoulder cylinder is needed, even when a sleeve swings.
+	const HEIGHT: Array[float]=[.095,.061,.026,-.032,-.103,-.184,-.264,-.338,-.426]
+	const CX: Array[float]=[-.085,-.061,-.027,-.008,.015,.032,.053,.066,.073]
+	const CZ: Array[float]=[-.012,-.017,-.023,-.025,-.031,-.040,-.041,-.045,-.048]
+	const RX: Array[float]=[.056,.069,.082,.089,.085,.078,.073,.065,.062]
+	const RZ: Array[float]=[.062,.070,.080,.086,.085,.082,.078,.071,.069]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -57,7 +60,7 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	var top_radius_x: float=RX[0]*shoulder*muscle
 	var top_radius_z: float=RZ[0]*lerpf(.92,1.12,
 		GENES.value(genome,"body_depth"))
-	var dome_center:=Vector3(sign*CX[0],HEIGHT[0]+.022,CZ[0])
+	var dome_center:=Vector3(sign*CX[0],HEIGHT[0]+.012,CZ[0])
 	for segment in range(14):
 		var a: float=TAU*float(segment)/14.0
 		var b: float=TAU*float(segment+1)/14.0
@@ -77,6 +80,7 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	sleeve.set_meta("anatomic_upper_arm_radius",RX[3]*shoulder*muscle)
 	sleeve.set_meta("anatomic_sex_profile",sex)
 	sleeve.set_meta("lean_shoulder_taper",true)
+	sleeve.set_meta("underlapping_deltoid_join",true)
 	sleeve.set_meta("sealed_upper_shoulder",true)
 	sleeve.set_meta("old_limb_pivot_preserved",true)
 	sleeve.set_meta("no_new_collision",true)
@@ -163,10 +167,11 @@ static func fitted_forearm(pivot: Node3D,side: float,
 	if existing!=null: return existing
 	var length: float=GENES.forearm_length(genome)
 	var body_depth: float=lerpf(.92,1.09,GENES.value(genome,"body_depth"))
+	var arm_tone: float=lerpf(.93,1.09,GENES.value(genome,"muscle_tone"))
 	var mesh_tool:=SurfaceTool.new()
 	mesh_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	mesh_tool.set_material(cloth)
-	const LEVELS: int=8
+	const LEVELS: int=11
 	const SIDES: int=14
 	for row in range(LEVELS-1):
 		for sector in range(SIDES):
@@ -176,12 +181,19 @@ static func fitted_forearm(pivot: Node3D,side: float,
 				var angle: float=TAU*float(pair[1])/float(SIDES)
 				var t: float=float(k)/float(LEVELS-1)
 				var y: float=lerpf(.050,-length+.067,t)
-				var taper: float=lerpf(.061,.054,smoothstep(0.0,1.0,t))
-				var bulge: float=.010*sin(PI*t)
+				# A muscular upper third, visible forearm flexor bulge,
+				# narrowed wrist and slight radial/ulnar asymmetry.
+				# Unlike the old tapered tube, wrist size is independent
+				# of the forearm's inherited length.
+				var taper: float=lerpf(.064,.039,smoothstep(.10,.96,t))
+				var bulge: float=.012*pow(sin(PI*t),2.0)*arm_tone
+				var wrist: float=taper+bulge
+				var sweep: float=.016*t+(.006*sin(PI*t))
 				points.append(Vector3(
-					side*.016*t+cos(angle)*(taper+bulge),
+					side*sweep+cos(angle)*wrist,
 					y,
-					-.012*t+sin(angle)*(taper+bulge)*body_depth))
+					-.012*t+sin(angle)*wrist*body_depth*
+						(1.0-.07*t)))
 			for index in [0,1,2,0,2,3]:
 				var p: Vector3=points[index]
 				mesh_tool.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU, p.y*1.8))
@@ -193,6 +205,7 @@ static func fitted_forearm(pivot: Node3D,side: float,
 	sleeve.material_override=cloth
 	sleeve.set_meta("detaches_with_parent_arm",true)
 	sleeve.set_meta("inherited_wrist_reach",length)
+	sleeve.set_meta("anatomic_forearm_wrist_taper",true)
 	sleeve.set_meta("no_new_collision",true)
 	pivot.add_child(sleeve)
 	# Low-poly anatomical palm instead of the old detached egg-shaped
@@ -388,9 +401,9 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	shoemesh.begin(Mesh.PRIMITIVE_TRIANGLES)
 	shoemesh.set_material(boot_hide)
 	const SHOE_Y: Array[float]=[-.756,-.846,-.924,-.973]
-	const SHOE_W: Array[float]=[.086,.097,.118,.119]
-	const SHOE_Z: Array[float]=[-.022,-.058,-.122,-.128]
-	const SHOE_D: Array[float]=[.093,.116,.171,.172]
+	const SHOE_W: Array[float]=[.073,.078,.088,.092]
+	const SHOE_Z: Array[float]=[-.019,-.045,-.120,-.133]
+	const SHOE_D: Array[float]=[.079,.096,.161,.168]
 	for row in range(SHOE_Y.size()-1):
 		for segment in range(12):
 			var a: float=TAU*float(segment)/12.0
@@ -424,6 +437,7 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	boot.mesh=shoemesh.commit()
 	boot.material_override=boot_hide
 	boot.set_meta("weathered_leather",true)
+	boot.set_meta("slim_foot_silhouette",true)
 	boot.set_meta("original_detachable_leg",true)
 	boot.set_meta("no_new_collision",true)
 	knee.add_child(boot)
