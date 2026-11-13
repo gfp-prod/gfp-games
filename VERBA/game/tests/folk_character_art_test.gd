@@ -102,7 +102,11 @@ func _run() -> void:
 			var vertices: PackedVector3Array=sleeve.mesh.surface_get_arrays(0)[
 				Mesh.ARRAY_VERTEX]
 			var limb_bounds: AABB=sleeve.get_aabb()
-			if vertices.size()<350 or limb_bounds.size.y<.45 or (
+			# The top surface must be sealed: an earlier fitted sleeve
+			# exposed an open dark hole when the camera stood above a person.
+			if not bool(sleeve.get_meta("sealed_upper_shoulder",false)):
+				_fail("Shoulder sleeve lost its skin-safe upper cloth closure"); return
+			if vertices.size()<540 or limb_bounds.size.y<.45 or (
 					limb_bounds.size.x<.20 or limb_bounds.size.x>.48):
 				_fail("An arm reverted to a rigid one-piece cylinder"); return
 			if not sleeve.find_children("*","CollisionShape3D",true,false).is_empty():
