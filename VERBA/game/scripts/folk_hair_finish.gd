@@ -5,6 +5,23 @@ extends RefCounted
 const ART=preload("res://scripts/art.gd")
 const GENES=preload("res://scripts/npc_genetics.gd")
 
+## Keep a grown lock outside the inherited torso as it passes the shoulder.
+## The old straight ribbons went through the chest/back beneath their roots.
+## Hair stays part of the same non-colliding face rig; no rigid wig or hitbox.
+static func _routed_depth(at: Vector3,t: float,tip_y: float,
+		x: float,curl: float) -> float:
+	var z: float=at.z+.045*t+.010*curl*sin(t*TAU*1.2)
+	if tip_y>=1.70:
+		return z
+	var shoulder_turn: float=smoothstep(.14,.64,t)
+	if at.z>.10:
+		# Long loose hair and ponytails clear the back of a fitted tunic.
+		z=lerpf(z,maxf(z,.358+.035*absf(x)),shoulder_turn)
+	else:
+		# Face-framing locks and braids ride forward over the chest.
+		z=lerpf(z,minf(z,-.344+.045*absf(x)),shoulder_turn)
+	return z
+
 static func _strand(root: Node3D,name: String,material: Material,
 		at: Vector3,tip_y: float,side: float,wide: float,
 		curl: float,sweep: float=0.0) -> MeshInstance3D:
@@ -24,7 +41,7 @@ static func _strand(root: Node3D,name: String,material: Material,
 				var taper: float=lerpf(.91,.32,pow(t,1.55))
 				var wave: float=.017*curl*sin(t*TAU*1.45+side*.83)
 				var x: float=at.x+sweep*t+wave+cos(theta)*wide*taper
-				var z: float=at.z+.045*t+.010*curl*sin(t*TAU*1.2)+(
+				var z: float=_routed_depth(at,t,tip_y,x,curl)+(
 					sin(theta)*wide*.73*taper)
 				vertices.append(Vector3(x,lerpf(at.y,tip_y,t),z))
 			for k in [0,1,2,0,2,3]:
@@ -73,17 +90,21 @@ static func _braid(root: Node3D,main: Material,highlight: Material,
 	# Six alternating overlapping plaits define a readable woven strand.
 	for i in range(6):
 		var t: float=(float(i)+.42)/6.0
-		var center:=Vector3(top.x+side*.015*t,
-			lerpf(top.y,tip_y,t),top.z+.042*t)
+		var plait_x: float=top.x+side*.015*t
+		var center:=Vector3(plait_x,
+			lerpf(top.y,tip_y,t),
+			_routed_depth(top,t,tip_y,plait_x,curl))
 		var plait:=ART.bone(root,
 			center+Vector3(-side*.035,.043,0),
 			center+Vector3(side*.035,-.039,.012),
 			.038*(1.0-t*.40),.027*(1.0-t*.35),
 			highlight if i%2==0 else main,8)
 		plait.name=side_name+"WovenBraidPlait"+str(i)
+	var tie_x: float=top.x+side*.018
+	var tie_depth: float=_routed_depth(top,1.0,tip_y,tie_x,curl)
 	var end:=ART.bone(root,
-		Vector3(top.x+side*.018,tip_y+.043,top.z+.040),
-		Vector3(top.x+side*.018,tip_y+.023,top.z+.041),
+		Vector3(tie_x,tip_y+.043,tie_depth),
+		Vector3(tie_x,tip_y+.023,tie_depth+.004),
 		.028,.025,highlight,8)
 	end.name=side_name+"BraidedLeatherTie"
 
