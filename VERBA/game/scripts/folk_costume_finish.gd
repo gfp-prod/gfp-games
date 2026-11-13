@@ -509,7 +509,9 @@ static func dress(figure: Node3D,person: String,
 	# The old low-tunic over-shell draped from hip to mid-thigh like a
 	# stiff single cylinder. End it at the high hip; separate tailored
 	# dresses can still reach below the knee when an outfit calls for it.
-	var levels: Array[float]=[.745,.795,.845,.925,.98,1.17,1.24]
+	# Upper shirt ends at the high hip: never hide the first quarter of
+	# the inherited femur under a conical outer panel.
+	var levels: Array[float]=[.875,.91,.945,.98,1.08,1.17,1.24]
 	for j in range(levels.size()-1):
 		var low: float=levels[j]
 		var high: float=levels[j+1]
@@ -523,7 +525,7 @@ static func dress(figure: Node3D,person: String,
 			for point in [p0,p1,p2,p0,p2,p3]:
 				var side_vent: float=maxf(0.0,absf(point.x)-
 					.76*BODY._section(point.y,genome,sex).x)
-				var low_hem: float=1.0-smoothstep(.745,.87,point.y)
+				var low_hem: float=1.0-smoothstep(.875,.97,point.y)
 				var outward: Vector3=Vector3(point.x*1.042,
 					point.y+side_vent*.16*low_hem,
 					point.z*1.042)
@@ -665,7 +667,7 @@ static func tailored_womenswear(figure: Node3D,person: String,
 		"ida": style="baker_apron_dress"; hem_y=.51
 		"mara": style="scribe_gown"; hem_y=.38
 		"sela": style="layered_merchant_skirt"; hem_y=.54
-		"lena": style="painter_smock"; hem_y=.68
+		"lena": style="painter_smock"; hem_y=.855
 		"juno": style="attendant_work_dress"; hem_y=.78
 		_: hem_y=lerpf(.39,.66,GENES.value(genome,"hair_style"))
 	var trim_color: Color=Color("574138")
