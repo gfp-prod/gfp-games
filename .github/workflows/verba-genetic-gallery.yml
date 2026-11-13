@@ -78,7 +78,9 @@ jobs:
           git checkout -B "${GITHUB_HEAD_REF}" "origin/${GITHUB_HEAD_REF}"
           mkdir -p docs/npc_review
           cp /tmp/verba-direct-npc-screens/*.jpg docs/npc_review/
-          git add docs/npc_review/*.jpg
+          # Every direct-view JPEG must identify its actual rendered revision.
+          printf 'source_sha=%s\nrenderer=Godot 4.5.2\n' "${PR_HEAD_SHA}" > docs/npc_review/RENDERED_SOURCE.txt
+          git add docs/npc_review/*.jpg docs/npc_review/RENDERED_SOURCE.txt
           git diff --cached --quiet && exit 0
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "VERBA visual proof: publish twelve in-game NPC and orthographic frames"
           git push origin "HEAD:refs/heads/${GITHUB_HEAD_REF}"
