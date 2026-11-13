@@ -44,8 +44,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 			for ring_and_angle in [[row,a],[row+1,a],[row+1,b],[row,b]]:
 				var index: int=int(ring_and_angle[0])
 				var angle: float=float(ring_and_angle[1])
-				var width: float=RX[index]*shoulder*muscle
-				var depth: float=RZ[index]*lerpf(.92,1.12,
+				var width: float=RX[index]*shoulder*muscle*.93
+				var depth: float=RZ[index]*.91*lerpf(.92,1.12,
 					GENES.value(genome,"body_depth"))
 				# The anterior deltoid and posterior triceps have different
 				# projections. An identical ellipse around every arm ring
@@ -68,8 +68,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	# Seal the upper aperture with a subtle inward-domed cloth cap; this
 	# shares the same material, articulation and detachable limb identity.
 	# A separate cylinder/collarbone would only recreate the old problem.
-	var top_radius_x: float=RX[0]*shoulder*muscle
-	var top_radius_z: float=RZ[0]*lerpf(.92,1.12,
+	var top_radius_x: float=RX[0]*shoulder*muscle*.93
+	var top_radius_z: float=RZ[0]*.91*lerpf(.92,1.12,
 		GENES.value(genome,"body_depth"))
 	var dome_center:=Vector3(sign*CX[0],HEIGHT[0]+.012,CZ[0])
 	for segment in range(14):
@@ -88,7 +88,7 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	sleeve.mesh=surface.commit()
 	sleeve.material_override=cloth
 	sleeve.set_meta("inherits_shoulder",true)
-	sleeve.set_meta("anatomic_upper_arm_radius",RX[3]*shoulder*muscle)
+	sleeve.set_meta("anatomic_upper_arm_radius",RX[3]*shoulder*muscle*.93)
 	sleeve.set_meta("anatomic_sex_profile",sex)
 	sleeve.set_meta("lean_shoulder_taper",true)
 	sleeve.set_meta("underlapping_deltoid_join",true)
@@ -196,8 +196,8 @@ static func fitted_forearm(pivot: Node3D,side: float,
 				# narrowed wrist and slight radial/ulnar asymmetry.
 				# Unlike the old tapered tube, wrist size is independent
 				# of the forearm's inherited length.
-				var taper: float=lerpf(.064,.039,smoothstep(.10,.96,t))
-				var bulge: float=.012*pow(sin(PI*t),2.0)*arm_tone
+				var taper: float=lerpf(.058,.035,smoothstep(.10,.96,t))
+				var bulge: float=.010*pow(sin(PI*t),2.0)*arm_tone
 				var wrist: float=taper+bulge
 				var sweep: float=.016*t+(.006*sin(PI*t))
 				# Flexor mass is strongest on the front of the proximal
@@ -575,22 +575,8 @@ static func dress(figure: Node3D,person: String,
 		Vector3(pocket_anchor.x*1.06,.91,pocket_anchor.z*1.06-.034),
 		Vector3(.104,.13,.035),leather,Vector3(0,-.22,0))
 	pocket.name="WornHipPouchSeam"
-	# Removed three exposed shoulder/collar cylinders. Their helper-like
-	# ivory bars looked disconnected from the torso when the NPC turned.
-	# The tunic owns the shoulder silhouette; cuffs stay rig-attached.
-	for sign in [-1.0,1.0]:
-		# Cuffs are parented to animated arms and change with each step.
-		var arm: Node3D=figure.get_node_or_null(
-			"AnimatedLeftArm" if sign<0.0 else "AnimatedRightArm") as Node3D
-		if arm!=null:
-			# The old rigid dark wrist barrel should not be wider than
-			# the fabric directly above it.
-			ART.bone(arm,Vector3(sign*.064,-.383,-.045),
-				Vector3(sign*.076,-.418,-.047),.056,.053,leather,8)
-		var leg: Node3D=figure.get_node_or_null(
-			"AnimatedLeftLeg" if sign<0.0 else "AnimatedRightLeg") as Node3D
-		# The inherited lower-leg shell and fitted boot already have a
-		# tapered ankle; adding another cuff box would recreate stacked cubes.
+	# The old rigid wrist barrel was still attached to the upper arm at
+	# the discarded elbow position. The fitted forearm now owns its wrist.
 	# Dye variation belongs to the profession, not to a random rainbow.
 	match person:
 		"mara":

@@ -136,14 +136,14 @@ static func body_scale(g: Dictionary,sex: String="unspecified") -> Vector3:
 	var depth: float=value(g,"body_depth")
 	var female: bool=sex=="female"
 	var height: float=(.875+.325*height_gene) if female else (.94+.32*height_gene)
-	var breadth: float=lerpf(.855,1.095,shoulders)
+	var breadth: float=lerpf(.835,1.065,shoulders)
 	if female:
 		# Broad-shouldered women retain their width; fine-boned women
 		# average narrower, without overriding their transmitted genes.
-		breadth*=lerpf(.945,1.012,shoulders)
-	var thickness: float=lerpf(.855,1.085,depth)
+		breadth*=lerpf(.930,1.006,shoulders)
+	var thickness: float=lerpf(.835,1.065,depth)
 	if female:
-		thickness*=lerpf(.955,1.01,depth)
+		thickness*=lerpf(.945,1.008,depth)
 	return Vector3(breadth,height,thickness)
 
 static func forearm_length(g: Dictionary) -> float:

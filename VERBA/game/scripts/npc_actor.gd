@@ -153,7 +153,7 @@ func _ready() -> void:
 		# Shoulder sockets are measured from this person's inherited upper
 		# thorax. A fixed x=.345 made both sexes look broad-shouldered.
 		var socket_width: float=BODY._section(1.365,genome,sex).x
-		arm.position=Vector3(side*(.030+.88*socket_width),1.405,0)
+		arm.position=Vector3(side*(.028+.87*socket_width),1.405,0)
 		# A slightly relaxed, inherited resting stance instead of two
 		# vertical mannequin rods; gait and reaching still drive rotation.x.
 		arm.rotation.z=side*lerpf(.095,.145,
@@ -313,8 +313,8 @@ func _ready() -> void:
 			_install_limb_hitbox(modern_leg,side_name+"_leg")
 			var modern_arm:=Node3D.new()
 			modern_arm.name="ModularModern"+side_name.capitalize()+"Arm"
-			modern_arm.position=Vector3(side*(.034+
-				.91*BODY._section(1.365,genome,sex).x),1.405,0)
+			modern_arm.position=Vector3(side*(.028+
+				.87*BODY._section(1.365,genome,sex).x),1.405,0)
 			attendant.add_child(modern_arm)
 			modern_arm.rotation.z=side*lerpf(.095,.145,GENES.value(genome,"shoulder_width"))
 			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt,sex)
@@ -657,10 +657,11 @@ func _install_limb_hitbox(limb: Node3D, part: String) -> void:
 	var capsule:=CapsuleShape3D.new()
 	# One capsule per arm retains the original limb identity while
 	# covering the full inherited shoulder-to-wrist reach.
-	capsule.height=.905 if part.ends_with("_arm") else .88
-	capsule.radius=.088 if part.ends_with("_arm") else .124
+	var arm_reach: float=.283+GENES.forearm_length(genome)+.185
+	capsule.height=arm_reach if part.ends_with("_arm") else .88
+	capsule.radius=.072 if part.ends_with("_arm") else .124
 	shape.shape=capsule
-	shape.position=Vector3(0,-.385 if part.ends_with("_arm") else -.425,0)
+	shape.position=Vector3(0,-arm_reach*.5+.030 if part.ends_with("_arm") else -.425,0)
 	area.add_child(shape)
 	limb_hitboxes[part]=area
 
@@ -776,7 +777,7 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 		if not anatomy["missing"].has(part): continue
 		var side: float=-1.0 if part.begins_with("left") else 1.0
 		var joint_y: float=1.43 if part.ends_with("arm") else .975
-		var joint_x: float=side*(.35 if part.ends_with("arm") else .17)
+		var joint_x: float=side*((.028+.87*BODY._section(1.365,genome,sex).x) if part.ends_with("arm") else .17)
 		var stump: MeshInstance3D=ART.orb(support_visual,
 			Vector3(joint_x,joint_y,0),
 			Vector3(.19,.13,.19),linen if anatomy["bandaged"] else wound,10)

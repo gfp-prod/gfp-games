@@ -105,11 +105,35 @@ func _run() -> void:
 	# Realistic average characters should not look wider than their
 	# upper torso is tall. This detects the last pass's stocky, tent-like
 	# baseline while retaining the separate feminine/masculine ratios.
-	if female_hip>.297 or male_hip>.281 or (
-			BODY._section(1.10,same_genome,"female").x>.221) or (
-			BODY._section(1.10,same_genome,"male").x>.260):
+	if female_hip>.285 or male_hip>.265 or (
+			BODY._section(1.10,same_genome,"female").x>.214) or (
+			BODY._section(1.10,same_genome,"male").x>.248):
 		_fail("Average inherited anatomy regressed to the old husky silhouette")
 		return
+	# Compare genuine inherited finger geometry against the shoulder. A
+	# shorter forearm alone can leave a visually overlong upper-arm assembly.
+	for allele in [0,500,1000]:
+		var inherited: Dictionary=same_genome.duplicate(true)
+		inherited["alleles"]["limb_ratio"]=[allele,allele]
+		var arm_root:=Node3D.new()
+		root.add_child(arm_root)
+		var sleeve:=COSTUME.fitted_sleeve(arm_root,1.0,inherited,
+			ART.mat(Color("746b5b"),.97),"male")
+		var elbow:=Node3D.new()
+		elbow.position=Vector3(.044,-.283,-.040)
+		arm_root.add_child(elbow)
+		COSTUME.fitted_forearm(elbow,1.0,inherited,
+			ART.mat(Color("746b5b"),.97),
+			ART.mat(GENES.skin_color(inherited),.96))
+		var index_finger: MeshInstance3D=elbow.get_node_or_null(
+			"Finger1LowPolyPhalanges") as MeshInstance3D
+		if sleeve==null or sleeve.mesh==null or index_finger==null:
+			_fail("Inherited articulated arm geometry is missing")
+			return
+		var tip: float=elbow.position.y+index_finger.get_aabb().position.y
+		if tip<-.85 or tip>-.70:
+			_fail("Inherited arm fingertips extend below the thigh or are stubby")
+			return
 	# Keep inherited ratios even as we narrow the average human mesh.
 	# A broad bloodline remains broad by genotype, not by clothing.
 	# Test vertical slenderness rather than simply shrinking all

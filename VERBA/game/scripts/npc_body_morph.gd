@@ -59,14 +59,14 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 	# average half-widths are deliberately lean; broadness must come from
 	# inherited muscle/frame loci, not a huge default mannequin torso.
 	# Distinct, continuous rings at hip crest / waist / ribs / shoulder.
-	var pelvis:=Vector2(.255*hips*hip_factor,
-		.249*depth*(.92+.11*hips)*pelvis_depth)
-	var midriff:=Vector2((.235*waist+.010*(1.0-muscle_gene))*waist_factor,
-		.222*depth*(.975 if female else 1.0))
-	var ribcage:=Vector2((.269*chest+upper_muscle*.65)*rib_factor,
-		.256*depth*(.970 if female else 1.030 if male else 1.0))
-	var shoulder:=Vector2((.283*shoulders+.008*chest)*shoulder_factor,
-		.246*depth*(.975 if female else 1.035 if male else 1.0))
+	var pelvis:=Vector2(.241*hips*hip_factor,
+		.228*depth*(.92+.11*hips)*pelvis_depth)
+	var midriff:=Vector2((.219*waist+.008*(1.0-muscle_gene))*waist_factor,
+		.210*depth*(.975 if female else 1.0))
+	var ribcage:=Vector2((.249*chest+upper_muscle*.55)*rib_factor,
+		.235*depth*(.970 if female else 1.030 if male else 1.0))
+	var shoulder:=Vector2((.257*shoulders+.007*chest)*shoulder_factor,
+		.226*depth*(.975 if female else 1.035 if male else 1.0))
 	# A slender collar opening closes toward the new cranial/throat
 	# landmark. An oversized neckline left a hollow dark collar around
 	# the smaller, more realistic head.
