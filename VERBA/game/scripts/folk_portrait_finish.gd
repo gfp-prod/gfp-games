@@ -32,23 +32,28 @@ static func _depth(x: float,y: float,g: Dictionary,
 	var shell: float=-.193*sqrt(maxf(.013,1.0-nx*nx-ny*ny))
 	var bridge_width: float=lerpf(.029,.070,_v(g,"nose_width"))
 	var bridge_height: float=lerpf(1.715,1.746,_v(g,"nose_bridge"))
-	var nose_projection: float=lerpf(.034,.118,_v(g,"nose_projection"))
+	# Constrain nasal projection within a face-sized volume. The former
+	# maximum of .118 across a .19-deep head made long noses look like
+	# spikes extending all the way down the face.
+	var nose_projection: float=lerpf(.030,.081,_v(g,"nose_projection"))
 	nose_projection*=(.94 if sex=="female" else 1.07 if sex=="male" else 1.0)
 	var nose: float=-nose_projection*exp(
-		-pow(x/bridge_width,2.0)-pow((y-bridge_height)/.070,2.0))
+		-pow(x/bridge_width,2.0)-pow((y-bridge_height)/.053,2.0))
 	var cheek_height: float=lerpf(1.703,1.756,_v(g,"cheek_height"))
 	var cheek_softness: float=1.16 if sex=="female" else .93 if sex=="male" else 1.0
-	var cheeks: float=-lerpf(.008,.042,_v(g,"cheek_fullness"))*cheek_softness*exp(
+	# Cheek fullness is preserved as inherited volume, but the old deep
+	# Gaussian relief created two bruised-looking hollows below each eye.
+	var cheeks: float=-lerpf(.006,.021,_v(g,"cheek_fullness"))*cheek_softness*exp(
 		-pow((absf(x)-.115)/.058,2.0)-pow((y-cheek_height)/.054,2.0))
 	var eye_level: float=lerpf(1.779,1.804,_v(g,"brow_height"))
-	var socket: float=.008*exp(-pow(
+	var socket: float=.0045*exp(-pow(
 		(absf(x)-lerpf(.074,.105,_v(g,"eye_spacing")))/.037,2.0)
 		-pow((y-eye_level)/.025,2.0))
 	var lips: float=-lerpf(.005,.024,_v(g,"lip_fullness"))*exp(
 		-pow(x/.076,2.0)-pow((y-1.666)/.019,2.0))
 	# Modest supraorbital projection changes the real brow bone, rather
 	# than only thickening an eyebrow strip or changing eye makeup.
-	var brow_ridge: float=-.010*exp(
+	var brow_ridge: float=-.0065*exp(
 		-pow((absf(x)-.075)/.071,2.0)-pow((y-1.824)/.036,2.0))
 	var ridge_factor: float=.36 if sex=="female" else 1.25 if sex=="male" else 1.0
 	brow_ridge*=ridge_factor
@@ -758,6 +763,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		highlight.name="InheritedCheekboneFacet"
 		highlight.mesh=plane.commit()
 		highlight.material_override=cheek_tone
+		highlight.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(highlight)
 	var mouth_width: float=lerpf(.038,.077,_v(g,"mouth_width"))
 	var lip_height: float=1.65+(_v(g,"face_length")-.5)*.017
@@ -816,6 +822,24 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	# inherited follicle properties without being forced into a profession.
 	HAIR.finish(root,person,g,sex,hair)
 	_facial_hair(root,g,sex,age_years)
+	# These tiny expression meshes were casting disproportionately dark
+	# contact shadows across the real inherited face. Preserve their
+	# volume, depth, animation and material response, but let the single
+	# physical skull control the face rather than dozens of local shadow
+	# casters. Hair and the anatomical throat keep normal shadow behavior.
+	var facial_decoration: Array[String]=[
+		"SubtleModeledEar","SmallRecessedEye","InheritedIris",
+		"AnatomicalPupil","IndividualUpperEyelid","AnatomicalLowerEyelid",
+		"ExpressionUpperBlinkCover","ExpressionLowerBlinkCover",
+		"InheritedBrow","ModeledNoseWing","InheritedNostril",
+		"InheritedCheekboneFacet","SmallNaturalLipLine",
+		"ModeledLowerLipLeft","NaturalLipCorner","ModeledLowerLipRight",
+		"ExpressionMouthOpening"
+	]
+	for part in root.find_children("*","MeshInstance3D",true,false):
+		if String(part.name) in facial_decoration:
+			(part as MeshInstance3D).cast_shadow=(
+				GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
 	if _v(g,"freckles")>.68:
 		for i in range(4):
 			var side: float=-1.0 if i<2 else 1.0
