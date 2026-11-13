@@ -123,6 +123,11 @@ func _run() -> void:
 		# Orthographic projection removes perspective distortion so we can
 		# compare head-to-stature, shoulders, hip projection and limb reach.
 		if i in [0,1,8]:
+			# Lift the same physical actor into clear sky only while taking
+			# the orthographic diagnostic. Hills previously hid the knees,
+			# making the anatomy reference screenshots unusable.
+			var ground_pose: Vector3=citizen.global_position
+			citizen.global_position=ground_pose+Vector3(0,10.0,0)
 			cam.projection=Camera3D.PROJECTION_ORTHOGONAL
 			cam.size=2.48
 			for direction in ["front","profile"]:
@@ -144,6 +149,7 @@ func _run() -> void:
 					return
 				print("GENETIC_LANDMARK_FRAME: "+anatomy_name)
 			cam.projection=Camera3D.PROJECTION_PERSPECTIVE
+			citizen.global_position=ground_pose
 		# Waist-level detail frames catch the old sphere hands and rigid
 		# wrists that are invisible in full-body game screenshots.
 		if i in [0,1,8]:
