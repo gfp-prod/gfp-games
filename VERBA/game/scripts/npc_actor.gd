@@ -461,8 +461,10 @@ func _make_baker_headscarf(parent: Node3D,flour: Material,
 	var tool:=SurfaceTool.new()
 	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	tool.set_material(flour)
-	var width: float=lerpf(.183,.208,GENES.value(genome,"hair_volume"))
-	var depth: float=lerpf(.155,.174,GENES.value(genome,"hair_volume"))
+	# This is a tied kerchief, not a brimmed mushroom. Let the cloth
+	# rest within the real skull width, preserving inherited volume.
+	var width: float=lerpf(.171,.191,GENES.value(genome,"hair_volume"))
+	var depth: float=lerpf(.153,.169,GENES.value(genome,"hair_volume"))
 	const SEGMENTS: int=20
 	const RINGS: int=9
 	for row in range(RINGS-1):
@@ -471,13 +473,16 @@ func _make_baker_headscarf(parent: Node3D,flour: Material,
 			for pair in [[row,seg],[row+1,seg],[row+1,seg+1],[row,seg+1]]:
 				var t: float=float(pair[0])/float(RINGS-1)
 				var a: float=TAU*float(pair[1])/float(SEGMENTS)
-				var radius: float=pow(maxf(.0,1.0-t*t),.73)
-				var rim_y: float=(1.945+.014*maxf(.0,-sin(a))+
-					.007*absf(cos(a)))
-				var y: float=(lerpf(rim_y,2.059,t)+
+				var radius: float=pow(maxf(.0,1.0-t*t),.92)
+				# Lower and tuck the leading fold against the forehead; the
+				# old high horizontal lip looked like a floating white saucer.
+				var rim_y: float=(1.912+.026*absf(cos(a))+
+					.003*maxf(.0,-sin(a)))
+				var y: float=(lerpf(rim_y,2.054,t)+
 					.003*(1.0-t)*sin(4.0*a))
 				quad.append(Vector3(cos(a)*width*radius,
-					y-1.989,sin(a)*depth*radius))
+					y-1.989,sin(a)*depth*radius-
+					.006*maxf(0.0,-sin(a))*(1.0-t)))
 			for k in [0,1,2,0,2,3]:
 				var v: Vector3=quad[k]
 				tool.set_uv(Vector2(v.x+.3,v.y+.25))
