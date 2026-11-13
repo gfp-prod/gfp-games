@@ -64,8 +64,15 @@ static func _outward_face_normal(x: float,y: float,g: Dictionary,
 	const EPS: float=.0035
 	var dx: float=(_depth(x+EPS,y,g,sex)-_depth(x-EPS,y,g,sex))/(EPS*2.0)
 	var dy: float=(_depth(x,y+EPS,g,sex)-_depth(x,y-EPS,g,sex))/(EPS*2.0)
-	return Vector3(clampf(dx,-1.65,1.65),
-		clampf(dy,-1.65,1.65),-1.0).normalized()
+	# This is a stylized LOW-POLY face, not a displacement-mapped
+	# mathematical surface. Sampling the full Gaussian nose/socket
+	# gradients turned ordinary skin almost perpendicular to the key
+	# light, painting huge black patches into the actual Godot frames.
+	# Let the sculpted triangles define profile, but use a gently varied
+	# outward lighting normal that never goes grazing across the face.
+	var shallow_x: float=clampf(dx*.15,-.22,.22)
+	var shallow_y: float=clampf(dy*.15,-.22,.22)
+	return Vector3(shallow_x,shallow_y,-1.0).normalized()
 
 
 ## Width of the lower facial outline: the old portrait was a rectangular
