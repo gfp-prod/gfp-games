@@ -94,6 +94,12 @@ static func _jaw_outline(y: float,g: Dictionary,sex: String) -> float:
 	var chin_rounding: float=lerpf(.73,1.0,smoothstep(1.575,1.675,y))
 	return lerpf(1.0,taper,lower)*chin_rounding
 
+# Rather than extruding a rectangular mask over a spherical skull,
+# roll the forehead/temple edges into the inherited crown. The face
+# remains one contiguous genetic mesh; the forehead is not a pasted card.
+static func _forehead_outline(y: float) -> float:
+	return lerpf(1.0,.73,smoothstep(1.845,1.945,y))
+
 static func _chin_edge_height(x: float,y: float) -> float:
 	# The facial shell used to end as a horizontal shelf. Curve the side
 	# boundary toward a central chin rather than a rectangular mask.
@@ -118,10 +124,10 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 			var x1: float=lerpf(-.183,.183,float(xi+1)/float(COLS))*fw
 			var y0: float=1.77+(lerpf(1.575,1.931,float(yi)/float(ROWS))-1.77)*fy
 			var y1: float=1.77+(lerpf(1.575,1.931,float(yi+1)/float(ROWS))-1.77)*fy
-			var x0low: float=x0*_jaw_outline(y0,g,sex)
-			var x0high: float=x0*_jaw_outline(y1,g,sex)
-			var x1low: float=x1*_jaw_outline(y0,g,sex)
-			var x1high: float=x1*_jaw_outline(y1,g,sex)
+			var x0low: float=x0*_jaw_outline(y0,g,sex)*_forehead_outline(y0)
+			var x0high: float=x0*_jaw_outline(y1,g,sex)*_forehead_outline(y1)
+			var x1low: float=x1*_jaw_outline(y0,g,sex)*_forehead_outline(y0)
+			var x1high: float=x1*_jaw_outline(y1,g,sex)*_forehead_outline(y1)
 			var pts: Array[Vector3]=[
 				Vector3(x0low,_chin_edge_height(x0low,y0),
 					_depth(x0low,_chin_edge_height(x0low,y0),g,sex)),
@@ -688,14 +694,14 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		# pupil and upper/lower eyelids instead of a black flat square.
 		var eye_aperture: float=lerpf(.80,1.28,_v(g,"eye_aperture"))
 		var sclera:=ART.orb(socket,Vector3(0,0,-.006),
-			Vector3(eye_width*1.18,.028*eye_aperture,.012),
-			ART.mat(Color("d5cab7"),.89),12)
+			Vector3(eye_width*1.18,.025*eye_aperture,.012),
+			ART.mat(Color("bdb3a5"),.93),12)
 		sclera.name="SmallRecessedEye"
 		var iris:=ART.orb(socket,Vector3(0,0,-.013),
-			Vector3(eye_width*.49,.019*eye_aperture,.006),iris_ink,12)
+			Vector3(eye_width*.56,.018*eye_aperture,.006),iris_ink,12)
 		iris.name="InheritedIris"
 		var pupil:=ART.orb(socket,Vector3(0,0,-.018),
-			Vector3(eye_width*.245,.012*eye_aperture,.004),eye_ink,10)
+			Vector3(eye_width*.265,.011*eye_aperture,.004),eye_ink,10)
 		pupil.name="AnatomicalPupil"
 		var lid:=_fitted_eye_fold(socket,"IndividualUpperEyelid",skin,
 			g,sex,eye_width*.94,eye_aperture,true)
