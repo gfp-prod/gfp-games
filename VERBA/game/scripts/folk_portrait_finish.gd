@@ -8,14 +8,20 @@ const GENES=preload("res://scripts/npc_genetics.gd")
 static func _v(g: Dictionary,key: String) -> float:
 	return GENES.value(g,key)
 
-static func _depth(x: float,y: float,g: Dictionary) -> float:
+static func _depth(x: float,y: float,g: Dictionary,
+		sex: String="unspecified") -> float:
 	var width: float=.197+_v(g,"face_width")*.037
 	var length: float=.215+_v(g,"face_length")*.061
 	var nx: float=x/width
 	var ny: float=(y-1.77)/length
 	# Narrower chin versus broader lower jaw is inherited independently
 	# of cheekbones. All vertices remain part of a single coherent surface.
-	var jaw: float=lerpf(.76,1.26,_v(g,"jaw_width"))
+	var jaw_gene: float=_v(g,"jaw_width")
+	var jaw: float=lerpf(.76,1.26,jaw_gene)
+	# Jaw shape has overlapping population averages. The inherited jaw
+	# allele can still make a broad-jawed woman or fine-boned man.
+	jaw*=lerpf(.88,1.05,jaw_gene) if sex=="female" else (
+		lerpf(.985,1.125,jaw_gene) if sex=="male" else 1.0)
 	var cheek: float=lerpf(.83,1.21,_v(g,"cheek_fullness"))
 	# Independent inherited jaw angle determines squareness at the chin.
 	var angle: float=lerpf(-.028,.038,_v(g,"jaw_angle"))
@@ -24,10 +30,13 @@ static func _depth(x: float,y: float,g: Dictionary) -> float:
 	var shell: float=-.193*sqrt(maxf(.013,1.0-nx*nx-ny*ny))
 	var bridge_width: float=lerpf(.026,.065,_v(g,"nose_width"))
 	var bridge_height: float=lerpf(1.715,1.746,_v(g,"nose_bridge"))
-	var nose: float=-lerpf(.034,.118,_v(g,"nose_projection"))*exp(
+	var nose_projection: float=lerpf(.034,.118,_v(g,"nose_projection"))
+	nose_projection*=(.94 if sex=="female" else 1.07 if sex=="male" else 1.0)
+	var nose: float=-nose_projection*exp(
 		-pow(x/bridge_width,2.0)-pow((y-bridge_height)/.070,2.0))
 	var cheek_height: float=lerpf(1.703,1.756,_v(g,"cheek_height"))
-	var cheeks: float=-lerpf(.004,.031,_v(g,"cheek_fullness"))*exp(
+	var cheek_softness: float=1.16 if sex=="female" else .93 if sex=="male" else 1.0
+	var cheeks: float=-lerpf(.004,.031,_v(g,"cheek_fullness"))*cheek_softness*exp(
 		-pow((absf(x)-.115)/.058,2.0)-pow((y-cheek_height)/.054,2.0))
 	var eye_level: float=lerpf(1.779,1.804,_v(g,"brow_height"))
 	var socket: float=.008*exp(-pow(
@@ -35,15 +44,23 @@ static func _depth(x: float,y: float,g: Dictionary) -> float:
 		-pow((y-eye_level)/.025,2.0))
 	var lips: float=-lerpf(.005,.024,_v(g,"lip_fullness"))*exp(
 		-pow(x/.076,2.0)-pow((y-1.666)/.019,2.0))
-	return shell+nose+cheeks+socket+lips-.003
+	# Modest supraorbital projection changes the real brow bone, rather
+	# than only thickening an eyebrow strip or changing eye makeup.
+	var brow_ridge: float=-.010*exp(
+		-pow((absf(x)-.075)/.071,2.0)-pow((y-1.824)/.036,2.0))
+	brow_ridge*=.36 if sex=="female" else 1.25 if sex=="male" else 1.0
+	return shell+nose+cheeks+socket+lips+brow_ridge-.003
 
-static func _integrated_face(root: Node3D,skin: Material,g: Dictionary) -> void:
+static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
+		sex: String="unspecified") -> void:
 	# 14*16*6 = 1344 vertices per head. This is a small mesh per
 	# genome, generated only once when a character is instantiated.
 	var st:=SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var fw: float=lerpf(.90,1.10,_v(g,"face_width"))
-	var fy: float=lerpf(.90,1.11,_v(g,"face_length"))
+	var fw: float=lerpf(.90,1.10,_v(g,"face_width"))*
+		(.965 if sex=="female" else 1.025 if sex=="male" else 1.0)
+	var fy: float=lerpf(.90,1.11,_v(g,"face_length"))*
+		(.985 if sex=="female" else 1.035 if sex=="male" else 1.0)
 	for yi in range(16):
 		for xi in range(14):
 			var x0: float=lerpf(-.183,.183,float(xi)/14.0)*fw
@@ -51,10 +68,10 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary) -> void:
 			var y0: float=1.77+(lerpf(1.575,1.931,float(yi)/16.0)-1.77)*fy
 			var y1: float=1.77+(lerpf(1.575,1.931,float(yi+1)/16.0)-1.77)*fy
 			var pts: Array[Vector3]=[
-				Vector3(x0,y0,_depth(x0,y0,g)),
-				Vector3(x0,y1,_depth(x0,y1,g)),
-				Vector3(x1,y0,_depth(x1,y0,g)),
-				Vector3(x1,y1,_depth(x1,y1,g))]
+				Vector3(x0,y0,_depth(x0,y0,g,sex)),
+				Vector3(x0,y1,_depth(x0,y1,g,sex)),
+				Vector3(x1,y0,_depth(x1,y0,g,sex)),
+				Vector3(x1,y1,_depth(x1,y1,g,sex))]
 			for j in [0,1,2,1,3,2]:
 				var point: Vector3=pts[j]
 				st.set_uv(Vector2((point.x+.20)*2.5,(point.y-1.54)*2.5))
@@ -66,12 +83,14 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary) -> void:
 	face.material_override=skin
 	root.add_child(face)
 
-static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary) -> void:
+static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary,
+		sex: String="unspecified") -> void:
 	# Continuous skin-colored bridge below the genetically sculpted jaw.
 	# Removing a tall fabric collar without this geometry left heads floating
 	# over their shoulders in the real 1280x720 village captures.
 	# A six-ring silhouette avoids the replacement artifact of a rigid neck pipe.
 	var jaw_width: float=lerpf(.88,1.13,_v(g,"jaw_width"))
+	jaw_width*=(.93 if sex=="female" else 1.055 if sex=="male" else 1.0)
 	var depth_scale: float=lerpf(.90,1.11,_v(g,"body_depth"))
 	var heights: Array[float]=[1.445,1.485,1.525,1.565,1.605,1.655]
 	var half_widths: Array[float]=[.150,.139,.145,.156,.168,.172]
@@ -107,7 +126,8 @@ static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary) -> void:
 	root.add_child(neck)
 
 static func finish(figure: Node3D,person: String,skin: Material,
-		hair: Material,brow: Material,genome: Dictionary={}) -> void:
+		hair: Material,brow: Material,genome: Dictionary={},
+		sex: String="unspecified") -> void:
 	if figure.get_node_or_null("IndividualFaceConstruction")!=null:
 		return
 	var g: Dictionary=genome if GENES.validate(genome) else GENES.founder(person)
@@ -117,9 +137,10 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	root.set_meta("no_new_collision",true)
 	root.set_meta("facial_variation",int(round(_v(g,"face_width")*100)))
 	root.set_meta("genetic_face",true)
+	root.set_meta("anatomic_sex_profile",sex)
 	figure.add_child(root)
-	_integrated_face(root,skin,g)
-	_anatomical_neck(root,skin,g)
+	_integrated_face(root,skin,g,sex)
+	_anatomical_neck(root,skin,g,sex)
 	var eye_ink:=ART.mat(Color("201c1a"),1.0)
 	var iris_ink:=ART.mat(GENES.eye_color(g),.98)
 	var lip_ink:=ART.mat(GENES.skin_color(g).darkened(
@@ -134,7 +155,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 			Vector3(.065,.102,.064)*ear_scale,skin,9)
 		ear.name="SubtleModeledEar"
 		var x: float=sign*eye_gap
-		var depth: float=_depth(x,eye_height,g)-.011
+		var depth: float=_depth(x,eye_height,g,sex)-.011
 		var socket:=Node3D.new()
 		socket.name="ExpressionEyeLeft" if sign<0.0 else "ExpressionEyeRight"
 		socket.position=Vector3(x,eye_height,depth)
@@ -173,7 +194,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		lower_cover.set_meta("rest_y",lower_cover.position.y)
 		var brow_rig:=Node3D.new()
 		brow_rig.name="ExpressionBrowLeft" if sign<0.0 else "ExpressionBrowRight"
-		brow_rig.position=Vector3(x,eye_height+.044,_depth(x,eye_height+.044,g)-.012)
+		brow_rig.position=Vector3(x,eye_height+.044,_depth(x,eye_height+.044,g,sex)-.012)
 		root.add_child(brow_rig)
 		var brow_mesh:=ART.bone(brow_rig,Vector3(-eye_width*.82,0,0),
 			Vector3(eye_width*.82,sign*tilt*.034,0),
@@ -187,7 +208,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var nose_y: float=lerpf(1.704,1.732,_v(g,"nose_bridge"))
 	var nose_width: float=lerpf(.027,.058,_v(g,"nose_width"))
 	var nostril_width: float=lerpf(.64,1.28,_v(g,"nostril_width"))
-	var nose_front: float=_depth(0,nose_y,g)
+	var nose_front: float=_depth(0,nose_y,g,sex)
 	var tip:=ART.orb(root,Vector3(0,nose_y-.012,nose_front-.007),
 		Vector3(nose_width*.84,.036,.023),skin,10)
 	tip.name="ModeledNoseTip"
@@ -195,7 +216,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	for side in [-1.0,1.0]:
 		var wing_x: float=side*nose_width*.72
 		var wing_y: float=nose_y-.035
-		var wing_front: float=_depth(wing_x,wing_y,g)
+		var wing_front: float=_depth(wing_x,wing_y,g,sex)
 		var alar:=ART.orb(root,Vector3(wing_x,wing_y,wing_front-.004),
 			Vector3(nose_width*.48,.024,.017),skin,9)
 		alar.name="ModeledNoseWing"
@@ -216,7 +237,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 			var px: float=ridge_x+offset.x*side
 			var py: float=ridge_y+offset.y
 			plane.set_uv(Vector2(px*2.0,py*2.0))
-			plane.add_vertex(Vector3(px,py,_depth(px,py,g)-.003))
+			plane.add_vertex(Vector3(px,py,_depth(px,py,g,sex)-.003))
 		var highlight:=MeshInstance3D.new()
 		highlight.name="InheritedCheekboneFacet"
 		highlight.mesh=plane.commit()
@@ -226,7 +247,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var lip_height: float=1.65+(_v(g,"face_length")-.5)*.017
 	var mouth:=Node3D.new()
 	mouth.name="ExpressionMouth"
-	mouth.position=Vector3(0,lip_height,_depth(0,lip_height,g)-.019)
+	mouth.position=Vector3(0,lip_height,_depth(0,lip_height,g,sex)-.019)
 	root.add_child(mouth)
 	# Two independently articulated lip corners make smiles, frowns,
 	# exhaustion and uncertainty readable on even a blocky face.
@@ -303,7 +324,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 			var side: float=-1.0 if i<2 else 1.0
 			var px: float=side*(.09+.030*float(i%2))
 			var py: float=1.722+float(i%2)*.016
-			var dot:=ART.orb(root,Vector3(px,py,_depth(px,py,g)-.009),
+			var dot:=ART.orb(root,Vector3(px,py,_depth(px,py,g,sex)-.009),
 				Vector3(.012,.011,.005),brow,7)
 			dot.name="InheritedFreckle"
 	root.set_meta("expression_blink",0.0)
