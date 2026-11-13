@@ -128,15 +128,15 @@ static func _hair_sheet(root: Node3D,name: String,material: Material,
 				var t: float=float(pair[0])/float(ROWS-1)
 				var u: float=float(pair[1])/float(SPANS-1)*2.0-1.0
 				var flow: float=pow(sin(PI*t),2.0)
-				var width: float=half_width*lerpf(.65,1.10,
-					smoothstep(.0,.35,t))*(1.0-.22*t)
-				var ripple: float=.012*curl*sin(t*TAU*1.4+u*2.1)
+				var width: float=half_width*lerpf(.53,.92,
+					smoothstep(.0,.35,t))*(1.0-.24*t)
+				var ripple: float=.007*curl*sin(t*TAU*1.4+u*2.1)
 				var x: float=at.x+u*width+sweep*t+ripple
 				var center_z: float=_routed_depth(at,t,tip_y,x,curl)
 				# The raised central ridge makes a continuous curved
 				# hair panel rather than a paper-flat plane.
-				var z: float=center_z-.022*(1.0-u*u)*flow
-				z+=.007*sin(u*PI*1.8+t*4.1)*t
+				var z: float=center_z-.009*(1.0-u*u)*flow
+				z+=.0035*sin(u*PI*1.8+t*4.1)*t
 				corners.append(Vector3(x,lerpf(at.y,tip_y,t),z))
 			for k in [0,1,2,0,2,3]:
 				var p: Vector3=corners[k]
@@ -197,7 +197,7 @@ static func _gathered_knot(root: Node3D,name: String,mat: Material,
 ## A faceted *connected* crop shell with a scalloped perimeter.
 ## No twenty separate spheres orbiting the scalp and no free-ended rods.
 static func _curly_crown(root: Node3D,mat: Material,g: Dictionary) -> MeshInstance3D:
-	var density: float=lerpf(.92,1.12,GENES.value(g,"hair_volume"))
+	var density: float=lerpf(.92,1.06,GENES.value(g,"hair_volume"))
 	var curl: float=GENES.value(g,"hair_curl")
 	var st:=SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -211,13 +211,13 @@ static func _curly_crown(root: Node3D,mat: Material,g: Dictionary) -> MeshInstan
 					[row+1,sector+1],[row,sector+1]]:
 				var t: float=float(pair[0])/float(ROWS-1)
 				var a: float=TAU*float(pair[1])/float(SECTORS)
-				var scallop: float=.011*curl*sin(a*10.0+t*9.0)
-				var radius: float=(.183*pow(maxf(0.0,1.0-t*t),.7)+
+				var scallop: float=.007*curl*sin(a*10.0+t*9.0)
+				var radius: float=(.158*pow(maxf(0.0,1.0-t*t),.7)+
 					scallop*(1.0-t))*density
-				var edge: float=1.944+.014*maxf(0.0,-sin(a))
+				var edge: float=1.956+.010*maxf(0.0,-sin(a))
 				quad.append(Vector3(
 					cos(a)*radius,
-					lerpf(edge,2.071+.014*curl,t)+
+					lerpf(edge,2.062+.012*curl,t)+
 						.008*sin(a*7.0+t*12.0)*sin(PI*t),
 					.026+sin(a)*radius*.81))
 			for k in [0,1,2,0,2,3]:
@@ -246,24 +246,24 @@ static func _back_panels(root: Node3D,main: Material,shine: Material,
 		var mat: Material=shine if i in [1,3] else main
 		_hair_sheet(root,"FacetedBackHairPanel"+str(i),mat,
 			Vector3(x,1.987,.151+absf(x)*.15),
-			tip_y+variation,.079,curl,x*.14)
+			tip_y+variation,.063,curl,x*.12)
 
 static func _side_framing(root: Node3D,main: Material,shine: Material,
 		tip_y: float,curl: float,wide: float=.047) -> void:
 	for side in [-1.0,1.0]:
 		var name: String="Left" if side<0.0 else "Right"
 		_hair_sheet(root,"Faceted"+name+"HairFrame",main,
-			Vector3(side*.172,1.968,-.022),
-			tip_y,wide*1.5,curl,side*.026)
+			Vector3(side*.195,1.972,.036),
+			tip_y,wide*.97,curl,side*.021)
 		_hair_sheet(root,"Fine"+name+"HairUnderlayer",shine,
-			Vector3(side*.189,1.939,.046),
-			tip_y+.082,wide*.90,curl,side*.011)
+			Vector3(side*.202,1.943,.074),
+			tip_y+.082,wide*.64,curl,side*.010)
 
 static func _braid(root: Node3D,main: Material,highlight: Material,
 		side: float,top: Vector3,tip_y: float,curl: float) -> void:
 	var side_name: String="Left" if side<0.0 else "Right"
 	_strand(root,"Woven"+side_name+"HairCore",main,
-		top,tip_y,side,.040,curl,side*.018)
+		top,tip_y,side,.027,curl,side*.018)
 	# Six alternating overlapping plaits define a readable woven strand.
 	for i in range(6):
 		var t: float=(float(i)+.42)/6.0
@@ -272,17 +272,17 @@ static func _braid(root: Node3D,main: Material,highlight: Material,
 			lerpf(top.y,tip_y,t),
 			_routed_depth(top,t,tip_y,plait_x,curl))
 		var plait:=ART.bone(root,
-			center+Vector3(-side*.035,.043,0),
-			center+Vector3(side*.035,-.039,.012),
-			.038*(1.0-t*.40),.027*(1.0-t*.35),
+			center+Vector3(-side*.021,.026,-.002),
+			center+Vector3(side*.021,-.023,.008),
+			.019*(1.0-t*.35),.015*(1.0-t*.30),
 			highlight if i%2==0 else main,8)
 		plait.name=side_name+"WovenBraidPlait"+str(i)
 	var tie_x: float=top.x+side*.018
 	var tie_depth: float=_routed_depth(top,1.0,tip_y,tie_x,curl)
 	var end:=ART.bone(root,
-		Vector3(tie_x,tip_y+.043,tie_depth),
-		Vector3(tie_x,tip_y+.023,tie_depth+.004),
-		.028,.025,highlight,8)
+		Vector3(tie_x,tip_y+.028,tie_depth),
+		Vector3(tie_x,tip_y+.013,tie_depth+.004),
+		.018,.018,highlight,8)
 	end.name=side_name+"BraidedLeatherTie"
 
 static func _swept_top(root: Node3D,main: Material,shine: Material,
@@ -319,9 +319,9 @@ static func finish(face_root: Node3D,person: String,genome: Dictionary,
 			_side_framing(root,hair,shine,length_end+.09,curl)
 			if style=="wave":
 				for side in [-1.0,1.0]:
-					_strand(root,"SinuousOverShoulder"+str(side),shine,
-						Vector3(side*.196,1.845,-.005),length_end+.105,
-						side,.047,maxf(.52,curl),side*.055)
+					_hair_sheet(root,"SinuousOverShoulder"+str(side),shine,
+						Vector3(side*.204,1.845,.011),length_end+.105,
+						.031,maxf(.52,curl),side*.029)
 		"braids":
 			_back_panels(root,deep,hair,1.65,curl)
 			for side in [-1.0,1.0]:
@@ -363,8 +363,8 @@ static func finish(face_root: Node3D,person: String,genome: Dictionary,
 			# angles while remaining part of the hair, not decorative rods.
 			for side in [-1.0,1.0]:
 				_hair_sheet(root,"CurlyTemple"+str(side),deep,
-					Vector3(side*.166,2.018,-.021),1.946,.044,curl,
-					side*.006)
+					Vector3(side*.154,2.012,-.019),1.954,.032,curl,
+					side*.004)
 		_:
 			_swept_top(root,hair,deep,curl,1.0)
 			if style=="crop":
