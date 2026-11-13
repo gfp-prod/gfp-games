@@ -143,74 +143,183 @@ static func _anatomical_neck(root: Node3D,skin: Material,g: Dictionary,
 	neck.set_meta("no_new_collision",true)
 	root.add_child(neck)
 
-## Layered hair behind the temples and ears, fitted to each inherited head.
-## Hairstyle is grooming, not a fixed sex allele. Named villagers choose
-## distinct cuts; future descendants may select longer hair independently
-## of role. The sculpted cheek, jaw and eyes remain unobscured.
+## Faceted hair shapes use real contour geometry. They are groomed
+## choices whose length, curl, thickness and pattern are inherited.
+## Do not build hair from giant unsupported eggs stuck to the skull.
+static func _hair_lock(root: Node3D,name: String,hair: Material,
+		x: float,z: float,end_y: float,volume: float,curl: float,
+		back: bool=false) -> MeshInstance3D:
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(hair)
+	const STEPS: int=10
+	const SIDES: int=9
+	for i in range(STEPS-1):
+		for k in range(SIDES):
+			var corners: Array[Vector3]=[]
+			for pair in [[i,k],[i+1,k],[i+1,k+1],[i,k+1]]:
+				var row: int=int(pair[0])
+				var a: float=TAU*float(pair[1])/float(SIDES)
+				var t: float=float(row)/float(STEPS-1)
+				var radius: float=(.036+.023*volume)*lerpf(1.10,.38,
+					smoothstep(.55,1.0,t))
+				var sway: float=sin(t*TAU*(.70+curl*.65))*.026*curl
+				var root_y: float=1.945
+				var yy: float=lerpf(root_y,end_y,t)
+				var xx: float=x+sway+sin(t*PI)*signf(x)*.012
+				var zz: float=z+lerpf(-.055,.025,t)+(
+					.067*pow(t,1.3) if back else -.025*pow(t,1.5))
+				corners.append(Vector3(xx+cos(a)*radius,yy,
+					zz+sin(a)*radius*.85))
+			for index in [0,1,2,0,2,3]:
+				var v: Vector3=corners[index]
+				st.set_uv(Vector2(float(k)/float(SIDES),v.y*1.3))
+				st.add_vertex(v)
+	st.generate_normals()
+	var strand:=MeshInstance3D.new()
+	strand.name=name
+	strand.mesh=st.commit()
+	strand.material_override=hair
+	strand.set_meta("inherited_hair_length",end_y)
+	strand.set_meta("no_new_collision",true)
+	root.add_child(strand)
+	return strand
+
 static func _layered_hair(root: Node3D,person: String,
 		hair: Material,g: Dictionary,sex: String) -> void:
-	var cut: float=0.0
-	match person:
-		"sela": cut=1.56
-		"mara": cut=1.62
-		"lena": cut=1.59
-		"nima": cut=1.54
-		"juno": cut=1.68
-		"ida": cut=0.0
-		_:
-			var volume: float=_v(g,"hair_volume")
-			if sex=="female" and volume>.44:
-				cut=lerpf(1.72,1.55,volume)
-			elif sex=="male" and volume>.89:
-				cut=1.70
-	if cut==0.0: return
-	var fullness: float=lerpf(.86,1.14,_v(g,"hair_volume"))
-	var curl: float=_v(g,"hair_curl")
-	for side in [-1.0,1.0]:
-		var tmesh:=SurfaceTool.new()
-		tmesh.begin(Mesh.PRIMITIVE_TRIANGLES)
-		tmesh.set_material(hair)
-		const RINGS: int=7
-		const SECTORS: int=12
-		for row in range(RINGS-1):
-			for sector in range(SECTORS):
-				var verts: Array[Vector3]=[]
-				for pair in [[row,sector],[row+1,sector],[row+1,sector+1],[row,sector+1]]:
-					var k: int=int(pair[0])
-					var theta: float=TAU*float(pair[1])/float(SECTORS)
-					var t: float=float(k)/float(RINGS-1)
-					var yy: float=lerpf(1.965,cut,t)
-					var thick: float=lerpf(.050,.028,smoothstep(.60,1.0,t))
-					var swing: float=.010*sin(t*TAU*(1.0+curl))
-					var cx: float=side*(.164+.022*sin(PI*t)+swing)
-					var cz: float=lerpf(.012,.048,t)
-					verts.append(Vector3(
-						cx+cos(theta)*thick*fullness,
-						yy,
-						cz+sin(theta)*(.060+.016*curl)*(1.0-.32*t)))
+	var shape: Dictionary=GENES.hair_profile(g,sex,person)
+	var style: String=String(shape["style"])
+	var volume: float=float(shape["volume"])
+	var curl: float=float(shape["curl"])
+	var length: float=float(shape["length"])
+	root.set_meta("inherited_hair_style",style)
+	root.set_meta("inherited_hair_length",length)
+	if style in ["loose","wave","braids","bun","ponytail"]:
+		var end_y: float=lerpf(1.52,1.30,length)
+		if person=="sela": end_y=1.39
+		if person=="lena": end_y=1.32
+		if person=="mara": end_y=1.37
+		for side in [-1.0,1.0]:
+			var strand_end: float=end_y if style not in ["bun","ponytail"] else 1.72
+			if style=="braids":
+				strand_end=end_y-.045
+			var lock:=_hair_lock(root,
+				"HereditaryLeftHairDrape" if side<0.0 else
+				"HereditaryRightHairDrape",hair,side*.180,
+				-.008 if style=="braids" else .075,
+				strand_end,volume,curl,style!="braids")
+			if style=="braids":
+				# A thin diagonal braid cord, divided into small facets,
+				# lies in front of the collar, without intersecting the face.
+				lock.position.z=-.12
+				var wrap:=ART.bone(root,
+					Vector3(side*.19,end_y+.018,-.158),
+					Vector3(side*.19,end_y-.004,-.158),
+					.019,.014,ART.mat(Color("927356"),.99),8)
+				wrap.name="HairBraidTie"
+		if style in ["loose","wave"]:
+			for side in [-1.0,1.0]:
+				_hair_lock(root,"SecondaryLayeredBackHair",hair,side*.092,
+					.180,end_y-.045,volume*.81,curl,true)
+		if style=="bun":
+			# Low tied knot behind the skull, not a second helmet.
+			var knot:=ART.orb(root,Vector3(0,1.80,.225),
+				Vector3(.25,.24,.17),hair,11)
+			knot.name="TiedLowHairBun"
+		if style=="ponytail":
+			_hair_lock(root,"TiedBackHereditaryPonytail",hair,0,.218,
+				end_y-.10,volume,curl,true)
+			var cord:=ART.bone(root,Vector3(-.08,1.846,.205),
+				Vector3(.08,1.846,.205),.018,.018,
+				ART.mat(Color("574334"),.99),8)
+			cord.name="HairPonytailCord"
+	elif style in ["shaggy","swept"]:
+		for side in [-1.0,1.0]:
+			_hair_lock(root,"MasculineSideSweptHair",hair,side*.176,
+				.035,1.735,volume*.78,curl)
+		var part:=ART.bone(root,Vector3(-.12,1.998,-.110),
+			Vector3(.11,2.015,-.106),.013,.013,hair,9)
+		part.name="ShortSideSweptParting"
+	elif style=="curly_crop":
+		for side in [-1.0,1.0]:
+			var taper:=ART.orb(root,Vector3(side*.157,1.950,-.035),
+				Vector3(.112,.087,.112),hair,9)
+			taper.name="CurledTempleFade"
+	# The inherited crown still exists. Long hair reads through layered
+	# silhouettes and works with hats and bonnets.
+
+## Genetically expressed facial hair occupies the actual chin and jaw
+## skin surface. It is never a face-covering sphere or decal that hides
+## eyes, nose or speaking lips. Stubble, moustache, goatee and full-beard
+## profiles all use the same saved DNA and adult age expression.
+static func _facial_hair(root: Node3D,person: String,hair: Material,
+		g: Dictionary,sex: String,age_years: float) -> void:
+	var profile: Dictionary=GENES.beard_profile(g,sex,age_years)
+	var style: String=String(profile["style"])
+	root.set_meta("heritable_beard_style",style)
+	root.set_meta("heritable_beard_density",float(profile["density"]))
+	if style=="clean": return
+	var beard:=ART.mat(GENES.hair_color(g).darkened(.10),.99)
+	var fullness: float=float(profile["density"])
+	var tip: float=float(profile["length"])
+	var needs_chin: bool=style in ["goatee","short","full","stubble"]
+	if needs_chin:
+		var surface:=SurfaceTool.new()
+		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		surface.set_material(beard)
+		var lower_y: float=1.605-(
+			.046*tip if style in ["full","short"] else .009)
+		var top_y: float=1.647
+		for i in range(6):
+			for j in range(12):
+				var vertices: Array[Vector3]=[]
+				for item in [[i,j],[i+1,j],[i+1,j+1],[i,j+1]]:
+					var row: int=int(item[0])
+					var sector: int=int(item[1])
+					var v: float=float(row)/6.0
+					var angle: float=lerpf(-PI*.86,-PI*.14,
+						float(sector)/12.0)
+					var width: float=(
+						.092 if style=="goatee" else .168)
+					var x: float=cos(angle)*width
+					var y: float=lerpf(top_y,lower_y,v)
+					var forward: float=_depth(x,maxf(1.585,y),g,sex)
+					var projection: float=.010+.018*v*fullness
+					vertices.append(Vector3(x,y,forward-projection))
 				for index in [0,1,2,0,2,3]:
-					var p: Vector3=verts[index]
-					tmesh.set_uv(Vector2(float(sector)/float(SECTORS),p.y))
-					tmesh.add_vertex(p)
-		tmesh.generate_normals()
-		var lock:=MeshInstance3D.new()
-		lock.name="LayeredLeftTempleHair" if side<0.0 else "LayeredRightTempleHair"
-		lock.mesh=tmesh.commit()
-		lock.material_override=hair
-		lock.set_meta("groomed_not_sex_locked",true)
-		lock.set_meta("no_new_collision",true)
-		root.add_child(lock)
-	# The back falls behind the jaw, not across the facial features.
-	var nape:=ART.orb(root,Vector3(0,lerpf(1.84,1.75,
-		clampf((1.74-cut)/.20,0.0,1.0)),.144),
-		Vector3(.304,lerpf(.33,.45,clampf((1.74-cut)/.20,0.0,1.0)),
-		.127),hair,12)
-	nape.name="LayeredNapeHair"
-	nape.set_meta("no_new_collision",true)
+					var point: Vector3=vertices[index]
+					surface.set_uv(Vector2((point.x+.20)*2.0,point.y))
+					surface.add_vertex(point)
+		surface.generate_normals()
+		var chin:=MeshInstance3D.new()
+		chin.name="InheritedFacialHairChin"
+		chin.mesh=surface.commit()
+		chin.material_override=beard
+		chin.set_meta("no_new_collision",true)
+		root.add_child(chin)
+	if style in ["moustache","full","short"]:
+		for side in [-1.0,1.0]:
+			var x: float=side*.042
+			var y: float=1.686
+			var z: float=_depth(x,y,g,sex)-.026
+			var moustache:=ART.bone(root,
+				Vector3(side*.006,y+.004,z),
+				Vector3(side*.074,y-.005,z+.004),.015,
+				.010,beard,9)
+			moustache.name=(
+				"InheritedLeftMoustache" if side<0.0 else "InheritedRightMoustache")
+	if style in ["full","short","sideburns"]:
+		for side in [-1.0,1.0]:
+			var cheek:=ART.bone(root,
+				Vector3(side*.153,1.749,-.116),
+				Vector3(side*.146,1.666,-.104),
+				.018+.018*fullness,.012+.008*tip,beard,9)
+			cheek.name=(
+				"InheritedLeftSideburn" if side<0.0 else "InheritedRightSideburn")
 
 static func finish(figure: Node3D,person: String,skin: Material,
 		hair: Material,brow: Material,genome: Dictionary={},
-		sex: String="unspecified") -> void:
+		sex: String="unspecified",age_years: float=28.0) -> void:
 	if figure.get_node_or_null("IndividualFaceConstruction")!=null:
 		return
 	var g: Dictionary=genome if GENES.validate(genome) else GENES.founder(person)
@@ -403,6 +512,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 			Vector3(.11,2.011,-.14),.014,.014,brow,8)
 		part.name="InheritedHairPart"
 	_layered_hair(root,person,hair,g,sex)
+	_facial_hair(root,person,hair,g,sex,age_years)
 	if _v(g,"freckles")>.68:
 		for i in range(4):
 			var side: float=-1.0 if i<2 else 1.0
