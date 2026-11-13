@@ -49,10 +49,10 @@ func _run() -> void:
 	for entry in entries:
 		definitions[String(entry["id"])]=entry
 	var renders:Array=[
-		{"name":"npc_women_fullbody","ids":["ida","lena","nima","mara","sela","juno"],"distance":-8.3,"level":1.23},
-		{"name":"npc_men_fullbody","ids":["orin","titus","tomas","daro","cass","brin"],"distance":-8.3,"level":1.23},
-		{"name":"npc_faces_women","ids":["lena","nima","sela"],"distance":-3.7,"level":1.75},
-		{"name":"npc_faces_men","ids":["titus","orin","tomas"],"distance":-3.7,"level":1.75}
+		{"name":"npc_women_fullbody","ids":["ida","lena","nima","mara","sela","juno"],"distance":-6.75,"level":1.23},
+		{"name":"npc_men_fullbody","ids":["orin","titus","tomas","daro","cass","brin"],"distance":-6.75,"level":1.23},
+		{"name":"npc_faces_women","ids":["lena","nima","sela"],"distance":-3.35,"level":1.75},
+		{"name":"npc_faces_men","ids":["titus","orin","tomas"],"distance":-3.35,"level":1.75}
 	]
 	var dir:="res://visual-reports"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
