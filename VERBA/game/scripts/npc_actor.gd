@@ -123,9 +123,16 @@ func _ready() -> void:
 	# one-piece walking cone. Props remain on their own worker identities.
 	# Twelve-sided fitted tunic with a broad shoulder and a shaped hem:
 	# these surfaces replace the previous square torso and floating eyes.
+	# Hide the obsolete fixed cone shells that cover inherited waist,
+	# hips and torso geometry. Retain nodes temporarily for old scene
+	# references; the visible clothes come from fitted BODY and COSTUME.
 	var tunic:=ART.cone(figure,Vector3(0,1.125,0),.285,.56,cloth,.205,12)
 	tunic.name="TaperedVillagerTunic"
-	ART.cone(figure,Vector3(0,.79,0),.315,.52,cloth,.255,12)
+	tunic.visible=false
+	tunic.set_meta("legacy_hidden_by_genetic_torso",true)
+	var old_lower_tunic:=ART.cone(figure,Vector3(0,.79,0),.315,.52,cloth,.255,12)
+	old_lower_tunic.name="LegacyLowerTunicHidden"
+	old_lower_tunic.visible=false
 	# Shoulder, neck opening and trapezius now come from the inherited
 	# single cloth surface. No exposed helper cylinder beneath the chin.
 	var head:=ART.orb(figure,Vector3(0,1.77,0),
@@ -152,7 +159,7 @@ func _ready() -> void:
 		# remain children of this original severable arm, not new body modules.
 		var forearm:=Node3D.new()
 		forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-		forearm.position=Vector3(side*.072,-.378,-.045)
+		forearm.position=Vector3(side*.072,-.410,-.045)
 		forearm.rotation.x=-.11
 		arm.add_child(forearm)
 		COSTUME.fitted_forearm(forearm,side,genome,cloth,skin)
@@ -292,7 +299,7 @@ func _ready() -> void:
 			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt)
 			var modern_forearm:=Node3D.new()
 			modern_forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-			modern_forearm.position=Vector3(side*.072,-.378,-.045)
+			modern_forearm.position=Vector3(side*.072,-.410,-.045)
 			modern_forearm.rotation.x=-.11
 			modern_arm.add_child(modern_forearm)
 			COSTUME.fitted_forearm(modern_forearm,side,genome,shirt,skin)
@@ -601,10 +608,12 @@ func _install_limb_hitbox(limb: Node3D, part: String) -> void:
 	limb.add_child(area)
 	var shape:=CollisionShape3D.new()
 	var capsule:=CapsuleShape3D.new()
-	capsule.height=.94 if part.ends_with("_arm") else .42
+	# One capsule per arm retains the original limb identity while
+	# covering the full inherited shoulder-to-wrist reach.
+	capsule.height=1.18 if part.ends_with("_arm") else .42
 	capsule.radius=.119 if part.ends_with("_arm") else .135
 	shape.shape=capsule
-	shape.position=Vector3(0,-.46 if part.ends_with("_arm") else -.23,0)
+	shape.position=Vector3(0,-.57 if part.ends_with("_arm") else -.23,0)
 	area.add_child(shape)
 	limb_hitboxes[part]=area
 
