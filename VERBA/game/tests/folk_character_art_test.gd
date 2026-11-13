@@ -86,14 +86,43 @@ func _run() -> void:
 		"GroomedHairStudio",true,false) as Node3D
 	if smith_style==null or smith_style.get_child_count()<3:
 		_fail("Blacksmith has no inherited male hairstyle geometry"); return
-	# Seven straight long locks used to appear as a levitating flat plate
-	# over the smith's head. Demand a real multi-height curl cluster.
-	var curl_meshes: Array[Node]=smith_style.find_children(
-		"TightFacetedCurl*","MeshInstance3D",false,false)
-	if curl_meshes.size()<18 or smith_style.find_child(
-			"TightCurlLock*",true,false)!=null:
-		_fail("Male curly crop reverted to floating rigid strands")
+	# The blacksmith's curls must be ONE coherent surface. Previous
+	# attempts passed density checks by scattering spheres above his skull.
+	var curl_crown: MeshInstance3D=smith_style.get_node_or_null(
+		"SculptedCurlyCrown") as MeshInstance3D
+	if curl_crown==null or curl_crown.mesh==null or (
+			not bool(curl_crown.get_meta("one_connected_curl_silhouette",false))):
+		_fail("Curly hair reverted to a floating collection of spheres")
 		return
+	if curl_crown.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<1000:
+		_fail("Curly crown lost its connected low-poly sculpt"); return
+	if smith_style.find_child("TightFacetedCurl*",true,false)!=null or (
+			smith_style.find_child("TightCurlLock*",true,false)!=null):
+		_fail("Unconnected curl beads or stiff dangling locks returned")
+		return
+	# Visual quality must be inspected in generated mesh vertices, not
+	# just the presence of a hairstyle tag. Check real hairline geometry.
+	for person_actor in [ida,orin,mara,sela]:
+		var cap: MeshInstance3D=person_actor.find_child(
+			"NaturalHairline",true,false) as MeshInstance3D
+		if cap==null or cap.mesh==null or not bool(
+				cap.get_meta("hairline_follows_skull",false)):
+			_fail("Genetically shaped hairline was replaced by a helmet sphere")
+			return
+		if cap.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<500:
+			_fail("Hairline lacks the sculpted silhouette topology")
+			return
+	for actor in [mara,sela]:
+		var groom: Node3D=actor.find_child("GroomedHairStudio",true,false)
+		var panels: Array[Node]=groom.find_children(
+			"FacetedBackHairPanel*","MeshInstance3D",false,false)
+		if panels.size()<3:
+			_fail("Long hair lost its overlapping sculpted silhouette")
+			return
+		for panel in panels:
+			if not bool(panel.get_meta("sculpted_continuous_tress",false)):
+				_fail("Long hairstyle reverted to hanging rigid hair tubes")
+				return
 	var figure=ida.find_child("VisibleInhabitant",true,false)
 	var face=ida.find_child("ModeledInhabitantHead",true,false) as MeshInstance3D
 	var robe=ida.find_child("TaperedVillagerTunic",true,false) as MeshInstance3D
