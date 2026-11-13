@@ -66,11 +66,17 @@ func _run() -> void:
 		var panel: MeshInstance3D=cheek as MeshInstance3D
 		if panel.cast_shadow!=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
 			_fail("Decorative beard creates mask-like cheek shadow"); return
-		var beard_pts: PackedVector3Array=panel.mesh.surface_get_arrays(0)[
-			Mesh.ARRAY_VERTEX]
-		for p in beard_pts:
-			if p.y>1.715:
+		var arrays: Array=panel.mesh.surface_get_arrays(0)
+		var beard_pts: PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+		var beard_normals: PackedVector3Array=arrays[Mesh.ARRAY_NORMAL]
+		if beard_normals.size()!=beard_pts.size() or beard_pts.size()<70:
+			_fail("Genetic beard has missing or empty face normals"); return
+		for i in range(beard_pts.size()):
+			if beard_pts[i].y>1.715:
 				_fail("Beard grows into the inherited lower eyelid"); return
+			if beard_normals[i].z>-.75:
+				_fail("Genetic beard points inward and shades as black bruise")
+				return
 	# The genetically sculpted face must meet the ORIGINAL skull at the
 	# temples without a floating cardboard mask edge, across head sizes.
 	var face_mesh: MeshInstance3D=beard_root.find_child(
