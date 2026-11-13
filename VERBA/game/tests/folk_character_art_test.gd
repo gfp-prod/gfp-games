@@ -42,6 +42,50 @@ func _run() -> void:
 	if ida==null or orin==null:
 		_fail("Baker or blacksmith is missing from the living village")
 		return
+	# Quality gate: women must have distinct hair and dress silhouettes
+	# and professions must use low-poly tools, not floating huge boxes.
+	var sela: Node3D
+	var mara: Node3D
+	var titus: Node3D
+	for resident in world.npcs:
+		match resident.npc_id:
+			"sela": sela=resident
+			"mara": mara=resident
+			"titus": titus=resident
+	if sela==null or mara==null or titus==null:
+		_fail("Character art gallery lacks female/male profession variety"); return
+	for woman in [ida,mara,sela]:
+		var styled: Node3D=woman.find_child(
+			"GroomedHairStudio",true,false) as Node3D
+		var tailored: MeshInstance3D=woman.find_child(
+			"TailoredHereditaryDress",true,false) as MeshInstance3D
+		var outfit: Node3D=woman.find_child(
+			"RoleWardrobeLayers",true,false) as Node3D
+		if styled==null or tailored==null or outfit==null:
+			_fail("Women regressed to the unisex tunic and blank scalp"); return
+		if styled.get_child_count()<3 or tailored.mesh==null:
+			_fail("Female hair and dress silhouettes lack modeled layers"); return
+		if woman.find_children("*","CollisionShape3D",true,false).is_empty():
+			_fail("Character lost physical limb targeting during costume pass"); return
+	if String(mara.find_child("GroomedHairStudio",true,false).get_meta(
+			"hairstyle",""))==String(sela.find_child(
+			"GroomedHairStudio",true,false).get_meta("hairstyle","")):
+		_fail("Different women still share identical grooming"); return
+	var merchant_pouch: MeshInstance3D=sela.find_child(
+		"VisibleMerchantPouch",true,false) as MeshInstance3D
+	if merchant_pouch==null or merchant_pouch.mesh is BoxMesh or (
+			merchant_pouch.get_aabb().size.x>.32) or (
+			not bool(merchant_pouch.get_meta("hip_fitted_satchels",false))):
+		_fail("Merchant still carries a large floating golden box"); return
+	var shield: MeshInstance3D=titus.find_child(
+		"VisibleGuardShield",true,false) as MeshInstance3D
+	if shield==null or shield.mesh==null or shield.mesh is BoxMesh or (
+			not titus.left_arm.is_ancestor_of(shield)):
+		_fail("Guard still carries a suspended rectangular shield"); return
+	var smith_style: Node3D=orin.find_child(
+		"GroomedHairStudio",true,false) as Node3D
+	if smith_style==null or smith_style.get_child_count()<3:
+		_fail("Blacksmith has no inherited male hairstyle geometry"); return
 	var figure=ida.find_child("VisibleInhabitant",true,false)
 	var face=ida.find_child("ModeledInhabitantHead",true,false) as MeshInstance3D
 	var robe=ida.find_child("TaperedVillagerTunic",true,false) as MeshInstance3D
