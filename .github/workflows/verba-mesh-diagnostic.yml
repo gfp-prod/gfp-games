@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - "VERBA/game/tests/diagnose_genetic_meshes.gd"
+      - "VERBA/game/tests/parse_character_scripts.gd"
+      - "VERBA/game/scripts/folk_portrait_finish.gd"
+      - "VERBA/game/scripts/npc_genetics.gd"
       - ".github/workflows/verba-mesh-diagnostic.yml"
 jobs:
   material-and-mesh-trace:
@@ -19,6 +22,10 @@ jobs:
           use-dotnet: false
       - name: Import real Godot meshes
         run: godot --headless --path . --editor --import --quit >/tmp/verba-mesh-import.log 2>&1
+      - name: Directly parse NPC appearance scripts with exact line errors
+        run: |
+          godot --headless --path . --script res://tests/parse_character_scripts.gd 2>&1 | tee /tmp/character-parse.log
+          grep -q "PASS: direct character script parser" /tmp/character-parse.log
       - name: Find tall model artifacts near faces
         run: |
           timeout 90s godot --headless --path . --script res://tests/diagnose_genetic_meshes.gd 2>&1 | tee /tmp/mesh-diagnostic.log
