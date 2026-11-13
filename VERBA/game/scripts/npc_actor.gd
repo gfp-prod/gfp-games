@@ -146,6 +146,11 @@ func _ready() -> void:
 	var head:=ART.orb(figure,Vector3(0,1.77,0),
 		Vector3(.42,.49,.39),skin,13)
 	head.name="ModeledInhabitantHead"
+	# Preserve the legacy skull for back-of-head silhouette, original
+	# figure calibration and save compatibility, but never allow this
+	# overlapping orb to project a fake face-mask shadow onto the
+	# sculpted, inherited front facial surface.
+	head.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# Individual anatomy replaces the floating eyes and identical hair
 	# caps, retaining the original tested head and collision silhouette.
 	var hair:=ART.mat(GENES.hair_color(genome),.96)
@@ -347,6 +352,7 @@ func _ready() -> void:
 		var modern_head:=ART.orb(attendant,Vector3(0,1.76,0),
 			Vector3(.42,.49,.39),skin,12)
 		modern_head.name="ModernGeneticHead"
+		modern_head.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		# The former two huge head-level boxes became a floating roof in
 		# close-up. A close crown and shallow visor preserve the station
 		# worker's hat without hiding the genetic face beneath it.
