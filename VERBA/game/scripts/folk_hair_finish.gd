@@ -13,7 +13,10 @@ static func _routed_depth(at: Vector3,t: float,tip_y: float,
 	var z: float=at.z+.045*t+.010*curl*sin(t*TAU*1.2)
 	if tip_y>=1.70:
 		return z
-	var shoulder_turn: float=smoothstep(.14,.64,t)
+	# Keep the first part of the tress behind the jaw. Turning toward
+	# the front of the tunic while still at cheek height made side locks
+	# look like two suspended boards glued to the face.
+	var shoulder_turn: float=smoothstep(.40,.86,t)
 	if at.z>.10:
 		# Long loose hair and ponytails clear the back of a fitted tunic.
 		z=lerpf(z,maxf(z,.358+.035*absf(x)),shoulder_turn)
@@ -67,9 +70,9 @@ static func scalp_cap(face_root: Node3D, hair: Material, genome: Dictionary,
 	if existing!=null: return existing
 	var volume: float=GENES.value(genome,"hair_volume")
 	var part: float=GENES.value(genome,"hair_parting")
-	var width: float=lerpf(.187,.209,volume)
-	var depth: float=lerpf(.159,.185,volume)
-	var top: float=lerpf(2.048,2.085,volume)
+	var width: float=lerpf(.180,.200,volume)
+	var depth: float=lerpf(.169,.185,volume)
+	var top: float=lerpf(2.044,2.077,volume)
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(hair)
@@ -84,13 +87,16 @@ static func scalp_cap(face_root: Node3D, hair: Material, genome: Dictionary,
 				var theta: float=TAU*float(pair[1])/float(SECTORS)
 				var t: float=float(k)/float(RINGS-1)
 				var circumference: float=pow(maxf(.0,1.0-t*t),.68)
-				var hairline: float=1.924+.014*maxf(.0,-sin(theta))
-				hairline+=.015*absf(cos(theta))
+				# Place the leading rim on the forehead rather than behind
+				# the face at hairline height, and sweep it up at the temples.
+				var front: float=maxf(0.0,-sin(theta))
+				var hairline: float=1.911+.027*absf(cos(theta))-.003*front
 				hairline+=.009*(part-.5)*cos(theta)
+				hairline+=.0035*sin(theta*6.0+part*TAU)*front
 				quad.append(Vector3(
 					cos(theta)*width*circumference,
 					lerpf(hairline,top,t)+.004*(1.0-t)*sin(theta*3.0+t*5.0),
-					.030+sin(theta)*depth*circumference))
+					.000+sin(theta)*depth*circumference))
 			for k in [0,1,2,0,2,3]:
 				var p: Vector3=quad[k]
 				surface.set_uv(Vector2((p.x+.25)*2.0,(p.z+.25)*2.0))
@@ -132,7 +138,8 @@ static func _hair_sheet(root: Node3D,name: String,material: Material,
 				# widening as it passes the temple. A broad straight upper
 				# edge made the old hair read like a glued-on paper card.
 				var width: float=half_width*lerpf(.16,.95,
-					smoothstep(.0,.23,t))*(1.0-.32*t)
+					smoothstep(.0,.23,t))*(1.0-.32*t)*(
+					1.0-.51*smoothstep(.68,1.0,t))
 				var ripple: float=.007*curl*sin(t*TAU*1.4+u*2.1)
 				var x: float=at.x+u*width+sweep*t+ripple
 				var center_z: float=_routed_depth(at,t,tip_y,x,curl)
@@ -215,14 +222,16 @@ static func _curly_crown(root: Node3D,mat: Material,g: Dictionary) -> MeshInstan
 				var t: float=float(pair[0])/float(ROWS-1)
 				var a: float=TAU*float(pair[1])/float(SECTORS)
 				var scallop: float=.007*curl*sin(a*10.0+t*9.0)
-				var radius: float=(.158*pow(maxf(0.0,1.0-t*t),.7)+
+				var radius: float=(.172*pow(maxf(0.0,1.0-t*t),.7)+
 					scallop*(1.0-t))*density
-				var edge: float=1.956+.010*maxf(0.0,-sin(a))
+				# A front hairline that touches the forehead; the former rim
+				# started above the face as a detached flat black cap.
+				var edge: float=1.917+.028*absf(cos(a))-.004*maxf(0.0,-sin(a))
 				quad.append(Vector3(
 					cos(a)*radius,
 					lerpf(edge,2.062+.012*curl,t)+
 						.008*sin(a*7.0+t*12.0)*sin(PI*t),
-					.026+sin(a)*radius*.81))
+					.000+sin(a)*radius*.96))
 			for k in [0,1,2,0,2,3]:
 				var v: Vector3=quad[k]
 				st.set_uv(Vector2((v.x+.24)*2.0,(v.z+.24)*2.0))
@@ -256,11 +265,11 @@ static func _side_framing(root: Node3D,main: Material,shine: Material,
 	for side in [-1.0,1.0]:
 		var name: String="Left" if side<0.0 else "Right"
 		_hair_sheet(root,"Faceted"+name+"HairFrame",main,
-			Vector3(side*.169,1.972,.036),
-			tip_y,wide*.97,curl,side*.021)
+			Vector3(side*.181,1.953,.076),
+			tip_y,wide*.80,curl,side*.042)
 		_hair_sheet(root,"Fine"+name+"HairUnderlayer",shine,
-			Vector3(side*.178,1.943,.074),
-			tip_y+.082,wide*.64,curl,side*.010)
+			Vector3(side*.184,1.935,.095),
+			tip_y+.082,wide*.47,curl,side*.026)
 
 static func _braid(root: Node3D,main: Material,highlight: Material,
 		side: float,top: Vector3,tip_y: float,curl: float) -> void:
