@@ -212,12 +212,12 @@ static func _curly_crown(root: Node3D,mat: Material,g: Dictionary) -> MeshInstan
 				var t: float=float(pair[0])/float(ROWS-1)
 				var a: float=TAU*float(pair[1])/float(SECTORS)
 				var scallop: float=.011*curl*sin(a*10.0+t*9.0)
-				var radius: float=(.185*pow(maxf(0.0,1.0-t*t),.7)+
+				var radius: float=(.183*pow(maxf(0.0,1.0-t*t),.7)+
 					scallop*(1.0-t))*density
 				var edge: float=1.944+.014*maxf(0.0,-sin(a))
 				quad.append(Vector3(
 					cos(a)*radius,
-					lerpf(edge,2.101+.020*curl,t)+
+					lerpf(edge,2.071+.014*curl,t)+
 						.008*sin(a*7.0+t*12.0)*sin(PI*t),
 					.026+sin(a)*radius*.81))
 			for k in [0,1,2,0,2,3]:
@@ -353,6 +353,11 @@ static func finish(face_root: Node3D,person: String,genome: Dictionary,
 			_back_panels(root,hair,deep,1.77,curl)
 			_side_framing(root,hair,shine,1.755,curl,.036)
 		"curly_crop":
+			# Do not layer a smooth helmet dome underneath the already
+			# closed sculpted curl shell; that created an unnatural hair rim.
+			var scalp: MeshInstance3D=face_root.get_node_or_null(
+				"NaturalHairline") as MeshInstance3D
+			if scalp!=null: scalp.visible=false
 			_curly_crown(root,hair,genome)
 			# Scalp-hugging temples retain the silhouette from three-quarter
 			# angles while remaining part of the hair, not decorative rods.
