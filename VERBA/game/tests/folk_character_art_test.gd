@@ -324,9 +324,10 @@ func _run() -> void:
 				_fail("Fingertips are back at knee level or arms too short"); return
 			var area: Area3D=citizen.limb_hitboxes[side.to_lower()+"_arm"]
 			var capsule: CollisionShape3D=area.get_child(0) as CollisionShape3D
+			var expected_reach: float=.283+load("res://scripts/npc_genetics.gd").forearm_length(genome)+.185
 			if capsule==null or not (capsule.shape is CapsuleShape3D) or (
-					(capsule.shape as CapsuleShape3D).height<.88):
-				_fail("Long forearm lost its continuous physical hitbox"); return
+					absf((capsule.shape as CapsuleShape3D).height-expected_reach)>.012):
+				_fail("Genetic arm hitbox no longer matches its real reach"); return
 		var torso: MeshInstance3D=citizen.find_child(
 			"InheritedChestWaistHipCloth",true,false) as MeshInstance3D
 		if torso==null or String(torso.get_meta(
@@ -343,7 +344,7 @@ func _run() -> void:
 		var person: Dictionary=world.village_sim.people[String(citizen.npc_id)]
 		var gg: Dictionary=person["genome"]
 		var sex: String=String(person["sex"])
-		var shoulder_socket: float=.030+.88*genetic_body._section(
+		var shoulder_socket: float=.028+.87*genetic_body._section(
 			1.365,gg,sex).x
 		var femur_socket: float=.455*genetic_body._section(.78,gg,sex).x
 		if absf(citizen.left_arm.position.x+shoulder_socket)>.007 or (
