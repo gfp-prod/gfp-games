@@ -175,6 +175,23 @@ func _run() -> void:
 			man_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]):
 		_fail("Sex-linked morphology still creates identical actual mesh vertices")
 		return
+	# The earlier side-view baker had a rigid spear-shaped bust apron,
+	# despite her waist and hip ratios being correct. Inspect the actual
+	# midline shirt projection, not just the saved bust-volume allele.
+	var baseline_front: Vector3=BODY._point(1.265,-PI*.5,
+		same_genome,"female")
+	var baseline_rib: float=BODY._section(1.265,same_genome,"female").y
+	var baseline_projection: float=-baseline_front.z-baseline_rib
+	if baseline_projection<.025 or baseline_projection>.083:
+		_fail("Typical inherited female torso has an implausibly flat or projecting chest")
+		return
+	var high_bust_genome: Dictionary=same_genome.duplicate(true)
+	high_bust_genome["alleles"]["bust_volume"]=[970,970]
+	var high_projection: float=-BODY._point(1.265,-PI*.5,
+		high_bust_genome,"female").z-baseline_rib
+	if high_projection<=baseline_projection+.036 or high_projection>.148:
+		_fail("Inherited bust shape is either not expressed or protrudes as a rigid shield")
+		return
 	# Silhouette-only waist ratios are not enough: the last models still
 	# looked like featureless oval cylinders from three-quarter angles.
 	# Compare the finished front/back/side contour to each inherited oval.
