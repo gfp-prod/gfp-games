@@ -408,7 +408,9 @@ static func _beard_patch(root: Node3D,name: String,mat: Material,
 				# coal-black square directly beneath the eye. The inner
 				# cheek line begins lower, the outer sideburn remains high.
 				var inner: float=1.0-clampf(absf(x)/.14,0.0,1.0)
-				var y: float=lerpf(top-.045*inner,bottom+tip,v)
+				var cheek: bool=name.begins_with("GeneticFacialHairCheek")
+				var root_y: float=top-.045*inner if cheek else top
+				var y: float=lerpf(root_y,bottom+tip,v)
 				var z: float=_depth(x,y,g,sex)-.003-.004*weight*v
 				quad.append(Vector3(x,y,z))
 			for i in [0,1,2,0,2,3]:
