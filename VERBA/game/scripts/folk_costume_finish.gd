@@ -25,8 +25,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	# A longer rounded deltoid folds into the body from beneath the
 	# shoulder, then tapers across the biceps to the elbow. No free-standing
 	# clavicle/shoulder cylinder is needed, even when a sleeve swings.
-	const HEIGHT: Array[float]=[.095,.061,.026,-.019,-.079,-.155,-.222,-.293,-.365]
-	const CX: Array[float]=[-.078,-.056,-.025,-.006,.014,.029,.044,.053,.060]
+	const HEIGHT: Array[float]=[.095,.061,.026,-.017,-.067,-.122,-.185,-.247,-.320]
+	const CX: Array[float]=[-.076,-.054,-.023,-.007,.011,.023,.036,.046,.052]
 	const CZ: Array[float]=[-.012,-.017,-.023,-.025,-.031,-.040,-.041,-.045,-.048]
 	# Keep a low-volume cap over the deltoid, but do not give every
 	# villager broad, perfectly round biceps. High inherited muscle still
