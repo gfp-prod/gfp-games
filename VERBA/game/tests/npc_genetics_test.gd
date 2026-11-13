@@ -49,7 +49,7 @@ func _run() -> void:
 	# can produce children of different physiques without role presets.
 	var tall: Dictionary=a.duplicate(true)
 	var short: Dictionary=a.duplicate(true)
-	for locus in ["stature","shoulder_width","body_depth","hip_width"]:
+	for locus in ["stature","shoulder_width","body_depth","hip_width","limb_ratio"]:
 		tall["alleles"][locus]=[970,970]
 		short["alleles"][locus]=[40,40]
 	var large_daughter: Vector3=GENES.body_scale(tall,"female")
@@ -64,8 +64,8 @@ func _run() -> void:
 	if not _check(GENES.validate(inherited_tall) and (
 			GENES.body_scale(inherited_tall,"female").y>GENES.body_scale(short,"male").y),
 			"Parents' stature does not survive reproduction"): return
-	if not _check(GENES.forearm_length(tall) > .335 and (
-			GENES.forearm_length(short)<GENES.forearm_length(tall)):
+	if not _check(GENES.forearm_length(tall)>.335 and
+			GENES.forearm_length(short)<GENES.forearm_length(tall),
 			"Old limb_ratio allele is still ignored for arm reach"): return
 	if not _check(GENES.offspring_sex("born_0001",1938) in ["female","male"],
 			"Child sex did not resolve to a physical phenotype"): return
