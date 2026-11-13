@@ -5,6 +5,9 @@ const VERSION := 1
 const ECONOMY = preload("res://scripts/village_economy.gd")
 const ANATOMY = preload("res://scripts/npc_anatomy.gd")
 const GENES = preload("res://scripts/npc_genetics.gd")
+# Existing named women keep their identities across save migration;
+# later descendants receive a stable sex independent of their body alleles.
+const FEMALE_FOUNDERS := ["mara","ida","lena","nima","sela","juno"]
 const COMMISSIONS = preload("res://scripts/wizard_commissions.gd")
 const ROLES := [
 	["mara","scribe","crow",82,53,24],
@@ -78,6 +81,7 @@ func reset(seed_value: int) -> void:
 			"known_events":[],"last_action":"idle","alive":true,
 			"anatomy":ANATOMY.new_state(),"known_wounded":[],
 			"genome":GENES.founder(id,gene_seed),
+			"sex":"female" if FEMALE_FOUNDERS.has(id) else "male",
 			"family":GENES.founder_family(id,-365*(21+posmod(id.hash(),28))),
 			"life_stage":"adult"}
 	# Stable initial families without hardcoded affair, crime, or plot outcomes.
@@ -544,7 +548,8 @@ func create_child(parent_a_id: String,parent_b_id: String,
 		"wealth":0,"mood":50.0,"spouse":"","trust":{},"grievance":{},
 		"known_events":[],"last_action":"rest","alive":true,
 		"anatomy":ANATOMY.new_state(),"known_wounded":[],
-		"genome":genome,"family":family}
+		"genome":genome,"sex":GENES.offspring_sex(child_id,gene_seed),
+		"family":family}
 	people[child_id]=record
 	for parent_id in [parent_a_id,parent_b_id]:
 		people[parent_id]["family"]["children"].append(child_id)
@@ -614,6 +619,13 @@ func restore(record: Dictionary) -> bool:
 				-365*(21+posmod(String(stored_id).hash(),28)))
 		if not old_person.has("life_stage"):
 			old_person["life_stage"]="adult"
+		if not old_person.has("sex"):
+			old_person["sex"]=("female" if FEMALE_FOUNDERS.has(
+				String(stored_id)) else ("male" if not String(stored_id).begins_with(
+				"born_") else GENES.offspring_sex(String(stored_id),restore_gene_seed)))
+		if String(old_person["sex"]) not in ["female","male"]:
+			restore_error="invalid biological phenotype"
+			return false
 		# Preserve original v1 parental alleles while introducing
 		# independently heritable facial and body proportions.
 		var migrated_genome: Dictionary=GENES.upgrade(
