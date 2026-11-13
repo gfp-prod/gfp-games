@@ -530,13 +530,19 @@ static func _facial_hair(root: Node3D,g: Dictionary,sex: String,
 		GENES.hair_color(g),.19),.98)
 	stubble.cull_mode=BaseMaterial3D.CULL_DISABLED
 	var facial_mat: Material=stubble if style=="stubble" else dark
+	# Cheeks receive subtle inherited beard coverage, while the chin
+	# and moustache retain their deeper, age-dependent hair pigment.
+	# A broad uniform black under-eye rectangle is not a beard.
+	var cheek_mat:=ART.mat(GENES.skin_color(g).lerp(
+		GENES.hair_color(g),.34 if style!="stubble" else .17),.98)
+	cheek_mat.cull_mode=BaseMaterial3D.CULL_DISABLED
 	var weight: float=lerpf(.65,1.35,length)
 	if style in ["short","full","stubble","sideburns"]:
 		for side in [-1.0,1.0]:
-			var edge: float=side*.135
-			var near: float=side*.066
+			var edge: float=side*.153
+			var near: float=side*.105
 			_beard_patch(root,"GeneticFacialHairCheek"+str(side),
-				facial_mat,g,sex,minf(edge,near),maxf(edge,near),
+				cheek_mat,g,sex,minf(edge,near),maxf(edge,near),
 				1.708 if style!="sideburns" else 1.727,
 				1.628 if style=="full" else 1.659,weight)
 	if style in ["short","full","goatee","stubble"]:
@@ -917,6 +923,13 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		highlight.mesh=plane.commit()
 		highlight.material_override=cheek_tone
 		highlight.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# The inherited cheekbone relief already exists in _depth().
+		# Extra coplanar triangles Z-fought with the unified facial
+		# shell, creating a black tear/bruise on real Godot captures.
+		# Keep these nodes for asset compatibility and mesh diagnostics;
+		# the visible cheekbone is the connected face geometry itself.
+		highlight.visible=false
+		highlight.set_meta("integrated_cheekbone_no_overlay",true)
 		root.add_child(highlight)
 	var mouth_width: float=lerpf(.038,.077,_v(g,"mouth_width"))
 	var lip_height: float=1.65+(_v(g,"face_length")-.5)*.017
