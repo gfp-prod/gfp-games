@@ -179,6 +179,39 @@ func _run() -> void:
 		if actor.find_child("AnimatedLeftArm",true,false)==null:
 			_fail("A new costume mesh accidentally removed the original moving rig")
 			return
+	# The painter's work apron must reveal the inherited waist. A
+	# rectangular drape can conceal all our anatomical sculpting while
+	# still passing a torso-mesh unit test.
+	var painter: Node3D
+	for resident in world.npcs:
+		if String(resident.npc_id)=="lena": painter=resident
+	if painter==null:
+		_fail("Painter missing from living game world"); return
+	var painter_smock: MeshInstance3D=painter.find_child(
+		"PainterPigmentedWorkSmock",true,false) as MeshInstance3D
+	if painter_smock==null or not bool(painter_smock.get_meta(
+			"genetic_waist_fitted_apron",false)):
+		_fail("Painter's apron reverted to an identical rectangular slab")
+		return
+	var waist_width: float=0.0
+	var hem_width: float=0.0
+	for point in painter_smock.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+		if point.y>.98 and point.y<1.07:
+			waist_width=maxf(waist_width,absf(point.x))
+		if point.y<.70:
+			hem_width=maxf(hem_width,absf(point.x))
+	if waist_width<=.02 or hem_width<=waist_width*1.22:
+		_fail("Painter's apron covers the waist with a rigid box profile")
+		return
+	# Every citizen's over-tunic must stop above the thigh, leaving the
+	# original detachable femurs rather than burying them in a tube.
+	for actor in [ida,orin,painter]:
+		var overshirt: MeshInstance3D=actor.find_child(
+			"CutAndRepairedTunicPanels",true,false) as MeshInstance3D
+		if overshirt==null or not bool(overshirt.get_meta(
+				"leg_silhouette_uncovered",false)):
+			_fail("Over-tunic reverted to the old long cylinder")
+			return
 	# The old movable arms were plain cylinders whose hard shoulder
 	# intersections made the bodies look assembled from spare parts.
 	# Ensure the new fitted meshes belong to the exact original limb rigs.
