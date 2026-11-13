@@ -156,7 +156,7 @@ func _ready() -> void:
 		arm.position=Vector3(side*(.030+.88*socket_width),1.405,0)
 		# A slightly relaxed, inherited resting stance instead of two
 		# vertical mannequin rods; gait and reaching still drive rotation.x.
-		arm.rotation.z=side*lerpf(.050,.090,
+		arm.rotation.z=side*lerpf(.095,.145,
 			GENES.value(genome,"shoulder_width"))
 		figure.add_child(arm)
 		# Shoulder cap and upper sleeve have a sculpted circumference and
@@ -166,8 +166,9 @@ func _ready() -> void:
 		# remain children of this original severable arm, not new body modules.
 		var forearm:=Node3D.new()
 		forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-		forearm.position=Vector3(side*.072,-.410,-.045)
-		forearm.rotation.x=-.11
+		forearm.position=Vector3(side*.058,-.410,-.045)
+		forearm.rotation.x=.16
+		forearm.rotation.z=-side*.10
 		arm.add_child(forearm)
 		COSTUME.fitted_forearm(forearm,side,genome,cloth,skin)
 		var leg:=Node3D.new()
@@ -313,12 +314,13 @@ func _ready() -> void:
 			modern_arm.position=Vector3(side*(.034+
 				.91*BODY._section(1.365,genome,sex).x),1.405,0)
 			attendant.add_child(modern_arm)
-			modern_arm.rotation.z=side*lerpf(.050,.090,GENES.value(genome,"shoulder_width"))
+			modern_arm.rotation.z=side*lerpf(.095,.145,GENES.value(genome,"shoulder_width"))
 			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt,sex)
 			var modern_forearm:=Node3D.new()
 			modern_forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-			modern_forearm.position=Vector3(side*.072,-.410,-.045)
-			modern_forearm.rotation.x=-.11
+			modern_forearm.position=Vector3(side*.058,-.410,-.045)
+			modern_forearm.rotation.x=.16
+			modern_forearm.rotation.z=-side*.10
 			modern_arm.add_child(modern_forearm)
 			COSTUME.fitted_forearm(modern_forearm,side,genome,shirt,skin)
 			modular_limbs[side_name+"_arm"]=modern_arm
@@ -604,10 +606,10 @@ func _process(delta: float) -> void:
 	# The elbows bend in response to reaching, working and gait. They
 	# never animate an invisible or separately detachable forearm.
 	if left_forearm!=null and not limb_missing("left_arm"):
-		var left_bend: float=-.11-maxf(0.0,-offhand)*.28-absf(stride)*.20
+		var left_bend: float=.16+maxf(0.0,-offhand)*.28+absf(stride)*.20
 		left_forearm.rotation.x=lerpf(left_forearm.rotation.x,left_bend,minf(1.0,delta*8.0))
 	if right_forearm!=null and not limb_missing("right_arm"):
-		var right_bend: float=-.11-maxf(0.0,-reach)*.32-absf(stride)*.20
+		var right_bend: float=.16+maxf(0.0,-reach)*.32+absf(stride)*.20
 		right_forearm.rotation.x=lerpf(right_forearm.rotation.x,right_bend,minf(1.0,delta*8.0))
 	if harvest_sack!=null:
 		harvest_sack.visible=phase=="delivery" and not limb_missing("right_arm")
