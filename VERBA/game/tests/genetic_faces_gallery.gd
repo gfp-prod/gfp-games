@@ -163,6 +163,66 @@ func _run() -> void:
 					names[i]+"_hand_detail",base,.62,1.25):
 				_fail("Could not photograph modeled wrists and fingers")
 				return
+		# Diagnostic pose capture uses the actual citizen's articulated
+		# and severable modules. These are staged movement KEY POSES,
+		# not a claim that the actor walked here under simulation.
+		# Preserve every live transform after photographing so the family
+		# proof below still depicts the undisturbed scene.
+		if i in [0,1]:
+			var prior_root: Vector3=citizen.global_position
+			var prior_left_arm: Vector3=citizen.left_arm.rotation
+			var prior_right_arm: Vector3=citizen.right_arm.rotation
+			var prior_left_leg: Vector3=citizen.left_leg.rotation
+			var prior_right_leg: Vector3=citizen.right_leg.rotation
+			var prior_left_forearm: Vector3=citizen.left_forearm.rotation
+			var prior_right_forearm: Vector3=citizen.right_forearm.rotation
+			var old_turn: float=visual_root.rotation.y
+			var old_gait: float=citizen.gait_weight
+			var old_phase: float=citizen.distance_gait_phase
+			var old_clock: float=citizen.motion_clock
+			citizen.global_position=prior_root+Vector3(0,120.0,0)
+			citizen.motion_clock=2.10
+			if i==0:
+				citizen.gait_weight=1.0
+				citizen.distance_gait_phase=PI*.44
+				citizen._pose_upper_body(.35,true,false,false)
+				citizen.left_arm.rotation.x=.25
+				citizen.right_arm.rotation.x=-.24
+				citizen.left_leg.rotation.x=-.20
+				citizen.right_leg.rotation.x=.23
+			else:
+				citizen.gait_weight=0.0
+				citizen._pose_upper_body(.35,false,true,false)
+				citizen.left_arm.rotation.x=-.34
+				citizen.right_arm.rotation.x=-.85
+				citizen.left_forearm.rotation.x=.51
+				citizen.right_forearm.rotation.x=.70
+			cam.projection=Camera3D.PROJECTION_ORTHOGONAL
+			cam.size=2.48
+			cam.global_position=citizen.to_global(Vector3(2.85,1.12,-2.85))
+			cam.look_at(citizen.to_global(Vector3(0,1.03,0)),Vector3.UP)
+			for frame in range(3): await process_frame
+			RenderingServer.force_draw()
+			var pose_name: String=names[i]+(
+				"_walk_rig_pose" if i==0 else "_work_rig_pose")
+			var posed_image: Image=root.get_texture().get_image()
+			if posed_image==null or posed_image.save_png(
+					base+"/"+pose_name+".png")!=OK:
+				_fail("Could not capture animated module pose: "+pose_name)
+				return
+			print("GENETIC_POSE_FRAME: "+pose_name)
+			cam.projection=Camera3D.PROJECTION_PERSPECTIVE
+			citizen.global_position=prior_root
+			citizen.left_arm.rotation=prior_left_arm
+			citizen.right_arm.rotation=prior_right_arm
+			citizen.left_leg.rotation=prior_left_leg
+			citizen.right_leg.rotation=prior_right_leg
+			citizen.left_forearm.rotation=prior_left_forearm
+			citizen.right_forearm.rotation=prior_right_forearm
+			visual_root.rotation.y=old_turn
+			citizen.gait_weight=old_gait
+			citizen.distance_gait_phase=old_phase
+			citizen.motion_clock=old_clock
 		# Two additional authentic game-world views examine a BENT knee
 		# from an oblique angle. A static front portrait cannot prove that
 		# the foot and calf actually follow the second articulated joint.
@@ -213,5 +273,5 @@ func _run() -> void:
 		_fail("Actual on-map four-person bloodline photo failed")
 		return
 	print("GENETIC_FACE_FRAME: 08_ida_orin_and_children")
-	print("PASS: thirty-one actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
+	print("PASS: thirty-three actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
 	quit(0)
