@@ -78,20 +78,24 @@ func _ready() -> void:
 	right_arm=anatomy["right_arm"]
 	left_leg=anatomy["left_leg"]
 	right_leg=anatomy["right_leg"]
-	# Cloth mantle and a small side bag distinguish scribe from keeper.
-	ART.bone(figure,Vector3(-.34,1.48,-.14),
-		Vector3(.30,1.46,-.13),.065,.062,trim,7)
-	if npc_id == "mara":
-		ART.bone(figure,Vector3(-.54,.15,.12),
-			Vector3(-.48,2.43,.16),.048,.037,leather,8)
-		ART.orb(figure,Vector3(-.48,2.44,.16),
-			Vector3(.075,.09,.071),trim,9)
-	else:
-		ART.box(figure,Vector3(.46,.89,.18),
-			Vector3(.26,.38,.21),leather,
-			Vector3(0,-.22,-.11))
-		ART.bone(figure,Vector3(-.12,1.47,.04),
-			Vector3(.50,.99,.17),.052,.045,trim,7)
+	# Equipment now follows each person's occupation, rather than every
+	# NPC wearing identical massive shoulder guards and a generic satchel.
+	if npc_id in ["mara","tomas","cass"]:
+		ART.bone(figure,Vector3(-.23,1.46,-.14),
+			Vector3(.20,.99,-.17),.026,.020,trim,8)
+	if npc_id=="mara":
+		ART.bone(figure,Vector3(-.47,.13,.12),
+			Vector3(-.42,2.39,.16),.036,.030,leather,8)
+		ART.orb(figure,Vector3(-.42,2.4,.16),
+			Vector3(.068,.08,.065),trim,9)
+	elif npc_id=="tomas":
+		ART.box(figure,Vector3(.34,.81,.10),Vector3(.21,.31,.13),leather)
+	elif npc_id=="ves":
+		ART.orb(figure,Vector3(0,1.33,-.27),
+			Vector3(.09,.11,.045),trim,10)
+	elif npc_id=="lena":
+		ART.bone(figure,Vector3(-.36,.74,-.22),
+			Vector3(-.31,1.24,-.20),.024,.019,trim,8)
 	# Role identity belongs to the person: the same figure carries these
 	# tools whether travelling, trading or standing at the workplace.
 	# Do not replace every citizen with the same cone-robe silhouette.
