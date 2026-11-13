@@ -251,75 +251,6 @@ static func _layered_hair(root: Node3D,person: String,
 	# The inherited crown still exists. Long hair reads through layered
 	# silhouettes and works with hats and bonnets.
 
-## Genetically expressed facial hair occupies the actual chin and jaw
-## skin surface. It is never a face-covering sphere or decal that hides
-## eyes, nose or speaking lips. Stubble, moustache, goatee and full-beard
-## profiles all use the same saved DNA and adult age expression.
-static func _facial_hair(root: Node3D,person: String,hair: Material,
-		g: Dictionary,sex: String,age_years: float) -> void:
-	var profile: Dictionary=GENES.beard_profile(g,sex,age_years)
-	var style: String=String(profile["style"])
-	root.set_meta("heritable_beard_style",style)
-	root.set_meta("heritable_beard_density",float(profile["density"]))
-	if style=="clean": return
-	var beard:=ART.mat(GENES.hair_color(g).darkened(.10),.99)
-	var fullness: float=float(profile["density"])
-	var tip: float=float(profile["length"])
-	var needs_chin: bool=style in ["goatee","short","full","stubble"]
-	if needs_chin:
-		var surface:=SurfaceTool.new()
-		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-		surface.set_material(beard)
-		var lower_y: float=1.605-(
-			.046*tip if style in ["full","short"] else .009)
-		var top_y: float=1.647
-		for i in range(6):
-			for j in range(12):
-				var vertices: Array[Vector3]=[]
-				for item in [[i,j],[i+1,j],[i+1,j+1],[i,j+1]]:
-					var row: int=int(item[0])
-					var sector: int=int(item[1])
-					var v: float=float(row)/6.0
-					var angle: float=lerpf(-PI*.86,-PI*.14,
-						float(sector)/12.0)
-					var width: float=(
-						.092 if style=="goatee" else .168)
-					var x: float=cos(angle)*width
-					var y: float=lerpf(top_y,lower_y,v)
-					var forward: float=_depth(x,maxf(1.585,y),g,sex)
-					var projection: float=.010+.018*v*fullness
-					vertices.append(Vector3(x,y,forward-projection))
-				for index in [0,1,2,0,2,3]:
-					var point: Vector3=vertices[index]
-					surface.set_uv(Vector2((point.x+.20)*2.0,point.y))
-					surface.add_vertex(point)
-		surface.generate_normals()
-		var chin:=MeshInstance3D.new()
-		chin.name="InheritedFacialHairChin"
-		chin.mesh=surface.commit()
-		chin.material_override=beard
-		chin.set_meta("no_new_collision",true)
-		root.add_child(chin)
-	if style in ["moustache","full","short"]:
-		for side in [-1.0,1.0]:
-			var x: float=side*.042
-			var y: float=1.686
-			var z: float=_depth(x,y,g,sex)-.026
-			var moustache:=ART.bone(root,
-				Vector3(side*.006,y+.004,z),
-				Vector3(side*.074,y-.005,z+.004),.015,
-				.010,beard,9)
-			moustache.name=(
-				"InheritedLeftMoustache" if side<0.0 else "InheritedRightMoustache")
-	if style in ["full","short","sideburns"]:
-		for side in [-1.0,1.0]:
-			var cheek:=ART.bone(root,
-				Vector3(side*.153,1.749,-.116),
-				Vector3(side*.146,1.666,-.104),
-				.018+.018*fullness,.012+.008*tip,beard,9)
-			cheek.name=(
-				"InheritedLeftSideburn" if side<0.0 else "InheritedRightSideburn")
-
 ## Low-poly facial hair follows the existing facial surface. No floating
 ## beards, flat front-facing billboards, or extra facial physics. Alleles
 ## determine growth and distribution; adult grooming alters style.
@@ -362,7 +293,9 @@ static func _facial_hair(root: Node3D,g: Dictionary,sex: String,
 	var expression: Dictionary=GENES.beard_profile(g,sex,age_years)
 	var style: String=String(expression["style"])
 	root.set_meta("facial_hair_style",style)
+	root.set_meta("heritable_beard_style",style)
 	root.set_meta("facial_hair_density",float(expression["density"]))
+	root.set_meta("heritable_beard_density",float(expression["density"]))
 	if style=="clean": return
 	var density: float=float(expression["density"])
 	var length: float=float(expression["length"])
@@ -592,8 +525,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	# Named villagers have recognisable grooming; descendants express
 	# inherited follicle properties without being forced into a profession.
 	HAIR.finish(root,person,g,sex,hair)
-	_facial_hair(root,g,sex)
-	_facial_hair(root,person,hair,g,sex,age_years)
+	_facial_hair(root,g,sex,age_years)
 	if _v(g,"freckles")>.68:
 		for i in range(4):
 			var side: float=-1.0 if i<2 else 1.0
