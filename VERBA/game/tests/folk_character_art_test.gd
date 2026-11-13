@@ -730,6 +730,16 @@ func _run() -> void:
 			_fail("Neutral face lost its thin continuous oral crease"); return
 		if top_lip.get_aabb().size.y>.034 or lower_lip.get_aabb().size.y>.031:
 			_fail("Lip masses regressed to oversized four-petal geometry"); return
+		for part_name in ["SmallRecessedEye","IndividualUpperEyelid",
+				"AnatomicalLowerEyelid","InheritedBrow","InheritedCheekboneFacet",
+				"ModeledNoseWing","SmallNaturalLipLine"]:
+			var facial_part: MeshInstance3D=portrait.find_child(
+				part_name,true,false) as MeshInstance3D
+			if facial_part==null or facial_part.cast_shadow!=(
+					GeometryInstance3D.SHADOW_CASTING_SETTING_OFF):
+				_fail("Decorative face mesh casts artificial under-eye shadows: "+
+					part_name)
+				return
 		# Verify skin-attached folds on the real inherited face, not only
 		# metadata or a decorative separate brow cylinder. Both eyes and both
 		# expression rigs must remain independently animated.
@@ -808,13 +818,26 @@ func _run() -> void:
 		var inherited: Dictionary=GENES.founder(person_name)
 		var finish: Node3D=GROOM.finish(groom_root,person_name,inherited,
 			"female",ART_LIB.mat(GENES.hair_color(inherited),.98))
-		var strand_name: String="FacetedLeftHairFrame" if person_name=="sela" else (
+		# Long loose hair now flows into the BACK panel, while short
+		# temple framing stops at the jaw rather than dangling as planks.
+		# Braids deliberately remain forward of the garment.
+		var strand_name: String="FacetedBackHairPanel2" if person_name=="sela" else (
 			"WovenLeftHairCore" if person_name=="mara" else "LongPonytailTail1")
 		var strand: MeshInstance3D=finish.get_node_or_null(
 			strand_name) as MeshInstance3D
-		if not _long_lock_clears_tunic(strand,person_name!="juno"):
+		if not _long_lock_clears_tunic(strand,person_name=="mara"):
 			_fail("Long hairstyle disappears into clothing: "+person_name)
 			return
+		if person_name=="sela":
+			var temple_panel: MeshInstance3D=finish.get_node_or_null(
+				"FacetedLeftHairFrame") as MeshInstance3D
+			if temple_panel==null or temple_panel.mesh==null:
+				_fail("Loose hairstyle lost scalp-attached temple framing"); return
+			var lowest_temple: float=100.0
+			for v in temple_panel.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+				lowest_temple=minf(lowest_temple,v.y)
+			if lowest_temple<1.66:
+				_fail("Loose side fringe became a hanging cardboard plank"); return
 		if finish.find_children("*","CollisionShape3D",true,false).size()>0:
 			_fail("Grooming added a new body collision or blocked limb severance")
 			return
