@@ -362,6 +362,16 @@ func _run() -> void:
 		if neck_bounds.position.y>1.46 or neck_bounds.end.y<1.64 or (
 				neck_bounds.size.x<.24 or neck_bounds.size.x>.45):
 			_fail("Neck bridge does not meet jaw and open garment"); return
+		# Reject the old thick skin-colored pipe, even if its total bounding
+		# box still reaches the individual jaw and chest correctly.
+		var narrow_throat_half_width: float=0.0
+		for neck_vertex in neck.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+			if absf(neck_vertex.y-1.565)<.002:
+				narrow_throat_half_width=maxf(narrow_throat_half_width,
+					absf(neck_vertex.x))
+		if narrow_throat_half_width<.069 or narrow_throat_half_width>.128:
+			_fail("Anatomical neck reverted to a stiff oversized throat cylinder")
+			return
 		if not figure.find_children("*","CollisionShape3D",true,false).is_empty():
 			_fail("Decorative anatomy replaced modular-limb physics"); return
 		var portrait: Node3D=figure.get_node("IndividualFaceConstruction")
