@@ -490,7 +490,9 @@ static func tailored_womenswear(figure: Node3D,person: String,
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_material(fabric)
 	const RING_COUNT: int=20
-	var rows: Array[float]=[1.07,.995,.91,.835,.73,.61,.51,.41,.33,hem_y]
+	var rows: Array[float]=[1.07,.995,.91,.835,.73,.61,.51,.41,.33]
+	rows=rows.filter(func(y: float) -> bool: return y>hem_y+.001)
+	rows.append(hem_y)
 	rows.sort()
 	rows.reverse()
 	# No visible torus at the waist; continuity in the fitted cloth
