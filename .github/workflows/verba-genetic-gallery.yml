@@ -5,6 +5,8 @@ on:
       - "VERBA/game/scripts/npc_genetics.gd"
       - "VERBA/game/scripts/folk_portrait_finish.gd"
       - "VERBA/game/scripts/npc_actor.gd"
+      - "VERBA/game/scripts/npc_body_morph.gd"
+      - "VERBA/game/scripts/folk_costume_finish.gd"
       - "VERBA/game/scripts/village_sim.gd"
       - "VERBA/game/scripts/world.gd"
       - "VERBA/game/tests/genetic_faces_gallery.gd"
@@ -31,8 +33,8 @@ jobs:
           if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:' /tmp/gene-import.log; then exit 1; fi
       - name: Photograph inherited physical faces and bodies inside Godot
         run: |
-          timeout 190s xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/genetic_faces_gallery.gd 2>&1 | tee /tmp/genetic-gallery.log
-          grep -q "PASS: ten actual Godot inherited face and body PNG frames" /tmp/genetic-gallery.log
+          timeout 320s xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/genetic_faces_gallery.gd 2>&1 | tee /tmp/genetic-gallery.log
+          grep -q "PASS: seventeen actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety" /tmp/genetic-gallery.log
       - name: Upload individual actual game screenshots
         if: always()
         uses: actions/upload-artifact@v4
