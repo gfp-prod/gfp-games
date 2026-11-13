@@ -409,6 +409,16 @@ func _run() -> void:
 		var eye: Node3D=portrait.get_node("ExpressionEyeLeft")
 		var sclera: MeshInstance3D=eye.get_node("SmallRecessedEye")
 		var sclera_size: Vector3=sclera.scale
+		var face_at_socket: float=FACE._depth(
+			eye.position.x,eye.position.y,record)
+		var ocular_standoff: float=face_at_socket-(
+			eye.position.z+sclera.position.z-sclera.scale.z*.5)
+		# An earlier eye rig made the face look mechanical: three bright
+		# disconnected strips floated forward of the sculpted socket.
+		if ocular_standoff<.003 or ocular_standoff>.018 or (
+				sclera.scale.x>.063):
+			_fail("Inherited eye became a protruding mechanical eyeball")
+			return
 		var upper: Node3D=eye.get_node_or_null("ExpressionUpperBlinkCover")
 		var lower_lid: Node3D=eye.get_node_or_null("ExpressionLowerBlinkCover")
 		if upper==null or lower_lid==null:
@@ -425,6 +435,10 @@ func _run() -> void:
 		var pupil: MeshInstance3D=eye.get_node_or_null("AnatomicalPupil")
 		if iris==null or pupil==null:
 			_fail("Eyes lost their separately movable inherited iris/pupil"); return
+		if iris.scale.x>=sclera.scale.x*.48 or (
+				pupil.scale.x>=iris.scale.x*.60):
+			_fail("Oversized iris and pupil obscure the inherited almond eye")
+			return
 		var sclera_rest: Vector3=sclera.position
 		for tick in range(20):
 			FACE.expression(figure,0.0,0.0,true,.7,Vector2(.006,-.003))
