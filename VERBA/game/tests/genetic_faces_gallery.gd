@@ -51,10 +51,10 @@ func _run() -> void:
 		_fail("An actual family cannot produce physical descendants")
 		return
 	var ids: Array[String]=["ida","orin","mara","sela","juno",
-		String(first["id"]),String(second["id"])]
+		String(first["id"]),String(second["id"]),"titus","lena"]
 	var names: Array[String]=["01_ida_baker","02_orin_blacksmith",
 		"03_mara_scribe","04_sela_merchant","05_juno_attendant",
-		"06_alma_child","07_milo_sibling"]
+		"06_alma_child","07_milo_sibling","09_titus_guard","10_lena_painter"]
 	var cam:=Camera3D.new()
 	cam.near=.04
 	cam.fov=50.0
@@ -107,7 +107,7 @@ func _run() -> void:
 			_fail("Could not photograph genuine world citizen: "+ids[i])
 			return
 		# Additional full figure to prove body's inherited measurements.
-		if i in [0,1]:
+		if i in [0,1,2,3,4,7,8]:
 			var body_focus: float=.85
 			var body_distance: float=3.15
 			if not await _capture(world,cam,citizen,
@@ -140,5 +140,5 @@ func _run() -> void:
 		_fail("Actual on-map four-person bloodline photo failed")
 		return
 	print("GENETIC_FACE_FRAME: 08_ida_orin_and_children")
-	print("PASS: ten actual Godot inherited face and body PNG frames")
+	print("PASS: seventeen actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
 	quit(0)
