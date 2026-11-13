@@ -220,7 +220,7 @@ static func dress(figure: Node3D,person: String,
 				loose_end.z*=1.065
 				var tie:=ART.bone(figure,knot,loose_end,
 					.014,.010,worn,7)
-				tie.name="BakerFittedSideTie"
+				tie.name="BakerFittedLeftTie" if sign<0.0 else "BakerFittedRightTie"
 		_:
 			pass
 
