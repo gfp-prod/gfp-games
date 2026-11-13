@@ -104,6 +104,36 @@ static func value(g: Dictionary, locus: String) -> float:
 	var pair: Array=g["alleles"][locus]
 	return (float(pair[0])+float(pair[1]))/(2.0*CAP)
 
+## Sex is a saved physical phenotype, not an intelligence/personality
+## allele or a shortcut for occupation. It influences population averages,
+## never imposes a hard upper or lower bound on inherited adult body size.
+static func offspring_sex(child_id: String,salt: int=1938) -> String:
+	return "female" if _seeded(child_id,salt+313).randi_range(0,1)==0 else "male"
+
+static func body_scale(g: Dictionary,sex: String="unspecified") -> Vector3:
+	# Broad overlap: a large-statured daughter can tower over a small man.
+	# Both parents transmit the actual stature alleles; sex shifts only the
+	# baseline expression and does not replace the heritable signal.
+	var height_gene: float=value(g,"stature")
+	var shoulders: float=value(g,"shoulder_width")
+	var depth: float=value(g,"body_depth")
+	var female: bool=sex=="female"
+	var height: float=(.82+.34*height_gene) if female else (.90+.30*height_gene)
+	var breadth: float=lerpf(.87,1.20,shoulders)
+	if female:
+		# Broad-shouldered women retain their width; fine-boned women
+		# average narrower, without overriding their transmitted genes.
+		breadth*=lerpf(.945,1.012,shoulders)
+	var thickness: float=lerpf(.86,1.16,depth)
+	if female:
+		thickness*=lerpf(.955,1.01,depth)
+	return Vector3(breadth,height,thickness)
+
+static func forearm_length(g: Dictionary) -> float:
+	# Use the inherited limb_ratio locus instead of arbitrary per-role
+	# or per-sex limb lengths. Stature is handled by body_scale's Y.
+	return lerpf(.335,.475,value(g,"limb_ratio"))
+
 static func child(a: Dictionary,b: Dictionary,child_id: String,salt: int=1938) -> Dictionary:
 	if not validate(a) or not validate(b): return {}
 	var rng:=_seeded(child_id,salt+71)
