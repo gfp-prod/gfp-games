@@ -21,8 +21,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	const HEIGHT: Array[float]=[.046,.006,-.060,-.140,-.240,-.330,-.414]
 	const CX: Array[float]=[-.058,-.031,-.007,.025,.049,.065,.076]
 	const CZ: Array[float]=[-.018,-.024,-.029,-.034,-.042,-.046,-.047]
-	const RX: Array[float]=[.094,.121,.125,.117,.106,.098,.087]
-	const RZ: Array[float]=[.101,.124,.128,.124,.115,.104,.090]
+	const RX: Array[float]=[.086,.106,.112,.109,.101,.094,.085]
+	const RZ: Array[float]=[.090,.112,.118,.116,.109,.099,.088]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -169,7 +169,7 @@ static func fitted_forearm(pivot: Node3D,side: float,
 				var angle: float=TAU*float(pair[1])/float(SIDES)
 				var t: float=float(k)/float(LEVELS-1)
 				var y: float=lerpf(.050,-length+.067,t)
-				var taper: float=lerpf(.117,.072,smoothstep(0.0,1.0,t))
+				var taper: float=lerpf(.103,.072,smoothstep(0.0,1.0,t))
 				var bulge: float=.008*sin(PI*t)
 				points.append(Vector3(
 					side*.016*t+cos(angle)*(taper+bulge),
@@ -189,7 +189,7 @@ static func fitted_forearm(pivot: Node3D,side: float,
 	sleeve.set_meta("no_new_collision",true)
 	pivot.add_child(sleeve)
 	var hand:=ART.orb(pivot,Vector3(side*.016,-length,-.012),
-		Vector3(.074,.092,.075),skin,12)
+		Vector3(.070,.096,.068),skin,12)
 	hand.name="InheritedArticulatedHand"
 	hand.set_meta("detaches_with_parent_arm",true)
 	# Subtle wrist hem, not a wide disconnected metal cuff.
