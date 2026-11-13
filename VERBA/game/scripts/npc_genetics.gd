@@ -151,7 +151,7 @@ static func forearm_length(g: Dictionary) -> float:
 	# upper arm and full hands, put fingertips at knee height. Restore a
 	# human elbow-to-wrist ratio while still expressing inherited reach.
 	# Stature is handled by body_scale's Y; limb_ratio remains heritable.
-	return lerpf(.350,.490,value(g,"limb_ratio"))
+	return lerpf(.285,.385,value(g,"limb_ratio"))
 
 ## Potential for facial hair is inherited by all, but normally expressed
 ## by adult male phenotypes. Individual genetic variation is broad.
