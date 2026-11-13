@@ -54,6 +54,20 @@ static func _depth(x: float,y: float,g: Dictionary,
 	brow_ridge*=ridge_factor
 	return shell+nose+cheeks+socket+lips+brow_ridge-.003
 
+## Use consistent OUTWARD (-Z) normals on the visible front surface.
+## These procedural surfaces are intentionally not indexed: sharing
+## vertices would invalidate face/eyelid articulation and review topology.
+## The old automatic normals followed inconsistent triangle winding and
+## turned some exposed mouth and eyelid polygons into dark rear faces.
+static func _outward_face_normal(x: float,y: float,g: Dictionary,
+		sex: String) -> Vector3:
+	const EPS: float=.0035
+	var dx: float=(_depth(x+EPS,y,g,sex)-_depth(x-EPS,y,g,sex))/(EPS*2.0)
+	var dy: float=(_depth(x,y+EPS,g,sex)-_depth(x,y-EPS,g,sex))/(EPS*2.0)
+	return Vector3(clampf(dx,-1.65,1.65),
+		clampf(dy,-1.65,1.65),-1.0).normalized()
+
+
 ## Width of the lower facial outline: the old portrait was a rectangular
 ## front patch with jaw only affecting surface DEPTH, so the visible cheeks
 ## and chin never actually narrowed.
@@ -108,8 +122,8 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 			for j in [0,1,2,1,3,2]:
 				var point: Vector3=pts[j]
 				st.set_uv(Vector2((point.x+.20)*2.5,(point.y-1.54)*2.5))
+				st.set_normal(_outward_face_normal(point.x,point.y,g,sex))
 				st.add_vertex(point)
-	st.generate_normals()
 	var face:=MeshInstance3D.new()
 	face.name="IndividualIntegratedFaceMesh"
 	face.mesh=st.commit()
@@ -421,8 +435,8 @@ static func _facial_ribbon(parent: Node3D,name: String,material: Material,
 		for k in [0,2,1,0,3,2]:
 			var v: Vector3=quad[k]
 			tool.set_uv(Vector2(v.x+.5,v.y+.5))
+			tool.set_normal(Vector3(0,0,-1))
 			tool.add_vertex(v)
-	tool.generate_normals()
 	if material is StandardMaterial3D:
 		(material as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
 	var ribbon:=MeshInstance3D.new()
@@ -465,8 +479,9 @@ static func _fitted_lip(parent: Node3D,name: String,material: Material,
 		for k in [0,2,1,0,3,2]:
 			var vertex: Vector3=corners[k]
 			st.set_uv(Vector2(vertex.x+.5,vertex.y+.5))
+			st.set_normal(_outward_face_normal(vertex.x,
+				mouth_y+vertex.y,g,sex))
 			st.add_vertex(vertex)
-	st.generate_normals()
 	if material is StandardMaterial3D:
 		(material as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
 	var lip:=MeshInstance3D.new()
@@ -513,8 +528,9 @@ static func _fitted_eye_fold(socket: Node3D,name: String,skin: Material,
 		for k in winding:
 			var p: Vector3=quad[k]
 			st.set_uv(Vector2(p.x+.2,p.y+.1))
+			st.set_normal(_outward_face_normal(
+				socket.position.x+p.x,socket.position.y+p.y,g,sex))
 			st.add_vertex(p)
-	st.generate_normals()
 	var fold:=MeshInstance3D.new()
 	fold.name=name
 	fold.mesh=st.commit()
@@ -549,8 +565,9 @@ static func _fitted_brow(brow_rig: Node3D,material: Material,
 		for k in [0,2,1,0,3,2]:
 			var p: Vector3=quad[k]
 			st.set_uv(Vector2(p.x+.2,p.y+.1))
+			st.set_normal(_outward_face_normal(
+				brow_rig.position.x+p.x,brow_rig.position.y+p.y,g,sex))
 			st.add_vertex(p)
-	st.generate_normals()
 	if material is StandardMaterial3D:
 		(material as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
 	var mesh:=MeshInstance3D.new()
@@ -592,8 +609,8 @@ static func _nose_facet(root: Node3D,skin: Material,g: Dictionary,
 			for k in [0,2,1,0,3,2]:
 				var v: Vector3=quad[k]
 				tool.set_uv(Vector2(v.x+.25,v.y+.25))
+				tool.set_normal(_outward_face_normal(v.x,nose_y+v.y,g,sex))
 				tool.add_vertex(v)
-	tool.generate_normals()
 	if skin is StandardMaterial3D:
 		(skin as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
 	var nose:=MeshInstance3D.new()
