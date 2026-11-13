@@ -516,7 +516,13 @@ func _run() -> void:
 		"ExpressionLowerLip/ModeledLowerLipLeft")
 	var raised_lower: MeshInstance3D=raised_mouth.get_node(
 		"ExpressionLowerLip/ModeledLowerLipLeft")
-	if flat_upper.transform==raised_upper.transform or flat_lower.transform==raised_lower.transform:
+	# Lips are now actual faceted meshes, not CylinderMesh props whose
+	# transform encoded the angle of the bone. Compare vertex geometry.
+	var flat_upper_pts: PackedVector3Array=flat_upper.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var raised_upper_pts: PackedVector3Array=raised_upper.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var flat_lower_pts: PackedVector3Array=flat_lower.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var raised_lower_pts: PackedVector3Array=raised_lower.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	if flat_upper_pts==raised_upper_pts or flat_lower_pts==raised_lower_pts:
 		_fail("Inherited lip curve does not change the visible upper AND lower lip contours")
 		return
 	if float(flat_mouth.get_meta("rest_corner_rise"))>=float(
