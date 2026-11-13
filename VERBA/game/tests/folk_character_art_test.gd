@@ -626,9 +626,49 @@ func _run() -> void:
 			_fail("An anatomical face has regressed to disconnected prop spheres")
 			return
 		var verts: PackedVector3Array=sculpt.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-		if verts.size()<1200:
-			_fail("The face no longer has sufficient sculpted profile topology")
+		if verts.size()<3800:
+			_fail("The face lost its continuous high-detail cheek/eye/nose topology")
 			return
+		# Verify skin-attached folds on the real inherited face, not only
+		# metadata or a decorative separate brow cylinder. Both eyes and both
+		# expression rigs must remain independently animated.
+		var face_math=load("res://scripts/folk_portrait_finish.gd")
+		var person_genome: Dictionary=world.village_sim.people[
+			String(citizen.npc_id)]["genome"]
+		var person_sex: String=String(world.village_sim.people[
+			String(citizen.npc_id)]["sex"])
+		for eye_name in ["ExpressionEyeLeft","ExpressionEyeRight"]:
+			var socket: Node3D=portrait.get_node_or_null(eye_name)
+			if socket==null:
+				_fail("Inherited face lost one of its articulated eye sockets"); return
+			var sclera: MeshInstance3D=socket.get_node_or_null(
+				"SmallRecessedEye") as MeshInstance3D
+			if sclera==null or sclera.scale.x<.051:
+				_fail("NPC eyes shrank back to the old unreadable bead size"); return
+			for lid_name in ["IndividualUpperEyelid","AnatomicalLowerEyelid"]:
+				var fold: MeshInstance3D=socket.get_node_or_null(
+					lid_name) as MeshInstance3D
+				if fold==null or fold.mesh==null or not bool(
+						fold.get_meta("attached_to_inherited_face",false)):
+					_fail("Skin-attached eye fold replaced by floating strip"); return
+				var fold_points: PackedVector3Array=fold.mesh.surface_get_arrays(0)[
+					Mesh.ARRAY_VERTEX]
+				if fold_points.size()<100:
+					_fail("Eye socket lost its tapered sculpted geometry"); return
+				for p in fold_points:
+					var skin_z: float=face_math._depth(
+						socket.position.x+p.x,socket.position.y+p.y,
+						person_genome,person_sex)
+					var relief: float=skin_z-(socket.position.z+p.z)
+					if relief<-.003 or relief>.022:
+						_fail("Eyelid fold floats off inherited facial contour"); return
+		for brow_name in ["ExpressionBrowLeft","ExpressionBrowRight"]:
+			var brow_rig: Node3D=portrait.get_node_or_null(brow_name)
+			var brow_mesh: MeshInstance3D=brow_rig.get_node_or_null(
+					"InheritedBrow") as MeshInstance3D if brow_rig!=null else null
+			if brow_mesh==null or brow_mesh.mesh==null or not bool(
+						brow_mesh.get_meta("attached_to_inherited_brow_bone",false)):
+				_fail("Expressive inherited brow returned to floating straight line"); return
 		if portrait.find_children("*","StaticBody3D",true,false).size()>0:
 			_fail("An artistic face introduced unnecessary collision")
 			return
