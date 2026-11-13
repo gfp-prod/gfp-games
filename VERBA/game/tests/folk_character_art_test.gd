@@ -43,6 +43,29 @@ func _run() -> void:
 			robe.get_meta("legacy_hidden_by_genetic_torso",false)):
 		_fail("Rigid legacy cone clothes are still masking individual physiques")
 		return
+	# The baker must now be a particular woman with a work dress and
+	# a tied bun, rather than the same male-bodied cylinder in an apron.
+	var tailored: MeshInstance3D=ida.find_child(
+		"TailoredHereditaryDress",true,false) as MeshInstance3D
+	var bun: MeshInstance3D=ida.find_child(
+		"TiedLowHairBun",true,false) as MeshInstance3D
+	if tailored==null or tailored.mesh==null or bun==null:
+		_fail("Ida lost the bespoke dress silhouette or her tied long hair")
+		return
+	if String(tailored.get_meta("tailored_style",""))!="baker_apron_dress":
+		_fail("The baker is still rendered in the generic unisex outfit")
+		return
+	var dress_vertices: PackedVector3Array=tailored.mesh.surface_get_arrays(0)[
+		Mesh.ARRAY_VERTEX]
+	if dress_vertices.size()<800 or not bool(
+			tailored.get_meta("no_new_collision",false)):
+		_fail("The fitted skirt is missing its real, non-physical pleated mesh")
+		return
+	var male_face: Node3D=orin.find_child(
+		"IndividualFaceConstruction",true,false) as Node3D
+	if male_face==null or not male_face.has_meta("heritable_beard_style"):
+		_fail("Orin's appearance does not consult inherited facial hair")
+		return
 	if apron.mesh==null or apron.mesh.get_surface_count()!=1:
 		_fail("The shaped baker apron surface is missing")
 		return
