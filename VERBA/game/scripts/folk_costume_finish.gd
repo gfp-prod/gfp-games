@@ -455,6 +455,113 @@ static func fitted_station_apron(figure: Node3D,genome: Dictionary,
 	figure.add_child(bib)
 	return bib
 
+## Individually shaped period garments, not a waistless cone. Dresses
+## expose the inherited waist and high hip before falling into a gently
+## pleated hem. Distinct silhouettes come from work and taste as well
+## as genes: a baker, scribe, merchant and painter look different.
+static func tailored_womenswear(figure: Node3D,person: String,
+		genome: Dictionary,sex: String,base: Material) -> MeshInstance3D:
+	var old:=figure.get_node_or_null("TailoredHereditaryDress") as MeshInstance3D
+	if old!=null: return old
+	if sex!="female": return null
+	var style: String="field_dress"
+	var hem_y: float=.37
+	match person:
+		"ida": style="baker_apron_dress"; hem_y=.39
+		"mara": style="scribe_gown"; hem_y=.205
+		"sela": style="layered_merchant_skirt"; hem_y=.255
+		"lena": style="painter_smock"; hem_y=.44
+		"juno": style="attendant_work_dress"; hem_y=.49
+		_: hem_y=lerpf(.23,.47,GENES.value(genome,"hair_style"))
+	var trim_color: Color=Color("574138")
+	var skirt_color: Color=Color("56534c")
+	match style:
+		"baker_apron_dress": skirt_color=Color("616255"); trim_color=Color("98846b")
+		"scribe_gown": skirt_color=Color("474f49"); trim_color=Color("9c8468")
+		"layered_merchant_skirt": skirt_color=Color("5e4947"); trim_color=Color("af8661")
+		"painter_smock": skirt_color=Color("526069"); trim_color=Color("b59d72")
+		"attendant_work_dress": skirt_color=Color("404c51"); trim_color=Color("868580")
+		_: skirt_color=Color("655d51")
+	var fabric:=FABRIC.worn_linen(skirt_color)
+	if fabric is StandardMaterial3D:
+		(fabric as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
+	var detail:=ART.mat(trim_color,.98)
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(fabric)
+	const RING_COUNT: int=20
+	var rows: Array[float]=[1.07,.995,.91,.835,.73,.61,.51,.41,.33,hem_y]
+	rows.sort()
+	rows.reverse()
+	# No visible torus at the waist; continuity in the fitted cloth
+	# is more important than adding more extraneous belts.
+	for row in range(rows.size()-1):
+		for i in range(RING_COUNT):
+			var corners: Array[Vector3]=[]
+			for entry in [[row,i],[row+1,i],[row+1,i+1],[row,i+1]]:
+				var ring: int=int(entry[0])
+				var k: int=int(entry[1])
+				var y: float=rows[ring]
+				var theta: float=TAU*float(k)/float(RING_COUNT)
+				var p: Vector3=BODY._point(maxf(y,.61),theta,genome,sex)
+				var below: float=clampf((.61-y)/maxf(.16,.61-hem_y),0.0,1.0)
+				var pleat: float=.007*sin(theta*7.0)*pow(below,1.2)
+				var fullness: float=lerpf(1.015,1.105,below)
+				# Avoid a generic bell skirt; the waist is close-fitting,
+				# the upper hip follows anatomy, and only the hem opens.
+				p.x=p.x*fullness+cos(theta)*pleat
+				p.z=p.z*fullness+sin(theta)*pleat
+				p.y=y+.007*sin(theta*3.0)*below
+				corners.append(p)
+			for k in [0,1,2,0,2,3]:
+				var p: Vector3=corners[k]
+				st.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU*1.4,p.y*1.8))
+				st.add_vertex(p)
+	st.generate_normals()
+	var gown:=MeshInstance3D.new()
+	gown.name="TailoredHereditaryDress"
+	gown.mesh=st.commit()
+	gown.material_override=fabric
+	gown.set_meta("tailored_style",style)
+	gown.set_meta("body_genes_preserved",true)
+	gown.set_meta("separate_sleeves_and_limbs",true)
+	gown.set_meta("no_new_collision",true)
+	figure.add_child(gown)
+	# Thin seam following the true waist; no bright cinching bar.
+	var waist: float=1.064
+	for i in range(RING_COUNT):
+		var a: float=TAU*float(i)/float(RING_COUNT)
+		var b: float=TAU*float(i+1)/float(RING_COUNT)
+		var pa: Vector3=BODY._point(waist,a,genome,sex)*Vector3(1.03,1.0,1.03)
+		var pb: Vector3=BODY._point(waist,b,genome,sex)*Vector3(1.03,1.0,1.03)
+		var piping:=ART.bone(figure,pa,pb,.010,.010,detail,7)
+		piping.name="TailoredBeltStitch"
+	# Work and story details distinguish professions without reusing a
+	# huge breastplate or cuboid chest hanging from the body.
+	if person in ["sela","mara","lena"]:
+		var side: float=-1.0 if person=="mara" else 1.0
+		var anchor: Vector3=BODY._point(.925,-PI*.5+side*1.10,genome,sex)
+		var pendant:=ART.orb(figure,Vector3(anchor.x*1.06,.92,
+			anchor.z*1.07-.012),Vector3(.046,.07,.023),detail,8)
+		pendant.name="MerchantOrScholarTalismans"
+		if person=="sela":
+			var fold:=ART.bone(figure,
+				Vector3(side*.15,.985,-.265),
+				Vector3(side*.28,.565,-.215),.014,.012,detail,8)
+			fold.name="TravelSashDrape"
+		elif person=="mara":
+			var clasp:=ART.orb(figure,Vector3(0,1.42,-.245),
+				Vector3(.045,.055,.020),detail,8)
+			clasp.name="ScribeCollarPin"
+		else:
+			var paint:=ART.orb(figure,
+				Vector3(side*.16,.72,-.273),
+				Vector3(.047,.065,.009),
+				ART.mat(Color("73594c"),.99),8)
+			paint.name="PainterWorkStain"
+	return gown
+
+
 static func dress_attendant(attendant: Node3D) -> void:
 	# A station worker should have a uniform silhouette, not a medieval
 	# figure with a cap pasted on. Existing independent attendant stays.
