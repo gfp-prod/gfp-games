@@ -33,6 +33,26 @@ func _run() -> void:
 		face_max=maxf(face_max,GENES.value(founder,"face_width"))
 	if not _check(tone_max-tone_min>.37 and face_max-face_min>.30,
 			"Founders still have nearly identical pigmentation or faces"): return
+	# Hair, beard coverage, moustaches and sideburns are genuine two-
+	# parent alleles; facial hair is expressed with age, not through work.
+	if not _check(GENES.GROOM_TRAITS.size()==8,
+			"Hereditary grooming trait library is incomplete"): return
+	var thick_beard: Dictionary=b.duplicate(true)
+	for locus in ["facial_hair_density","facial_hair_length",
+			"facial_hair_pattern","mustache_weight","sideburn_weight"]:
+		thick_beard["alleles"][locus]=[940,940]
+	var beard: Dictionary=GENES.beard_profile(thick_beard,"male",32.0)
+	if not _check(beard["style"]=="full" and float(beard["density"])>.9,
+			"Strong adult beard genes don't produce an actual full beard"): return
+	if not _check(GENES.beard_profile(thick_beard,"male",12.0)["style"]=="clean",
+			"Juvenile faces unexpectedly grow adult beards"): return
+	if not _check(GENES.beard_profile(thick_beard,"female",32.0)["style"]=="clean",
+			"Facial hair was applied without the adult male expression rule"): return
+	if not _check(GENES.hair_profile(a,"female","mara")["style"]=="braids" and
+			GENES.hair_profile(a,"female","ida")["style"]=="bun" and
+			GENES.hair_profile(a,"female","sela")["style"]=="wave" and
+			GENES.hair_profile(a,"female","juno")["style"]=="ponytail",
+			"Village hairstyle choices aren't being expressed in art data"): return
 	var child: Dictionary=GENES.child(a,b,"born_0001",1938)
 	var sibling: Dictionary=GENES.child(a,b,"born_0002",1938)
 	if not _check(GENES.validate(child) and GENES.validate(sibling) and child!=sibling,
