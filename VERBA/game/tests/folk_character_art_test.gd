@@ -117,6 +117,13 @@ func _run() -> void:
 	if smith_apron==null or not bool(
 			smith_apron.get_meta("fitted_to_inherited_torso",false)):
 		_fail("The blacksmith apron is still a featureless box"); return
+	# A panel with wrong triangle winding passed mesh tests but vanished in
+	# real Godot screenshots. Both faces and actual leather grain are required.
+	var hide: StandardMaterial3D=smith_apron.material_override as StandardMaterial3D
+	if hide==null or hide.cull_mode!=BaseMaterial3D.CULL_DISABLED or (
+			hide.albedo_texture!=FABRIC.leather_texture()):
+		_fail("Smith apron backface is culled or aged leather was not applied")
+		return
 	if smith_apron.mesh is BoxMesh or smith_apron.mesh==null:
 		_fail("The smith lost the sculpted apron mesh"); return
 	var smith_points: PackedVector3Array=smith_apron.mesh.surface_get_arrays(0)[
@@ -131,6 +138,12 @@ func _run() -> void:
 		var angle: float=-PI*.5+asin(clampf(p.x/section,-.91,.91))
 		if p.z>genetic_body._point(p.y,angle,smith_genome).z-.05:
 			_fail("Blacksmith apron intersects its inherited torso"); return
+	# Keep the baker's original apron identity but ban the bright stiff
+	# waist rods that dominated its real first-person view.
+	var stitch: Node3D=ida.find_child("BakerCloseFittedWaistSeam",true,false)
+	if stitch==null or ida.find_children("BakerFittedSideTie","MeshInstance3D",
+			true,false).size()!=2:
+		_fail("Baker lost her close-fitting work ties"); return
 	# Catch the exact modeling artifact: a broad cylinder floating across
 	# the clavicles was mistakenly used as an ivory costume/trim seam.
 	# It is not required by the detachable limb rig.
