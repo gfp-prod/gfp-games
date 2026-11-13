@@ -45,9 +45,9 @@ func _run() -> void:
 	var same_genome: Dictionary=GENES.founder("adult-anatomy-reference",1938)
 	# Median alleles let us independently detect unintentional universal
 	# bulk without banning naturally wide-hipped or muscular bloodlines.
-	for trait in ["stature","shoulder_width","chest_width",
+	for locus in ["stature","shoulder_width","chest_width",
 			"waist_width","hip_width","body_depth","muscle_tone","bust_volume"]:
-		same_genome["alleles"][trait]=[500,500]
+		same_genome["alleles"][locus]=[500,500]
 	var female_hip: float=BODY._section(.80,same_genome,"female").x
 	var male_hip: float=BODY._section(.80,same_genome,"male").x
 	# Realistic average characters should not look wider than their
