@@ -95,8 +95,29 @@ func _run() -> void:
 	if figure==null or face==null or robe==null or apron==null or bonnet==null or pocket==null:
 		_fail("The baker has lost her fitted clothing, modeled face or work gear")
 		return
-	if not (face.mesh is SphereMesh) or face.scale.x<.38 or face.scale.y<.43:
-		_fail("Character head regressed to the tiny floating-eyes mannequin")
+	# Check the visible mesh, not a metadata-only claim. Earlier adult
+	# inhabitants were 4-head-tall caricatures because their skulls were
+	# nearly half a meter high against a two-meter world body.
+	if not (face.mesh is SphereMesh) or face.scale.x<.31 or (
+			face.scale.x>.38) or (face.scale.y<.31 or face.scale.y>.38):
+		_fail("Figure-reference skull calibration regressed")
+		return
+	var crown_height: float=face.position.y+face.scale.y*.5
+	var skull_ratio: float=crown_height/face.scale.y
+	if skull_ratio<5.30 or skull_ratio>7.10:
+		_fail("Adult body/head proportions returned to stocky mannequin scale")
+		return
+	var skull_root: Node3D=ida.find_child(
+		"IndividualFaceConstruction",true,false) as Node3D
+	if skull_root==null or not bool(skull_root.get_meta(
+			"landmark_calibrated_skull",false)) or (
+			absf(skull_root.scale.y-face.scale.y/.49)>.004):
+		_fail("Facial features and head mesh no longer share throat-anchored scaling")
+		return
+	var age_child: Vector3=load("res://scripts/folk_portrait_finish.gd").skull_scale(
+		world.village_sim.people["ida"]["genome"],6.0)
+	if age_child.y<=skull_root.scale.y+.07:
+		_fail("Child heads no longer remain proportionally larger")
 		return
 	# The inherited fitted torso must be the actual visible garment.
 	# Two older identical rigid cones previously covered every variation
