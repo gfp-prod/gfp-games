@@ -34,8 +34,14 @@ func _run() -> void:
 	if not (face.mesh is SphereMesh) or face.scale.x<.38 or face.scale.y<.43:
 		_fail("Character head regressed to the tiny floating-eyes mannequin")
 		return
-	if not (robe.mesh is CylinderMesh) or (robe.mesh as CylinderMesh).radial_segments<10:
-		_fail("The fitted villager torso was replaced by a cuboid")
+	# The inherited fitted torso must be the actual visible garment.
+	# Two older identical rigid cones previously covered every variation
+	# in the genetic waist, hip and chest surfaces.
+	var lower_legacy: Node3D=ida.find_child("LegacyLowerTunicHidden",true,false)
+	if not (robe.mesh is CylinderMesh) or lower_legacy==null or (
+			robe.visible or lower_legacy.visible) or not bool(
+			robe.get_meta("legacy_hidden_by_genetic_torso",false)):
+		_fail("Rigid legacy cone clothes are still masking individual physiques")
 		return
 	if apron.mesh==null or apron.mesh.get_surface_count()!=1:
 		_fail("The shaped baker apron surface is missing")
@@ -141,12 +147,12 @@ func _run() -> void:
 			if absf(length-load("res://scripts/npc_genetics.gd").forearm_length(
 					genome))>.002:
 				_fail("Arm length ignores actual inherited limb ratio"); return
-			if arm.to_local(hand.global_position).y>-.63:
+			if arm.to_local(hand.global_position).y>-.82:
 				_fail("Individual's hand still sits at the waist"); return
 			var area: Area3D=citizen.limb_hitboxes[side.to_lower()+"_arm"]
 			var capsule: CollisionShape3D=area.get_child(0) as CollisionShape3D
 			if capsule==null or not (capsule.shape is CapsuleShape3D) or (
-					(capsule.shape as CapsuleShape3D).height<.77):
+					(capsule.shape as CapsuleShape3D).height<1.10):
 				_fail("Long forearm lost its continuous physical hitbox"); return
 		var torso: MeshInstance3D=citizen.find_child(
 			"InheritedChestWaistHipCloth",true,false) as MeshInstance3D
