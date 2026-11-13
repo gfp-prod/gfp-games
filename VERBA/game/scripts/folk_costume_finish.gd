@@ -406,6 +406,51 @@ static func dress(figure: Node3D,person: String,
 		_:
 			pass
 
+## A station apron draped over a real inherited torso rather than two
+## rectangular primitives. It preserves the waist and the lateral outline
+## of ribs and hips, which were hidden by the old uniform box.
+static func fitted_station_apron(figure: Node3D,genome: Dictionary,
+		fabric: Material,sex: String="unspecified") -> MeshInstance3D:
+	var existing:=figure.get_node_or_null("FittedStationWorkApron") as MeshInstance3D
+	if existing!=null: return existing
+	const HEIGHT: Array[float]=[1.40,1.35,1.29,1.19,1.10,1.02,.95,.87,.78,.67,.61]
+	const HALF_WIDTH: Array[float]=[.160,.190,.185,.180,.170,.164,.183,.207,.226,.248,.251]
+	const COLS: int=13
+	var source: Array[Vector3]=[]
+	for row in range(HEIGHT.size()):
+		var y: float=HEIGHT[row]
+		var section: float=BODY._section(y,genome,sex).x
+		for col in range(COLS):
+			var u: float=float(col)/float(COLS-1)*2.0-1.0
+			var x: float=u*HALF_WIDTH[row]
+			var angle: float=-PI*.5+asin(clampf(x/section,-.91,.91))
+			var body: Vector3=BODY._point(y,angle,genome,sex)
+			var drape: float=.090+.026*(1.0-u*u)
+			var hem_fold: float=.006*sin(float(col)*1.85) if row>6 else 0.0
+			source.append(Vector3(x,y,body.z-drape-hem_fold))
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(fabric)
+	for row in range(HEIGHT.size()-1):
+		for col in range(COLS-1):
+			var i: int=row*COLS+col
+			for index in [i,i+COLS,i+1,i+1,i+COLS,i+COLS+1]:
+				var p: Vector3=source[index]
+				st.set_uv(Vector2((p.x+.26)*2.1,(p.y-.59)*1.1))
+				st.add_vertex(p)
+	st.generate_normals()
+	var bib:=MeshInstance3D.new()
+	bib.name="FittedStationWorkApron"
+	bib.mesh=st.commit()
+	if fabric is StandardMaterial3D:
+		(fabric as StandardMaterial3D).cull_mode=BaseMaterial3D.CULL_DISABLED
+	bib.material_override=fabric
+	bib.set_meta("anatomic_body_profile",sex)
+	bib.set_meta("contoured_to_hips_and_waist",true)
+	bib.set_meta("no_new_collision",true)
+	figure.add_child(bib)
+	return bib
+
 static func dress_attendant(attendant: Node3D) -> void:
 	# A station worker should have a uniform silhouette, not a medieval
 	# figure with a cap pasted on. Existing independent attendant stays.
