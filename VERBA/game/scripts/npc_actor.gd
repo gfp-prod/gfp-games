@@ -580,6 +580,21 @@ func _process(delta: float) -> void:
 		left_leg.rotation.x=lerpf(left_leg.rotation.x,stride,minf(1.0,delta*9.0))
 	if right_leg!=null and not missing_right_leg:
 		right_leg.rotation.x=lerpf(right_leg.rotation.x,-stride,minf(1.0,delta*9.0))
+	# Knees flex only as each foot enters recovery. The shin, boot, and
+	# ankle travel together underneath the original detachable leg.
+	# Never flex the missing limb or play a full walk cycle while stopped.
+	if left_leg!=null and not missing_left_leg:
+		var knee_left: Node3D=left_leg.get_node_or_null("AnatomicalKneeHinge") as Node3D
+		if knee_left!=null:
+			var left_recovery: float=maxf(0.0,-sin(distance_gait_phase))
+			knee_left.rotation.x=lerpf(knee_left.rotation.x,
+				.54*left_recovery*gait_weight,minf(1.0,delta*9.0))
+	if right_leg!=null and not missing_right_leg:
+		var knee_right: Node3D=right_leg.get_node_or_null("AnatomicalKneeHinge") as Node3D
+		if knee_right!=null:
+			var right_recovery: float=maxf(0.0,sin(distance_gait_phase))
+			knee_right.rotation.x=lerpf(knee_right.rotation.x,
+				.54*right_recovery*gait_weight,minf(1.0,delta*9.0))
 	if support_visual!=null and is_instance_valid(support_visual):
 		var peg: Node3D=support_visual.get_node_or_null("FittedPegPivot") as Node3D
 		if peg!=null:
