@@ -133,7 +133,7 @@ static func finish(face_root: Node3D,person: String,genome: Dictionary,
 			_side_framing(root,hair,shine,1.745,curl,.029)
 			var bun:=ART.orb(root,Vector3(0,1.925,.210),
 				Vector3(.272,.205,.218),deep,12)
-			bun.name="CoiledLowPolyWorkBun"
+			bun.name="TiedLowHairBun"
 			for side in [-1.0,1.0]:
 				_braid(root,hair,shine,side,
 					Vector3(side*.126,1.962,.158),1.68,curl)
