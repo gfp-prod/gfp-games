@@ -125,6 +125,100 @@ static func _waist_wrap(root: Node3D,genome: Dictionary,
 		var seam:=ART.bone(root,p0,p1,.013,.011,material,6)
 		seam.name="WovenWaistCord"+str(seg)
 
+## A worn, fitted merchant satchel, not the large bright cuboid that
+## hovered away from Sela's hip in the real gameplay screenshot.
+static func merchant_satchel(figure: Node3D,
+		genome: Dictionary,sex: String) -> MeshInstance3D:
+	var existing:=figure.get_node_or_null("VisibleMerchantPouch") as MeshInstance3D
+	if existing!=null: return existing
+	var hide:=FABRIC.worn_leather(Color("68513f"))
+	var edge:=ART.mat(Color("8d7558"),.98)
+	var hip_x: float=BODY._section(.82,genome,sex).x
+	var cx: float=-hip_x*.92
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(hide)
+	for row in range(6):
+		for col in range(9):
+			var quad: Array[Vector3]=[]
+			for rc in [[row,col],[row+1,col],[row+1,col+1],[row,col+1]]:
+				var t: float=float(rc[0])/6.0
+				var u: float=float(rc[1])/9.0
+				var y: float=lerpf(.955,.690,t)
+				var x: float=cx+(.205*u-.103)*lerpf(.95,1.05,t)
+				var z: float=-.225-.030*sin(PI*u)+.011*t
+				quad.append(Vector3(x,y,z))
+			for index in [0,1,2,0,2,3]:
+				var p: Vector3=quad[index]
+				st.set_uv(Vector2(p.x+1.0,p.y))
+				st.add_vertex(p)
+	st.generate_normals()
+	var satchel:=MeshInstance3D.new()
+	satchel.name="VisibleMerchantPouch"
+	satchel.mesh=st.commit()
+	hide.cull_mode=BaseMaterial3D.CULL_DISABLED
+	satchel.material_override=hide
+	satchel.set_meta("hip_fitted_satchels",true)
+	satchel.set_meta("no_new_collision",true)
+	figure.add_child(satchel)
+	var shoulder: Vector3=BODY._point(1.345,
+		-PI*.5-.50,genome,sex)
+	var at_hip: Vector3=BODY._point(.965,
+		-PI*.5-1.20,genome,sex)
+	shoulder.z-=.035
+	at_hip.z-=.068
+	var strap:=ART.bone(figure,shoulder,at_hip,.014,.011,hide,8)
+	strap.name="MerchantCrossBodyLeatherStrap"
+	var clasp:=ART.orb(figure,Vector3(cx,.905,-.260),
+		Vector3(.032,.028,.012),edge,9)
+	clasp.name="SmallSatchelBrassClasp"
+	return satchel
+
+## Faceted dark kite-shield, tied to the actual severable forearm/upper
+## arm. The previous glowing white rectangle stayed suspended after
+## an arm was lost. This is a carried, not a world-static, object.
+static func guard_shield(left_arm: Node3D) -> MeshInstance3D:
+	var old:=left_arm.get_node_or_null("VisibleGuardShield") as MeshInstance3D
+	if old!=null: return old
+	var slate:=ART.mat(Color("454b4c"),.90)
+	var rim:=ART.mat(Color("7f755f"),.65)
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(slate)
+	var points: Array[Vector2]=[
+		Vector2(-.155,.270),Vector2(.155,.270),
+		Vector2(.195,.154),Vector2(.175,-.075),
+		Vector2(0.0,-.330),Vector2(-.175,-.075),
+		Vector2(-.195,.154)]
+	var at:=Vector3(-.105,-.375,-.194)
+	var center:=Vector3(at.x,at.y,at.z-.048)
+	for i in range(points.size()):
+		var j: int=(i+1)%points.size()
+		for v in [center,
+				at+Vector3(points[i].x,points[i].y,0.0),
+				at+Vector3(points[j].x,points[j].y,0.0)]:
+			st.set_uv(Vector2(v.x*.9+.5,v.y*.9+.5))
+			st.add_vertex(v)
+	st.generate_normals()
+	var shield:=MeshInstance3D.new()
+	shield.name="VisibleGuardShield"
+	shield.mesh=st.commit()
+	slate.cull_mode=BaseMaterial3D.CULL_DISABLED
+	shield.material_override=slate
+	shield.set_meta("attached_to_original_arm",true)
+	shield.set_meta("no_new_collision",true)
+	left_arm.add_child(shield)
+	for i in range(points.size()):
+		var j: int=(i+1)%points.size()
+		var p0: Vector3=at+Vector3(points[i].x,points[i].y,-.010)
+		var p1: Vector3=at+Vector3(points[j].x,points[j].y,-.010)
+		var band:=ART.bone(left_arm,p0,p1,.008,.008,rim,6)
+		band.name="GuardShieldWornRim"+str(i)
+	var boss:=ART.orb(left_arm,center+Vector3(0,0,-.013),
+		Vector3(.067,.064,.039),rim,10)
+	boss.name="ShieldTarnishedBoss"
+	return shield
+
 static func finish(figure: Node3D,person: String,
 		genome: Dictionary,sex: String) -> Node3D:
 	var existing:=figure.get_node_or_null("RoleWardrobeLayers") as Node3D
