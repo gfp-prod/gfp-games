@@ -106,6 +106,31 @@ static func _chin_edge_height(x: float,y: float) -> float:
 	var bottom: float=1.0-smoothstep(1.575,1.69,y)
 	return y+.025*pow(clampf(absf(x)/.183,0.0,1.0),2.0)*bottom
 
+## Match the actual calibrated legacy skull rather than letting the
+## sculpted front end as a protruding square plaque. ART.orb uses a
+## unit-radius .5 SphereMesh, scaled (.42,.49,.39) about (0,1.77,0).
+## The whole head and face are scaled together about the throat later.
+static func _skull_front_depth(x: float,y: float) -> float:
+	var r2: float=pow(x/.21,2.0)+pow((y-1.77)/.245,2.0)
+	return -.195*sqrt(maxf(.0,1.0-r2))
+
+
+static func _seated_face_depth(x: float,y: float,g: Dictionary,
+		sex: String,fw: float,fy: float) -> float:
+	var skin_z: float=_depth(x,y,g,sex)
+	var row_width: float=maxf(.027,.183*fw*
+		_jaw_outline(y,g,sex)*_forehead_outline(y))
+	var edge_x: float=absf(x)/row_width
+	var edge_y: float=(y-1.77)/(.161*fy) if y>=1.77 else (
+		(1.77-y)/(.195*fy))
+	var rim: float=clampf(maxf(edge_x,edge_y),0.0,1.0)
+	# Keep the true inheritable nose, cheeks and chin in the central
+	# three-quarters of the sculpt. Only the outer border blends into
+	# the old skull. No new collision, no extra rigid head.
+	var blend: float=smoothstep(.73,.985,rim)
+	return lerpf(skin_z,_skull_front_depth(x,y)-.005,blend)
+
+
 static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 		sex: String="unspecified") -> void:
 	# A finer continuous facial lattice lets the nose, cheeks and eye sockets
@@ -130,13 +155,17 @@ static func _integrated_face(root: Node3D,skin: Material,g: Dictionary,
 			var x1high: float=x1*_jaw_outline(y1,g,sex)*_forehead_outline(y1)
 			var pts: Array[Vector3]=[
 				Vector3(x0low,_chin_edge_height(x0low,y0),
-					_depth(x0low,_chin_edge_height(x0low,y0),g,sex)),
+					_seated_face_depth(x0low,_chin_edge_height(x0low,y0),
+						g,sex,fw,fy)),
 				Vector3(x0high,_chin_edge_height(x0high,y1),
-					_depth(x0high,_chin_edge_height(x0high,y1),g,sex)),
+					_seated_face_depth(x0high,_chin_edge_height(x0high,y1),
+						g,sex,fw,fy)),
 				Vector3(x1low,_chin_edge_height(x1low,y0),
-					_depth(x1low,_chin_edge_height(x1low,y0),g,sex)),
+					_seated_face_depth(x1low,_chin_edge_height(x1low,y0),
+						g,sex,fw,fy)),
 				Vector3(x1high,_chin_edge_height(x1high,y1),
-					_depth(x1high,_chin_edge_height(x1high,y1),g,sex))]
+					_seated_face_depth(x1high,_chin_edge_height(x1high,y1),
+						g,sex,fw,fy))]
 			for j in [0,1,2,1,3,2]:
 				var point: Vector3=pts[j]
 				st.set_uv(Vector2((point.x+.20)*2.5,(point.y-1.54)*2.5))
