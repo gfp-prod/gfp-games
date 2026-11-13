@@ -461,7 +461,6 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	const HEIGHTS: Array[float]=[1.40,1.365,1.33,1.29,1.255,1.22,1.17,1.11,1.055,.99,.93,.84,.77,.70,.64,.55]
 	var vertices: Array[Vector3]=[]
 	for y in HEIGHTS:
-		var t: float=clampf((1.40-y)/.85,0.0,1.0)
 		var hem_flare: float=1.0-smoothstep(.55,.92,y)
 		var waist_nip: float=exp(-pow((y-1.04)/.22,2.0))
 		# Narrow at the real waist, flare over the skirt, and keep the bib
