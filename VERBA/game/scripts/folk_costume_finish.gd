@@ -176,8 +176,8 @@ static func fitted_forearm(pivot: Node3D,side: float,
 				var angle: float=TAU*float(pair[1])/float(SIDES)
 				var t: float=float(k)/float(LEVELS-1)
 				var y: float=lerpf(.050,-length+.067,t)
-				var taper: float=lerpf(.084,.064,smoothstep(0.0,1.0,t))
-				var bulge: float=.008*sin(PI*t)
+				var taper: float=lerpf(.061,.054,smoothstep(0.0,1.0,t))
+				var bulge: float=.010*sin(PI*t)
 				points.append(Vector3(
 					side*.016*t+cos(angle)*(taper+bulge),
 					y,
@@ -199,11 +199,13 @@ static func fitted_forearm(pivot: Node3D,side: float,
 		Vector3(.070,.096,.068),skin,12)
 	hand.name="InheritedArticulatedHand"
 	hand.set_meta("detaches_with_parent_arm",true)
+	# The wrist seam shares the slender circumference of the forearm;
+	# oversized cuffs previously made this a separate blocky tube.
 	# Subtle wrist hem, not a wide disconnected metal cuff.
 	var seam:=ART.bone(pivot,
 		Vector3(side*.016,-length+.095,-.012),
 		Vector3(side*.016,-length+.070,-.012),
-		.077,.073,cloth,10)
+		.059,.057,cloth,10)
 	seam.name="ForearmWristSeam"
 	return sleeve
 
