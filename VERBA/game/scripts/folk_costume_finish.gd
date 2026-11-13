@@ -211,99 +211,142 @@ static func fitted_forearm(pivot: Node3D,side: float,
 
 static func fitted_lower_leg(leg: Node3D,side: float,
 		genome: Dictionary,sex: String="unspecified") -> MeshInstance3D:
+	# The entire parent leg remains the ONE existing severable part.
+	# Its separately deforming knee is visual-only: no additional hitbox,
+	# save identity, simulation limb, or collision shape.
 	var existing:=leg.get_node_or_null("GeneticTrouserLeg") as MeshInstance3D
 	if existing!=null: return existing
-	var cloth:=FABRIC.worn_linen(Color("4a4b45"))
-	var boot_hide:=FABRIC.worn_leather(Color("342b26"))
+	var cloth:=FABRIC.worn_linen(Color("565951"))
+	var boot_hide:=FABRIC.worn_leather(Color("372d28"))
 	var hip_gene: float=GENES.value(genome,"hip_width")
-	var hip: float=lerpf(.87,1.15,hip_gene)
-	# Weight-bearing thigh shape follows the pelvic/leg mass ratio.
-	# At the same height females average relatively greater lower-body
-	# mass, while strong muscles or large male hips can overlap.
-	var thigh_factor: float=lerpf(1.025,1.110,hip_gene) if sex=="female" else (
-		lerpf(.970,1.070,GENES.value(genome,"muscle_tone"))
-		if sex=="male" else 1.0)
-	var depth: float=lerpf(.90,1.10,GENES.value(genome,"body_depth"))
-	# The old 0.59m trouser and 0.60m boot stack made grown adults
-	# look like children with stunted legs. Model a full femur, knee,
-	# calf and ankle below the TRUE pelvic pivot (~0.98m).
-	# This preserves the same four physical, detachable limb identities.
-	const H: Array[float]=[.075,.015,-.075,-.200,-.315,-.400,-.490,-.570,-.660,-.740,-.820]
-	const W: Array[float]=[.136,.141,.137,.127,.117,.109,.115,.112,.099,.092,.087]
-	const D: Array[float]=[.140,.143,.138,.128,.116,.109,.118,.116,.104,.094,.089]
-	var tube:=SurfaceTool.new()
-	tube.begin(Mesh.PRIMITIVE_TRIANGLES)
-	tube.set_material(cloth)
+	var muscle_gene: float=GENES.value(genome,"muscle_tone")
+	var mass: float=lerpf(.88,1.13,hip_gene)
+	var thigh_factor: float=lerpf(.99,1.09,hip_gene) if sex=="female" else (
+		lerpf(.97,1.09,muscle_gene) if sex=="male" else 1.0)
+	var depth: float=lerpf(.91,1.09,GENES.value(genome,"body_depth"))
+	# Defined relative to the inherited femoral-head pivot at y=.98.
+	# The shin starts INSIDE the lower thigh (not on an open cylinder rim);
+	# it can swing independently without a hollow black joint appearing.
+	const H: Array[float]=[.092,.019,-.075,-.186,-.297,-.402,-.476,
+		-.568,-.665,-.759,-.846]
+	const W: Array[float]=[.135,.139,.133,.123,.112,.105,.108,.112,.106,.092,.084]
+	const D: Array[float]=[.133,.138,.134,.127,.117,.108,.112,.115,.110,.098,.088]
+	const KNEE_Y: float=-.420
+	const SEGMENTS: int=16
+	var upper:=SurfaceTool.new()
+	var lower:=SurfaceTool.new()
+	upper.begin(Mesh.PRIMITIVE_TRIANGLES)
+	lower.begin(Mesh.PRIMITIVE_TRIANGLES)
+	upper.set_material(cloth)
+	lower.set_material(cloth)
+	# Both use the same inherited leg dimensions. The lower section
+	# overlaps slightly inside its upper neighbor at the patella.
 	for row in range(H.size()-1):
-		for segment in range(14):
-			var a: float=TAU*float(segment)/14.0
-			var b: float=TAU*float(segment+1)/14.0
-			var corners: Array[Vector3]=[]
-			for pair in [[row,a],[row+1,a],[row+1,b],[row,b]]:
-				var i: int=int(pair[0])
-				var angle: float=float(pair[1])
-				var wrinkle: float=.007*sin(float(i)*1.6+angle*3.0+side*.35)
-				corners.append(Vector3(
-					cos(angle)*(W[i]*hip*thigh_factor+wrinkle),
-					H[i],
-					sin(angle)*D[i]*depth*lerpf(1.0,thigh_factor,.6) + .010*sin(float(i)*.58)))
+		if row==5 or row<5 or row>5:
+			var surface: SurfaceTool=upper if row<=5 else lower
+			# The shin begins at ring 5 and runs into the thigh;
+			# ring 5 on the lower surface must be included as overlap.
+			if row==5:
+				pass
+			for segment in range(SEGMENTS):
+				var a: float=TAU*float(segment)/float(SEGMENTS)
+				var b: float=TAU*float(segment+1)/float(SEGMENTS)
+				var corners: Array[Vector3]=[]
+				for pair in [[row,a],[row+1,a],[row+1,b],[row,b]]:
+					var i: int=int(pair[0])
+					var angle: float=float(pair[1])
+					var wrinkle: float=.005*sin(float(i)*1.6+angle*3.0+side*.35)
+					var width: float=W[i]*mass*thigh_factor+wrinkle
+					var profile: float=D[i]*depth*lerpf(1.0,thigh_factor,.55)
+					var calf: float=1.0+.013*sin(float(i)*1.3)
+					var p:=Vector3(cos(angle)*width,
+						H[i],sin(angle)*profile*calf+.008*sin(float(i)*.53))
+					if row>5: p.y-=KNEE_Y
+					corners.append(p)
+				for index in [0,1,2,0,2,3]:
+					var p: Vector3=corners[index]
+					surface.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU,p.y*1.55))
+					surface.add_vertex(p)
+	# The first shin ring is tucked into the thigh, avoiding a bright
+	# detached-looking upper/lower cylinder seam in straight stance.
+	# It follows the same underlying knee pivot and inherited radius.
+	for segment in range(SEGMENTS):
+		var a: float=TAU*float(segment)/float(SEGMENTS)
+		var b: float=TAU*float(segment+1)/float(SEGMENTS)
+		for angle_pair in [[a,b]]:
+			var points: Array[Vector3]=[]
+			for entry in [[5,a],[6,a],[6,b],[5,b]]:
+				var i: int=int(entry[0])
+				var theta: float=float(entry[1])
+				var radius_factor: float=.945
+				points.append(Vector3(
+					cos(theta)*(W[i]*mass*thigh_factor)*radius_factor,
+					H[i]-KNEE_Y,
+					sin(theta)*D[i]*depth*radius_factor))
 			for index in [0,1,2,0,2,3]:
-				var p: Vector3=corners[index]
-				tube.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU,p.y*1.55))
-				tube.add_vertex(p)
-	tube.generate_normals()
+				var p: Vector3=points[index]
+				lower.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU,p.y*1.55))
+				lower.add_vertex(p)
+	upper.generate_normals()
+	lower.generate_normals()
 	var trousers:=MeshInstance3D.new()
 	trousers.name="GeneticTrouserLeg"
-	trousers.mesh=tube.commit()
+	trousers.mesh=upper.commit()
 	trousers.material_override=cloth
 	trousers.set_meta("original_detachable_leg",true)
-	trousers.set_meta("inherited_hip_width",GENES.value(genome,"hip_width"))
+	trousers.set_meta("inherited_hip_width",hip_gene)
 	trousers.set_meta("anatomic_thigh_factor",thigh_factor)
-	trousers.set_meta("lean_leg_taper",true)
-	trousers.set_meta("full_length_hip_to_ankle",true)
-	trousers.set_meta("anatomic_sex_profile",sex)
+	trousers.set_meta("true_femoral_length",true)
 	trousers.set_meta("no_new_collision",true)
 	leg.add_child(trousers)
-
-	# The old cube boots floated beneath cylindrical calves. A dedicated
-	# leather shoe has an ankle, a sloping instep and a broad toe. Its
-	# sole sits at the original physical floor, preserving gait contact.
+	var knee:=Node3D.new()
+	knee.name="AnatomicalKneeHinge"
+	knee.position=Vector3(0,KNEE_Y,0)
+	knee.set_meta("articulates_with_stride",true)
+	knee.set_meta("detaches_with_original_leg",true)
+	knee.set_meta("no_new_collision",true)
+	leg.add_child(knee)
+	var shin:=MeshInstance3D.new()
+	shin.name="InheritedCalfAndShin"
+	shin.mesh=lower.commit()
+	shin.material_override=cloth
+	shin.set_meta("genetic_calf_radius",mass*thigh_factor)
+	shin.set_meta("no_new_collision",true)
+	knee.add_child(shin)
+	# The boot is under the shin pivot, so flexing the knee also moves
+	# the ankle and foot; it is never a second physical limb.
 	var shoemesh:=SurfaceTool.new()
 	shoemesh.begin(Mesh.PRIMITIVE_TRIANGLES)
 	shoemesh.set_material(boot_hide)
-	# Ankle and sole now meet the physical ground after the leg pivot
-	# was raised to the proper femoral-head height.
-	const SHOE_Y: Array[float]=[-.748,-.830,-.921,-.968]
-	const SHOE_W: Array[float]=[.092,.102,.124,.123]
-	const SHOE_Z: Array[float]=[-.030,-.068,-.123,-.129]
-	const SHOE_D: Array[float]=[.101,.119,.176,.177]
+	const SHOE_Y: Array[float]=[-.756,-.846,-.924,-.973]
+	const SHOE_W: Array[float]=[.086,.097,.118,.119]
+	const SHOE_Z: Array[float]=[-.022,-.058,-.122,-.128]
+	const SHOE_D: Array[float]=[.093,.116,.171,.172]
 	for row in range(SHOE_Y.size()-1):
 		for segment in range(12):
 			var a: float=TAU*float(segment)/12.0
 			var b: float=TAU*float(segment+1)/12.0
-			var vertices: Array[Vector3]=[]
+			var corners: Array[Vector3]=[]
 			for pair in [[row,a],[row+1,a],[row+1,b],[row,b]]:
-				var idx: int=int(pair[0])
+				var i: int=int(pair[0])
 				var angle: float=float(pair[1])
-				vertices.append(Vector3(
-					cos(angle)*SHOE_W[idx],
-					SHOE_Y[idx],
-					SHOE_Z[idx]+sin(angle)*SHOE_D[idx]))
+				corners.append(Vector3(
+					cos(angle)*SHOE_W[i],
+					SHOE_Y[i]-KNEE_Y,
+					SHOE_Z[i]+sin(angle)*SHOE_D[i]))
 			for index in [0,1,2,0,2,3]:
-				var p: Vector3=vertices[index]
-				shoemesh.set_uv(Vector2(p.x*1.6,p.z*1.6))
-				shoemesh.add_vertex(p)
-	# Close the sole so low camera angles never see a hollow boot.
-	var sole_center:=Vector3(0,SHOE_Y[SHOE_Y.size()-1],
-		SHOE_Z[SHOE_Z.size()-1])
+				var point: Vector3=corners[index]
+				shoemesh.set_uv(Vector2(point.x*1.6,point.z*1.6))
+				shoemesh.add_vertex(point)
+	var sole:=Vector3(0,SHOE_Y[-1]-KNEE_Y,SHOE_Z[-1])
 	for segment in range(12):
 		var a: float=TAU*float(segment)/12.0
 		var b: float=TAU*float(segment+1)/12.0
-		var rim_a:=Vector3(cos(a)*SHOE_W[3],SHOE_Y[3],
-			SHOE_Z[3]+sin(a)*SHOE_D[3])
-		var rim_b:=Vector3(cos(b)*SHOE_W[3],SHOE_Y[3],
-			SHOE_Z[3]+sin(b)*SHOE_D[3])
-		for p in [sole_center,rim_b,rim_a]:
+		var rim_a:=Vector3(cos(a)*SHOE_W[-1],SHOE_Y[-1]-KNEE_Y,
+			SHOE_Z[-1]+sin(a)*SHOE_D[-1])
+		var rim_b:=Vector3(cos(b)*SHOE_W[-1],SHOE_Y[-1]-KNEE_Y,
+			SHOE_Z[-1]+sin(b)*SHOE_D[-1])
+		for p in [sole,rim_b,rim_a]:
 			shoemesh.set_uv(Vector2(p.x,p.z))
 			shoemesh.add_vertex(p)
 	shoemesh.generate_normals()
@@ -311,12 +354,10 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	boot.name="GeneticAnkleBoot"
 	boot.mesh=shoemesh.commit()
 	boot.material_override=boot_hide
-	boot.set_meta("weathered_leather",true)
-	boot.set_meta("no_new_collision",true)
 	boot.set_meta("original_detachable_leg",true)
-	leg.add_child(boot)
+	boot.set_meta("no_new_collision",true)
+	knee.add_child(boot)
 	return trousers
-
 
 static func dress(figure: Node3D,person: String,
 		tunic: Material,trim: Material,leather: Material,
