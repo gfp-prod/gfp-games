@@ -656,6 +656,29 @@ func _run() -> void:
 		if verts.size()<3800:
 			_fail("The face lost its continuous high-detail cheek/eye/nose topology")
 			return
+		# SurfaceTool triangle winding determines the actual light-facing
+		# normal. Previously lip, brow, nose and upper eyelid strips faced
+		# INTO the head, producing dark patches and white faceted bars in
+		# real Godot close-ups despite passing all topology tests.
+		for feature_name in ["SmallNaturalLipLine","ModeledLowerLipLeft",
+				"NaturalLipCorner","ExpressionUpperBlinkCover",
+				"ExpressionLowerBlinkCover","InheritedBrow","ModeledNoseTip"]:
+			var feature: MeshInstance3D=portrait.find_child(
+				feature_name,true,false) as MeshInstance3D
+			if feature==null or feature.mesh==null:
+				_fail("Face lost anatomical surface: "+feature_name); return
+			var normals: PackedVector3Array=feature.mesh.surface_get_arrays(0)[
+				Mesh.ARRAY_NORMAL]
+			if normals.size()<24:
+				_fail("Face feature has no real shaded triangle normals: "+feature_name)
+				return
+			var visible_normals: int=0
+			for normal in normals:
+				if normal.z<-.15:
+					visible_normals+=1
+			if visible_normals<float(normals.size())*.64:
+				_fail("Face strip backfaces away from camera: "+feature_name)
+				return
 		# The last published close-ups showed a hard rectangular jaw shelf.
 		# Evaluate true face mesh: chin edges must tuck inward below cheek.
 		var widest_cheek: float=0.0
