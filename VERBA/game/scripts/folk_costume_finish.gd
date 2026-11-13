@@ -25,8 +25,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	# A longer rounded deltoid folds into the body from beneath the
 	# shoulder, then tapers across the biceps to the elbow. No free-standing
 	# clavicle/shoulder cylinder is needed, even when a sleeve swings.
-	const HEIGHT: Array[float]=[.095,.061,.026,-.017,-.067,-.122,-.185,-.247,-.320]
-	const CX: Array[float]=[-.034,-.024,-.009,.002,.014,.023,.031,.039,.043]
+	const HEIGHT: Array[float]=[.052,.038,.011,-.030,-.075,-.128,-.187,-.247,-.319]
+	const CX: Array[float]=[-.032,-.023,-.008,.003,.014,.022,.031,.038,.042]
 	const CZ: Array[float]=[-.012,-.017,-.023,-.025,-.031,-.040,-.041,-.045,-.048]
 	# Use a narrow anatomical deltoid and taper, without giving every
 	# villager inflated round biceps. High inherited muscle still
@@ -111,14 +111,18 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 	var samples: Array[Vector3]=[]
 	for y in HEIGHT:
 		var relative: float=clampf((1.39-y)/.81,0.0,1.0)
-		var half_width: float=lerpf(.155,.220,smoothstep(.0,1.0,relative))
+		# Real smithing aprons are slim at the chest, cinch at the belt,
+		# and open toward the lower thigh. A uniform wide leather plank
+		# makes even lean inherited figures look square and heavy.
+		var waist_nip: float=exp(-pow((y-1.05)/.215,2.0))
+		var half_width: float=lerpf(.151,.194,smoothstep(.0,1.0,relative))-.027*waist_nip
 		var body_section: Vector2=BODY._section(y,genome,sex)
 		for col in range(COLS):
 			var fraction: float=float(col)/float(COLS-1)*2.0-1.0
 			var x: float=fraction*half_width
 			var a: float=-PI*.5+asin(clampf(x/body_section.x,-.91,.91))
 			var point: Vector3=BODY._point(y,a,genome,sex)
-			var drape: float=.108+.020*(1.0-fraction*fraction)
+			var drape: float=.095+.019*(1.0-fraction*fraction)
 			# Gentle cloth crease at the hem; no unmodeled box corners.
 			var wrinkle: float=.008*sin(float(col)*1.85)*relative*relative
 			samples.append(Vector3(x,y,point.z-drape-wrinkle))
@@ -138,16 +142,17 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 	apron.mesh=st.commit()
 	apron.material_override=hide
 	apron.set_meta("fitted_to_inherited_torso",true)
+	apron.set_meta("waist_tapered_smith_apron",true)
 	apron.set_meta("no_new_collision",true)
 	figure.add_child(apron)
 	# Three small, surface-anchored iron rivets replace giant raised boxes.
-	for location in [Vector2(-.130,1.305),Vector2(.130,1.305),
-			Vector2(.168,.83)]:
+	for location in [Vector2(-.115,1.305),Vector2(.115,1.305),
+			Vector2(.130,.83)]:
 		var p_x: float=location.x
 		var p_y: float=location.y
 		var width: float=BODY._section(p_y,genome,sex).x
 		var angle: float=-PI*.5+asin(clampf(p_x/width,-.91,.91))
-		var face_z: float=BODY._point(p_y,angle,genome,sex).z-.14
+		var face_z: float=BODY._point(p_y,angle,genome,sex).z-.122
 		var rivet:=ART.orb(figure,Vector3(p_x,p_y,face_z),
 			Vector3(.020,.020,.009),trim,8)
 		rivet.name="SmithApronIronRivet"
