@@ -207,6 +207,7 @@ static func fitted_forearm(pivot: Node3D,side: float,
 static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 		skin: Material,length: float) -> MeshInstance3D:
 	var hand_scale: float=lerpf(.92,1.09,GENES.value(genome,"stature"))
+	var hand_anchor:=Vector3(side*.016,-length,-.012)
 	var st:=SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_material(skin)
@@ -229,7 +230,7 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 			for k in [0,1,2,0,2,3]:
 				var p: Vector3=corners[k]
 				st.set_uv(Vector2(p.x*3.0,p.y*3.0))
-				st.add_vertex(p)
+					st.add_vertex(p-hand_anchor)
 	# Close the palm underneath the individual finger roots.
 	var center:=Vector3(side*.016,Y[-1],-.012)
 	for sector in range(SIDES):
@@ -241,10 +242,11 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 				Vector3(center.x+cos(a)*WIDTH[-1]*hand_scale,
 					Y[-1],center.z+sin(a)*DEPTH[-1]*hand_scale)]:
 			st.set_uv(Vector2(p.x*3.0,p.z*3.0))
-			st.add_vertex(p)
+				st.add_vertex(p-hand_anchor)
 	st.generate_normals()
 	var palm:=MeshInstance3D.new()
 	palm.name="InheritedArticulatedHand"
+	palm.position=hand_anchor
 	palm.mesh=st.commit()
 	palm.material_override=skin
 	palm.set_meta("anatomic_palm",true)
