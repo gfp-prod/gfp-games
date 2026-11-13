@@ -4,6 +4,7 @@ extends CharacterBody3D
 ## physically navigate based on independent simulated economic/social actions.
 const ART = preload("res://scripts/art.gd")
 const COSTUME = preload("res://scripts/folk_costume_finish.gd")
+const WARDROBE = preload("res://scripts/folk_wardrobe_finish.gd")
 const PORTRAIT = preload("res://scripts/folk_portrait_finish.gd")
 const BODY = preload("res://scripts/npc_body_morph.gd")
 const FABRIC = preload("res://scripts/npc_cloth_finish.gd")
@@ -350,10 +351,12 @@ func _ready() -> void:
 		peak.name="ShortAttendantVisor"
 		COSTUME.dress_attendant(attendant)
 		BODY.finish(attendant,genome,shirt,true,sex)
+		WARDROBE.finish(attendant,npc_id,genome,sex)
 		COSTUME.tailored_womenswear(attendant,npc_id,genome,sex,shirt)
 	else:
 		COSTUME.dress(figure,npc_id,cloth,trim,leather,genome,sex)
 		BODY.finish(figure,genome,cloth,false,sex)
+		WARDROBE.finish(figure,npc_id,genome,sex)
 		COSTUME.tailored_womenswear(figure,npc_id,genome,sex,cloth)
 	# Mild-to-noticeable, inherited body dimensions. The faceted look is
 	# deliberate; we change proportions, not topology or collision IDs.
