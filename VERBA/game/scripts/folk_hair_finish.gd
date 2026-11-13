@@ -339,7 +339,9 @@ static func _back_hair_mass(root: Node3D,material: Material,
 			# triangles, not a billboard duplicated for each camera.
 			for side in [false,true]:
 				var corners: Array[Vector3]=rear if side else face
-				var winding: Array[int]=[0,2,1,0,3,2] if side else [
+				# Conditional literals are untyped Arrays in GDScript 4.5;
+				# do not assign them directly to Array[int] at runtime.
+				var winding: Array=[0,2,1,0,3,2] if side else [
 					0,1,2,0,2,3]
 				for k in winding:
 					var p: Vector3=corners[k]
