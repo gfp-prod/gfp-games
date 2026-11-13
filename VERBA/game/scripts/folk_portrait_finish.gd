@@ -662,8 +662,11 @@ static func _fitted_eye_fold(socket: Node3D,name: String,skin: Material,
 			var out: float=float(pair[1])
 			var fade: float=pow(maxf(0.0,1.0-u*u),.72)
 			var x: float=u*half_span
-			var eye_edge: float=(.017 if upper else -.017)*aperture
-			var arch: float=(.005 if upper else -.002)*fade
+			# Lid margins actually touch the sclera boundary. The old .017
+			# aperture sat ABOVE a .012-high eyeball, making pupils
+			# appear like bright beads pasted under floating brows.
+			var eye_edge: float=(.0105 if upper else -.0105)*aperture
+			var arch: float=(.0035 if upper else -.0015)*fade
 			var spread: float=(.011 if upper else -.010)*fade*out
 			var y: float=eye_edge+arch+spread
 			var face_z: float=_depth(socket.position.x+x,
@@ -807,8 +810,10 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		1.045 if sex=="female" else 1.0)
 	var tilt: float=lerpf(-.22,.22,_v(g,"brow_angle"))
 	for sign in [-1.0,1.0]:
-		var ear:=ART.orb(root,Vector3(sign*.205,1.762,.010),
-			Vector3(.065,.102,.064)*ear_scale,skin,9)
+		# Flatten the auricle onto the lateral skull. The former large
+		# egg at each temple read as a detached disk in close-ups.
+		var ear:=ART.orb(root,Vector3(sign*.198,1.750,.018),
+			Vector3(.051,.084,.043)*ear_scale,skin,11)
 		ear.name="SubtleModeledEar"
 		var x: float=sign*eye_gap
 		var depth: float=_depth(x,eye_height,g,sex)+.003
@@ -819,15 +824,17 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		# A real layered eye: modestly recessed sclera, inherited iris,
 		# pupil and upper/lower eyelids instead of a black flat square.
 		var eye_aperture: float=lerpf(.80,1.28,_v(g,"eye_aperture"))
+		# More human almond-shaped eyes: reduce exposed white vertically,
+		# while maintaining inherited width, aperture and articulated gaze.
 		var sclera:=ART.orb(socket,Vector3(0,0,-.006),
-			Vector3(eye_width*1.18,.025*eye_aperture,.012),
-			ART.mat(Color("bdb3a5"),.93),12)
+			Vector3(eye_width*1.14,.0215*eye_aperture,.009),
+			ART.mat(Color("b6afa4"),.94),12)
 		sclera.name="SmallRecessedEye"
 		var iris:=ART.orb(socket,Vector3(0,0,-.013),
-			Vector3(eye_width*.56,.018*eye_aperture,.006),iris_ink,12)
+			Vector3(eye_width*.52,.016*eye_aperture,.006),iris_ink,12)
 		iris.name="InheritedIris"
 		var pupil:=ART.orb(socket,Vector3(0,0,-.018),
-			Vector3(eye_width*.265,.011*eye_aperture,.004),eye_ink,10)
+			Vector3(eye_width*.245,.010*eye_aperture,.004),eye_ink,10)
 		pupil.name="AnatomicalPupil"
 		var lid:=_fitted_eye_fold(socket,"IndividualUpperEyelid",skin,
 			g,sex,eye_width*.94,eye_aperture,true)
