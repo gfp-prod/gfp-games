@@ -141,9 +141,11 @@ func _run() -> void:
 	# Keep the baker's original apron identity but ban the bright stiff
 	# waist rods that dominated its real first-person view.
 	var stitch: Node3D=ida.find_child("BakerCloseFittedWaistSeam",true,false)
-	if stitch==null or ida.find_children("BakerFittedSideTie","MeshInstance3D",
-			true,false).size()!=2:
-		_fail("Baker lost her close-fitting work ties"); return
+	if stitch==null or (
+			ida.find_child("BakerFittedLeftTie",true,false)==null) or (
+			ida.find_child("BakerFittedRightTie",true,false)==null):
+		_fail("Baker lost a uniquely named left or right fitted waist tie")
+		return
 	# Catch the exact modeling artifact: a broad cylinder floating across
 	# the clavicles was mistakenly used as an ivory costume/trim seam.
 	# It is not required by the detachable limb rig.
