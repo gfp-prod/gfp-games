@@ -4,6 +4,7 @@ extends SceneTree
 const GENES=preload("res://scripts/npc_genetics.gd")
 const FACE=preload("res://scripts/folk_portrait_finish.gd")
 const BODY=preload("res://scripts/npc_body_morph.gd")
+const COSTUME=preload("res://scripts/folk_costume_finish.gd")
 const ART=preload("res://scripts/art.gd")
 
 func _initialize() -> void:
@@ -147,6 +148,32 @@ func _run() -> void:
 	if woman_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]==(
 			man_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]):
 		_fail("Sex-linked morphology still creates identical actual mesh vertices")
+		return
+	# A past art pass hid the full femur under a single cylindrical robe,
+	# even while the leg code and its unit tests passed. Verify the ACTUAL
+	# generated shirt vertices and the length of the same severable leg mesh.
+	for garment in [woman_mesh,man_mesh]:
+		var lowest_shirt: float=INF
+		for point in garment.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+			lowest_shirt=minf(lowest_shirt,point.y)
+		if lowest_shirt<.79 or lowest_shirt>.84:
+			_fail("Clothing regressed to a long shin-hiding torso cylinder")
+			return
+	var leg_stage:=Node3D.new()
+	root.add_child(leg_stage)
+	var trouser:=COSTUME.fitted_lower_leg(leg_stage,1.0,
+		same_genome,"female")
+	var leg_bounds: AABB=trouser.get_aabb()
+	var boot: MeshInstance3D=leg_stage.get_node_or_null(
+		"GeneticAnkleBoot") as MeshInstance3D
+	if leg_bounds.position.y>-.80 or leg_bounds.end.y<.05 or boot==null:
+		_fail("Long articulated thigh/calf/ankle geometry was lost")
+		return
+	if boot.get_aabb().position.y>-.955:
+		_fail("Boot no longer meets the physical ground")
+		return
+	if not leg_stage.find_children("*","CollisionShape3D",true,false).is_empty():
+		_fail("A visual silhouette edit added a second physical leg")
 		return
 	# Facial differences must live in the sculpted continuous mesh too,
 	# not only the person's hair or hat. Inherited anatomy remains visible
