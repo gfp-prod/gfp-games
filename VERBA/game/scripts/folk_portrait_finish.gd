@@ -509,24 +509,8 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	# bonnet or straw hat instead of letting black curls poke through.
 	if person in ["ida","daro"]:
 		scalp.visible=false
-	var curl: float=_v(g,"hair_curl")
-	if curl>.46 and person not in ["ida","daro"]:
-		# Hair texture comes from small overlapping facets embedded inside
-		# the crown. Large vertical egg-shaped spheres looked like horns.
-		var count: int=4+int(floor(curl*3.0))
-		for i in range(count):
-			var lateral: float=float(i)-float(count-1)*.5
-			var cx: float=lateral*(.22/float(maxi(1,count-1)))
-			var irregular: float=sin(float(i)*2.4+volume*8.0)
-			var crown: float=-.024+volume*.007+irregular*.003
-			var curl_piece:=ART.orb(root,
-				Vector3(cx,1.959+crown,-.113),
-				Vector3(.027+volume*.005,.018+curl*.010,.030),hair,8)
-			curl_piece.name="GeneticCurlCluster"
-	elif curl<.31 and person not in ["ida","daro"]:
-		var part:=ART.bone(root,Vector3(-.15,1.975,-.14),
-			Vector3(.11,2.011,-.14),.014,.014,brow,8)
-		part.name="InheritedHairPart"
+	# The old tiny scalp spheres looked like horns in close-up shots.
+	# The groomed mesh now owns curls, fringe and parting instead.
 	# Named villagers have recognisable grooming; descendants express
 	# inherited follicle properties without being forced into a profession.
 	HAIR.finish(root,person,g,sex,hair)
