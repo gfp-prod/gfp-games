@@ -59,7 +59,7 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 		# Do not extrude the widest hip section unchanged down to the
 		# tunic hem: that produced a rectangular, barrel-shaped skirt.
 		# The fabric eases gently inward below the greater trochanter.
-		var toward_hem: float=smoothstep(.78,.61,clampf(y,.61,.78))
+		var toward_hem: float=1.0-smoothstep(.61,.78,clampf(y,.61,.78))
 		return Vector2(pelvis.x*lerpf(1.0,.935,toward_hem),
 			pelvis.y*lerpf(1.0,.965,toward_hem))
 	if y<1.10:
