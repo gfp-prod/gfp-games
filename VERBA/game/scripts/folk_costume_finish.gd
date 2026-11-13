@@ -498,7 +498,7 @@ static func tailored_womenswear(figure: Node3D,person: String,
 	st.set_material(fabric)
 	const RING_COUNT: int=20
 	var rows: Array[float]=[]
-	for level in [1.07,.995,.91,.835,.73,.61,.51,.41,.33]:
+	for level in [1.07,1.035,1.015,.995,.955,.91,.875,.835,.795,.73,.69,.61,.57,.51,.46,.41,.33]:
 		if float(level)>hem_y+.001: rows.append(float(level))
 	rows.append(hem_y)
 	# The high-hip tunic exposes the original weight-bearing femurs;
