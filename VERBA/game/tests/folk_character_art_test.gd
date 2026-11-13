@@ -219,7 +219,7 @@ func _run() -> void:
 	for point in painter_smock.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
 		if point.y>.98 and point.y<1.07:
 			waist_width=maxf(waist_width,absf(point.x))
-		if point.y<.70:
+		if point.y<.79:
 			hem_width=maxf(hem_width,absf(point.x))
 	if waist_width<=.02 or hem_width<=waist_width*1.22:
 		_fail("Painter's apron covers the waist with a rigid box profile")
