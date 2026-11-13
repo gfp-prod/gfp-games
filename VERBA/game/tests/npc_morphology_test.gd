@@ -22,12 +22,28 @@ func _run() -> void:
 	# The first 28 inherited alleles are exactly those from the prior game.
 	var legacy: Dictionary=a.duplicate(true)
 	legacy["version"]=1
-	for key in GENES.EXTRA_MORPH_TRAITS: legacy["alleles"].erase(key)
+	for key in GENES.EXTRA_MORPH_TRAITS+GENES.GROOM_TRAITS:
+		legacy["alleles"].erase(key)
+	# v2 player saves already have the body traits but not the beard genes.
+	var old_v2: Dictionary=a.duplicate(true)
+	old_v2["version"]=2
+	for groom_locus in GENES.GROOM_TRAITS:
+		old_v2["alleles"].erase(groom_locus)
+	var upgraded_v2: Dictionary=GENES.upgrade(old_v2,"ida")
+	if not GENES.validate(upgraded_v2):
+		_fail("An existing v2 save cannot upgrade to facial hair genetics")
+		return
+	for inherited_locus in GENES.TRAITS:
+		if inherited_locus in GENES.GROOM_TRAITS: continue
+		if upgraded_v2["alleles"][inherited_locus]!=a["alleles"][inherited_locus]:
+			_fail("New grooming genes overwrote an old physique gene")
+			return
 	var migrated: Dictionary=GENES.upgrade(legacy,"ida")
 	if not GENES.validate(migrated):
 		_fail("A saved v1 genome cannot migrate safely"); return
 	for locus in GENES.TRAITS:
-		if locus in GENES.EXTRA_MORPH_TRAITS: continue
+		if locus in GENES.EXTRA_MORPH_TRAITS or locus in GENES.GROOM_TRAITS:
+			continue
 		if migrated["alleles"][locus]!=a["alleles"][locus]:
 			_fail("Migration changed an old inherited allele "+locus); return
 	for locus in GENES.EXTRA_MORPH_TRAITS:
