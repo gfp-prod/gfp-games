@@ -230,7 +230,7 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 			for k in [0,1,2,0,2,3]:
 				var p: Vector3=corners[k]
 				st.set_uv(Vector2(p.x*3.0,p.y*3.0))
-					st.add_vertex(p-hand_anchor)
+				st.add_vertex(p-hand_anchor)
 	# Close the palm underneath the individual finger roots.
 	var center:=Vector3(side*.016,Y[-1],-.012)
 	for sector in range(SIDES):
@@ -242,7 +242,7 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 				Vector3(center.x+cos(a)*WIDTH[-1]*hand_scale,
 					Y[-1],center.z+sin(a)*DEPTH[-1]*hand_scale)]:
 			st.set_uv(Vector2(p.x*3.0,p.z*3.0))
-				st.add_vertex(p-hand_anchor)
+			st.add_vertex(p-hand_anchor)
 	st.generate_normals()
 	var palm:=MeshInstance3D.new()
 	palm.name="InheritedArticulatedHand"
