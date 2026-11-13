@@ -99,6 +99,9 @@ func _run() -> void:
 				_fail("An original detachable arm has lost its fitted sleeve"); return
 			if not bool(sleeve.get_meta("old_limb_pivot_preserved",false)):
 				_fail("Decorative sleeve replaced an amputatable arm joint"); return
+			var sign: float=-1.0 if side=="Left" else 1.0
+			if arm.rotation.z*sign<.04:
+				_fail("NPC arm lost its inherited relaxed resting posture"); return
 			var vertices: PackedVector3Array=sleeve.mesh.surface_get_arrays(0)[
 				Mesh.ARRAY_VERTEX]
 			var limb_bounds: AABB=sleeve.get_aabb()
@@ -141,6 +144,10 @@ func _run() -> void:
 			if not bool(trousers.get_meta("original_detachable_leg",false)) or (
 					not bool(boot.get_meta("no_new_collision",false))):
 				_fail("Fitted leg violated modular injury/collision contract"); return
+			var hide: StandardMaterial3D=boot.material_override as StandardMaterial3D
+			if hide==null or hide.albedo_texture!=FABRIC.leather_texture() or (
+					not bool(boot.get_meta("weathered_leather",false))):
+				_fail("Boot lost its grounded, worn leather material"); return
 			# The existing limb hitbox is deliberately physical. Only the
 			# NEW art meshes must be collision-free.
 			if not trousers.find_children("*","CollisionShape3D",true,false).is_empty() or (
