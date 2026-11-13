@@ -375,8 +375,12 @@ static func _beard_patch(root: Node3D,name: String,mat: Material,
 				# A scalloped lower edge follows the jaw and cheek planes.
 				var x: float=lerpf(left,right,u)*lerpf(1.0,.78,v)
 				var tip: float=.007*sin(float(col)*2.6)
-				var y: float=lerpf(top,bottom+tip,v)
-				var z: float=_depth(x,y,g,sex)-.007-.011*weight*v
+				# Beard growth is concentrated on the jaw, not a flat
+				# coal-black square directly beneath the eye. The inner
+				# cheek line begins lower, the outer sideburn remains high.
+				var inner: float=1.0-clampf(absf(x)/.14,0.0,1.0)
+				var y: float=lerpf(top-.045*inner,bottom+tip,v)
+				var z: float=_depth(x,y,g,sex)-.003-.004*weight*v
 				quad.append(Vector3(x,y,z))
 			for i in [0,1,2,0,2,3]:
 				var p: Vector3=quad[i]
@@ -387,6 +391,10 @@ static func _beard_patch(root: Node3D,name: String,mat: Material,
 	part.name=name
 	part.mesh=tool.commit()
 	part.material_override=mat
+	# Decorative stubble follows the genetically modeled skin. Duplicate
+	# shadows previously created a dark blotch below one eye in Godot.
+	part.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	part.set_meta("soft_inherited_facial_hair",true)
 	part.set_meta("no_new_collision",true)
 	part.set_meta("inherited_facial_hair",true)
 	root.add_child(part)
@@ -403,10 +411,11 @@ static func _facial_hair(root: Node3D,g: Dictionary,sex: String,
 	if style=="clean": return
 	var density: float=float(expression["density"])
 	var length: float=float(expression["length"])
-	var dark:=ART.mat(GENES.hair_color(g).darkened(.12),.99)
+	var dark:=ART.mat(GENES.hair_color(g).lerp(
+		GENES.skin_color(g),.43),.98)
 	dark.cull_mode=BaseMaterial3D.CULL_DISABLED
-	var stubble:=ART.mat(GENES.hair_color(g).lerp(
-		GENES.skin_color(g),.28),.98)
+	var stubble:=ART.mat(GENES.skin_color(g).lerp(
+		GENES.hair_color(g),.19),.98)
 	stubble.cull_mode=BaseMaterial3D.CULL_DISABLED
 	var facial_mat: Material=stubble if style=="stubble" else dark
 	var weight: float=lerpf(.65,1.35,length)
@@ -416,7 +425,8 @@ static func _facial_hair(root: Node3D,g: Dictionary,sex: String,
 			var near: float=side*.066
 			_beard_patch(root,"GeneticFacialHairCheek"+str(side),
 				facial_mat,g,sex,minf(edge,near),maxf(edge,near),
-				1.730,1.628 if style=="full" else 1.665,weight)
+				1.708 if style!="sideburns" else 1.727,
+				1.628 if style=="full" else 1.659,weight)
 	if style in ["short","full","goatee","stubble"]:
 		var chin_bottom: float=1.575 if style=="full" else (
 			1.610 if style=="short" else 1.628)
