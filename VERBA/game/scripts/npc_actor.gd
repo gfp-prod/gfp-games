@@ -12,6 +12,7 @@ var role: String = ""
 var world
 var definition: Dictionary = {}
 var inherited_genes: Dictionary = {}
+var severed_limbs: Dictionary = {}
 var route: NavigationAgent3D
 var current_goal: Vector3 = Vector3.ZERO
 var last_sim_action: String = ""
@@ -197,6 +198,62 @@ func _ready() -> void:
 	add_child(title)
 	name_label=title
 
+## A limb is an independent actor child, with a dropped physical remnant.
+## Injury signals can call this and later serialize severed_limbs in NPC state.
+func sever_limb(slot: String) -> bool:
+	var pivot: Node3D
+	match slot:
+		"left_arm": pivot=left_arm
+		"right_arm": pivot=right_arm
+		"left_leg": pivot=left_leg
+		"right_leg": pivot=right_leg
+		_: return false
+	if pivot==null or not is_instance_valid(pivot) or get_parent()==null:
+		return false
+	var anchor: Vector3=pivot.position
+	var original: Transform3D=pivot.global_transform
+	var remnant:=RigidBody3D.new()
+	remnant.name="Detached_"+npc_id+"_"+slot
+	remnant.collision_layer=8
+	remnant.collision_mask=16
+	get_parent().add_child(remnant)
+	remnant.global_transform=original
+	pivot.reparent(remnant,true)
+	pivot.position=Vector3.ZERO
+	var collision:=CollisionShape3D.new()
+	var sphere:=SphereShape3D.new()
+	sphere.radius=.19
+	collision.shape=sphere
+	remnant.add_child(collision)
+	remnant.apply_central_impulse(Vector3(.25,1.4,-.25))
+	var figure:=get_node_or_null("VisibleInhabitant") as Node3D
+	if figure!=null:
+		var stump:=ART.orb(figure,anchor,Vector3(.16,.15,.16),
+			ART.mat(Color("782c32"),.86),10)
+		stump.name="AmputationWound_"+slot
+		var droplets:=CPUParticles3D.new()
+		droplets.name="BloodSpray_"+slot
+		droplets.amount=14
+		droplets.lifetime=.8
+		droplets.one_shot=true
+		droplets.explosiveness=.85
+		droplets.gravity=Vector3(0,-2.5,0)
+		droplets.direction=Vector3(0,.7,-.2)
+		droplets.spread=45
+		droplets.initial_velocity_min=.5
+		droplets.initial_velocity_max=1.6
+		droplets.color=Color("862329")
+		droplets.position=anchor
+		figure.add_child(droplets)
+		droplets.emitting=true
+	match slot:
+		"left_arm": left_arm=null
+		"right_arm": right_arm=null
+		"left_leg": left_leg=null
+		"right_leg": right_leg=null
+	severed_limbs[slot]=true
+	return true
+
 func _make_baker_apron(parent: Node3D, fabric: Material, tie: Material) -> void:
 	# A front-facing trapezoidal cloth panel follows shoulders, waist, hem.
 	# Its surface normal points toward the player (-Z); it does not add
@@ -244,15 +301,15 @@ func _process(delta: float) -> void:
 		toward.y=0.0
 		if toward.length_squared()>.05:
 			rotation.y=lerp_angle(rotation.y,atan2(-toward.x,-toward.z),minf(1.0,delta*8.0))
-	if left_arm==null or world==null or world.village_sim==null: return
+	if world==null or world.village_sim==null: return
 	motion_clock+=delta
 	var order: Dictionary=world.village_sim.work_orders.get(npc_id,{})
 	var phase: String=String(order.get("phase",""))
 	var walking: bool=mobile and Vector2(velocity.x,velocity.z).length()>.20
 	var working: bool=not order.is_empty() and phase=="labor" and _near_work_goal()
 	var stride: float=sin(motion_clock*8.0)*.42 if walking else 0.0
-	left_leg.rotation.x=lerpf(left_leg.rotation.x,stride,minf(1.0,delta*9.0))
-	right_leg.rotation.x=lerpf(right_leg.rotation.x,-stride,minf(1.0,delta*9.0))
+	if left_leg!=null: left_leg.rotation.x=lerpf(left_leg.rotation.x,stride,minf(1.0,delta*9.0))
+	if right_leg!=null: right_leg.rotation.x=lerpf(right_leg.rotation.x,-stride,minf(1.0,delta*9.0))
 	var reach: float=0.0
 	var offhand: float=0.0
 	if working:
@@ -265,8 +322,8 @@ func _process(delta: float) -> void:
 	elif phase=="delivery" and npc_id=="daro":
 		reach=-.78
 		offhand=-.78
-	left_arm.rotation.x=lerpf(left_arm.rotation.x,offhand,minf(1.0,delta*8.0))
-	right_arm.rotation.x=lerpf(right_arm.rotation.x,reach,minf(1.0,delta*8.0))
+	if left_arm!=null: left_arm.rotation.x=lerpf(left_arm.rotation.x,offhand,minf(1.0,delta*8.0))
+	if right_arm!=null: right_arm.rotation.x=lerpf(right_arm.rotation.x,reach,minf(1.0,delta*8.0))
 	if harvest_sack!=null:
 		harvest_sack.visible=phase=="delivery"
 
