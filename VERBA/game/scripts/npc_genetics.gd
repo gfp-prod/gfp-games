@@ -2,12 +2,19 @@ extends RefCounted
 ## Compact, fictional polygenic appearance model. Two alleles per locus are
 ## persisted, one transmitted from each parent; no locus encodes ethnicity,
 ## morality, intelligence, sex, social role or an individual's choices.
-const VERSION: int=2
+const VERSION: int=3
 # Version 2 extends the physique and facial-control genome without changing
 # any of the original 28 loci or their transmitted parental alleles.
 const EXTRA_MORPH_TRAITS: Array[String]=[
 	"chest_width","bust_volume","waist_width","hip_width",
 	"muscle_tone","eye_aperture","nostril_width","lip_curve"
+]
+# Version 3: visual grooming, hair silhouette and biologically inherited
+# beard potential. Expression is age/sex-sensitive; alleles are not.
+const GROOM_TRAITS: Array[String]=[
+	"hair_length","hair_style","hair_parting","facial_hair_density",
+	"facial_hair_pattern","facial_hair_length","mustache_weight",
+	"sideburn_weight"
 ]
 const TRAITS: Array[String]=[
 	"pigment","warmth","eye_pigment","hair_pigment","hair_curl",
@@ -18,7 +25,10 @@ const TRAITS: Array[String]=[
 	"stature","shoulder_width","body_depth","limb_ratio",
 	"hair_volume","freckles","magic_sensitivity",
 	"chest_width","bust_volume","waist_width","hip_width",
-	"muscle_tone","eye_aperture","nostril_width","lip_curve"
+	"muscle_tone","eye_aperture","nostril_width","lip_curve",
+	"hair_length","hair_style","hair_parting","facial_hair_density",
+	"facial_hair_pattern","facial_hair_length","mustache_weight",
+	"sideburn_weight"
 ]
 const CAP: int=1000
 const MAX_ANCIENT: int=64
@@ -62,19 +72,24 @@ static func validate(g: Variant) -> bool:
 	return true
 
 static func upgrade(g: Variant,person_id: String,salt: int=1938) -> Dictionary:
-	# Persisted v1 founders and their children keep EVERY historical allele.
-	# Only the new morphological loci are deterministically populated. Old
-	# relationships, life stages, careers and anatomy do not change.
+	# Migrate real v1 and v2 saves without changing a single existing gene.
+	# Saved families retain every parent, child and historical inherited trait.
 	if validate(g): return normalize(g)
-	if not (g is Dictionary) or int(g.get("version",0))!=1:
-		return {}
+	if not (g is Dictionary): return {}
+	var saved_version: int=int(g.get("version",0))
+	if saved_version not in [1,2]: return {}
 	var source: Variant=g.get("alleles",{})
 	if not (source is Dictionary): return {}
-	if source.size()!=TRAITS.size()-EXTRA_MORPH_TRAITS.size(): return {}
+	var missing: Array[String]=[]
 	for locus in TRAITS:
-		if locus in EXTRA_MORPH_TRAITS: continue
-		if not source.has(locus) or not (source[locus] is Array):
-			return {}
+		if saved_version==1 and locus in EXTRA_MORPH_TRAITS:
+			missing.append(locus)
+		elif locus in GROOM_TRAITS:
+			missing.append(locus)
+	if source.size()!=TRAITS.size()-missing.size(): return {}
+	for locus in TRAITS:
+		if locus in missing: continue
+		if not source.has(locus) or not (source[locus] is Array): return {}
 		if source[locus].size()!=2: return {}
 		for allele in source[locus]:
 			if not (allele is int or allele is float): return {}
@@ -83,7 +98,7 @@ static func upgrade(g: Variant,person_id: String,salt: int=1938) -> Dictionary:
 	var result: Dictionary={"version":VERSION,"alleles":{}}
 	var baseline: Dictionary=founder(person_id,salt)
 	for locus in TRAITS:
-		var pair: Array=source[locus] if source.has(locus) else baseline["alleles"][locus]
+		var pair: Array=baseline["alleles"][locus] if locus in missing else source[locus]
 		result["alleles"][locus]=[int(pair[0]),int(pair[1])]
 	return result
 
@@ -135,6 +150,59 @@ static func forearm_length(g: Dictionary) -> float:
 	# Use the inherited limb_ratio locus instead of arbitrary per-role
 	# or per-sex limb lengths. Stature is handled by body_scale's Y.
 	return lerpf(.475,.635,value(g,"limb_ratio"))
+
+## Potential for facial hair is inherited by all, but normally expressed
+## by adult male phenotypes. Individual genetic variation is broad.
+static func beard_profile(g: Dictionary,sex: String,age_years: float=28.0) -> Dictionary:
+	var maturity: float=smoothstep(16.0,24.0,age_years)
+	var density: float=value(g,"facial_hair_density")
+	var length: float=value(g,"facial_hair_length")
+	var pattern: float=value(g,"facial_hair_pattern")
+	var mustache: float=value(g,"mustache_weight")
+	var sideburn: float=value(g,"sideburn_weight")
+	var expressed: float=density*maturity if sex=="male" else 0.0
+	var style: String="clean"
+	if expressed>.19:
+		style="stubble"
+	if expressed>.35 and mustache>.59 and pattern<.39:
+		style="moustache"
+	elif expressed>.42 and pattern<.39:
+		style="goatee"
+	elif expressed>.48 and length>.38:
+		style="full" if pattern>.53 else "short"
+	elif expressed>.34 and sideburn>.68:
+		style="sideburns"
+	return {"style":style,"density":expressed,
+		"length":length,"pattern":pattern,"mustache":mustache,
+		"sideburns":sideburn}
+
+static func hair_profile(g: Dictionary,sex: String,person_id: String="") -> Dictionary:
+	# A grooming preference is not a sex allele, but historical townsfolk
+	# can adopt culturally distinct styling without changing their DNA.
+	var length: float=value(g,"hair_length")
+	var style_gene: float=value(g,"hair_style")
+	var part: float=value(g,"hair_parting")
+	var curl: float=value(g,"hair_curl")
+	var full: float=value(g,"hair_volume")
+	var long_hair: bool=(sex=="female" and length>.15) or (
+		sex=="male" and length>.82)
+	var style: String="crop"
+	if long_hair:
+		style="braids" if style_gene>.74 else (
+			"bun" if style_gene>.52 else (
+			"wave" if curl>.51 else "loose"))
+	elif length>.48:
+		style="swept" if style_gene<.50 else "shaggy"
+	elif curl>.54:
+		style="curly_crop"
+	# A household can choose a practical hairstyle; not a hereditary role.
+	if person_id=="ida": style="bun"
+	if person_id=="juno": style="ponytail"
+	if person_id=="mara": style="braids"
+	if person_id=="sela": style="wave"
+	if person_id=="lena": style="loose"
+	return {"style":style,"length":length,"curl":curl,
+		"part":part,"volume":full}
 
 static func child(a: Dictionary,b: Dictionary,child_id: String,salt: int=1938) -> Dictionary:
 	if not validate(a) or not validate(b): return {}
