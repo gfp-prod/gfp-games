@@ -428,6 +428,10 @@ func _run() -> void:
 		if upper_lip==null or upper_lip.get_aabb().size.y<.009:
 			_fail("The inherited mouth is too fine to read at camera distance")
 			return
+		if upper_lip.mesh is CylinderMesh or not bool(upper_lip.get_meta(
+				"faceted_anatomical_surface",false)):
+			_fail("Mouth is still composed of attached cylindrical bars")
+			return
 		var face_at_socket: float=FACE._depth(
 			eye.position.x,eye.position.y,record)
 		var ocular_standoff: float=face_at_socket-(
@@ -477,6 +481,11 @@ func _run() -> void:
 		# The tip should actually emerge from the sculpted nasal bridge;
 		# an old offset placed it behind the surface at most angles.
 		var tip: MeshInstance3D=portrait.get_node("ModeledNoseTip")
+		if tip.mesh is SphereMesh or not bool(tip.get_meta(
+				"integrated_bridge_and_tip",false)) or (
+				tip.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<250):
+			_fail("Sculpted nose reverted to a detached round button")
+			return
 		var nose_y: float=lerpf(1.704,1.732,GENES.value(record,"nose_bridge"))
 		if tip.position.z>=FACE._depth(0.0,nose_y,record)-.005:
 			_fail("The modeled nose tip is buried in its head"); return
