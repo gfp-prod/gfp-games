@@ -108,6 +108,14 @@ func _run() -> void:
 		if not await _capture(world,cam,citizen,names[i],base,focus,dist):
 			_fail("Could not photograph genuine world citizen: "+ids[i])
 			return
+		# Readability and hair silhouette inspection at portrait distance.
+		# The same live NPC, genetics, actual head materials and lighting are
+		# used; only the comparison camera moves closer to the face.
+		if i in [0,1,2,3,8]:
+			if not await _capture(world,cam,citizen,
+					names[i]+"_face_detail",base,1.82,.96):
+				_fail("Could not inspect true eye, nose, lip and hair silhouette")
+				return
 		# Additional full figure to prove body's inherited measurements.
 		if i in [0,1,2,3,4,7,8]:
 			# Centre higher and pull back so the largest inherited
@@ -279,5 +287,5 @@ func _run() -> void:
 		_fail("Actual on-map four-person bloodline photo failed")
 		return
 	print("GENETIC_FACE_FRAME: 08_ida_orin_and_children")
-	print("PASS: thirty-three actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
+	print("PASS: thirty-eight actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
 	quit(0)
