@@ -144,8 +144,9 @@ func _ready() -> void:
 		leg.name="AnimatedLeftLeg" if side<0.0 else "AnimatedRightLeg"
 		leg.position=Vector3(side*.17,.61,.015)
 		figure.add_child(leg)
-		ART.bone(leg,Vector3.ZERO,Vector3(0,-.46,0),.115,.10,leather,8)
-		ART.box(leg,Vector3(0,-.52,-.095),Vector3(.25,.13,.42),leather)
+		# Genetically sized trouser and sculpted boot are mounted on this
+		# same animated, hit-detectable, independently detachable leg.
+		COSTUME.fitted_lower_leg(leg,side,genome,leather)
 		var limb_arm: String="left_arm" if side<0.0 else "right_arm"
 		var limb_leg: String="left_leg" if side<0.0 else "right_leg"
 		modular_limbs[limb_arm]=arm
