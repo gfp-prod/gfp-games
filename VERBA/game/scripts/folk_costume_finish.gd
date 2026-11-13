@@ -18,11 +18,11 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	if existing!=null: return existing
 	var shoulder: float=lerpf(.87,1.17,GENES.value(genome,"shoulder_width"))
 	var muscle: float=lerpf(.91,1.10,GENES.value(genome,"muscle_tone"))
-	const HEIGHT: Array[float]=[.085,.038,-.025,-.100,-.205,-.312,-.414]
+	const HEIGHT: Array[float]=[.046,.006,-.060,-.140,-.240,-.330,-.414]
 	const CX: Array[float]=[-.058,-.031,-.007,.025,.049,.065,.076]
 	const CZ: Array[float]=[-.018,-.024,-.029,-.034,-.042,-.046,-.047]
-	const RX: Array[float]=[.115,.153,.155,.143,.128,.112,.095]
-	const RZ: Array[float]=[.113,.155,.160,.150,.136,.116,.098]
+	const RX: Array[float]=[.094,.121,.125,.117,.106,.098,.087]
+	const RZ: Array[float]=[.101,.124,.128,.124,.115,.104,.090]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -182,8 +182,10 @@ static func dress(figure: Node3D,person: String,
 		var arm: Node3D=figure.get_node_or_null(
 			"AnimatedLeftArm" if sign<0.0 else "AnimatedRightArm") as Node3D
 		if arm!=null:
-			ART.bone(arm,Vector3(sign*.052,-.31,-.035),
-				Vector3(sign*.075,-.40,-.045),.117,.113,leather,8)
+			# The old rigid dark wrist barrel should not be wider than
+			# the fabric directly above it.
+			ART.bone(arm,Vector3(sign*.064,-.383,-.045),
+				Vector3(sign*.076,-.418,-.047),.089,.084,leather,8)
 		var leg: Node3D=figure.get_node_or_null(
 			"AnimatedLeftLeg" if sign<0.0 else "AnimatedRightLeg") as Node3D
 		if leg!=null:
@@ -205,10 +207,20 @@ static func dress(figure: Node3D,person: String,
 				ART.box(figure,Vector3(sign*.28,.92,-.443),
 					Vector3(.045,.045,.035),trim)
 		"ida":
-			# Waist ties are part of the baker's uniform, not floating ornaments.
+			# Former bright rods projected far from the baker's hips.
+			# A narrow dark linen knot follows the inherited side waist.
 			for sign in [-1.0,1.0]:
-				ART.bone(figure,Vector3(sign*.30,1.04,-.36),
-					Vector3(sign*.44,.79,-.25),.019,.015,trim,7)
+				var knot: Vector3=BODY._point(1.045,
+					-PI*.5+sign*1.10,genome)
+				var loose_end: Vector3=BODY._point(.91,
+					-PI*.5+sign*1.18,genome)
+				knot.x*=1.055
+				knot.z*=1.055
+				loose_end.x*=1.065
+				loose_end.z*=1.065
+				var tie:=ART.bone(figure,knot,loose_end,
+					.014,.010,worn,7)
+				tie.name="BakerFittedSideTie"
 		_:
 			pass
 
