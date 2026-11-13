@@ -106,8 +106,10 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 		sex: String="unspecified") -> MeshInstance3D:
 	var existing:=figure.get_node_or_null("VisibleSmithApron") as MeshInstance3D
 	if existing!=null: return existing
-	const HEIGHT: Array[float]=[1.39,1.35,1.30,1.24,1.17,1.10,1.02,.94,.85,.76,.67,.58]
-	const COLS: int=11
+	const HEIGHT: Array[float]=[1.39,1.37,1.35,1.325,1.30,1.27,1.24,
+		1.205,1.17,1.135,1.10,1.06,1.02,.98,.94,.895,.85,.805,
+		.76,.715,.67,.625,.58]
+	const COLS: int=21
 	var samples: Array[Vector3]=[]
 	for y in HEIGHT:
 		var relative: float=clampf((1.39-y)/.81,0.0,1.0)
@@ -122,9 +124,9 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 			var x: float=fraction*half_width
 			var a: float=-PI*.5+asin(clampf(x/body_section.x,-.91,.91))
 			var point: Vector3=BODY._point(y,a,genome,sex)
-			var drape: float=.095+.019*(1.0-fraction*fraction)
+			var drape: float=.029+.012*(1.0-fraction*fraction)+.006*relative*relative
 			# Gentle cloth crease at the hem; no unmodeled box corners.
-			var wrinkle: float=.008*sin(float(col)*1.85)*relative*relative
+			var wrinkle: float=.003*sin(float(col)*.96)*relative*relative
 			samples.append(Vector3(x,y,point.z-drape-wrinkle))
 	var st:=SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -152,7 +154,10 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 		var p_y: float=location.y
 		var width: float=BODY._section(p_y,genome,sex).x
 		var angle: float=-PI*.5+asin(clampf(p_x/width,-.91,.91))
-		var face_z: float=BODY._point(p_y,angle,genome,sex).z-.122
+		var rel: float=clampf((1.39-p_y)/.81,0.0,1.0)
+		var t: float=p_x/maxf(.01,BODY._section(p_y,genome,sex).x)
+		var face_z: float=BODY._point(p_y,angle,genome,sex).z-(
+			.029+.012*(1.0-clampf(t*t,0.0,1.0))+.006*rel*rel+.012)
 		var rivet:=ART.orb(figure,Vector3(p_x,p_y,face_z),
 			Vector3(.020,.020,.009),trim,8)
 		rivet.name="SmithApronIronRivet"
