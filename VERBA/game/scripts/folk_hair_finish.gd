@@ -302,6 +302,71 @@ static func _curly_crown(root: Node3D,mat: Material,g: Dictionary) -> MeshInstan
 	return crown
 
 
+## A joined back-of-head mantle supplies the actual hair volume.
+## Five narrow highlight tresses alone collapsed into a dangling cord in
+## the genuine side-view screenshots. This shell starts INSIDE the crown,
+## opens across the back of the skull, then drapes past the shoulders.
+static func _back_hair_mass(root: Node3D,material: Material,
+		tip_y: float,curl: float,volume: float) -> MeshInstance3D:
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(material)
+	const ROWS: int=13
+	const COLS: int=15
+	for row in range(ROWS-1):
+		for col in range(COLS-1):
+			var face: Array[Vector3]=[]
+			var rear: Array[Vector3]=[]
+			for cell in [[row,col],[row+1,col],
+					[row+1,col+1],[row,col+1]]:
+				var t: float=float(cell[0])/float(ROWS-1)
+				var u: float=float(cell[1])/float(COLS-1)*2.0-1.0
+				var a: float=u*PI*.50
+				var growth: float=smoothstep(.0,.34,t)
+				var width: float=lerpf(.145,.220+.025*volume,growth)
+				width*=1.0-.19*smoothstep(.74,1.0,t)
+				var wave: float=.010*curl*sin(t*TAU*1.2+a*2.0)
+				var x: float=sin(a)*width+wave*t
+				var behind: float=lerpf(.103,.348,smoothstep(.04,.61,t))
+				var z: float=behind+.058*cos(a)*sin(PI*t)
+				z+=.008*curl*sin(a*4.0+t*8.0)*t
+				var y: float=lerpf(1.99,tip_y,t)+(
+					.018*sin(a*3.0+curl*2.0)*pow(t,2.0))
+				var thickness: float=lerpf(.052,.036,t)
+				face.append(Vector3(x,y,z))
+				rear.append(Vector3(x,y,z+thickness))
+			# Front/back and all four exposed boundaries are actual
+			# triangles, not a billboard duplicated for each camera.
+			for side in [false,true]:
+				var corners: Array[Vector3]=rear if side else face
+				var winding: Array[int]=[0,2,1,0,3,2] if side else [
+					0,1,2,0,2,3]
+				for k in winding:
+					var p: Vector3=corners[k]
+					st.set_uv(Vector2(p.x+.5,p.y*.8))
+					st.add_vertex(p)
+			var walls: Array[Array]=[]
+			if col==0: walls.append([face[0],rear[0],rear[1],face[1]])
+			if col==COLS-2: walls.append([face[3],face[2],rear[2],rear[3]])
+			if row==0: walls.append([face[0],face[3],rear[3],rear[0]])
+			if row==ROWS-2: walls.append([face[1],rear[1],rear[2],face[2]])
+			for wall in walls:
+				for k in [0,1,2,0,2,3]:
+					var p: Vector3=wall[k]
+					st.set_uv(Vector2(p.x+.5,p.y*.8))
+					st.add_vertex(p)
+	st.generate_normals()
+	var mass:=MeshInstance3D.new()
+	mass.name="ContinuousBackHairMass"
+	mass.mesh=st.commit()
+	mass.material_override=material
+	mass.set_meta("hereditary_back_hair_volume",true)
+	mass.set_meta("inherited_hair_end",tip_y)
+	mass.set_meta("no_new_collision",true)
+	root.add_child(mass)
+	return mass
+
+
 static func _back_panels(root: Node3D,main: Material,shine: Material,
 		tip_y: float,curl: float) -> void:
 	# Individually cut ribbon panels give a soft mantle silhouette, not
@@ -388,6 +453,8 @@ static func finish(face_root: Node3D,person: String,genome: Dictionary,
 	match style:
 		"loose","wave":
 			var length_end: float=lerpf(1.47,1.29,gene_length)
+			_back_hair_mass(root,hair,length_end,curl,
+				float(profile["volume"]))
 			_back_panels(root,hair,shine,length_end,curl)
 			_side_framing(root,hair,shine,length_end+.09,curl,.047,true)
 			if style=="wave":
