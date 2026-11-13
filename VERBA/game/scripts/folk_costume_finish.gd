@@ -9,7 +9,7 @@ const BODY=preload("res://scripts/npc_body_morph.gd")
 const GENES=preload("res://scripts/npc_genetics.gd")
 
 
-## A soft, inherited shoulder cap and tapered sleeve on the EXISTING arm pivot.
+## A slim inset deltoid and tapered sleeve on the EXISTING arm pivot.
 ## Do not add new bones or physical limbs: the old modular arm node still owns
 ## hit detection, swing, severing, loading and social-care state.
 static func fitted_sleeve(arm: Node3D,sign: float,
@@ -26,13 +26,13 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	# shoulder, then tapers across the biceps to the elbow. No free-standing
 	# clavicle/shoulder cylinder is needed, even when a sleeve swings.
 	const HEIGHT: Array[float]=[.095,.061,.026,-.017,-.067,-.122,-.185,-.247,-.320]
-	const CX: Array[float]=[-.076,-.054,-.023,-.007,.011,.023,.036,.046,.052]
+	const CX: Array[float]=[-.034,-.024,-.009,.002,.014,.023,.031,.039,.043]
 	const CZ: Array[float]=[-.012,-.017,-.023,-.025,-.031,-.040,-.041,-.045,-.048]
-	# Keep a low-volume cap over the deltoid, but do not give every
-	# villager broad, perfectly round biceps. High inherited muscle still
+	# Use a narrow anatomical deltoid and taper, without giving every
+	# villager inflated round biceps. High inherited muscle still
 	# produces a powerful upper arm; the neutral figure remains lean.
-	const RX: Array[float]=[.053,.060,.070,.079,.077,.071,.065,.060,.057]
-	const RZ: Array[float]=[.057,.064,.074,.081,.078,.075,.071,.066,.063]
+	const RX: Array[float]=[.043,.049,.057,.064,.063,.060,.055,.052,.050]
+	const RZ: Array[float]=[.047,.053,.061,.069,.068,.063,.059,.056,.052]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -196,15 +196,15 @@ static func fitted_forearm(pivot: Node3D,side: float,
 				# narrowed wrist and slight radial/ulnar asymmetry.
 				# Unlike the old tapered tube, wrist size is independent
 				# of the forearm's inherited length.
-				var taper: float=lerpf(.058,.035,smoothstep(.10,.96,t))
-				var bulge: float=.010*pow(sin(PI*t),2.0)*arm_tone
+				var taper: float=lerpf(.053,.032,smoothstep(.10,.96,t))
+				var bulge: float=.008*pow(sin(PI*t),2.0)*arm_tone
 				var wrist: float=taper+bulge
 				var sweep: float=.016*t+(.006*sin(PI*t))
 				# Flexor mass is strongest on the front of the proximal
 				# forearm, while radial and ulnar edges are unequal. Hands,
 				# hitboxes, elbow pivot and inherited arm lengths are untouched.
-				var flexor: float=.008*exp(-pow((t-.34)/.19,2.0))
-				var radial: float=.005*exp(-pow((t-.51)/.25,2.0))
+				var flexor: float=.006*exp(-pow((t-.34)/.19,2.0))
+				var radial: float=.004*exp(-pow((t-.51)/.25,2.0))
 				var front: float=maxf(0.0,-sin(angle))
 				points.append(Vector3(
 					side*sweep+cos(angle)*(wrist+radial*side*cos(angle)),
@@ -387,8 +387,8 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	# it can swing independently without a hollow black joint appearing.
 	const H: Array[float]=[.092,.019,-.075,-.186,-.297,-.402,-.476,
 		-.568,-.665,-.759,-.846]
-	const W: Array[float]=[.116,.119,.114,.105,.096,.089,.091,.095,.090,.080,.074]
-	const D: Array[float]=[.118,.123,.118,.111,.102,.095,.096,.099,.095,.087,.080]
+	const W: Array[float]=[.105,.109,.106,.097,.087,.081,.080,.083,.077,.069,.063]
+	const D: Array[float]=[.108,.114,.111,.103,.095,.090,.089,.093,.088,.078,.071]
 	const KNEE_Y: float=-.420
 	const SEGMENTS: int=16
 	var upper:=SurfaceTool.new()
