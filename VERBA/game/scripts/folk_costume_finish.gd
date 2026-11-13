@@ -6,6 +6,123 @@ extends RefCounted
 const ART=preload("res://scripts/art.gd")
 const FABRIC=preload("res://scripts/npc_cloth_finish.gd")
 const BODY=preload("res://scripts/npc_body_morph.gd")
+const GENES=preload("res://scripts/npc_genetics.gd")
+
+
+## A soft, inherited shoulder cap and tapered sleeve on the EXISTING arm pivot.
+## Do not add new bones or physical limbs: the old modular arm node still owns
+## hit detection, swing, severing, loading and social-care state.
+static func fitted_sleeve(arm: Node3D,sign: float,
+		genome: Dictionary,cloth: Material) -> MeshInstance3D:
+	var existing:=arm.get_node_or_null("GeneticFittedSleeve") as MeshInstance3D
+	if existing!=null: return existing
+	var shoulder: float=lerpf(.87,1.17,GENES.value(genome,"shoulder_width"))
+	var muscle: float=lerpf(.91,1.10,GENES.value(genome,"muscle_tone"))
+	const HEIGHT: Array[float]=[.085,.038,-.025,-.100,-.205,-.312,-.414]
+	const CX: Array[float]=[-.058,-.031,-.007,.025,.049,.065,.076]
+	const CZ: Array[float]=[-.018,-.024,-.029,-.034,-.042,-.046,-.047]
+	const RX: Array[float]=[.115,.153,.155,.143,.128,.112,.095]
+	const RZ: Array[float]=[.113,.155,.160,.150,.136,.116,.098]
+	var surface:=SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface.set_material(cloth)
+	for row in range(HEIGHT.size()-1):
+		for segment in range(14):
+			var a: float=TAU*float(segment)/14.0
+			var b: float=TAU*float(segment+1)/14.0
+			var corners: Array[Vector3]=[]
+			for ring_and_angle in [[row,a],[row+1,a],[row+1,b],[row,b]]:
+				var index: int=int(ring_and_angle[0])
+				var angle: float=float(ring_and_angle[1])
+				var width: float=RX[index]*shoulder*muscle
+				var depth: float=RZ[index]*lerpf(.92,1.12,
+					GENES.value(genome,"body_depth"))
+				corners.append(Vector3(
+					sign*CX[index]+cos(angle)*width,
+					HEIGHT[index],
+					CZ[index]+sin(angle)*depth))
+			for j in [0,1,2,0,2,3]:
+				var p: Vector3=corners[j]
+				surface.set_uv(Vector2(
+					(float(segment)+float(j%3)*.35)/14.0,p.y*1.6))
+				surface.add_vertex(p)
+	surface.generate_normals()
+	var sleeve:=MeshInstance3D.new()
+	sleeve.name="GeneticFittedSleeve"
+	sleeve.mesh=surface.commit()
+	sleeve.material_override=cloth
+	sleeve.set_meta("inherits_shoulder",true)
+	sleeve.set_meta("old_limb_pivot_preserved",true)
+	sleeve.set_meta("no_new_collision",true)
+	arm.add_child(sleeve)
+	return sleeve
+
+## The smith's old apron was a broad rectangular slab suspended ahead of
+## the abdomen. This shaped leather panel follows inherited torso curvature
+## and retains the same visible name for compatible art reviews.
+static func smith_work_apron(figure: Node3D,genome: Dictionary,
+		hide: Material,leather: Material,trim: Material) -> MeshInstance3D:
+	var existing:=figure.get_node_or_null("VisibleSmithApron") as MeshInstance3D
+	if existing!=null: return existing
+	const HEIGHT: Array[float]=[1.39,1.35,1.30,1.24,1.17,1.10,1.02,.94,.85,.76,.67,.58]
+	const COLS: int=11
+	var samples: Array[Vector3]=[]
+	for y in HEIGHT:
+		var relative: float=clampf((1.39-y)/.81,0.0,1.0)
+		var half_width: float=lerpf(.19,.28,smoothstep(.0,1.0,relative))
+		var body_section: Vector2=BODY._section(y,genome)
+		for col in range(COLS):
+			var fraction: float=float(col)/float(COLS-1)*2.0-1.0
+			var x: float=fraction*half_width
+			var a: float=-PI*.5+asin(clampf(x/body_section.x,-.91,.91))
+			var point: Vector3=BODY._point(y,a,genome)
+			var drape: float=.108+.020*(1.0-fraction*fraction)
+			# Gentle cloth crease at the hem; no unmodeled box corners.
+			var wrinkle: float=.008*sin(float(col)*1.85)*relative*relative
+			samples.append(Vector3(x,y,point.z-drape-wrinkle))
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(hide)
+	for row in range(HEIGHT.size()-1):
+		for col in range(COLS-1):
+			var i: int=row*COLS+col
+			for j in [i,i+1,i+COLS,i+1,i+COLS+1,i+COLS]:
+				var p: Vector3=samples[j]
+				st.set_uv(Vector2(p.x+0.5,p.y))
+				st.add_vertex(p)
+	st.generate_normals()
+	var apron:=MeshInstance3D.new()
+	apron.name="VisibleSmithApron"
+	apron.mesh=st.commit()
+	apron.material_override=hide
+	apron.set_meta("fitted_to_inherited_torso",true)
+	apron.set_meta("no_new_collision",true)
+	figure.add_child(apron)
+	# Three small, surface-anchored iron rivets replace giant raised boxes.
+	for location in [Vector2(-.155,1.305),Vector2(.155,1.305),
+			Vector2(.205,.83)]:
+		var p_x: float=location.x
+		var p_y: float=location.y
+		var width: float=BODY._section(p_y,genome).x
+		var angle: float=-PI*.5+asin(clampf(p_x/width,-.91,.91))
+		var face_z: float=BODY._point(p_y,angle,genome).z-.14
+		var rivet:=ART.orb(figure,Vector3(p_x,p_y,face_z),
+			Vector3(.020,.020,.009),trim,8)
+		rivet.name="SmithApronIronRivet"
+	# Actual leather tie follows the torso circumference, not a block
+	# suspended in front of the chest.
+	for side in [-1.0,1.0]:
+		var ring_a: float=-PI*.5+side*.72
+		var ring_b: float=-PI*.5+side*1.33
+		var a: Vector3=BODY._point(.995,ring_a,genome)
+		var b: Vector3=BODY._point(.995,ring_b,genome)
+		a.x*=1.07
+		a.z*=1.08
+		b.x*=1.07
+		b.z*=1.08
+		var tie:=ART.bone(figure,a,b,.029,.025,leather,7)
+		tie.name="SmithApronSideTie"
+	return apron
 
 static func dress(figure: Node3D,person: String,
 		tunic: Material,trim: Material,leather: Material,
