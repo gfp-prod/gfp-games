@@ -137,8 +137,8 @@ func _run() -> void:
 				for frame in range(3): await process_frame
 				RenderingServer.force_draw()
 				var anatomy_frame: Image=root.get_texture().get_image()
-				var anatomy_name: String=base+"/"+names[i]+
-					"_orthographic_"+direction+".png"
+				var anatomy_name: String="%s/%s_orthographic_%s.png" % [
+					base,names[i],direction]
 				if anatomy_frame==null or anatomy_frame.save_png(anatomy_name)!=OK:
 					_fail("Cannot render orthographic anatomical "+direction)
 					return
