@@ -462,8 +462,12 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	# the flat apron, creating a giant brown hole in the actual render.
 	# A genuine conformal surface follows inherited chest/waist/hips
 	# across many sampled heights and lateral points, without new colliders.
-	const COLUMNS: int=11
-	const HEIGHTS: Array[float]=[1.40,1.365,1.33,1.29,1.255,1.22,1.17,1.11,1.055,.99,.93,.84,.77,.70,.64,.55]
+	const COLUMNS: int=21
+	# Additional rings let the cloth follow the inherited rib and bust
+	# contours without a comically deep stand-off from the body.
+	const HEIGHTS: Array[float]=[1.40,1.385,1.365,1.345,1.33,1.31,1.29,
+		1.273,1.255,1.237,1.22,1.195,1.17,1.14,1.11,1.08,1.055,
+		1.02,.99,.96,.93,.885,.84,.805,.77,.735,.70,.67,.64,.595,.55]
 	var vertices: Array[Vector3]=[]
 	for y in HEIGHTS:
 		var hem_flare: float=1.0-smoothstep(.55,.92,y)
@@ -480,10 +484,10 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 			# Dense sampling follows the convex bust and lower ribs. The
 			# old five-column panel cut across the curved chest: the opaque
 			# shirt pierced the apron, leaving a jagged brown hole.
-			# A center-weighted air gap clears the outer cloth while the
-			# panel still follows inherited body geometry.
-			var drape_gap: float=.082+.025*(1.0-absf(fraction))+
-				.012*hem_flare
+			# A small fabric allowance clears the overshirt. The previous
+			# 8–12 cm offset looked like a rigid shield floating over the chest.
+			var drape_gap: float=.032+.011*(1.0-absf(fraction))+
+				.008*hem_flare
 			vertices.append(Vector3(x,y,point.z-drape_gap))
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -506,18 +510,25 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	apron.material_override=fabric
 	apron.set_meta("drapes_over_inherited_torso",true)
 	parent.add_child(apron)
-	var waist_front: float=BODY._point(1.04,-PI*.5,genome,sex).z-.155
-	# A stitched waist seam, not a broad yellow bar projecting across
-	# the entire abdomen.
-	var stitch:=ART.bone(parent,Vector3(-.16,1.04,waist_front),
-		Vector3(.16,1.04,waist_front),.013,.013,tie,8)
-	stitch.name="BakerCloseFittedWaistSeam"
-	var pocket_z: float=BODY._point(.75,-PI*.5,genome,sex).z-.152
-	var pocket:=ART.box(parent,Vector3(-.08,.75,pocket_z),
-		Vector3(.17,.14,.022),fabric)
+	# Attach the stitched belt to actual apron vertices, not a floating
+	# straight rod measured from the underlying body at an obsolete offset.
+	var seam_row: int=HEIGHTS.find(1.055)
+	for col in range(3,COLUMNS-4):
+		var seam_a: Vector3=vertices[seam_row*COLUMNS+col]+Vector3(0,0,-.006)
+		var seam_b: Vector3=vertices[seam_row*COLUMNS+col+1]+Vector3(0,0,-.006)
+		var thread:=ART.bone(parent,seam_a,seam_b,.007,.006,tie,7)
+		thread.name="BakerCloseFittedWaistSeam"
+	# Pocket placement is sampled from the SAME conformal panel mesh;
+	# hands, forearms and tunic remain part of the original modular rig.
+	var pocket_row: int=HEIGHTS.find(.77)
+	var pocket_anchor: Vector3=vertices[pocket_row*COLUMNS+6]
+	var pocket:=ART.box(parent,pocket_anchor+Vector3(0,0,-.018),
+		Vector3(.146,.125,.024),fabric)
 	pocket.name="BakerWorkPocket"
-	ART.bone(parent,Vector3(-.17,.83,pocket_z-.011),
-		Vector3(.01,.83,pocket_z-.011),.009,.009,tie,7)
+	var pocket_stitch:=ART.bone(parent,
+		pocket_anchor+Vector3(-.064,.059,-.034),
+		pocket_anchor+Vector3(.064,.059,-.034),.006,.006,tie,7)
+	pocket_stitch.name="BakerPocketUpperStitch"
 
 func _process(delta: float) -> void:
 	# World labels are discovery aids, not floating billboards visible across
