@@ -569,6 +569,51 @@ static func finish(figure: Node3D,person: String,skin: Material,
 			dot.name="InheritedFreckle"
 	root.set_meta("expression_blink",0.0)
 
+## Figure-drawing landmark calibration for the existing procedural skull.
+## One silhouette module governs skull, modeled face, hair and hats without
+## rescaling the physics body, the actual genetics, or the detachable limbs.
+## The shared throat origin stays seated inside the open inherited collar.
+## Adult heads are intentionally stylized (~5.7 skull heights per stature),
+## rather than the previous near-4-head mannequin. Young NPCs keep the
+## naturally larger head-to-body ratio characteristic of childhood.
+static func skull_scale(g: Dictionary,age_years: float) -> Vector3:
+	var maturity: float=smoothstep(8.0,19.0,maxf(0.0,age_years))
+	var skull_gene: float=GENES.value(g,"face_width")
+	var height_gene: float=GENES.value(g,"face_length")
+	return Vector3(
+		lerpf(.94,.83,maturity)*lerpf(.97,1.035,skull_gene),
+		lerpf(.87,.68,maturity)*lerpf(.985,1.025,height_gene),
+		lerpf(.93,.85,maturity))
+
+
+static func fit_skull_landmarks(figure: Node3D,g: Dictionary,
+		age_years: float) -> void:
+	if bool(figure.get_meta("skull_landmarks_fitted",false)): return
+	var face: Node3D=figure.get_node_or_null("IndividualFaceConstruction")
+	if face==null: return
+	var dimensions: Vector3=skull_scale(g,age_years)
+	const THROAT: float=1.49
+	# Body/face generators both use absolute pre-growth coordinates.
+	# Affine scaling about the THROAT marker keeps mouth, eyes, hair
+	# and skin-colored neck mutually registered. An arbitrary scale
+	# about the feet would leave a floating jaw.
+	face.scale=dimensions
+	face.position.y=THROAT*(1.0-dimensions.y)
+	face.set_meta("landmark_calibrated_skull",true)
+	face.set_meta("anatomical_head_scale",dimensions)
+	for node_name in ["ModeledInhabitantHead","ModernGeneticHead",
+			"VisibleBakerBonnet","VisibleFarmerHat","VisibleFarmerCrown",
+			"FittedAttendantCapCrown","ShortAttendantVisor"]:
+		var part: MeshInstance3D=figure.get_node_or_null(
+			node_name) as MeshInstance3D
+		if part==null: continue
+		part.position.y=THROAT+(part.position.y-THROAT)*dimensions.y
+		part.scale=part.scale*dimensions
+		part.set_meta("skull_landmark_fitted",true)
+	figure.set_meta("skull_landmarks_fitted",true)
+	figure.set_meta("sculpt_skull_to_stature",true)
+
+
 static func expression(figure: Node3D,feel: float,blink: float=0.0,
 		speaking: bool=false,conversation_phase: float=0.0) -> void:
 	var root: Node3D=figure.get_node_or_null("IndividualFaceConstruction")
