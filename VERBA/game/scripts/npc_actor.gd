@@ -351,19 +351,19 @@ func _ready() -> void:
 		peak.name="ShortAttendantVisor"
 		COSTUME.dress_attendant(attendant)
 		BODY.finish(attendant,genome,shirt,true,sex)
-		WARDROBE.finish(attendant,npc_id,genome,sex)
 		COSTUME.tailored_womenswear(attendant,npc_id,genome,sex,shirt)
+		WARDROBE.finish(attendant,npc_id,genome,sex)
 	else:
 		COSTUME.dress(figure,npc_id,cloth,trim,leather,genome,sex)
 		BODY.finish(figure,genome,cloth,false,sex)
-		WARDROBE.finish(figure,npc_id,genome,sex)
 		COSTUME.tailored_womenswear(figure,npc_id,genome,sex,cloth)
+		WARDROBE.finish(figure,npc_id,genome,sex)
 	# Mild-to-noticeable, inherited body dimensions. The faceted look is
 	# deliberate; we change proportions, not topology or collision IDs.
 	inherited_body_dimensions=GENES.body_scale(genome,sex)
 	_apply_genetic_growth()
 	if visual_attendant!=null:
-		PORTRAIT.finish(visual_attendant,npc_id,skin,hair,brow,genome,sex)
+		PORTRAIT.finish(visual_attendant,npc_id,skin,hair,brow,genome,sex,age_years)
 	# Both face and limb models inherit the same body shape, and child
 	# models use the existing detachable body-part system.
 	refresh_anatomy_visuals()
