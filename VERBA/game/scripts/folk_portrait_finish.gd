@@ -24,13 +24,13 @@ static func _depth(x: float,y: float,g: Dictionary,
 	var jaw_factor: float=lerpf(.815,1.035,jaw_gene) if sex=="female" else (
 		lerpf(.985,1.125,jaw_gene) if sex=="male" else 1.0)
 	jaw*=jaw_factor
-	var cheek: float=lerpf(.83,1.21,_v(g,"cheek_fullness"))
+	var cheek: float=lerpf(.81,1.25,_v(g,"cheek_fullness"))
 	# Independent inherited jaw angle determines squareness at the chin.
 	var angle: float=lerpf(-.028,.038,_v(g,"jaw_angle"))
 	var profile: float=lerpf(jaw,cheek,smoothstep(1.66+angle,1.79+angle,y))
 	nx/=profile
 	var shell: float=-.193*sqrt(maxf(.013,1.0-nx*nx-ny*ny))
-	var bridge_width: float=lerpf(.026,.065,_v(g,"nose_width"))
+	var bridge_width: float=lerpf(.029,.070,_v(g,"nose_width"))
 	var bridge_height: float=lerpf(1.715,1.746,_v(g,"nose_bridge"))
 	var nose_projection: float=lerpf(.034,.118,_v(g,"nose_projection"))
 	nose_projection*=(.94 if sex=="female" else 1.07 if sex=="male" else 1.0)
@@ -38,7 +38,7 @@ static func _depth(x: float,y: float,g: Dictionary,
 		-pow(x/bridge_width,2.0)-pow((y-bridge_height)/.070,2.0))
 	var cheek_height: float=lerpf(1.703,1.756,_v(g,"cheek_height"))
 	var cheek_softness: float=1.16 if sex=="female" else .93 if sex=="male" else 1.0
-	var cheeks: float=-lerpf(.004,.031,_v(g,"cheek_fullness"))*cheek_softness*exp(
+	var cheeks: float=-lerpf(.008,.042,_v(g,"cheek_fullness"))*cheek_softness*exp(
 		-pow((absf(x)-.115)/.058,2.0)-pow((y-cheek_height)/.054,2.0))
 	var eye_level: float=lerpf(1.779,1.804,_v(g,"brow_height"))
 	var socket: float=.008*exp(-pow(
@@ -394,10 +394,12 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var lip_ink:=ART.mat(GENES.skin_color(g).darkened(
 		lerpf(.31,.18,_v(g,"lip_fullness"))),.99)
 	var ear_scale: float=lerpf(.70,1.33,_v(g,"ear_size"))
-	var eye_gap: float=lerpf(.068,.113,_v(g,"eye_spacing"))
+	var eye_gap: float=lerpf(.068,.107,_v(g,"eye_spacing"))
 	var eye_height: float=lerpf(1.780,1.802,_v(g,"brow_height"))
-	var eye_width: float=lerpf(.032,.052,_v(g,"eye_shape")) * (
-		1.055 if sex=="female" else 1.0)
+	# Feature dimensions must read at the standard third-person distance.
+	# Larger eye anatomy is inherited rather than painted onto the face.
+	var eye_width: float=lerpf(.040,.064,_v(g,"eye_shape")) * (
+		1.045 if sex=="female" else 1.0)
 	var tilt: float=lerpf(-.22,.22,_v(g,"brow_angle"))
 	for sign in [-1.0,1.0]:
 		var ear:=ART.orb(root,Vector3(sign*.205,1.762,.010),
@@ -411,47 +413,47 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		root.add_child(socket)
 		# A real layered eye: modestly recessed sclera, inherited iris,
 		# pupil and upper/lower eyelids instead of a black flat square.
-		var eye_aperture: float=lerpf(.73,1.26,_v(g,"eye_aperture"))
+		var eye_aperture: float=lerpf(.80,1.28,_v(g,"eye_aperture"))
 		var sclera:=ART.orb(socket,Vector3(0,0,-.006),
-			Vector3(eye_width*1.18,.024*eye_aperture,.012),
+			Vector3(eye_width*1.18,.028*eye_aperture,.012),
 			ART.mat(Color("d5cab7"),.89),12)
 		sclera.name="SmallRecessedEye"
 		var iris:=ART.orb(socket,Vector3(0,0,-.013),
-			Vector3(eye_width*.47,.017*eye_aperture,.006),iris_ink,12)
+			Vector3(eye_width*.49,.019*eye_aperture,.006),iris_ink,12)
 		iris.name="InheritedIris"
 		var pupil:=ART.orb(socket,Vector3(0,0,-.018),
-			Vector3(eye_width*.23,.011*eye_aperture,.004),eye_ink,10)
+			Vector3(eye_width*.245,.012*eye_aperture,.004),eye_ink,10)
 		pupil.name="AnatomicalPupil"
-		var lid:=ART.bone(socket,Vector3(-eye_width*.77,.013*eye_aperture,-.011),
-			Vector3(eye_width*.77,.013*eye_aperture,-.011),.006,.006,skin,9)
+		var lid:=ART.bone(socket,Vector3(-eye_width*.83,.016*eye_aperture,-.011),
+			Vector3(eye_width*.83,.016*eye_aperture,-.011),.008,.008,skin,9)
 		lid.name="IndividualUpperEyelid"
-		var lower_lid:=ART.bone(socket,Vector3(-eye_width*.72,-.013*eye_aperture,-.010),
-			Vector3(eye_width*.72,-.013*eye_aperture,-.010),.0045,.005,skin,9)
+		var lower_lid:=ART.bone(socket,Vector3(-eye_width*.77,-.016*eye_aperture,-.010),
+			Vector3(eye_width*.77,-.016*eye_aperture,-.010),.006,.006,skin,9)
 		lower_lid.name="AnatomicalLowerEyelid"
 		# Blink with actual moving eyelid volumes. The sclera, iris and pupil
 		# stay at their anatomical sizes; compressing the entire eye made
 		# villagers look like rubber-faced dolls during conversations.
 		var upper_cover:=ART.orb(socket,
-			Vector3(0,.023*eye_aperture,-.009),
-			Vector3(eye_width*1.26,.016*eye_aperture,.011),skin,12)
+			Vector3(0,.026*eye_aperture,-.009),
+			Vector3(eye_width*1.26,.018*eye_aperture,.011),skin,12)
 		upper_cover.name="ExpressionUpperBlinkCover"
 		upper_cover.set_meta("rest_y",upper_cover.position.y)
 		var lower_cover:=ART.orb(socket,
-			Vector3(0,-.022*eye_aperture,-.009),
-			Vector3(eye_width*1.24,.015*eye_aperture,.011),skin,12)
+			Vector3(0,-.026*eye_aperture,-.009),
+			Vector3(eye_width*1.24,.017*eye_aperture,.011),skin,12)
 		lower_cover.name="ExpressionLowerBlinkCover"
 		lower_cover.set_meta("rest_y",lower_cover.position.y)
 		var brow_rig:=Node3D.new()
 		brow_rig.name="ExpressionBrowLeft" if sign<0.0 else "ExpressionBrowRight"
-		brow_rig.position=Vector3(x,eye_height+.038,_depth(x,eye_height+.038,g,sex)-.006)
+		brow_rig.position=Vector3(x,eye_height+.048,_depth(x,eye_height+.048,g,sex)-.010)
 		root.add_child(brow_rig)
 		var feminine_brow: bool=sex=="female"
 		var brow_mesh:=ART.bone(brow_rig,
-			Vector3(-eye_width*.76,0,0),
-			Vector3(eye_width*.76,sign*tilt*.034+(
+			Vector3(-eye_width*.89,0,0),
+			Vector3(eye_width*.89,sign*tilt*.038+(
 				.004 if feminine_brow else 0.0),0),
-			.0045 if feminine_brow else .0055,
-			.0055 if feminine_brow else .0065,brow,8)
+			.0065 if feminine_brow else .008,
+			.0075 if feminine_brow else .009,brow,8)
 		brow_mesh.name="InheritedBrow"
 		brow_rig.set_meta("rest_y",brow_rig.position.y)
 		brow_rig.set_meta("rest_tilt",sign*tilt*.11)
@@ -459,19 +461,19 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	# A bridge/tip/nostril pair gives a distinct profile without a giant
 	# cartoon bulb or unsupported free-floating cylinder.
 	var nose_y: float=lerpf(1.704,1.732,_v(g,"nose_bridge"))
-	var nose_width: float=lerpf(.027,.058,_v(g,"nose_width"))
+	var nose_width: float=lerpf(.030,.068,_v(g,"nose_width"))
 	var nostril_width: float=lerpf(.64,1.28,_v(g,"nostril_width"))
 	var nose_front: float=_depth(0,nose_y,g,sex)
-	var tip:=ART.orb(root,Vector3(0,nose_y-.012,nose_front-.007),
-		Vector3(nose_width*.68,.029,.017),skin,10)
+	var tip:=ART.orb(root,Vector3(0,nose_y-.014,nose_front-.014),
+		Vector3(nose_width*.91,.044,.030),skin,10)
 	tip.name="ModeledNoseTip"
 	var nostril_skin:=ART.mat(GENES.skin_color(g).darkened(.39),.99)
 	for side in [-1.0,1.0]:
 		var wing_x: float=side*nose_width*.72
 		var wing_y: float=nose_y-.035
 		var wing_front: float=_depth(wing_x,wing_y,g,sex)
-		var alar:=ART.orb(root,Vector3(wing_x,wing_y,wing_front-.004),
-			Vector3(nose_width*.38,.018,.012),skin,9)
+		var alar:=ART.orb(root,Vector3(wing_x,wing_y,wing_front-.009),
+			Vector3(nose_width*.43,.022,.016),skin,9)
 		alar.name="ModeledNoseWing"
 		var nostril:=ART.orb(root,
 			Vector3(side*nose_width*.68*nostril_width,wing_y-.013,wing_front-.009),
@@ -479,14 +481,14 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		nostril.name="InheritedNostril"
 	# Faceted cheekbone highlights follow the integrated mesh surface.
 	# The underlying skull is continuous, not an attached cheek sphere.
-	var cheek_tone:=ART.mat(GENES.skin_color(g).lightened(.038),.99)
+	var cheek_tone:=ART.mat(GENES.skin_color(g).lightened(.029),.99)
 	for side in [-1.0,1.0]:
 		var ridge_x: float=side*lerpf(.113,.133,_v(g,"cheek_fullness"))
 		var ridge_y: float=lerpf(1.727,1.773,_v(g,"cheek_height"))
 		var plane:=SurfaceTool.new()
 		plane.begin(Mesh.PRIMITIVE_TRIANGLES)
-		for offset in [Vector2(-.028,-.018),Vector2(.013,.016),
-				Vector2(.039,-.010)]:
+		for offset in [Vector2(-.035,-.026),Vector2(.008,.022),
+				Vector2(.051,-.014)]:
 			var px: float=ridge_x+offset.x*side
 			var py: float=ridge_y+offset.y
 			plane.set_uv(Vector2(px*2.0,py*2.0))
@@ -496,7 +498,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		highlight.mesh=plane.commit()
 		highlight.material_override=cheek_tone
 		root.add_child(highlight)
-	var mouth_width: float=lerpf(.028,.069,_v(g,"mouth_width"))
+	var mouth_width: float=lerpf(.038,.077,_v(g,"mouth_width"))
 	var lip_height: float=1.65+(_v(g,"face_length")-.5)*.017
 	var mouth:=Node3D.new()
 	mouth.name="ExpressionMouth"
@@ -510,13 +512,13 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var lower_rig:=Node3D.new()
 	lower_rig.name="ExpressionLowerLip"
 	mouth.add_child(lower_rig)
-	var fullness: float=lerpf(.005,.016,_v(g,"lip_fullness"))
+	var fullness: float=lerpf(.008,.024,_v(g,"lip_fullness"))
 	# Lip curve is independent of inherited width and fullness. High
 	# alleles lift the neutral mouth corners and Cupid's bow; low alleles
 	# produce a flatter, downturned mouth. Expressions animate these
 	# inherited shapes rather than replacing them with generic lips.
-	var cupid_rise: float=lerpf(.003,.013,_v(g,"lip_curve"))
-	var corner_rise: float=lerpf(-.009,.007,_v(g,"lip_curve"))
+	var cupid_rise: float=lerpf(.004,.016,_v(g,"lip_curve"))
+	var corner_rise: float=lerpf(-.011,.009,_v(g,"lip_curve"))
 	mouth.set_meta("rest_cupid_rise",cupid_rise)
 	mouth.set_meta("rest_corner_rise",corner_rise)
 	# Upper and lower lip bands occupy separate volumes and articulate
@@ -543,17 +545,9 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var open_mouth:=ART.orb(mouth,Vector3(0,-.005,-.002),
 		Vector3(mouth_width*1.7,.007,.009),ART.mat(Color("301c1c"),1),8)
 	open_mouth.name="ExpressionMouthOpening"
-	# Close-fitting hair, inherited volume and curl. Not a wig made of
-	# giant floating spheres. Color is inherited separately from shape.
-	var volume: float=_v(g,"hair_volume")
-	var scalp:=ART.orb(root,Vector3(0,1.959,.036),
-		Vector3(lerpf(.355,.420,volume),lerpf(.083,.155,volume),
-			lerpf(.330,.381,volume)),hair,13)
-	scalp.name="NaturalHairline"
-	# Keep genetic hair in the genome, but tuck it beneath a working
-	# bonnet or straw hat instead of letting black curls poke through.
-	if person in ["ida","daro"]:
-		scalp.visible=false
+	# Connected scalp shell follows each inherited skull and natural
+	# hairline. A huge flattened spherical cap used to resemble a helmet.
+	var scalp: MeshInstance3D=HAIR.scalp_cap(root,hair,g,person)
 	# The old tiny scalp spheres looked like horns in close-up shots.
 	# The groomed mesh now owns curls, fringe and parting instead.
 	# Named villagers have recognisable grooming; descendants express
