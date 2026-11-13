@@ -245,6 +245,18 @@ func _run() -> void:
 				"leg_silhouette_uncovered",false)):
 			_fail("Over-tunic reverted to the old long cylinder")
 			return
+	# Compare actual living shoulder pivots against the same inherited
+	# torso width. Smaller-average female shoulders must not have an
+	# identical square outer-arm attachment as the blacksmith.
+	var ida_shoulder_width: float=genetic_body._section(1.365,
+		world.village_sim.people["ida"]["genome"],"female").x
+	var orin_shoulder_width: float=genetic_body._section(1.365,
+		world.village_sim.people["orin"]["genome"],"male").x
+	var ida_socket_ratio: float=absf(ida.left_arm.position.x)/ida_shoulder_width
+	var orin_socket_ratio: float=absf(orin.left_arm.position.x)/orin_shoulder_width
+	if ida_socket_ratio>=orin_socket_ratio-.025:
+		_fail("Female-average arms still attach at broad male shoulder offsets")
+		return
 	# The old movable arms were plain cylinders whose hard shoulder
 	# intersections made the bodies look assembled from spare parts.
 	# Ensure the new fitted meshes belong to the exact original limb rigs.
