@@ -2,6 +2,9 @@ extends SceneTree
 ## Render-asset regression: preserve human proportions and the baker's
 ## identifiable working costume without changing any simulation authority.
 const FABRIC=preload("res://scripts/npc_cloth_finish.gd")
+const GROOM=preload("res://scripts/folk_hair_finish.gd")
+const GENES=preload("res://scripts/npc_genetics.gd")
+const ART_LIB=preload("res://scripts/art.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -9,6 +12,23 @@ func _initialize() -> void:
 func _fail(reason: String) -> void:
 	push_error("Villager character art: " + reason)
 	quit(1)
+
+## Examine real SurfaceTool vertices near the ends of inherited long locks.
+## A lock may be long but invisible if its last rows disappear inside cloth.
+func _long_lock_clears_tunic(mesh: MeshInstance3D,front: bool) -> bool:
+	if mesh==null or mesh.mesh==null: return false
+	var points: PackedVector3Array=mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	if points.size()<100: return false
+	var lowest: float=100.0
+	for v in points:
+		lowest=minf(lowest,v.y)
+	var at_hem: int=0
+	for v in points:
+		if v.y>lowest+.021: continue
+		at_hem+=1
+		if front and v.z>-.298: return false
+		if not front and v.z<.320: return false
+	return at_hem>=8
 
 func _run() -> void:
 	var world=load("res://main.tscn").instantiate()
@@ -378,5 +398,30 @@ func _run() -> void:
 		(face.material_override as StandardMaterial3D).albedo_color):
 		_fail("Every villager received an identical skin material")
 		return
+	# Three real hairstyle generators should clear clothes at the ends of
+	# the locks. Previously the strands were geometrically valid but
+	# disappeared into the chest and back of every walking villager.
+	for person_name in ["sela","mara","juno"]:
+		var groom_root:=Node3D.new()
+		root.add_child(groom_root)
+		var inherited: Dictionary=GENES.founder(person_name)
+		var finish: Node3D=GROOM.finish(groom_root,person_name,inherited,
+			"female",ART_LIB.mat(GENES.hair_color(inherited),.98))
+		var strand_name: String="FacetedLeftHairFrame" if person_name=="sela" else (
+			"WovenLeftHairCore" if person_name=="mara" else "LongPonytailTail1")
+		var strand: MeshInstance3D=finish.get_node_or_null(
+			strand_name) as MeshInstance3D
+		if not _long_lock_clears_tunic(strand,person_name!="juno"):
+			_fail("Long hairstyle disappears into clothing: "+person_name)
+			return
+		if finish.find_children("*","CollisionShape3D",true,false).size()>0:
+			_fail("Grooming added a new body collision or blocked limb severance")
+			return
+		if person_name=="sela":
+			var back: MeshInstance3D=finish.get_node_or_null(
+				"FacetedBackHairPanel2") as MeshInstance3D
+			if not _long_lock_clears_tunic(back,false):
+				_fail("Loose long hair still penetrates the fitted back")
+				return
 	print("PASS: fitted villager bodies, individual face anatomy, distance-aware rigging and baker apron preserve distinct worker appearance")
 	quit(0)
