@@ -94,8 +94,18 @@ func _run() -> void:
 			not bool(curl_crown.get_meta("one_connected_curl_silhouette",false))):
 		_fail("Curly hair reverted to a floating collection of spheres")
 		return
-	if curl_crown.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<1000:
+	var curl_vertices: PackedVector3Array=curl_crown.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	if curl_vertices.size()<1000:
 		_fail("Curly crown lost its connected low-poly sculpt"); return
+	# A curl shell can be connected and STILL hover like a flat hat.
+	# Check actual foremost roots reach the forehead below the crown.
+	var seated_curls: bool=false
+	for point in curl_vertices:
+		if absf(point.x)<.035 and point.z<-.140 and point.y<1.943:
+			seated_curls=true
+			break
+	if not seated_curls:
+		_fail("Curly crown has lifted back off the natural forehead"); return
 	if smith_style.find_child("TightFacetedCurl*",true,false)!=null or (
 			smith_style.find_child("TightCurlLock*",true,false)!=null):
 		_fail("Unconnected curl beads or stiff dangling locks returned")
@@ -109,8 +119,19 @@ func _run() -> void:
 				cap.get_meta("hairline_follows_skull",false)):
 			_fail("Genetically shaped hairline was replaced by a helmet sphere")
 			return
-		if cap.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<500:
+		var hairline_vertices: PackedVector3Array=cap.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+		if hairline_vertices.size()<500:
 			_fail("Hairline lacks the sculpted silhouette topology")
+			return
+		var forehead_contact: bool=false
+		var temple_rise: bool=false
+		for point in hairline_vertices:
+			if absf(point.x)<.033 and point.z<-.151 and point.y<1.925:
+				forehead_contact=true
+			if absf(point.x)>.155 and absf(point.z)<.052 and point.y>1.924:
+				temple_rise=true
+		if not forehead_contact or not temple_rise:
+			_fail("Scalp shell returned to floating halo/straight cap hairline")
 			return
 	for actor in [mara,sela]:
 		var groom: Node3D=actor.find_child("GroomedHairStudio",true,false)
@@ -131,6 +152,12 @@ func _run() -> void:
 	var pocket=ida.find_child("BakerWorkPocket",true,false)
 	if figure==null or face==null or robe==null or apron==null or bonnet==null or pocket==null:
 		_fail("The baker has lost her fitted clothing, modeled face or work gear")
+		return
+	# The bonnet must hug the inherited skull. Wide flat rims are what
+	# made the baker look as though she wore a pale mushroom on her head.
+	var bonnet_bounds: AABB=bonnet.get_aabb()
+	if bonnet_bounds.size.x>.397 or bonnet_bounds.size.y<.125:
+		_fail("Baker kerchief is a wide brim rather than a fitted cap")
 		return
 	# Check the visible mesh, not a metadata-only claim. Earlier adult
 	# inhabitants were 4-head-tall caricatures because their skulls were
@@ -718,6 +745,24 @@ func _run() -> void:
 			_fail("Grooming added a new body collision or blocked limb severance")
 			return
 		if person_name=="sela":
+			var left_frame: MeshInstance3D=finish.get_node_or_null(
+				"FacetedLeftHairFrame") as MeshInstance3D
+			var frame_points: PackedVector3Array=left_frame.mesh.surface_get_arrays(0)[
+				Mesh.ARRAY_VERTEX]
+			var mid_min: float=1000.0
+			var mid_max: float=-1000.0
+			var hem_min: float=1000.0
+			var hem_max: float=-1000.0
+			for p in frame_points:
+				if absf(p.y-1.67)<.028:
+					mid_min=minf(mid_min,p.x)
+					mid_max=maxf(mid_max,p.x)
+				if p.y<1.405:
+					hem_min=minf(hem_min,p.x)
+					hem_max=maxf(hem_max,p.x)
+			if mid_max<=mid_min or hem_max<=hem_min or (
+					hem_max-hem_min)>.74*(mid_max-mid_min):
+				_fail("Long side hair has blunt rectangular ends again"); return
 			var back: MeshInstance3D=finish.get_node_or_null(
 				"FacetedBackHairPanel2") as MeshInstance3D
 			if not _long_lock_clears_tunic(back,false):
