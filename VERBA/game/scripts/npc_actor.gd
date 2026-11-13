@@ -486,8 +486,8 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 			# shirt pierced the apron, leaving a jagged brown hole.
 			# A small fabric allowance clears the overshirt. The previous
 			# 8–12 cm offset looked like a rigid shield floating over the chest.
-			var drape_gap: float=.032+.011*(1.0-absf(fraction))+
-				.008*hem_flare
+			var drape_gap: float=(.032+.011*(1.0-absf(fraction))+
+				.008*hem_flare)
 			vertices.append(Vector3(x,y,point.z-drape_gap))
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
