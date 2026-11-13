@@ -1,0 +1,51 @@
+name: VERBA NPC character art screenshots
+on:
+  push:
+    branches: [verba-godot]
+    paths:
+      - "VERBA/game/scripts/npc_actor.gd"
+      - "VERBA/game/scripts/npc_genetics.gd"
+      - "VERBA/game/scripts/npc_appearance.gd"
+      - "VERBA/game/tests/npc_appearance_gallery.gd"
+      - ".github/workflows/verba-npc-visual.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  npc-gallery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Install OpenGL screenshot backend
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0
+      - name: Import game assets
+        run: godot --headless --path . --editor --import --quit
+      - name: Render four actual NPC screenshots
+        run: |
+          mkdir -p visual-reports
+          xvfb-run -a -s "-screen 0 1280x800x24" \
+            godot --path . --rendering-method gl_compatibility \
+            --script res://tests/npc_appearance_gallery.gd 2>&1 | tee visual-reports/npc-appearance.log
+          test "$(find visual-reports -name 'npc_*_fullbody.png' -o -name 'npc_faces_*.png' | wc -l)" -eq 4
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Invalid call\.' visual-reports/npc-appearance.log; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verba-npc-character-screenshots
+          path: |
+            VERBA/game/visual-reports/npc_women_fullbody.png
+            VERBA/game/visual-reports/npc_men_fullbody.png
+            VERBA/game/visual-reports/npc_faces_women.png
+            VERBA/game/visual-reports/npc_faces_men.png
+          if-no-files-found: warn
+          retention-days: 30
