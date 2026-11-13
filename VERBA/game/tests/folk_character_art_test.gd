@@ -168,6 +168,18 @@ func _run() -> void:
 			if absf(mesh.position.y-1.47)<.12 and absf(mesh.position.z+.13)<.10 and cylinder.height>.36:
 				_fail("The exposed chest collarbone cylinder has returned")
 				return
+	# The forging hammer must stay attached to Orin's original modular
+	# hand, but it must not dominate the camera as a giant horizontal slab.
+	var hammer: Node3D=orin.find_child(
+		"VisibleSmithHammer",true,false) as Node3D
+	var hammer_head: MeshInstance3D=hammer.get_node_or_null(
+		"SmithHammerWorkingHead") as MeshInstance3D if hammer!=null else null
+	if hammer==null or hammer_head==null or not (
+			orin.right_arm.is_ancestor_of(hammer)):
+		_fail("Smith's resized hammer lost its original movable hand"); return
+	if not (hammer_head.mesh is BoxMesh) or (
+			(hammer_head.mesh as BoxMesh).size.x>.27):
+		_fail("Smith's tool has become an enormous floating beam again"); return
 	# The petrol worker must swing its actual visible uniform sleeves,
 	# not the old medieval character model that is hidden beneath it.
 	var attendant: Node3D=null
