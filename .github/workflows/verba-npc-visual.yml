@@ -2,6 +2,8 @@ name: VERBA NPC character art screenshots
 on:
   push:
     branches: [verba-godot]
+  pull_request:
+    branches: [verba-godot]
     paths:
       - "VERBA/game/scripts/npc_actor.gd"
       - "VERBA/game/scripts/npc_genetics.gd"
