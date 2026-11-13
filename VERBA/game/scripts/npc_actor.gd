@@ -160,7 +160,7 @@ func _ready() -> void:
 		arm.position=Vector3(side*(.028+.87*socket_width),1.405,0)
 		# A slightly relaxed, inherited resting stance instead of two
 		# vertical mannequin rods; gait and reaching still drive rotation.x.
-		arm.rotation.z=side*lerpf(.095,.145,
+		arm.rotation.z=side*lerpf(.072,.110,
 			GENES.value(genome,"shoulder_width"))
 		figure.add_child(arm)
 		# Shoulder cap and upper sleeve have a sculpted circumference and
@@ -170,7 +170,7 @@ func _ready() -> void:
 		# remain children of this original severable arm, not new body modules.
 		var forearm:=Node3D.new()
 		forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-		forearm.position=Vector3(side*.044,-.283,-.040)
+		forearm.position=Vector3(side*.040,-GENES.upper_arm_length(genome),-.035)
 		forearm.rotation.x=.16
 		forearm.rotation.z=-side*.10
 		arm.add_child(forearm)
@@ -320,11 +320,11 @@ func _ready() -> void:
 			modern_arm.position=Vector3(side*(.028+
 				.87*BODY._section(1.365,genome,sex).x),1.405,0)
 			attendant.add_child(modern_arm)
-			modern_arm.rotation.z=side*lerpf(.095,.145,GENES.value(genome,"shoulder_width"))
+			modern_arm.rotation.z=side*lerpf(.072,.110,GENES.value(genome,"shoulder_width"))
 			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt,sex)
 			var modern_forearm:=Node3D.new()
 			modern_forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-			modern_forearm.position=Vector3(side*.044,-.283,-.040)
+			modern_forearm.position=Vector3(side*.040,-GENES.upper_arm_length(genome),-.035)
 			modern_forearm.rotation.x=.16
 			modern_forearm.rotation.z=-side*.10
 			modern_arm.add_child(modern_forearm)
@@ -661,9 +661,9 @@ func _install_limb_hitbox(limb: Node3D, part: String) -> void:
 	var capsule:=CapsuleShape3D.new()
 	# One capsule per arm retains the original limb identity while
 	# covering the full inherited shoulder-to-wrist reach.
-	var arm_reach: float=.283+GENES.forearm_length(appearance_genome)+.185
+	var arm_reach: float=GENES.upper_arm_length(appearance_genome)+GENES.forearm_length(appearance_genome)+.185
 	capsule.height=arm_reach if part.ends_with("_arm") else .88
-	capsule.radius=.072 if part.ends_with("_arm") else .124
+	capsule.radius=.068 if part.ends_with("_arm") else .124
 	shape.shape=capsule
 	shape.position=Vector3(0,-arm_reach*.5+.030 if part.ends_with("_arm") else -.425,0)
 	area.add_child(shape)
@@ -784,7 +784,7 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 		var joint_x: float=side*((.028+.87*BODY._section(1.365,appearance_genome,appearance_sex).x) if part.ends_with("arm") else .17)
 		var stump: MeshInstance3D=ART.orb(support_visual,
 			Vector3(joint_x,joint_y,0),
-			Vector3(.19,.13,.19),linen if anatomy["bandaged"] else wound,10)
+			Vector3(.125,.13,.125),linen if anatomy["bandaged"] else wound,10)
 		stump.name="DetachableJoint_"+part
 	if not ANATOMY.needs_support(anatomy): return
 	var lost_left: bool=anatomy["missing"].has("left_leg")
