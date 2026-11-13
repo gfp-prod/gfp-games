@@ -33,6 +33,8 @@ var mobile: bool = false
 var name_label: Label3D
 var left_arm: Node3D
 var right_arm: Node3D
+var left_forearm: Node3D
+var right_forearm: Node3D
 var left_leg: Node3D
 var right_leg: Node3D
 var harvest_sack: Node3D
@@ -98,14 +100,17 @@ func _ready() -> void:
 	# use the aged parchment texture for clothing or a glossy material.
 	var cloth := FABRIC.worn_linen(Color(String(definition.get("robe","746c60"))))
 	var genome: Dictionary=GENES.founder(npc_id)
+	var sex: String="unspecified"
 	var stage: String="adult"
 	if world!=null and world.village_sim!=null and world.village_sim.people.has(npc_id):
 		var record: Dictionary=world.village_sim.people[npc_id]
 		genome=record.get("genome",genome)
+		sex=String(record.get("sex","unspecified"))
 		stage=String(record.get("life_stage","adult"))
 	if not GENES.validate(genome):
 		genome=GENES.founder(npc_id)
 	set_meta("genome_traits",true)
+	set_meta("body_sex",sex)
 	set_meta("bloodline_generation",
 		int(world.village_sim.people[npc_id]["family"].get("generation",0)) if
 		world!=null and world.village_sim!=null and world.village_sim.people.has(npc_id) else 0)
@@ -143,7 +148,14 @@ func _ready() -> void:
 		# Shoulder cap and upper sleeve have a sculpted circumference and
 		# attach to the old detachable, animated physical arm pivot.
 		COSTUME.fitted_sleeve(arm,side,genome,cloth)
-		ART.orb(arm,Vector3(side*.075,-.46,-.045),Vector3(.093,.12,.088),skin,10)
+		# Genuine elbow articulation. The longer inherited forearm and hand
+		# remain children of this original severable arm, not new body modules.
+		var forearm:=Node3D.new()
+		forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
+		forearm.position=Vector3(side*.072,-.378,-.045)
+		forearm.rotation.x=-.11
+		arm.add_child(forearm)
+		COSTUME.fitted_forearm(forearm,side,genome,cloth,skin)
 		var leg:=Node3D.new()
 		leg.name="AnimatedLeftLeg" if side<0.0 else "AnimatedRightLeg"
 		leg.position=Vector3(side*.17,.61,.015)
@@ -159,9 +171,11 @@ func _ready() -> void:
 		_install_limb_hitbox(leg,limb_leg)
 		if side<0.0:
 			left_arm=arm
+			left_forearm=forearm
 			left_leg=leg
 		else:
 			right_arm=arm
+			right_forearm=forearm
 			right_leg=leg
 	# Keep the scribe's distinct staff; other professions already have
 	# their own fitted belt pouch in COSTUME.dress. The former universal
@@ -180,7 +194,7 @@ func _ready() -> void:
 			var flour:=ART.mat(Color("d2c4a1"),.98)
 			# A shaped cloth bib, a tied waist and a pocket replace the
 			# vertical white rectangle that used to obscure the whole body.
-			_make_baker_apron(figure,flour,trim,genome)
+			_make_baker_apron(figure,flour,trim,genome,sex)
 			var bonnet:=ART.orb(figure,Vector3(0,1.989,.025),
 				Vector3(.46,.24,.40),flour,12)
 			bonnet.name="VisibleBakerBonnet"
@@ -191,14 +205,14 @@ func _ready() -> void:
 			var metal:=ART.mat(Color("737e81"),.52)
 			# Shaped leather hangs in front of the actual inherited torso.
 			# Retain original occupational identity and arm-mounted hammer.
-			COSTUME.smith_work_apron(figure,genome,hide,leather,metal)
+			COSTUME.smith_work_apron(figure,genome,hide,leather,metal,sex)
 			var hammer:=Node3D.new()
 			hammer.name="VisibleSmithHammer"
 			# A work hammer hangs by the wrist at rest. The previous
 			# giant bright rectangular head sat near eye height, reading
 			# as a floating white bar across the first-person view.
-			hammer.position=Vector3(.092,-.49,-.065)
-			right_arm.add_child(hammer)
+			hammer.position=Vector3(.015,-GENES.forearm_length(genome)+.08,-.012)
+			right_forearm.add_child(hammer)
 			var handle:=ART.bone(hammer,Vector3(0,-.20,0),
 				Vector3(0,.12,0),.031,.027,leather,8)
 			handle.name="SmithHammerTimberHandle"
@@ -213,8 +227,8 @@ func _ready() -> void:
 			ART.cone(figure,Vector3(0,2.14,0),.29,.23,straw,.21,12)
 			var staff:=Node3D.new()
 			staff.name="VisibleFarmerRake"
-			staff.position=Vector3(-.19,-.52,-.11)
-			left_arm.add_child(staff)
+			staff.position=Vector3(-.08,-GENES.forearm_length(genome)+.065,-.08)
+			left_forearm.add_child(staff)
 			ART.bone(staff,Vector3(0,-.77,0),Vector3(0,1.03,0),
 				.039,.029,leather,8)
 			ART.box(staff,Vector3(0,1.02,0),Vector3(.47,.10,.09),trim)
@@ -274,17 +288,25 @@ func _ready() -> void:
 			modern_arm.name="ModularModern"+side_name.capitalize()+"Arm"
 			modern_arm.position=Vector3(side*.43,1.42,0)
 			attendant.add_child(modern_arm)
-			ART.bone(modern_arm,Vector3.ZERO,Vector3(side*.08,-.43,-.06),.115,.081,shirt,10)
-			ART.orb(modern_arm,Vector3(side*.09,-.47,-.06),Vector3(.095,.105,.084),skin,10)
+			modern_arm.rotation.z=side*lerpf(.060,.125,GENES.value(genome,"shoulder_width"))
+			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt)
+			var modern_forearm:=Node3D.new()
+			modern_forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
+			modern_forearm.position=Vector3(side*.072,-.378,-.045)
+			modern_forearm.rotation.x=-.11
+			modern_arm.add_child(modern_forearm)
+			COSTUME.fitted_forearm(modern_forearm,side,genome,shirt,skin)
 			modular_limbs[side_name+"_arm"]=modern_arm
 			_install_limb_hitbox(modern_arm,side_name+"_arm")
 			# The real visible uniform limbs must receive gait and arm-swing,
 			# not the hidden medieval base rig underneath them.
 			if side<0.0:
 				left_arm=modern_arm
+				left_forearm=modern_forearm
 				left_leg=modern_leg
 			else:
 				right_arm=modern_arm
+				right_forearm=modern_forearm
 				right_leg=modern_leg
 		var modern_head:=ART.orb(attendant,Vector3(0,1.76,0),
 			Vector3(.42,.49,.39),skin,12)
@@ -299,16 +321,13 @@ func _ready() -> void:
 			Vector3(.34,.025,.13),denim)
 		peak.name="ShortAttendantVisor"
 		COSTUME.dress_attendant(attendant)
-		BODY.finish(attendant,genome,shirt,true)
+		BODY.finish(attendant,genome,shirt,true,sex)
 	else:
-		COSTUME.dress(figure,npc_id,cloth,trim,leather,genome)
-		BODY.finish(figure,genome,cloth)
+		COSTUME.dress(figure,npc_id,cloth,trim,leather,genome,sex)
+		BODY.finish(figure,genome,cloth,false,sex)
 	# Mild-to-noticeable, inherited body dimensions. The faceted look is
 	# deliberate; we change proportions, not topology or collision IDs.
-	var shoulder: float=lerpf(.88,1.17,GENES.value(genome,"shoulder_width"))
-	var height: float=lerpf(.85,1.16,GENES.value(genome,"stature"))
-	var depth: float=lerpf(.87,1.15,GENES.value(genome,"body_depth"))
-	inherited_body_dimensions=Vector3(shoulder,height,depth)
+	inherited_body_dimensions=GENES.body_scale(genome,sex)
 	_apply_genetic_growth()
 	if visual_attendant!=null:
 		PORTRAIT.finish(visual_attendant,npc_id,skin,hair,brow,genome)
@@ -389,7 +408,7 @@ func _apply_genetic_growth() -> void:
 	last_body_age_day=world.village_sim.current_day
 
 func _make_baker_apron(parent: Node3D, fabric: Material,
-		tie: Material, genome: Dictionary) -> void:
+		tie: Material, genome: Dictionary, sex: String) -> void:
 	# The chest has its own anatomical curve. Sampling only at the
 	# top and waist lets the physical ribcage and bust protrude through
 	# the flat apron, creating a giant brown hole in the actual render.
@@ -401,12 +420,12 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	for y in HEIGHTS:
 		var t: float=clampf((1.40-y)/.85,0.0,1.0)
 		var half_width: float=lerpf(.20,.285,t)
-		var torso_section: Vector2=BODY._section(y,genome)
+		var torso_section: Vector2=BODY._section(y,genome,sex)
 		for col in range(COLUMNS):
 			var fraction: float=float(col)/float(COLUMNS-1)*2.0-1.0
 			var x: float=half_width*fraction
 			var angle: float=-PI*.5+asin(clampf(x/torso_section.x,-.89,.89))
-			var point: Vector3=BODY._point(y,angle,genome)
+			var point: Vector3=BODY._point(y,angle,genome,sex)
 			# Dense sampling follows the convex bust and lower ribs. The
 			# old five-column panel cut across the curved chest: the opaque
 			# shirt pierced the apron, leaving a jagged brown hole.
@@ -435,13 +454,13 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	apron.material_override=fabric
 	apron.set_meta("drapes_over_inherited_torso",true)
 	parent.add_child(apron)
-	var waist_front: float=BODY._point(1.04,-PI*.5,genome).z-.155
+	var waist_front: float=BODY._point(1.04,-PI*.5,genome,sex).z-.155
 	# A stitched waist seam, not a broad yellow bar projecting across
 	# the entire abdomen.
 	var stitch:=ART.bone(parent,Vector3(-.20,1.04,waist_front),
 		Vector3(.20,1.04,waist_front),.013,.013,tie,8)
 	stitch.name="BakerCloseFittedWaistSeam"
-	var pocket_z: float=BODY._point(.75,-PI*.5,genome).z-.152
+	var pocket_z: float=BODY._point(.75,-PI*.5,genome,sex).z-.152
 	var pocket:=ART.box(parent,Vector3(-.08,.75,pocket_z),
 		Vector3(.17,.14,.022),fabric)
 	pocket.name="BakerWorkPocket"
@@ -553,6 +572,14 @@ func _process(delta: float) -> void:
 		offhand=-.78
 	left_arm.rotation.x=lerpf(left_arm.rotation.x,offhand,minf(1.0,delta*8.0))
 	right_arm.rotation.x=lerpf(right_arm.rotation.x,reach,minf(1.0,delta*8.0))
+	# The elbows bend in response to reaching, working and gait. They
+	# never animate an invisible or separately detachable forearm.
+	if left_forearm!=null and not limb_missing("left_arm"):
+		var left_bend: float=-.11-maxf(0.0,-offhand)*.28-absf(stride)*.20
+		left_forearm.rotation.x=lerpf(left_forearm.rotation.x,left_bend,minf(1.0,delta*8.0))
+	if right_forearm!=null and not limb_missing("right_arm"):
+		var right_bend: float=-.11-maxf(0.0,-reach)*.32-absf(stride)*.20
+		right_forearm.rotation.x=lerpf(right_forearm.rotation.x,right_bend,minf(1.0,delta*8.0))
 	if harvest_sack!=null:
 		harvest_sack.visible=phase=="delivery" and not limb_missing("right_arm")
 
@@ -574,10 +601,10 @@ func _install_limb_hitbox(limb: Node3D, part: String) -> void:
 	limb.add_child(area)
 	var shape:=CollisionShape3D.new()
 	var capsule:=CapsuleShape3D.new()
-	capsule.height=.42
+	capsule.height=.86 if part.ends_with("_arm") else .42
 	capsule.radius=.135
 	shape.shape=capsule
-	shape.position=Vector3(0,-.23,0)
+	shape.position=Vector3(0,-.42 if part.ends_with("_arm") else -.23,0)
 	area.add_child(shape)
 	limb_hitboxes[part]=area
 
