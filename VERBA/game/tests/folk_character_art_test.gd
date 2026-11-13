@@ -724,12 +724,20 @@ func _run() -> void:
 		# top edge is the rectangular mask visible in real close-ups.
 		var middle_outline: float=0.0
 		var crown_outline: float=0.0
+		var face_y_min: float=INF
+		var face_y_max: float=-INF
 		for p in verts:
-			if absf(p.y-1.840)<.009:
+			face_y_min=minf(face_y_min,p.y)
+			face_y_max=maxf(face_y_max,p.y)
+		var midlevel: float=lerpf(face_y_min,face_y_max,.75)
+		var crownlevel: float=lerpf(face_y_min,face_y_max,.94)
+		for p in verts:
+			if absf(p.y-midlevel)<.012:
 				middle_outline=maxf(middle_outline,absf(p.x))
-			if p.y>1.918:
+			if p.y>crownlevel:
 				crown_outline=maxf(crown_outline,absf(p.x))
-		if middle_outline<.12 or crown_outline>=middle_outline*.94:
+		if middle_outline<.12 or crown_outline<.08 or (
+				crown_outline>=middle_outline*.94):
 			_fail("Inherited forehead did not curve into the skull"); return
 		var lip_node: Node3D=portrait.get_node_or_null("ExpressionMouth")
 		var top_lip: MeshInstance3D=lip_node.get_node_or_null(
