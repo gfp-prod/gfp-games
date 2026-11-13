@@ -167,9 +167,11 @@ static func _hair_lock(root: Node3D,name: String,hair: Material,
 				var sway: float=sin(t*TAU*(.70+curl*.65))*.026*curl
 				var root_y: float=1.945
 				var yy: float=lerpf(root_y,end_y,t)
-				var xx: float=x+sway+sin(t*PI)*signf(x)*.012
-				var zz: float=z+lerpf(-.055,.025,t)+(
-					.067*pow(t,1.3) if back else -.025*pow(t,1.5))
+				# Move the strand around the real ribcage, rather than
+				# burying all long hair inside the tunic's front/back.
+				var xx: float=x+sway+signf(x)*.092*smoothstep(.14,.76,t)
+				var zz: float=lerpf(z-.050,
+					.345 if back else -.325,smoothstep(.16,.83,t))
 				corners.append(Vector3(xx+cos(a)*radius,yy,
 					zz+sin(a)*radius*.85))
 			for index in [0,1,2,0,2,3]:
@@ -210,9 +212,9 @@ static func _layered_hair(root: Node3D,person: String,
 				-.008 if style=="braids" else .075,
 				strand_end,volume,curl,style!="braids")
 			if style=="braids":
-				# A thin diagonal braid cord, divided into small facets,
-				# lies in front of the collar, without intersecting the face.
-				lock.position.z=-.12
+				# Braids lie in front of the garment; surface geometry
+				# already moves them forward as they pass the jaw.
+				lock.set_meta("front_of_clothing",true)
 				var wrap:=ART.bone(root,
 					Vector3(side*.19,end_y+.018,-.158),
 					Vector3(side*.19,end_y-.004,-.158),
