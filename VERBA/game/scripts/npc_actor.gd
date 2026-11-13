@@ -472,10 +472,10 @@ func _make_baker_headscarf(parent: Node3D,flour: Material,
 				var t: float=float(pair[0])/float(RINGS-1)
 				var a: float=TAU*float(pair[1])/float(SEGMENTS)
 				var radius: float=pow(maxf(.0,1.0-t*t),.73)
-				var rim_y: float=1.945+.014*maxf(.0,-sin(a))+
-					.007*absf(cos(a))
-				var y: float=lerpf(rim_y,2.059,t)+
-					.003*(1.0-t)*sin(4.0*a)
+				var rim_y: float=(1.945+.014*maxf(.0,-sin(a))+
+					.007*absf(cos(a)))
+				var y: float=(lerpf(rim_y,2.059,t)+
+					.003*(1.0-t)*sin(4.0*a))
 				quad.append(Vector3(cos(a)*width*radius,
 					y-1.989,sin(a)*depth*radius))
 			for k in [0,1,2,0,2,3]:
