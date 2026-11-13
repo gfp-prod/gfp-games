@@ -49,9 +49,9 @@ func _run() -> void:
 	var genetic_body=load("res://scripts/npc_body_morph.gd")
 	var ida_genome: Dictionary=world.village_sim.people["ida"]["genome"]
 	for v in triangles:
-		var section_width: float=genetic_body._section(v.y,ida_genome).x
+		var section_width: float=genetic_body._section(v.y,ida_genome,String(world.village_sim.people["ida"]["sex"])).x
 		var angle: float=-PI*.5+asin(clampf(v.x/section_width,-.89,.89))
-		var outer_front: float=genetic_body._point(v.y,angle,ida_genome).z
+		var outer_front: float=genetic_body._point(v.y,angle,ida_genome,String(world.village_sim.people["ida"]["sex"])).z
 		if v.z>outer_front-.046:
 			_fail("Baker apron is buried behind genetically modeled clothing")
 			return
@@ -61,9 +61,9 @@ func _run() -> void:
 	for triangle in range(0,triangles.size(),3):
 		var center: Vector3=(triangles[triangle]+triangles[triangle+1]+
 			triangles[triangle+2])/3.0
-		var radius: float=genetic_body._section(center.y,ida_genome).x
+		var radius: float=genetic_body._section(center.y,ida_genome,String(world.village_sim.people["ida"]["sex"])).x
 		var angle: float=-PI*.5+asin(clampf(center.x/radius,-.89,.89))
-		var front: float=genetic_body._point(center.y,angle,ida_genome).z
+		var front: float=genetic_body._point(center.y,angle,ida_genome,String(world.village_sim.people["ida"]["sex"])).z
 		if center.z>front-.055:
 			_fail("Baker apron triangle interior clips through the chest or waist")
 			return
@@ -117,6 +117,46 @@ func _run() -> void:
 			var module_name: String=side.to_lower()+"_arm"
 			if actor.modular_limbs.get(module_name)!=arm:
 				_fail("Sleeve was added to a different arm than the injury rig"); return
+	# A full two-piece arm should reach the upper thigh, not end at
+	# chest level. The forearm's length comes from the inherited ratio and
+	# the elbow belongs to the original severable arm hierarchy.
+	for citizen in [ida,orin]:
+		var person: Dictionary=world.village_sim.people[String(citizen.npc_id)]
+		var genome: Dictionary=person["genome"]
+		for side in ["Left","Right"]:
+			var arm: Node3D=citizen.modular_limbs[
+				side.to_lower()+"_arm"] as Node3D
+			var elbow: Node3D=arm.get_node_or_null("Animated"+side+"Forearm")
+			if elbow==null or not arm.is_ancestor_of(elbow):
+				_fail("Inherited arm has no articulated elbow"); return
+			var mesh: MeshInstance3D=elbow.get_node_or_null(
+				"InheritedForearmSleeve") as MeshInstance3D
+			var hand: MeshInstance3D=elbow.get_node_or_null(
+				"InheritedArticulatedHand") as MeshInstance3D
+			if mesh==null or hand==null or mesh.mesh==null:
+				_fail("Arm still ends in a stub instead of a forearm and hand"); return
+			if not bool(mesh.get_meta("detaches_with_parent_arm",false)):
+				_fail("Forearm does not detach with its upper arm"); return
+			var length: float=float(mesh.get_meta("inherited_wrist_reach",0.0))
+			if absf(length-load("res://scripts/npc_genetics.gd").forearm_length(
+					genome))>.002:
+				_fail("Arm length ignores actual inherited limb ratio"); return
+			if arm.to_local(hand.global_position).y>-.63:
+				_fail("Individual's hand still sits at the waist"); return
+			var area: Area3D=citizen.limb_hitboxes[side.to_lower()+"_arm"]
+			var capsule: CollisionShape3D=area.get_child(0) as CollisionShape3D
+			if capsule==null or not (capsule.shape is CapsuleShape3D) or (
+					(capsule.shape as CapsuleShape3D).height<.77):
+				_fail("Long forearm lost its continuous physical hitbox"); return
+		var torso: MeshInstance3D=citizen.find_child(
+			"InheritedChestWaistHipCloth",true,false) as MeshInstance3D
+		if torso==null or String(torso.get_meta(
+				"sex_linked_body_shape",""))!=String(person["sex"]):
+			_fail("Female/male inherited body profiles are not expressed"); return
+		var expected: Vector3=load("res://scripts/npc_genetics.gd").body_scale(
+			genome,String(person["sex"]))
+		if citizen.inherited_body_dimensions.distance_to(expected)>.001:
+			_fail("NPC stature and frame size ignore heritable body genes"); return
 	# Legs must remain independently amputatable while trousers and
 	# footwear follow the inherited body rather than cubic ankle blocks.
 	for citizen in [ida,orin]:
@@ -177,9 +217,9 @@ func _run() -> void:
 	for index in range(0,smith_points.size(),3):
 		var p: Vector3=(smith_points[index]+smith_points[index+1]+
 			smith_points[index+2])/3.0
-		var section: float=genetic_body._section(p.y,smith_genome).x
+		var section: float=genetic_body._section(p.y,smith_genome,String(world.village_sim.people["orin"]["sex"])).x
 		var angle: float=-PI*.5+asin(clampf(p.x/section,-.91,.91))
-		if p.z>genetic_body._point(p.y,angle,smith_genome).z-.05:
+		if p.z>genetic_body._point(p.y,angle,smith_genome,String(world.village_sim.people["orin"]["sex"])).z-.05:
 			_fail("Blacksmith apron intersects its inherited torso"); return
 	# Keep the baker's original apron identity but ban the bright stiff
 	# waist rods that dominated its real first-person view.
