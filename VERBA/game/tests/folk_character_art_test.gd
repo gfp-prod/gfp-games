@@ -749,15 +749,23 @@ func _run() -> void:
 				"FacetedLeftHairFrame") as MeshInstance3D
 			var frame_points: PackedVector3Array=left_frame.mesh.surface_get_arrays(0)[
 				Mesh.ARRAY_VERTEX]
+			# Hair length is inherited: compare the real mesh at its own
+			# middle and end instead of assuming an absolute world Y.
+			var bottom_y: float=1000.0
+			var top_y: float=-1000.0
+			for p in frame_points:
+				bottom_y=minf(bottom_y,p.y)
+				top_y=maxf(top_y,p.y)
+			var midpoint_y: float=lerpf(top_y,bottom_y,.55)
 			var mid_min: float=1000.0
 			var mid_max: float=-1000.0
 			var hem_min: float=1000.0
 			var hem_max: float=-1000.0
 			for p in frame_points:
-				if absf(p.y-1.67)<.028:
+				if absf(p.y-midpoint_y)<.052:
 					mid_min=minf(mid_min,p.x)
 					mid_max=maxf(mid_max,p.x)
-				if p.y<1.405:
+				if p.y<bottom_y+.012:
 					hem_min=minf(hem_min,p.x)
 					hem_max=maxf(hem_max,p.x)
 			if mid_max<=mid_min or hem_max<=hem_min or (
