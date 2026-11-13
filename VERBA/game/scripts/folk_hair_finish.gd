@@ -280,7 +280,14 @@ static func _curly_crown(root: Node3D,mat: Material,g: Dictionary) -> MeshInstan
 					scallop*(1.0-t))*density
 				# A front hairline that touches the forehead; the former rim
 				# started above the face as a detached flat black cap.
-				var edge: float=1.917+.028*absf(cos(a))-.004*maxf(0.0,-sin(a))
+				# Cut the curly crown downward INTO the forehead at its front
+				# boundary. The old front rim sat above the unified head
+				# and exposed an empty black wedge under Orin's hairline.
+				# Temple roots stay higher, with small asymmetric curls.
+				var front: float=maxf(0.0,-sin(a))
+				var temple: float=pow(absf(cos(a)),1.35)
+				var edge: float=1.917+.035*temple-.025*front
+				edge+=.005*curl*sin(a*9.0+1.2)*front
 				quad.append(Vector3(
 					cos(a)*radius,
 					lerpf(edge,2.062+.012*curl,t)+
