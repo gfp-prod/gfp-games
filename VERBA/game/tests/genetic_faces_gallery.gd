@@ -123,11 +123,12 @@ func _run() -> void:
 		# Orthographic projection removes perspective distortion so we can
 		# compare head-to-stature, shoulders, hip projection and limb reach.
 		if i in [0,1,8]:
-			# Lift the same physical actor into clear sky only while taking
-			# the orthographic diagnostic. Hills previously hid the knees,
-			# making the anatomy reference screenshots unusable.
+			# Lift the REAL NPC for the temporary orthographic inspection.
+			# Ten metres was not enough: nearby tree beams still crossed the
+			# foreground of side views and hid the apron/body silhouette.
+			# The actor is returned to its unchanged simulation position.
 			var ground_pose: Vector3=citizen.global_position
-			citizen.global_position=ground_pose+Vector3(0,10.0,0)
+			citizen.global_position=ground_pose+Vector3(0,120.0,0)
 			cam.projection=Camera3D.PROJECTION_ORTHOGONAL
 			cam.size=2.48
 			for direction in ["front","profile"]:
@@ -207,5 +208,5 @@ func _run() -> void:
 		_fail("Actual on-map four-person bloodline photo failed")
 		return
 	print("GENETIC_FACE_FRAME: 08_ida_orin_and_children")
-	print("PASS: seventeen actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
+	print("PASS: twenty-eight actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
 	quit(0)
