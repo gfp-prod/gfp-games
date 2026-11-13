@@ -19,7 +19,7 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	if existing!=null: return existing
 	var shoulder: float=lerpf(.87,1.17,GENES.value(genome,"shoulder_width"))
 	var muscle_gene: float=GENES.value(genome,"muscle_tone")
-	var muscle: float=lerpf(.86,1.04,muscle_gene) if sex=="female" else (
+	var muscle: float=lerpf(.78,.97,muscle_gene) if sex=="female" else (
 		lerpf(.98,1.13,muscle_gene) if sex=="male" else
 		lerpf(.91,1.10,muscle_gene))
 	const HEIGHT: Array[float]=[.046,.006,-.060,-.140,-.240,-.330,-.414]
@@ -465,7 +465,7 @@ static func tailored_womenswear(figure: Node3D,person: String,
 	if old!=null: return old
 	if sex!="female": return null
 	var style: String="field_dress"
-	var hem_y: float=.37
+	var hem_y: float=.34
 	match person:
 		"ida": style="baker_apron_dress"; hem_y=.39
 		"mara": style="scribe_gown"; hem_y=.205
@@ -506,8 +506,8 @@ static func tailored_womenswear(figure: Node3D,person: String,
 				var theta: float=TAU*float(k)/float(RING_COUNT)
 				var p: Vector3=BODY._point(maxf(y,.61),theta,genome,sex)
 				var below: float=clampf((.61-y)/maxf(.16,.61-hem_y),0.0,1.0)
-				var pleat: float=.007*sin(theta*7.0)*pow(below,1.2)
-				var fullness: float=lerpf(1.015,1.105,below)
+				var pleat: float=.012*sin(theta*7.0)*pow(below,1.2)
+				var fullness: float=lerpf(1.015,1.235,below)
 				# Avoid a generic bell skirt; the waist is close-fitting,
 				# the upper hip follows anatomy, and only the hem opens.
 				p.x=p.x*fullness+cos(theta)*pleat
