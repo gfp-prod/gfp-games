@@ -160,7 +160,7 @@ static func _loft(parent: Node3D, node_name: String, rings: Array[Vector3],
 			var lo_b:=Vector3(cos(b)*low.x,low.y,sin(b)*low.z)
 			var hi_a:=Vector3(cos(a)*high.x,high.y,sin(a)*high.z)
 			var hi_b:=Vector3(cos(b)*high.x,high.y,sin(b)*high.z)
-			for v in [lo_a,hi_a,lo_b,lo_b,hi_a,hi_b]:
+			for v in [lo_a,lo_b,hi_a,lo_b,hi_b,hi_a]:
 				surface.add_vertex(v)
 	surface.generate_normals()
 	var result:=MeshInstance3D.new()
