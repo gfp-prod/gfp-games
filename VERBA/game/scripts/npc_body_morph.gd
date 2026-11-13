@@ -55,20 +55,22 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 	# Lean baseline, not low-detail anatomy: the original last pass
 	# multiplied pelvic width with soft-tissue width and overall X scale,
 	# making nearly every resident broad even with moderate alleles.
-	# Preserve shape RATIOS and high-allele broad physiques.
+	# Preserve shape RATIOS and high-allele broad physiques. The current
+	# average half-widths are deliberately lean; broadness must come from
+	# inherited muscle/frame loci, not a huge default mannequin torso.
 	# Distinct, continuous rings at hip crest / waist / ribs / shoulder.
-	var pelvis:=Vector2(.302*hips*hip_factor,
-		.282*depth*(.92+.11*hips)*pelvis_depth)
-	var midriff:=Vector2((.277*waist+.016*(1.0-muscle_gene))*waist_factor,
-		.246*depth*(.975 if female else 1.0))
-	var ribcage:=Vector2((.314*chest+upper_muscle)*rib_factor,
-		.284*depth*(.970 if female else 1.030 if male else 1.0))
-	var shoulder:=Vector2((.327*shoulders+.010*chest)*shoulder_factor,
-		.274*depth*(.975 if female else 1.035 if male else 1.0))
+	var pelvis:=Vector2(.255*hips*hip_factor,
+		.249*depth*(.92+.11*hips)*pelvis_depth)
+	var midriff:=Vector2((.235*waist+.010*(1.0-muscle_gene))*waist_factor,
+		.222*depth*(.975 if female else 1.0))
+	var ribcage:=Vector2((.269*chest+upper_muscle*.65)*rib_factor,
+		.256*depth*(.970 if female else 1.030 if male else 1.0))
+	var shoulder:=Vector2((.283*shoulders+.008*chest)*shoulder_factor,
+		.246*depth*(.975 if female else 1.035 if male else 1.0))
 	# A slender collar opening closes toward the new cranial/throat
 	# landmark. An oversized neckline left a hollow dark collar around
 	# the smaller, more realistic head.
-	var neckline:=Vector2(.155,.140)
+	var neckline:=Vector2(.148,.134)
 	if y<=.78:
 		# Do not extrude the widest hip section unchanged down to the
 		# tunic hem: that produced a rectangular, barrel-shaped skirt.
