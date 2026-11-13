@@ -29,15 +29,15 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	# the person's inherited elbow, rather than making every arm a rigid
 	# high-shouldered tube reaching well below that joint.
 	var upper_length: float=GENES.upper_arm_length(genome)
-	var HEIGHT: Array[float]=[.026,.009,-.018,-.055,-.092,-.136,
+	var HEIGHT: Array[float]=[.020,.006,-.020,-.055,-.092,-.136,
 		-.181,-.221,-upper_length-.015]
-	const CX: Array[float]=[-.032,-.023,-.008,.003,.014,.022,.031,.038,.042]
+	const CX: Array[float]=[-.046,-.036,-.014,.003,.014,.022,.031,.038,.042]
 	const CZ: Array[float]=[-.012,-.017,-.023,-.025,-.031,-.040,-.041,-.045,-.048]
 	# Use a narrow anatomical deltoid and taper, without giving every
 	# villager inflated round biceps. High inherited muscle still
 	# produces a powerful upper arm; the neutral figure remains lean.
-	const RX: Array[float]=[.043,.049,.057,.064,.063,.060,.055,.052,.050]
-	const RZ: Array[float]=[.047,.053,.061,.069,.068,.063,.059,.056,.052]
+	const RX: Array[float]=[.036,.043,.053,.062,.061,.059,.055,.052,.050]
+	const RZ: Array[float]=[.039,.046,.058,.067,.066,.062,.059,.056,.052]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -76,7 +76,7 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	var top_radius_x: float=RX[0]*shoulder*muscle*.93
 	var top_radius_z: float=RZ[0]*.91*lerpf(.92,1.12,
 		GENES.value(genome,"body_depth"))
-	var dome_center:=Vector3(sign*CX[0],HEIGHT[0]+.012,CZ[0])
+	var dome_center:=Vector3(sign*CX[0],HEIGHT[0]+.004,CZ[0])
 	for segment in range(14):
 		var a: float=TAU*float(segment)/14.0
 		var b: float=TAU*float(segment+1)/14.0
@@ -263,8 +263,8 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 	# then flattening at the knuckles. No rectangular palm or hand bead.
 	var Y: Array[float]=[-length+.073,-length+.048,
 		-length-.004,-length-.035,-length-.060,-length-.075]
-	var WIDTH: Array[float]=[.036,.038,.046,.051,.049,.044]
-	var DEPTH: Array[float]=[.032,.032,.031,.028,.025,.022]
+	var WIDTH: Array[float]=[.032,.034,.041,.045,.044,.040]
+	var DEPTH: Array[float]=[.030,.030,.029,.026,.024,.021]
 	for row in range(Y.size()-1):
 		for sector in range(SIDES):
 			var a: float=TAU*float(sector)/float(SIDES)
@@ -308,7 +308,7 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 	# conversational distance; finger scale overlaps inherited stature.
 	var lengths: Array[float]=[.062,.077,.073,.056]
 	for finger in range(4):
-		var offset: float=(float(finger)-1.5)*.022*hand_scale
+		var offset: float=(float(finger)-1.5)*.020*hand_scale
 		var x: float=side*.016+offset
 		var begin:=Vector3(x,-length-.066,-.013)
 		var end:=Vector3(x+side*.003,
@@ -320,15 +320,15 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 		var phalanx: MeshInstance3D=_digit_loft(pivot,
 			"Finger"+str(finger)+"LowPolyPhalanges",skin,
 			[begin,flex,end],
-			[Vector2(.0105,.010),Vector2(.0086,.009),
-				Vector2(.0045,.0050)])
+			[Vector2(.0095,.0090),Vector2(.0078,.0080),
+				Vector2(.0043,.0048)])
 		phalanx.set_meta("detaches_with_parent_arm",true)
 		phalanx.set_meta("no_new_collision",true)
 	# The fifth digit projects forward and folds toward the palm; it is
 	# not an extra straight fifth vertical tube.
-	var thumb_base:=Vector3(side*.055*hand_scale,-length-.024,-.031)
-	var thumb_joint:=Vector3(side*.083*hand_scale,-length-.056,-.050)
-	var thumb_tip:=Vector3(side*.080*hand_scale,-length-.094,-.061)
+	var thumb_base:=Vector3(side*.048*hand_scale,-length-.024,-.031)
+	var thumb_joint:=Vector3(side*.073*hand_scale,-length-.056,-.049)
+	var thumb_tip:=Vector3(side*.071*hand_scale,-length-.094,-.059)
 	var thumb_a: MeshInstance3D=_digit_loft(pivot,
 		"AnatomicalThumbMetacarpal",skin,
 		[thumb_base,thumb_base.lerp(thumb_joint,.54),thumb_joint],
