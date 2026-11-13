@@ -413,11 +413,16 @@ static func _beard_patch(root: Node3D,name: String,mat: Material,
 				var y: float=lerpf(root_y,bottom+tip,v)
 				var z: float=_depth(x,y,g,sex)-.003-.004*weight*v
 				quad.append(Vector3(x,y,z))
-			for i in [0,1,2,0,2,3]:
+			# The surface advances from high Y to low Y and left to
+			# right, the OPPOSITE winding of the upward-built face.
+			# Automatic normals previously pointed into the head, so
+			# the lit cheek patch appeared as a black bruise from one
+			# camera/light angle despite having correct hair pigment.
+			for i in [0,2,1,0,3,2]:
 				var p: Vector3=quad[i]
 				tool.set_uv(Vector2(p.x*3.0,p.y*2.0))
+				tool.set_normal(_outward_face_normal(p.x,p.y,g,sex))
 				tool.add_vertex(p)
-	tool.generate_normals()
 	var part:=MeshInstance3D.new()
 	part.name=name
 	part.mesh=tool.commit()
