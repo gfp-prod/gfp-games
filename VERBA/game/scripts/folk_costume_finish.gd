@@ -28,8 +28,11 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	const HEIGHT: Array[float]=[.095,.061,.026,-.032,-.103,-.184,-.264,-.338,-.426]
 	const CX: Array[float]=[-.085,-.061,-.027,-.008,.015,.032,.053,.066,.073]
 	const CZ: Array[float]=[-.012,-.017,-.023,-.025,-.031,-.040,-.041,-.045,-.048]
-	const RX: Array[float]=[.056,.069,.082,.089,.085,.078,.073,.065,.062]
-	const RZ: Array[float]=[.062,.070,.080,.086,.085,.082,.078,.071,.069]
+	# Keep a low-volume cap over the deltoid, but do not give every
+	# villager broad, perfectly round biceps. High inherited muscle still
+	# produces a powerful upper arm; the neutral figure remains lean.
+	const RX: Array[float]=[.053,.060,.070,.079,.077,.071,.065,.060,.057]
+	const RZ: Array[float]=[.057,.064,.074,.081,.078,.075,.071,.066,.063]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -44,10 +47,18 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 				var width: float=RX[index]*shoulder*muscle
 				var depth: float=RZ[index]*lerpf(.92,1.12,
 					GENES.value(genome,"body_depth"))
+				# The anterior deltoid and posterior triceps have different
+				# projections. An identical ellipse around every arm ring
+				# produced the long wooden-pipe silhouette in game photos.
+				var deltoid: float=exp(-pow((HEIGHT[index]+.045)/.160,2.0))
+				var triceps: float=exp(-pow((HEIGHT[index]+.215)/.185,2.0))
+				var forward: float=pow(maxf(0.0,-sin(angle)),2.0)
+				var rear: float=pow(maxf(0.0,sin(angle)),2.0)
 				corners.append(Vector3(
 					sign*CX[index]+cos(angle)*width,
 					HEIGHT[index],
-					CZ[index]+sin(angle)*depth))
+					CZ[index]+sin(angle)*depth-.008*deltoid*forward+
+						.006*triceps*rear))
 			for j in [0,1,2,0,2,3]:
 				var p: Vector3=corners[j]
 				surface.set_uv(Vector2(
@@ -189,11 +200,17 @@ static func fitted_forearm(pivot: Node3D,side: float,
 				var bulge: float=.012*pow(sin(PI*t),2.0)*arm_tone
 				var wrist: float=taper+bulge
 				var sweep: float=.016*t+(.006*sin(PI*t))
+				# Flexor mass is strongest on the front of the proximal
+				# forearm, while radial and ulnar edges are unequal. Hands,
+				# hitboxes, elbow pivot and inherited arm lengths are untouched.
+				var flexor: float=.008*exp(-pow((t-.34)/.19,2.0))
+				var radial: float=.005*exp(-pow((t-.51)/.25,2.0))
+				var front: float=maxf(0.0,-sin(angle))
 				points.append(Vector3(
-					side*sweep+cos(angle)*wrist,
+					side*sweep+cos(angle)*(wrist+radial*side*cos(angle)),
 					y,
 					-.012*t+sin(angle)*wrist*body_depth*
-						(1.0-.07*t)))
+						(1.0-.07*t)-flexor*front))
 			for index in [0,1,2,0,2,3]:
 				var p: Vector3=points[index]
 				mesh_tool.set_uv(Vector2((atan2(p.z,p.x)+PI)/TAU, p.y*1.8))
