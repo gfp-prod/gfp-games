@@ -506,7 +506,10 @@ static func dress(figure: Node3D,person: String,
 	var hem:=SurfaceTool.new()
 	hem.begin(Mesh.PRIMITIVE_TRIANGLES)
 	hem.set_material(tunic)
-	var levels: Array[float]=[.61,.70,.83,.98,1.17,1.24]
+	# The old low-tunic over-shell draped from hip to mid-thigh like a
+	# stiff single cylinder. End it at the high hip; separate tailored
+	# dresses can still reach below the knee when an outfit calls for it.
+	var levels: Array[float]=[.745,.795,.845,.925,.98,1.17,1.24]
 	for j in range(levels.size()-1):
 		var low: float=levels[j]
 		var high: float=levels[j+1]
@@ -518,13 +521,18 @@ static func dress(figure: Node3D,person: String,
 			var p2: Vector3=BODY._point(high,b,genome,sex)
 			var p3: Vector3=BODY._point(low,b,genome,sex)
 			for point in [p0,p1,p2,p0,p2,p3]:
-				var outward: Vector3=Vector3(point.x*1.042,point.y,
+				var side_vent: float=maxf(0.0,absf(point.x)-
+					.76*BODY._section(point.y,genome,sex).x)
+				var low_hem: float=1.0-smoothstep(.745,.87,point.y)
+				var outward: Vector3=Vector3(point.x*1.042,
+					point.y+side_vent*.16*low_hem,
 					point.z*1.042)
 				hem.set_uv(Vector2(outward.x*1.9,outward.y*2.1))
 				hem.add_vertex(outward)
 	hem.generate_normals()
 	var outer:=MeshInstance3D.new()
 	outer.name="CutAndRepairedTunicPanels"
+	outer.set_meta("leg_silhouette_uncovered",true)
 	outer.mesh=hem.commit()
 	figure.add_child(outer)
 	# Real waist measurement also determines the belt circumference and
