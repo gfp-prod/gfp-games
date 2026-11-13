@@ -470,8 +470,8 @@ static func _fitted_brow(brow_rig: Node3D,material: Material,
 			var side: float=float(pair[1])
 			var fade: float=pow(maxf(0.0,1.0-u*u),.68)
 			var x: float=u*half_span
-			var y: float=brow_tilt*(u+1.0)*.5+.004*fade+
-				side*half_height*fade
+			var y: float=(brow_tilt*(u+1.0)*.5+.004*fade+
+				side*half_height*fade)
 			var face_z: float=_depth(brow_rig.position.x+x,
 				brow_rig.position.y+y,g,sex)-brow_rig.position.z
 			quad.append(Vector3(x,y,face_z-.006*fade-.002))
