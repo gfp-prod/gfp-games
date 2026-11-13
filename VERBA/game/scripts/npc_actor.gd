@@ -158,20 +158,15 @@ func _ready() -> void:
 		else:
 			right_arm=arm
 			right_leg=leg
-	# No external collarbone placeholder: the old thick light-colored
-	# horizontal cylinder at chest height looked like an exposed skeletal
-	# control bone. The tunic and its neck already close this silhouette.
+	# Keep the scribe's distinct staff; other professions already have
+	# their own fitted belt pouch in COSTUME.dress. The former universal
+	# oversized box-and-strap satchel hung in the same place on every
+	# villager, intersected sleeves, and obscured the aprons in game views.
 	if npc_id == "mara":
 		ART.bone(figure,Vector3(-.54,.15,.12),
 			Vector3(-.48,2.43,.16),.048,.037,leather,8)
 		ART.orb(figure,Vector3(-.48,2.44,.16),
 			Vector3(.075,.09,.071),trim,9)
-	else:
-		ART.box(figure,Vector3(.46,.89,.18),
-			Vector3(.26,.38,.21),leather,
-			Vector3(0,-.22,-.11))
-		ART.bone(figure,Vector3(-.12,1.47,.04),
-			Vector3(.50,.99,.17),.052,.045,trim,7)
 	# Role identity belongs to the person: the same figure carries these
 	# tools whether travelling, trading or standing at the workplace.
 	# Do not replace every citizen with the same cone-robe silhouette.
@@ -194,11 +189,17 @@ func _ready() -> void:
 			COSTUME.smith_work_apron(figure,genome,hide,leather,metal)
 			var hammer:=Node3D.new()
 			hammer.name="VisibleSmithHammer"
-			hammer.position=Vector3(.105,-.44,-.16)
+			# A work hammer hangs by the wrist at rest. The previous
+			# giant bright rectangular head sat near eye height, reading
+			# as a floating white bar across the first-person view.
+			hammer.position=Vector3(.092,-.49,-.065)
 			right_arm.add_child(hammer)
-			ART.bone(hammer,Vector3(0,-.33,0),
-				Vector3(0,.31,0),.048,.036,leather,8)
-			ART.box(hammer,Vector3(0,.27,0),Vector3(.41,.17,.23),metal)
+			var handle:=ART.bone(hammer,Vector3(0,-.20,0),
+				Vector3(0,.12,0),.031,.027,leather,8)
+			handle.name="SmithHammerTimberHandle"
+			var head_mesh:=ART.box(hammer,Vector3(0,-.15,0),
+				Vector3(.24,.13,.14),metal)
+			head_mesh.name="SmithHammerWorkingHead"
 		"daro":
 			var straw:=ART.mat(Color("b8a477"),.99)
 			var brim:=ART.cone(figure,Vector3(0,2.02,0),.49,.075,
