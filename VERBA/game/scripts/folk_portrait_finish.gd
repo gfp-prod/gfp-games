@@ -491,9 +491,13 @@ static func _fitted_lip(parent: Node3D,name: String,material: Material,
 			var t: float=float(pair[0])/float(STEPS)
 			var side: float=float(pair[1])
 			var center: Vector3=from.lerp(to,t)
-			# Almost invisible at mouth corners / cupid's central join,
-			# but full enough to be readable without the old chunky petals.
-			var taper: float=pow(maxf(0.0,sin(PI*t)),.68)
+			# Each half of the mouth begins/ends at the central seam.
+			# Taper ONLY at the OUTER corner. The previous sin(PI*t)
+			# also tapered the central Cupid's bow to zero, leaving
+			# a pinched four-petal gap in otherwise natural mouths.
+			var reach: float=maxf(.001,maxf(absf(from.x),absf(to.x)))
+			var outer: float=clampf(absf(center.x)/reach,0.0,1.0)
+			var taper: float=.19+.81*sqrt(maxf(0.0,1.0-outer*outer))
 			var y: float=center.y+side*half_height*taper
 			var relief: float=_depth(center.x,mouth_y+y,g,sex)
 			var z: float=relief-mouth_front-.007-.002*taper
@@ -798,19 +802,19 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	# from their own corners. Very thin lips remain truly thin.
 	var left_lip:=_fitted_lip(left_corner,"SmallNaturalLipLine",lip_ink,
 		Vector3(-mouth_width,corner_rise,0),Vector3(0,cupid_rise,0),
-		fullness*.36,g,sex,lip_height,mouth.position.z)
+		fullness*.41,g,sex,lip_height,mouth.position.z)
 	var left_lower:=_fitted_lip(lower_rig,"ModeledLowerLipLeft",lip_ink,
 		Vector3(-mouth_width,corner_rise-.007,0),Vector3(0,-.010,0),
-		fullness*.27,g,sex,lip_height,mouth.position.z)
+		fullness*.31,g,sex,lip_height,mouth.position.z)
 	var right_corner:=Node3D.new()
 	right_corner.name="ExpressionLipRight"
 	mouth.add_child(right_corner)
 	var right_lip:=_fitted_lip(right_corner,"NaturalLipCorner",lip_ink,
 		Vector3(0,cupid_rise,0),Vector3(mouth_width,corner_rise,0),
-		fullness*.36,g,sex,lip_height,mouth.position.z)
+		fullness*.41,g,sex,lip_height,mouth.position.z)
 	var right_lower:=_fitted_lip(lower_rig,"ModeledLowerLipRight",lip_ink,
 		Vector3(0,-.010,0),Vector3(mouth_width,corner_rise-.007,0),
-		fullness*.27,g,sex,lip_height,mouth.position.z)
+		fullness*.31,g,sex,lip_height,mouth.position.z)
 	var open_mouth:=_facial_ribbon(mouth,"ExpressionMouthOpening",
 		ART.mat(Color("301c1c"),1),
 		Vector3(-mouth_width*.89,-.005,.013),
