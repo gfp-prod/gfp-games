@@ -563,7 +563,7 @@ def main():
     source_digest = hashlib.sha256(base.read_bytes()).hexdigest()
     head, source_vertices, source_faces = read_human_base(base)
     dimensions, eyes = crop_and_normalize(head)
-    skin = make_material("Orin_WarmUmberSkin", (.34,.185,.125))
+    skin = make_material("Orin_WarmUmberSkin", (.145,.080,.057))
     hair_mat = make_material("Orin_DarkCurls", (.026,.022,.019))
     head.data.materials.append(skin)
     ivory = make_material("Orin_ScleraSoftIvory",(.58,.54,.47))
@@ -590,23 +590,42 @@ def main():
     # Without this, the open-mouth target displays a fleshy disk
     # across the whole cavity instead of a readable opening.
     inner_mouth = make_material("Orin_OralCavity",(.070,.026,.021))
+    brow_color = make_material("Orin_RootedBrows",(.032,.022,.018))
+    lip_color = make_material("Orin_NaturalVermilion",(.123,.061,.059))
     head.data.materials.append(inner_mouth)
+    head.data.materials.append(brow_color)
+    head.data.materials.append(lip_color)
     oral_faces = 0
+    brow_faces = 0
+    lip_faces = 0
     for f in head.data.polygons:
         f.material_index = 0
         f.use_smooth = True
         middle = sum((head.data.vertices[j].co for j in f.vertices),
                      Vector((0,0,0))) / len(f.vertices)
-        # In Blender -Y faces forward. Behind the external lip plane,
-        # only central mouth topology should receive cavity pigment.
+        # In Blender -Y faces forward. Inherited CC0 face topology
+        # supplies the original brows and lips. Dye those patches
+        # directly on the MOVING head polygons, rather than gluing on
+        # floating eyebrow cards or surface-mounted mouth props.
         if (abs(middle.x)<.058 and -.171<middle.z<-.106
                 and -.144<middle.y<-.027):
             f.material_index = 1
             oral_faces += 1
+        elif (.035<abs(middle.x)<.094 and .054<middle.z<.080
+                and middle.y<-.145):
+            f.material_index = 2
+            brow_faces += 1
+        elif (abs(middle.x)<.050 and -.145<middle.z<-.116
+                and middle.y<-.176):
+            f.material_index = 3
+            lip_faces += 1
     if oral_faces < 20 or oral_faces > 1200:
         raise RuntimeError("Oral cavity material mask missed inner topology: "
                            + str(oral_faces))
     print("ORIN_ORAL_CAVITY_FACES",oral_faces)
+    print("ORIN_ANATOMICAL_BROW_AND_LIP_FACES",brow_faces,lip_faces)
+    if brow_faces<8 or lip_faces<8:
+        raise RuntimeError("MakeHuman front-face brow/lip topology changed")
     facial_shapes(head)
     hair = sculpt_curly_crop(head, hair_mat)
     mouth_cavity = sculpt_mouth_interior()
