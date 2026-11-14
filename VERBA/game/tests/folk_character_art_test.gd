@@ -798,8 +798,14 @@ func _run() -> void:
 			"ExpressionMouthOpening") as MeshInstance3D if lip_node!=null else null
 		if top_lip==null or lower_lip==null or crease==null or not crease.visible:
 			_fail("Neutral face lost its thin continuous oral crease"); return
-		if top_lip.get_aabb().size.y>.034 or lower_lip.get_aabb().size.y>.031:
-			_fail("Lip masses regressed to oversized four-petal geometry"); return
+		# Lip bands must actually survive gameplay-size renders; tiny
+		# microribbons passed the old maximum-only test. Wide, flat
+		# rose-colored panels are also disallowed.
+		if top_lip.get_aabb().size.y<.018 or (
+				lower_lip.get_aabb().size.y<.013) or (
+				top_lip.get_aabb().size.y>.058) or (
+				lower_lip.get_aabb().size.y>.052):
+			_fail("Lips are either unreadable or oversized flat petals"); return
 		for part_name in ["SmallRecessedEye","IndividualUpperEyelid",
 				"AnatomicalLowerEyelid","InheritedBrow","InheritedCheekboneFacet",
 				"ModeledNoseWing","SmallNaturalLipLine"]:
