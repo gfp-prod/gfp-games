@@ -386,7 +386,10 @@ def sculpt_curly_crop(head, hair_mat):
     base_roots = list(pts)
     lobes = 0
     for i, root in enumerate(base_roots):
-        if i%5 != 0 or root.z < .055:
+        # Cover enough of the curved scalp for a genuinely textured,
+        # tight crop; the sparse modulo-five layout yielded fewer than
+        # fifty nodules and left a smooth bald-cap silhouette.
+        if i%2 != 0 or root.z < .033:
             continue
         if len(base_roots) > 0 and lobes >= 180:
             break
