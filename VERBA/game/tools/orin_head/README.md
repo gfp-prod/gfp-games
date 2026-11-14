@@ -21,7 +21,7 @@ Requires Blender and one-time internet access for the pinned MakeHuman CC0 sourc
 
 From VERBA/game, run:
 
-    blender -b -t 2 --python tools/orin_head/build_orin_head.py -- --out assets/models/authored/orin_head
+    blender -b -t 2 --python tools/orin_head/build_orin_head.py -- --out ../orin_head_build
 
 Expected outputs:
 - orin_head_editable.blend — Blender-editable head, materials, lights, sculpted hair and ten shape keys
@@ -29,7 +29,7 @@ Expected outputs:
 - six Blender studio views, including neutral, profile, blink and speech
 - manifest.json with dimensions, license and input-source checksum
 
-Import this GLB with Godot 4.5.2, then capture the actual Godot viewport:
+Copy the generated GLB into assets/models/authored/orin_head (keep .blend in ../orin_head_build, outside the Godot project). Import with Godot 4.5.2, then capture the actual Godot viewport:
 
     xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/orin_authored_head_gallery.gd
 
