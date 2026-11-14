@@ -894,6 +894,23 @@ func _run() -> void:
 		var inherited: Dictionary=GENES.founder(person_name)
 		var finish: Node3D=GROOM.finish(groom_root,person_name,inherited,
 			"female",ART_LIB.mat(GENES.hair_color(inherited),.98))
+		# The face-level hair silhouette must now contain a joined,
+		# inherited parting across the forehead. A smooth helmet
+		# plus loose side strips is not an acceptable hairstyle.
+		var style: String=String(finish.get_meta("hairstyle",""))
+		if style in ["loose","wave","braids","bun","ponytail",
+				"swept","shaggy"]:
+			var fringe: MeshInstance3D=finish.get_node_or_null(
+				"GroomedFringeVolume") as MeshInstance3D
+			if fringe==null or fringe.mesh==null:
+				_fail("Groomed hair is a helmet without a real fringe"); return
+			var fringe_bounds: AABB=fringe.get_aabb()
+			if fringe_bounds.size.x<.29 or fringe_bounds.size.y<.095 or (
+					fringe_bounds.size.z<.073):
+				_fail("Hairstyle lacks readable roots and forehead layering")
+				return
+			if fringe.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<600:
+				_fail("Fringe is still one floating decorative hair card"); return
 		# Long loose hair now flows into the BACK panel, while short
 		# temple framing stops at the jaw rather than dangling as planks.
 		# Braids deliberately remain forward of the garment.
