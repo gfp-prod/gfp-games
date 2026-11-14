@@ -357,17 +357,63 @@ def sculpt_curly_crop(head, hair_mat):
     src = head.data
     scalp = bpy.data.meshes.new("Orin_RootedCurls")
     index_map, pts, faces = {}, [], []
+    def above_hairline(point):
+        # The former fixed Z>.092 crop excluded most of the back
+        # and temples: it looked like a rigid front-half bowl cut.
+        # Follow the forehead up and the rear occiput down.
+        rearward = smoothstep(-.12, .09, point.y)
+        threshold = .104 - .083*rearward
+        threshold += .014*smoothstep(.105,.17,abs(point.x))
+        return point.z > threshold
+
     for poly in src.polygons:
         inds = list(poly.vertices)
-        if not all(src.vertices[j].co.z > .092 for j in inds):
+        if not all(above_hairline(src.vertices[j].co) for j in inds):
             continue
         for j in inds:
             if j not in index_map:
                 index_map[j] = len(pts)
                 pts.append(src.vertices[j].co.copy())
         faces.append(tuple(index_map[j] for j in inds))
-    if len(faces) < 120:
+    if len(faces) < 180:
         raise RuntimeError("No meaningful cranial surface for rooted hair")
+
+    # Sculpt a mass of overlapping, low-poly CURL TUFTS directly into
+    # this same authored hair mesh. The lobes penetrate the rooted
+    # scalp: they do not float as rigid ribbons or card-shaped clumps.
+    # Use deterministic spacing for stable renders and saved assets.
+    base_roots = list(pts)
+    lobes = 0
+    for i, root in enumerate(base_roots):
+        if i%5 != 0 or root.z < .055:
+            continue
+        if len(base_roots) > 0 and lobes >= 180:
+            break
+        normal = root.normalized()
+        phase = i * 2.399963229728653
+        radius = .009 + .0035*math.sin(phase*1.8)**2
+        center = root + normal*(.012+.002*math.sin(phase))
+        tip = normal*(radius*.79)
+        first = len(pts)
+        # Two poles and a hexagonal faceted ring; closed 12-triangle
+        # nodules with a readable dark curly silhouette.
+        tangent = normal.cross(Vector((0,0,1)))
+        if tangent.length < .1:
+            tangent = normal.cross(Vector((0,1,0)))
+        tangent.normalize()
+        bitangent = normal.cross(tangent).normalized()
+        pts.extend([center+tip, center-tip])
+        for j in range(6):
+            angle = (j/6.0)*math.tau+phase
+            pts.append(center+(tangent*math.cos(angle)
+                +bitangent*math.sin(angle))*radius)
+        for j in range(6):
+            n=(j+1)%6
+            faces.append((first,first+2+j,first+2+n))
+            faces.append((first+1,first+2+n,first+2+j))
+        lobes += 1
+    if lobes < 50:
+        raise RuntimeError("Curl crop lost its rooted faceted tufts")
     scalp.from_pydata(pts, [], faces)
     scalp.update()
     hair = bpy.data.objects.new("Orin_SculptedCurlyCrop", scalp)
@@ -392,6 +438,7 @@ def sculpt_curly_crop(head, hair_mat):
     mod.offset = 0
     hair["style"] = "short tightly curled crop"
     hair["rooted_on_cc0_cranium"] = True
+    hair["rooted_curl_tuft_count"] = lobes
     return hair
 
 
@@ -469,7 +516,7 @@ def main():
     head, source_vertices, source_faces = read_human_base(base)
     dimensions, eyes = crop_and_normalize(head)
     skin = make_material("Orin_WarmUmberSkin", (.34,.185,.125))
-    hair_mat = make_material("Orin_DarkCurls", (.052,.046,.041))
+    hair_mat = make_material("Orin_DarkCurls", (.026,.022,.019))
     head.data.materials.append(skin)
     ivory = make_material("Orin_ScleraSoftIvory",(.58,.54,.47))
     iris = make_material("Orin_IrisUmber",(.115,.082,.056))
