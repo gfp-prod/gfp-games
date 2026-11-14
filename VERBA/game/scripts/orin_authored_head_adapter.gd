@@ -16,7 +16,7 @@ static func _head(scene: Node) -> MeshInstance3D:
 static func get_head(scene: Node) -> MeshInstance3D:
 	return _head(scene)
 
-static func _set(mesh: MeshInstance3D,key: String,weight: float) -> bool:
+static func _set_shape(mesh: MeshInstance3D,key: String,weight: float) -> bool:
 	if mesh==null or mesh.mesh==null: return false
 	var id: int=mesh.find_blend_shape_by_name(StringName(key))
 	if id<0: return false
@@ -39,7 +39,7 @@ static func apply_genome(scene: Node,g: Dictionary) -> bool:
 		"LipVolume":"lip_fullness"
 	}
 	for shape in pairs.keys():
-		if not _set(mesh,String(shape),
+		if not _set_shape(mesh,String(shape),
 				_inheritance_weight(g,String(pairs[shape]))): return false
 	return true
 
@@ -49,7 +49,7 @@ static func apply_expression(scene: Node,blink: float=0.0,
 	var mesh: MeshInstance3D=get_head(scene)
 	if mesh==null: return false
 	for shape in ["Blink_L","Blink_R"]:
-		if not _set(mesh,shape,blink): return false
+		if not _set_shape(mesh,shape,blink): return false
 	for expr in ["MouthOpen","Smile","Frown","BrowRaise"]:
 		var weight: float=0.0
 		match expr:
@@ -57,7 +57,7 @@ static func apply_expression(scene: Node,blink: float=0.0,
 			"Smile": weight=smile
 			"Frown": weight=frown
 			"BrowRaise": weight=brows
-		if not _set(mesh,expr,weight): return false
+		if not _set_shape(mesh,expr,weight): return false
 	return true
 
 static func verify_authoring(scene: Node) -> bool:
