@@ -21,12 +21,13 @@
     "LipVolume"
   ],
   "facial_mesh": {
-    "mesh_vertices": 6219,
-    "mesh_polygons": 5810,
-    "body_crop_fraction": 0.196,
+    "mesh_vertices": 4306,
+    "mesh_polygons": 4280,
+    "body_crop_fraction": 0.15,
+    "discarded_helper_components": 40,
     "head_height_m": 0.52,
-    "head_width_m": 0.738077653123501,
-    "head_depth_m": 0.3635031812658993
+    "head_width_m": 0.36053584440565883,
+    "head_depth_m": 0.4248484114731576
   },
   "integration": "Opt-in review only; no NPC replacement."
 }
