@@ -443,6 +443,76 @@ static func _swept_top(root: Node3D,main: Material,shine: Material,
 			Vector3(x-side*.085,2.033,-.057),
 			1.925,.066,curl,side*(.073+.009*float(i)))
 
+## This is an authored, joined HAIRLINE silhouette, not six straight
+## cardboard locks stuck on top of a bald cap. Large connected clumps
+## cross the forehead, part according to genotype and return into the
+## crown in 3D. The same physical groom may still be worn differently.
+static func _parted_front_mantle(root: Node3D,mat: Material,
+		genome: Dictionary,style: String) -> MeshInstance3D:
+	var part: float=GENES.value(genome,"hair_parting")
+	var curl: float=GENES.value(genome,"hair_curl")
+	var density: float=GENES.value(genome,"hair_volume")
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(mat)
+	const ROWS: int=7
+	const COLS: int=12
+	for row in range(ROWS-1):
+		for col in range(COLS-1):
+			var front: Array[Vector3]=[]
+			var rear: Array[Vector3]=[]
+			for pair in [[row,col],[row+1,col],
+					[row+1,col+1],[row,col+1]]:
+				var t: float=float(pair[0])/float(ROWS-1)
+				var u: float=float(pair[1])/float(COLS-1)*2.0-1.0
+				var part_axis: float=(part-.5)*.055
+				var comb: float=sin((u+part)*PI*3.3)
+				# Distinct, readable large locks rather than small
+				# follicle noise. The tips remain ABOVE the eyebrows.
+				var fringe_drop: float=.019+.028*pow(absf(comb),1.4)
+				var tip_y: float=1.928-fringe_drop
+				if style=="swept":
+					tip_y+=.023
+				elif style in ["loose","wave"]:
+					tip_y-=.007
+				var x: float=u*(.163+.016*density)
+				x+=part_axis*(1.0-t)
+				var wave: float=.004*curl*sin(u*TAU*2.0+t*PI)
+				var y: float=lerpf(2.007,tip_y,t)+wave*sin(PI*t)
+				var z: float=lerpf(-.088,-.174,t)
+				z-=.006*(1.0-absf(u))*sin(PI*t)
+				var v:=Vector3(x,y,z)
+				front.append(v)
+				rear.append(v+Vector3(0,0,.017+.008*sin(PI*t)))
+			for surf in [front,rear]:
+				var verts: Array[Vector3]=surf
+				var triangles: Array=[0,1,2,0,2,3] if surf==front else [
+					0,2,1,0,3,2]
+				for k in triangles:
+					var v: Vector3=verts[k]
+					st.set_uv(Vector2(v.x+.5,v.y*.5))
+					st.add_vertex(v)
+			# Close the visible tips and perimeter so side profiles
+			# depict an actual hair mass rather than edge-on strips.
+			if row==ROWS-2:
+				var seam: Array[Vector3]=[
+					front[1],rear[1],rear[2],front[2]]
+				for k in [0,1,2,0,2,3]:
+					var v: Vector3=seam[k]
+					st.set_uv(Vector2(v.x+.5,v.y*.5))
+					st.add_vertex(v)
+	st.generate_normals()
+	var mesh:=MeshInstance3D.new()
+	mesh.name="GroomedFringeVolume"
+	mesh.mesh=st.commit()
+	mesh.material_override=mat
+	mesh.set_meta("inherited_parted_hairline",part)
+	mesh.set_meta("groomed_style",style)
+	mesh.set_meta("no_new_collision",true)
+	root.add_child(mesh)
+	return mesh
+
+
 static func finish(face_root: Node3D,person: String,genome: Dictionary,
 		sex: String,hair: Material) -> Node3D:
 	var existing:=face_root.get_node_or_null("GroomedHairStudio") as Node3D
@@ -459,6 +529,12 @@ static func finish(face_root: Node3D,person: String,genome: Dictionary,
 	root.set_meta("styling_is_a_choice",true)
 	root.set_meta("no_new_collision",true)
 	face_root.add_child(root)
+	# A silhouette-bearing rooted fringe distinguishes these hair grooms
+	# from the old shared shiny helmet dome. Curly crops use their own
+	# connected scalloped crown and should not receive a straight fringe.
+	if style in ["loose","wave","braids","bun","ponytail","swept","shaggy"] and (
+			person not in ["ida","daro"]):
+		_parted_front_mantle(root,hair,genome,style)
 	var shine:=ART.mat(GENES.hair_color(genome).lightened(.085),.97)
 	var deep:=ART.mat(GENES.hair_color(genome).darkened(.10),.98)
 	match style:
