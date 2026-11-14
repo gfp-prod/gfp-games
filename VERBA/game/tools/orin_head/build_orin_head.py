@@ -241,8 +241,8 @@ def facial_shapes(head):
     back = max(ys)
     # Blend the deformation over the visible front hemisphere only.
     front_center = front + .33 * (back - front)
-    eye_x = .205 * width
-    eye_z = .009
+    eye_x = .175 * width
+    eye_z = .0125
     mouth_z = -.137
     brow_z = .061
 
@@ -256,21 +256,31 @@ def facial_shapes(head):
             frontal = weight_face(v)
             if name.startswith("Blink_"):
                 side = -1 if name.endswith("L") else 1
-                influence = (bell(v.x, side * eye_x, .085)
-                             * bell(v.z, eye_z, .034) * frontal)
-                if v.z >= eye_z:
-                    v.z -= .022 * influence
-                else:
-                    v.z += .013 * influence
-                # Eyelid skin moves over the eye, not the globe.
-                v.y -= .003 * influence
+                # The old upper/lower sign-branch folded the continuous
+                # eye-loop through itself, making torn polygon ribbons.
+                # Preserve vertex ordering by closing the aperture
+                # continuously around its anatomical centre, per eye.
+                eye_region = (bell(v.x, side * eye_x, .040)
+                              * bell(v.z, eye_z, .026))
+                exposed_skin = 1. - smoothstep(-.137, -.105, v.y)
+                influence = eye_region * exposed_skin
+                v.z = eye_z + (v.z - eye_z) * (1. - .88 * influence)
+                # Move actual eyelid skin ahead of the globe rather than
+                # inserting detached, sliding "eyelid" props.
+                v.y -= .010 * influence
             elif name == "MouthOpen":
-                w = bell(v.x, 0, .074) * bell(v.z, mouth_z, .060) * frontal
-                if v.z < mouth_z:
-                    v.z -= .036 * w
-                    v.y -= .004 * w
-                elif v.z >= mouth_z:
-                    v.z += .005 * w
+                # Move the *mandible* coherently. The first pose
+                # only stretched a tiny region below the lip seam,
+                # creating a skin-coloured square hanging from the face.
+                front_mouth = bell(v.x, 0, .100) * frontal
+                lip_lower = bell(v.z, mouth_z-.023, .046)
+                jaw_lower = bell(v.z, mouth_z-.072, .090)
+                # Inverse threshold: lower lip and chin move together.
+                lower_factor = 1. - smoothstep(mouth_z-.016,
+                                               mouth_z+.008,v.z)
+                w = front_mouth * lower_factor
+                v.z -= (.012*lip_lower + .010*jaw_lower) * w
+                v.y -= .004 * w
             elif name in ("Smile", "Frown"):
                 w = bell(abs(v.x), .050, .033) * bell(v.z, mouth_z, .038) * frontal
                 v.z += (.022 if name == "Smile" else -.018) * w
