@@ -651,6 +651,39 @@ static func _fitted_lip(parent: Node3D,name: String,material: Material,
 	return lip
 
 
+## A genuine blink occludes the pupil using a skin surface in FRONT
+## of the eyeball. The original floating ribbons moved but never covered it.
+static func _blink_shutter(socket: Node3D,name: String,skin: Material,
+		half_span: float,aperture: float) -> MeshInstance3D:
+	var st:=SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_material(skin)
+	const SEGS: int=16
+	for i in range(SEGS):
+		var q: Array[Vector3]=[]
+		for pair in [[i,-1.0],[i+1,-1.0],[i+1,1.0],[i,1.0]]:
+			var u: float=float(pair[0])/float(SEGS)*2.0-1.0
+			var side: float=float(pair[1])
+			var taper: float=.55+.45*sqrt(maxf(0.0,1.0-u*u))
+			q.append(Vector3(u*half_span,
+				side*.025*aperture*taper,-.031+.003*u*u))
+		for k in [0,2,1,0,3,2]:
+			var p: Vector3=q[k]
+			st.set_uv(Vector2(p.x+.2,p.y+.2))
+			st.set_normal(Vector3(0,0,-1))
+			st.add_vertex(p)
+	var shutter:=MeshInstance3D.new()
+	shutter.name=name
+	shutter.mesh=st.commit()
+	shutter.material_override=skin
+	shutter.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	shutter.set_meta("visible_pupil_occluding_blink",true)
+	shutter.set_meta("faceted_anatomical_surface",true)
+	shutter.set_meta("no_new_collision",true)
+	socket.add_child(shutter)
+	return shutter
+
+
 ## Eyelids are shaped as shallow skin folds on the ACTUAL inherited face,
 ## not horizontal strips floating ahead of the eyes. Their tapered corners
 ## disappear into the eye socket; independent blink covers still animate.
@@ -671,7 +704,7 @@ static func _fitted_eye_fold(socket: Node3D,name: String,skin: Material,
 			# Lid margins actually touch the sclera boundary. The old .017
 			# aperture sat ABOVE a .012-high eyeball, making pupils
 			# appear like bright beads pasted under floating brows.
-			var eye_edge: float=(.0105 if upper else -.0105)*aperture
+			var eye_edge: float=(.017 if upper else -.017)*aperture
 			var arch: float=(.0035 if upper else -.0015)*fade
 			var spread: float=(.011 if upper else -.010)*fade*out
 			var y: float=eye_edge+arch+spread
@@ -805,14 +838,14 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var eye_ink:=ART.mat(Color("201c1a"),1.0)
 	var iris_ink:=ART.mat(GENES.eye_color(g),.98)
 	# Subtle vermilion contrast instead of a near-black cartoon mouth.
-	var lip_ink:=ART.mat(GENES.skin_color(g).darkened(
-		lerpf(.15,.075,_v(g,"lip_fullness"))),.99)
+	var lip_ink:=ART.mat(GENES.skin_color(g).lerp(
+		Color("814d4b"),.24).darkened(.07),.96)
 	var ear_scale: float=lerpf(.70,1.33,_v(g,"ear_size"))
 	var eye_gap: float=lerpf(.068,.107,_v(g,"eye_spacing"))
 	var eye_height: float=lerpf(1.780,1.802,_v(g,"brow_height"))
 	# Feature dimensions must read at the standard third-person distance.
 	# Larger eye anatomy is inherited rather than painted onto the face.
-	var eye_width: float=lerpf(.045,.068,_v(g,"eye_shape")) * (
+	var eye_width: float=lerpf(.064,.084,_v(g,"eye_shape")) * (
 		1.045 if sex=="female" else 1.0)
 	var tilt: float=lerpf(-.22,.22,_v(g,"brow_angle"))
 	for sign in [-1.0,1.0]:
@@ -833,14 +866,14 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		# More human almond-shaped eyes: reduce exposed white vertically,
 		# while maintaining inherited width, aperture and articulated gaze.
 		var sclera:=ART.orb(socket,Vector3(0,0,-.006),
-			Vector3(eye_width*1.14,.0215*eye_aperture,.009),
-			ART.mat(Color("b6afa4"),.94),12)
+			Vector3(eye_width*1.16,.035*eye_aperture,.012),
+			ART.mat(Color("c9c2b7"),.94),14)
 		sclera.name="SmallRecessedEye"
 		var iris:=ART.orb(socket,Vector3(0,0,-.013),
-			Vector3(eye_width*.52,.016*eye_aperture,.006),iris_ink,12)
+			Vector3(eye_width*.65,.028*eye_aperture,.007),iris_ink,14)
 		iris.name="InheritedIris"
 		var pupil:=ART.orb(socket,Vector3(0,0,-.018),
-			Vector3(eye_width*.245,.010*eye_aperture,.004),eye_ink,10)
+			Vector3(eye_width*.30,.017*eye_aperture,.004),eye_ink,12)
 		pupil.name="AnatomicalPupil"
 		var lid:=_fitted_eye_fold(socket,"IndividualUpperEyelid",skin,
 			g,sex,eye_width*.94,eye_aperture,true)
@@ -849,15 +882,13 @@ static func finish(figure: Node3D,person: String,skin: Material,
 		# Blink with actual moving eyelid volumes. The sclera, iris and pupil
 		# stay at their anatomical sizes; compressing the entire eye made
 		# villagers look like rubber-faced dolls during conversations.
-		var upper_cover:=_facial_ribbon(socket,"ExpressionUpperBlinkCover",skin,
-			Vector3(-eye_width*.99,0,-.015),
-			Vector3(eye_width*.99,0,-.015),.016*eye_aperture)
-		upper_cover.position.y=.038*eye_aperture
+		var upper_cover:=_blink_shutter(socket,
+			"ExpressionUpperBlinkCover",skin,eye_width*.62,eye_aperture)
+		upper_cover.position.y=.049*eye_aperture
 		upper_cover.set_meta("rest_y",upper_cover.position.y)
-		var lower_cover:=_facial_ribbon(socket,"ExpressionLowerBlinkCover",skin,
-			Vector3(-eye_width*.96,0,-.015),
-			Vector3(eye_width*.96,0,-.015),.016*eye_aperture)
-		lower_cover.position.y=-.038*eye_aperture
+		var lower_cover:=_blink_shutter(socket,
+			"ExpressionLowerBlinkCover",skin,eye_width*.62,eye_aperture)
+		lower_cover.position.y=-.049*eye_aperture
 		lower_cover.set_meta("rest_y",lower_cover.position.y)
 		var brow_rig:=Node3D.new()
 		brow_rig.name="ExpressionBrowLeft" if sign<0.0 else "ExpressionBrowRight"
@@ -945,7 +976,7 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	var lower_rig:=Node3D.new()
 	lower_rig.name="ExpressionLowerLip"
 	mouth.add_child(lower_rig)
-	var fullness: float=lerpf(.008,.024,_v(g,"lip_fullness"))
+	var fullness: float=lerpf(.018,.032,_v(g,"lip_fullness"))
 	# Lip curve is independent of inherited width and fullness. High
 	# alleles lift the neutral mouth corners and Cupid's bow; low alleles
 	# produce a flatter, downturned mouth. Expressions animate these
@@ -958,27 +989,27 @@ static func finish(figure: Node3D,person: String,skin: Material,
 	# from their own corners. Very thin lips remain truly thin.
 	var left_lip:=_fitted_lip(left_corner,"SmallNaturalLipLine",lip_ink,
 		Vector3(-mouth_width,corner_rise,0),Vector3(0,cupid_rise,0),
-		fullness*.41,g,sex,lip_height,mouth.position.z)
+		fullness*.65,g,sex,lip_height,mouth.position.z)
 	var left_lower:=_fitted_lip(lower_rig,"ModeledLowerLipLeft",lip_ink,
 		Vector3(-mouth_width,corner_rise-.007,0),Vector3(0,-.010,0),
-		fullness*.31,g,sex,lip_height,mouth.position.z)
+		fullness*.53,g,sex,lip_height,mouth.position.z)
 	var right_corner:=Node3D.new()
 	right_corner.name="ExpressionLipRight"
 	mouth.add_child(right_corner)
 	var right_lip:=_fitted_lip(right_corner,"NaturalLipCorner",lip_ink,
 		Vector3(0,cupid_rise,0),Vector3(mouth_width,corner_rise,0),
-		fullness*.41,g,sex,lip_height,mouth.position.z)
+		fullness*.65,g,sex,lip_height,mouth.position.z)
 	var right_lower:=_fitted_lip(lower_rig,"ModeledLowerLipRight",lip_ink,
 		Vector3(0,-.010,0),Vector3(mouth_width,corner_rise-.007,0),
-		fullness*.31,g,sex,lip_height,mouth.position.z)
+		fullness*.53,g,sex,lip_height,mouth.position.z)
 	var open_mouth:=_facial_ribbon(mouth,"ExpressionMouthOpening",
 		ART.mat(Color("301c1c"),1),
 		Vector3(-mouth_width*.89,-.005,.013),
-		Vector3(mouth_width*.89,-.005,.013),.0022)
+		Vector3(mouth_width*.89,-.005,.013),.0040)
 	# A fine oral crease anchors the lips at rest; the old four separate
 	# thick petals read like a geometric flower rather than a mouth.
 	open_mouth.visible=true
-	open_mouth.scale.y=.36
+	open_mouth.scale.y=.70
 	# Connected scalp shell follows each inherited skull and natural
 	# hairline. A huge flattened spherical cap used to resemble a helmet.
 	var scalp: MeshInstance3D=HAIR.scalp_cap(root,hair,g,person)
@@ -1091,7 +1122,7 @@ static func expression(figure: Node3D,feel: float,blink: float=0.0,
 				var lid: Node3D=eye.get_node_or_null(lid_name)
 				if lid==null: continue
 				var rest: float=float(lid.get_meta("rest_y",lid.position.y))
-				var sealed: float=.002 if lid_name=="ExpressionUpperBlinkCover" else -.002
+				var sealed: float=.004 if lid_name=="ExpressionUpperBlinkCover" else -.004
 				lid.position.y=lerpf(lid.position.y,lerpf(rest,sealed,closure),.37)
 	for part in ["ExpressionBrowLeft","ExpressionBrowRight"]:
 		var brow: Node3D=root.get_node_or_null(part)
@@ -1118,12 +1149,12 @@ static func expression(figure: Node3D,feel: float,blink: float=0.0,
 			var syllable: float=absf(sin(conversation_phase*7.5))
 			var talking: bool=speaking and syllable>.38
 			opening_mesh.visible=true
-			opening_mesh.scale.y=lerpf(.7,2.5,syllable) if talking else .36+maxf(0.0,-emotion)*1.1
+			opening_mesh.scale.y=lerpf(1.4,3.5,syllable) if talking else .70+maxf(0.0,-emotion)*1.1
 			# Only the lower lip moves with a spoken syllable. The mouth
 			# aperture follows it; the face, teeth and nose remain still.
 			var lower: Node3D=mouth.get_node_or_null("ExpressionLowerLip")
 			if lower!=null:
-				var lowered: float=(-.024*syllable if talking else
+				var lowered: float=(-.033*syllable if talking else
 					-.006*maxf(0.0,-emotion))
 				lower.position.y=lerpf(lower.position.y,lowered,.32)
 	root.set_meta("expression_blink",eyelid_drop)
