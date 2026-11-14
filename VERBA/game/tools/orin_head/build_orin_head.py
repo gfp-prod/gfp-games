@@ -132,7 +132,19 @@ def crop_and_normalize(obj):
         center = sum((v.co for v in comp),Vector((0,0,0))) / n
         if 69<=n<=78 and abs(center.x)>.03 and (
                 center.z > cut+.43*(high-cut)):
-            eyes_raw.append(list(comp))
+            # Copy the eye faces NOW: deleting helper components from
+            # BMesh will invalidate all BMVert/BMFace references.
+            ordered = sorted(comp,key=lambda v:v.index)
+            lookup = {v:i for i,v in enumerate(ordered)}
+            triangles = []
+            seen = set()
+            for v in ordered:
+                for f in v.link_faces:
+                    if f in seen or not all(x in lookup for x in f.verts):
+                        continue
+                    seen.add(f)
+                    triangles.append(tuple(lookup[x] for x in f.verts))
+            eyes_raw.append(([v.co.copy() for v in ordered], triangles))
     # The 72-vertex CC0 eyeball pieces occur in a left/right pair.
     # If source topology ever changes, FAIL rather than synthesize
     # eyes from unrelated clothing helpers.
@@ -167,15 +179,8 @@ def crop_and_normalize(obj):
     # Build eye objects from their ORIGINAL anatomically seated topology,
     # not 2D cartoon decals. Assign a controlled separate iris/pupil.
     eyes = []
-    for comp in eyes_raw:
-        index = {v:i for i,v in enumerate(comp)}
-        points = [normalize(v.co) for v in comp]
-        faces = []
-        for v in comp:
-            for f in v.link_faces:
-                if f.verts[0]!=v: continue
-                if all(x in index for x in f.verts):
-                    faces.append(tuple(index[x] for x in f.verts))
+    for raw_points, faces in eyes_raw:
+        points = [normalize(p) for p in raw_points]
         if len(faces)<50:
             raise RuntimeError("MakeHuman eye component lost its eye mesh")
         m = bpy.data.meshes.new("Orin_Eyeball_Anatomical")
