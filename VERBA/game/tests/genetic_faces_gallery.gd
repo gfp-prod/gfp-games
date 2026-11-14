@@ -21,7 +21,11 @@ func _capture(world: Node3D,cam: Camera3D,actor: Node3D,
 	# Controlled close-up lighting reveals actual low-poly facial planes
 	# across light/dark skin without changing normal in-game scene lights.
 	var fill: OmniLight3D=cam.get_node_or_null("DiagnosticFaceFill") as OmniLight3D
-	if fill!=null: fill.visible=name.ends_with("_face_detail")
+	if fill!=null:
+		fill.visible=name.ends_with("_face_detail") or (
+			name.ends_with("_eyes_open") or
+			name.ends_with("_eyes_closed") or
+			name.ends_with("_speaking"))
 	cam.global_position=actor.to_global(Vector3(offset_x,focus+.05,-distance))
 	cam.look_at(actor.to_global(Vector3(0,focus,0)),Vector3.UP)
 	for frame in range(2): await process_frame
@@ -142,6 +146,24 @@ func _run() -> void:
 			var head_focus: float=citizen.to_local(head.global_position).y
 			var portrait_ok: bool=await _capture(world,cam,citizen,
 					names[i]+"_face_detail",base,head_focus,.84,.12)
+			# An immobile skin-colored strip can pass a numeric blink
+			# check. These frames instead show the same real rig OPEN,
+			# FULLY CLOSED and ARTICULATING, in identical real-world light.
+			if portrait_ok and i in [0,1,3,8]:
+				for tick in range(24):
+					PORTRAIT.expression(visual_root,0.0,0.0,false,0.0)
+				portrait_ok=await _capture(world,cam,citizen,
+					names[i]+"_eyes_open",base,head_focus,.84,.12)
+				if portrait_ok:
+					for tick in range(24):
+						PORTRAIT.expression(visual_root,0.0,1.0,false,0.0)
+					portrait_ok=await _capture(world,cam,citizen,
+						names[i]+"_eyes_closed",base,head_focus,.84,.12)
+				if portrait_ok:
+					for tick in range(24):
+						PORTRAIT.expression(visual_root,0.0,0.0,true,.21)
+					portrait_ok=await _capture(world,cam,citizen,
+						names[i]+"_speaking",base,head_focus,.84,.12)
 			visual_root.rotation=prior_visual_rotation
 			visual_root.position=prior_visual_position
 			if title_node!=null: title_node.visible=prior_title_visible
@@ -320,5 +342,5 @@ func _run() -> void:
 		_fail("Actual on-map four-person bloodline photo failed")
 		return
 	print("GENETIC_FACE_FRAME: 08_ida_orin_and_children")
-	print("PASS: thirty-eight actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
+	print("PASS: fifty actual Godot face/body/family/expression screenshots with anatomical sex and inherited body-size variety")
 	quit(0)
