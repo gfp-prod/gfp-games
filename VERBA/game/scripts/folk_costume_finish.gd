@@ -9,7 +9,7 @@ const BODY=preload("res://scripts/npc_body_morph.gd")
 const GENES=preload("res://scripts/npc_genetics.gd")
 
 
-## A soft, inherited shoulder cap and tapered sleeve on the EXISTING arm pivot.
+## A slim inset deltoid and tapered sleeve on the EXISTING arm pivot.
 ## Do not add new bones or physical limbs: the old modular arm node still owns
 ## hit detection, swing, severing, loading and social-care state.
 static func fitted_sleeve(arm: Node3D,sign: float,
@@ -25,14 +25,19 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	# A longer rounded deltoid folds into the body from beneath the
 	# shoulder, then tapers across the biceps to the elbow. No free-standing
 	# clavicle/shoulder cylinder is needed, even when a sleeve swings.
-	const HEIGHT: Array[float]=[.095,.061,.026,-.017,-.067,-.122,-.185,-.247,-.320]
-	const CX: Array[float]=[-.076,-.054,-.023,-.007,.011,.023,.036,.046,.052]
+	# The cap begins below the trapezius. Sleeve length ends just beyond
+	# the person's inherited elbow, rather than making every arm a rigid
+	# high-shouldered tube reaching well below that joint.
+	var upper_length: float=GENES.upper_arm_length(genome)
+	var HEIGHT: Array[float]=[.020,.006,-.020,-.055,-.092,-.136,
+		-.181,-.221,-upper_length-.015]
+	const CX: Array[float]=[-.046,-.036,-.014,.003,.014,.022,.031,.038,.042]
 	const CZ: Array[float]=[-.012,-.017,-.023,-.025,-.031,-.040,-.041,-.045,-.048]
-	# Keep a low-volume cap over the deltoid, but do not give every
-	# villager broad, perfectly round biceps. High inherited muscle still
+	# Use a narrow anatomical deltoid and taper, without giving every
+	# villager inflated round biceps. High inherited muscle still
 	# produces a powerful upper arm; the neutral figure remains lean.
-	const RX: Array[float]=[.053,.060,.070,.079,.077,.071,.065,.060,.057]
-	const RZ: Array[float]=[.057,.064,.074,.081,.078,.075,.071,.066,.063]
+	const RX: Array[float]=[.036,.043,.053,.062,.061,.059,.055,.052,.050]
+	const RZ: Array[float]=[.039,.046,.058,.067,.066,.062,.059,.056,.052]
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(cloth)
@@ -44,8 +49,8 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 			for ring_and_angle in [[row,a],[row+1,a],[row+1,b],[row,b]]:
 				var index: int=int(ring_and_angle[0])
 				var angle: float=float(ring_and_angle[1])
-				var width: float=RX[index]*shoulder*muscle
-				var depth: float=RZ[index]*lerpf(.92,1.12,
+				var width: float=RX[index]*shoulder*muscle*.93
+				var depth: float=RZ[index]*.91*lerpf(.92,1.12,
 					GENES.value(genome,"body_depth"))
 				# The anterior deltoid and posterior triceps have different
 				# projections. An identical ellipse around every arm ring
@@ -68,10 +73,10 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	# Seal the upper aperture with a subtle inward-domed cloth cap; this
 	# shares the same material, articulation and detachable limb identity.
 	# A separate cylinder/collarbone would only recreate the old problem.
-	var top_radius_x: float=RX[0]*shoulder*muscle
-	var top_radius_z: float=RZ[0]*lerpf(.92,1.12,
+	var top_radius_x: float=RX[0]*shoulder*muscle*.93
+	var top_radius_z: float=RZ[0]*.91*lerpf(.92,1.12,
 		GENES.value(genome,"body_depth"))
-	var dome_center:=Vector3(sign*CX[0],HEIGHT[0]+.012,CZ[0])
+	var dome_center:=Vector3(sign*CX[0],HEIGHT[0]+.004,CZ[0])
 	for segment in range(14):
 		var a: float=TAU*float(segment)/14.0
 		var b: float=TAU*float(segment+1)/14.0
@@ -88,9 +93,11 @@ static func fitted_sleeve(arm: Node3D,sign: float,
 	sleeve.mesh=surface.commit()
 	sleeve.material_override=cloth
 	sleeve.set_meta("inherits_shoulder",true)
-	sleeve.set_meta("anatomic_upper_arm_radius",RX[3]*shoulder*muscle)
+	sleeve.set_meta("anatomic_upper_arm_radius",RX[3]*shoulder*muscle*.93)
 	sleeve.set_meta("anatomic_sex_profile",sex)
 	sleeve.set_meta("lean_shoulder_taper",true)
+	sleeve.set_meta("inherited_upper_arm_length",upper_length)
+	sleeve.set_meta("lowered_deltoid_cap",true)
 	sleeve.set_meta("underlapping_deltoid_join",true)
 	sleeve.set_meta("sealed_upper_shoulder",true)
 	sleeve.set_meta("old_limb_pivot_preserved",true)
@@ -106,21 +113,27 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 		sex: String="unspecified") -> MeshInstance3D:
 	var existing:=figure.get_node_or_null("VisibleSmithApron") as MeshInstance3D
 	if existing!=null: return existing
-	const HEIGHT: Array[float]=[1.39,1.35,1.30,1.24,1.17,1.10,1.02,.94,.85,.76,.67,.58]
-	const COLS: int=11
+	const HEIGHT: Array[float]=[1.39,1.37,1.35,1.325,1.30,1.27,1.24,
+		1.205,1.17,1.135,1.10,1.06,1.02,.98,.94,.895,.85,.805,
+		.76,.715,.67,.625,.58]
+	const COLS: int=21
 	var samples: Array[Vector3]=[]
 	for y in HEIGHT:
 		var relative: float=clampf((1.39-y)/.81,0.0,1.0)
-		var half_width: float=lerpf(.155,.220,smoothstep(.0,1.0,relative))
+		# Real smithing aprons are slim at the chest, cinch at the belt,
+		# and open toward the lower thigh. A uniform wide leather plank
+		# makes even lean inherited figures look square and heavy.
+		var waist_nip: float=exp(-pow((y-1.05)/.215,2.0))
+		var half_width: float=lerpf(.151,.194,smoothstep(.0,1.0,relative))-.027*waist_nip
 		var body_section: Vector2=BODY._section(y,genome,sex)
 		for col in range(COLS):
 			var fraction: float=float(col)/float(COLS-1)*2.0-1.0
 			var x: float=fraction*half_width
 			var a: float=-PI*.5+asin(clampf(x/body_section.x,-.91,.91))
 			var point: Vector3=BODY._point(y,a,genome,sex)
-			var drape: float=.108+.020*(1.0-fraction*fraction)
+			var drape: float=.029+.012*(1.0-fraction*fraction)+.006*relative*relative
 			# Gentle cloth crease at the hem; no unmodeled box corners.
-			var wrinkle: float=.008*sin(float(col)*1.85)*relative*relative
+			var wrinkle: float=.003*sin(float(col)*.96)*relative*relative
 			samples.append(Vector3(x,y,point.z-drape-wrinkle))
 	var st:=SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -138,16 +151,20 @@ static func smith_work_apron(figure: Node3D,genome: Dictionary,
 	apron.mesh=st.commit()
 	apron.material_override=hide
 	apron.set_meta("fitted_to_inherited_torso",true)
+	apron.set_meta("waist_tapered_smith_apron",true)
 	apron.set_meta("no_new_collision",true)
 	figure.add_child(apron)
 	# Three small, surface-anchored iron rivets replace giant raised boxes.
-	for location in [Vector2(-.130,1.305),Vector2(.130,1.305),
-			Vector2(.168,.83)]:
+	for location in [Vector2(-.115,1.305),Vector2(.115,1.305),
+			Vector2(.130,.83)]:
 		var p_x: float=location.x
 		var p_y: float=location.y
 		var width: float=BODY._section(p_y,genome,sex).x
 		var angle: float=-PI*.5+asin(clampf(p_x/width,-.91,.91))
-		var face_z: float=BODY._point(p_y,angle,genome,sex).z-.14
+		var rel: float=clampf((1.39-p_y)/.81,0.0,1.0)
+		var t: float=p_x/maxf(.01,BODY._section(p_y,genome,sex).x)
+		var face_z: float=BODY._point(p_y,angle,genome,sex).z-(
+			.029+.012*(1.0-clampf(t*t,0.0,1.0))+.006*rel*rel+.012)
 		var rivet:=ART.orb(figure,Vector3(p_x,p_y,face_z),
 			Vector3(.020,.020,.009),trim,8)
 		rivet.name="SmithApronIronRivet"
@@ -196,15 +213,15 @@ static func fitted_forearm(pivot: Node3D,side: float,
 				# narrowed wrist and slight radial/ulnar asymmetry.
 				# Unlike the old tapered tube, wrist size is independent
 				# of the forearm's inherited length.
-				var taper: float=lerpf(.064,.039,smoothstep(.10,.96,t))
-				var bulge: float=.012*pow(sin(PI*t),2.0)*arm_tone
+				var taper: float=lerpf(.053,.032,smoothstep(.10,.96,t))
+				var bulge: float=.008*pow(sin(PI*t),2.0)*arm_tone
 				var wrist: float=taper+bulge
 				var sweep: float=.016*t+(.006*sin(PI*t))
 				# Flexor mass is strongest on the front of the proximal
 				# forearm, while radial and ulnar edges are unequal. Hands,
 				# hitboxes, elbow pivot and inherited arm lengths are untouched.
-				var flexor: float=.008*exp(-pow((t-.34)/.19,2.0))
-				var radial: float=.005*exp(-pow((t-.51)/.25,2.0))
+				var flexor: float=.006*exp(-pow((t-.34)/.19,2.0))
+				var radial: float=.004*exp(-pow((t-.51)/.25,2.0))
 				var front: float=maxf(0.0,-sin(angle))
 				points.append(Vector3(
 					side*sweep+cos(angle)*(wrist+radial*side*cos(angle)),
@@ -246,8 +263,8 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 	# then flattening at the knuckles. No rectangular palm or hand bead.
 	var Y: Array[float]=[-length+.073,-length+.048,
 		-length-.004,-length-.035,-length-.060,-length-.075]
-	var WIDTH: Array[float]=[.036,.038,.046,.051,.049,.044]
-	var DEPTH: Array[float]=[.032,.032,.031,.028,.025,.022]
+	var WIDTH: Array[float]=[.032,.034,.041,.045,.044,.040]
+	var DEPTH: Array[float]=[.030,.030,.029,.026,.024,.021]
 	for row in range(Y.size()-1):
 		for sector in range(SIDES):
 			var a: float=TAU*float(sector)/float(SIDES)
@@ -291,7 +308,7 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 	# conversational distance; finger scale overlaps inherited stature.
 	var lengths: Array[float]=[.062,.077,.073,.056]
 	for finger in range(4):
-		var offset: float=(float(finger)-1.5)*.022*hand_scale
+		var offset: float=(float(finger)-1.5)*.020*hand_scale
 		var x: float=side*.016+offset
 		var begin:=Vector3(x,-length-.066,-.013)
 		var end:=Vector3(x+side*.003,
@@ -303,15 +320,15 @@ static func _modeled_hand(pivot: Node3D,side: float,genome: Dictionary,
 		var phalanx: MeshInstance3D=_digit_loft(pivot,
 			"Finger"+str(finger)+"LowPolyPhalanges",skin,
 			[begin,flex,end],
-			[Vector2(.0105,.010),Vector2(.0086,.009),
-				Vector2(.0045,.0050)])
+			[Vector2(.0095,.0090),Vector2(.0078,.0080),
+				Vector2(.0043,.0048)])
 		phalanx.set_meta("detaches_with_parent_arm",true)
 		phalanx.set_meta("no_new_collision",true)
 	# The fifth digit projects forward and folds toward the palm; it is
 	# not an extra straight fifth vertical tube.
-	var thumb_base:=Vector3(side*.055*hand_scale,-length-.024,-.031)
-	var thumb_joint:=Vector3(side*.083*hand_scale,-length-.056,-.050)
-	var thumb_tip:=Vector3(side*.080*hand_scale,-length-.094,-.061)
+	var thumb_base:=Vector3(side*.048*hand_scale,-length-.024,-.031)
+	var thumb_joint:=Vector3(side*.073*hand_scale,-length-.056,-.049)
+	var thumb_tip:=Vector3(side*.071*hand_scale,-length-.094,-.059)
 	var thumb_a: MeshInstance3D=_digit_loft(pivot,
 		"AnatomicalThumbMetacarpal",skin,
 		[thumb_base,thumb_base.lerp(thumb_joint,.54),thumb_joint],
@@ -387,8 +404,8 @@ static func fitted_lower_leg(leg: Node3D,side: float,
 	# it can swing independently without a hollow black joint appearing.
 	const H: Array[float]=[.092,.019,-.075,-.186,-.297,-.402,-.476,
 		-.568,-.665,-.759,-.846]
-	const W: Array[float]=[.116,.119,.114,.105,.096,.089,.091,.095,.090,.080,.074]
-	const D: Array[float]=[.118,.123,.118,.111,.102,.095,.096,.099,.095,.087,.080]
+	const W: Array[float]=[.105,.109,.106,.097,.087,.081,.080,.083,.077,.069,.063]
+	const D: Array[float]=[.108,.114,.111,.103,.095,.090,.089,.093,.088,.078,.071]
 	const KNEE_Y: float=-.420
 	const SEGMENTS: int=16
 	var upper:=SurfaceTool.new()
@@ -575,22 +592,8 @@ static func dress(figure: Node3D,person: String,
 		Vector3(pocket_anchor.x*1.06,.91,pocket_anchor.z*1.06-.034),
 		Vector3(.104,.13,.035),leather,Vector3(0,-.22,0))
 	pocket.name="WornHipPouchSeam"
-	# Removed three exposed shoulder/collar cylinders. Their helper-like
-	# ivory bars looked disconnected from the torso when the NPC turned.
-	# The tunic owns the shoulder silhouette; cuffs stay rig-attached.
-	for sign in [-1.0,1.0]:
-		# Cuffs are parented to animated arms and change with each step.
-		var arm: Node3D=figure.get_node_or_null(
-			"AnimatedLeftArm" if sign<0.0 else "AnimatedRightArm") as Node3D
-		if arm!=null:
-			# The old rigid dark wrist barrel should not be wider than
-			# the fabric directly above it.
-			ART.bone(arm,Vector3(sign*.064,-.383,-.045),
-				Vector3(sign*.076,-.418,-.047),.056,.053,leather,8)
-		var leg: Node3D=figure.get_node_or_null(
-			"AnimatedLeftLeg" if sign<0.0 else "AnimatedRightLeg") as Node3D
-		# The inherited lower-leg shell and fitted boot already have a
-		# tapered ankle; adding another cuff box would recreate stacked cubes.
+	# The old rigid wrist barrel was still attached to the upper arm at
+	# the discarded elbow position. The fitted forearm now owns its wrist.
 	# Dye variation belongs to the profession, not to a random rainbow.
 	match person:
 		"mara":
@@ -602,10 +605,10 @@ static func dress(figure: Node3D,person: String,
 			ART.bone(figure,Vector3(-.36,.53,-.15),
 				Vector3(.34,.54,-.15),.043,.034,worn,8)
 		"orin":
-			# Tiny rivets and leather reinforcement around an existing apron.
-			for sign in [-1.0,1.0]:
-				ART.box(figure,Vector3(sign*.28,.92,-.443),
-					Vector3(.045,.045,.035),trim)
+			# The smith's fitted leather apron already adds surface-anchored
+			# rivets. Remove two obsolete cubes at z=-.443 that floated in
+			# mid-air when the cloth was drawn close to the body.
+			pass
 		"ida":
 			# Former bright rods projected far from the baker's hips.
 			# A narrow dark linen knot follows the inherited side waist.

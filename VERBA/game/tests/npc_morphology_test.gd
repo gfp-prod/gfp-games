@@ -55,6 +55,45 @@ func _run() -> void:
 	if beard_geometry.find_children("*","CollisionShape3D",true,false).size()>0:
 		_fail("Facial hair incorrectly adds a new physical collision")
 		return
+	# The old full beard began directly beneath the eyeballs and
+	# independently cast shadows into one cheek. Keep a sculpted
+	# jawline beard, not an arbitrary black eye patch.
+	var cheek_beards: Array[Node]=beard_root.find_children(
+		"GeneticFacialHairCheek*","MeshInstance3D",true,false)
+	if cheek_beards.size()!=2:
+		_fail("Heritable facial hair lost its two cheek regions"); return
+	for cheek in cheek_beards:
+		var panel: MeshInstance3D=cheek as MeshInstance3D
+		if panel.cast_shadow!=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			_fail("Decorative beard creates mask-like cheek shadow"); return
+		var arrays: Array=panel.mesh.surface_get_arrays(0)
+		var beard_pts: PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+		var beard_normals: PackedVector3Array=arrays[Mesh.ARRAY_NORMAL]
+		if beard_normals.size()!=beard_pts.size() or beard_pts.size()<70:
+			_fail("Genetic beard has missing or empty face normals"); return
+		for i in range(beard_pts.size()):
+			if beard_pts[i].y>1.715:
+				_fail("Beard grows into the inherited lower eyelid"); return
+			if beard_normals[i].z>-.75:
+				_fail("Genetic beard points inward and shades as black bruise")
+				return
+	# The genetically sculpted face must meet the ORIGINAL skull at the
+	# temples without a floating cardboard mask edge, across head sizes.
+	var face_mesh: MeshInstance3D=beard_root.find_child(
+		"IndividualIntegratedFaceMesh",true,false) as MeshInstance3D
+	if face_mesh==null or face_mesh.mesh==null:
+		_fail("Continuous inherited face mesh has disappeared"); return
+	var face_pts: PackedVector3Array=face_mesh.mesh.surface_get_arrays(0)[
+		Mesh.ARRAY_VERTEX]
+	var seated_points: int=0
+	for p in face_pts:
+		if absf(p.y-1.77)>.032 or absf(p.x)<.13:
+			continue
+		if absf(p.z-(FACE._skull_front_depth(p.x,p.y)-.005))<.013:
+			seated_points+=1
+	if seated_points<8:
+		_fail("Inherited face sides no longer blend into the original skull")
+		return
 	# The first 28 inherited alleles are exactly those from the prior game.
 	var legacy: Dictionary=a.duplicate(true)
 	legacy["version"]=1
@@ -105,11 +144,35 @@ func _run() -> void:
 	# Realistic average characters should not look wider than their
 	# upper torso is tall. This detects the last pass's stocky, tent-like
 	# baseline while retaining the separate feminine/masculine ratios.
-	if female_hip>.297 or male_hip>.281 or (
-			BODY._section(1.10,same_genome,"female").x>.221) or (
-			BODY._section(1.10,same_genome,"male").x>.260):
+	if female_hip>.285 or male_hip>.265 or (
+			BODY._section(1.10,same_genome,"female").x>.214) or (
+			BODY._section(1.10,same_genome,"male").x>.248):
 		_fail("Average inherited anatomy regressed to the old husky silhouette")
 		return
+	# Compare genuine inherited finger geometry against the shoulder. A
+	# shorter forearm alone can leave a visually overlong upper-arm assembly.
+	for allele in [0,500,1000]:
+		var inherited: Dictionary=same_genome.duplicate(true)
+		inherited["alleles"]["limb_ratio"]=[allele,allele]
+		var arm_root:=Node3D.new()
+		root.add_child(arm_root)
+		var sleeve:=COSTUME.fitted_sleeve(arm_root,1.0,inherited,
+			ART.mat(Color("746b5b"),.97),"male")
+		var elbow:=Node3D.new()
+		elbow.position=Vector3(.040,-GENES.upper_arm_length(inherited),-.035)
+		arm_root.add_child(elbow)
+		COSTUME.fitted_forearm(elbow,1.0,inherited,
+			ART.mat(Color("746b5b"),.97),
+			ART.mat(GENES.skin_color(inherited),.96))
+		var index_finger: MeshInstance3D=elbow.get_node_or_null(
+			"Finger1LowPolyPhalanges") as MeshInstance3D
+		if sleeve==null or sleeve.mesh==null or index_finger==null:
+			_fail("Inherited articulated arm geometry is missing")
+			return
+		var tip: float=elbow.position.y+index_finger.get_aabb().position.y
+		if tip<-.81 or tip>-.63:
+			_fail("Inherited arm fingertips extend below the thigh or are stubby")
+			return
 	# Keep inherited ratios even as we narrow the average human mesh.
 	# A broad bloodline remains broad by genotype, not by clothing.
 	# Test vertical slenderness rather than simply shrinking all
@@ -150,6 +213,23 @@ func _run() -> void:
 	if woman_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]==(
 			man_mesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]):
 		_fail("Sex-linked morphology still creates identical actual mesh vertices")
+		return
+	# The earlier side-view baker had a rigid spear-shaped bust apron,
+	# despite her waist and hip ratios being correct. Inspect the actual
+	# midline shirt projection, not just the saved bust-volume allele.
+	var baseline_front: Vector3=BODY._point(1.265,-PI*.5,
+		same_genome,"female")
+	var baseline_rib: float=BODY._section(1.265,same_genome,"female").y
+	var baseline_projection: float=-baseline_front.z-baseline_rib
+	if baseline_projection<.025 or baseline_projection>.083:
+		_fail("Typical inherited female torso has an implausibly flat or projecting chest")
+		return
+	var high_bust_genome: Dictionary=same_genome.duplicate(true)
+	high_bust_genome["alleles"]["bust_volume"]=[970,970]
+	var high_projection: float=-BODY._point(1.265,-PI*.5,
+		high_bust_genome,"female").z-baseline_rib
+	if high_projection<=baseline_projection+.036 or high_projection>.148:
+		_fail("Inherited bust shape is either not expressed or protrudes as a rigid shield")
 		return
 	# Silhouette-only waist ratios are not enough: the last models still
 	# looked like featureless oval cylinders from three-quarter angles.
@@ -338,6 +418,16 @@ func _run() -> void:
 		if neck_bounds.position.y>1.46 or neck_bounds.end.y<1.64 or (
 				neck_bounds.size.x<.24 or neck_bounds.size.x>.45):
 			_fail("Neck bridge does not meet jaw and open garment"); return
+		# Reject the old thick skin-colored pipe, even if its total bounding
+		# box still reaches the individual jaw and chest correctly.
+		var narrow_throat_half_width: float=0.0
+		for neck_vertex in neck.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+			if absf(neck_vertex.y-1.565)<.002:
+				narrow_throat_half_width=maxf(narrow_throat_half_width,
+					absf(neck_vertex.x))
+		if narrow_throat_half_width<.069 or narrow_throat_half_width>.128:
+			_fail("Anatomical neck reverted to a stiff oversized throat cylinder")
+			return
 		if not figure.find_children("*","CollisionShape3D",true,false).is_empty():
 			_fail("Decorative anatomy replaced modular-limb physics"); return
 		var portrait: Node3D=figure.get_node("IndividualFaceConstruction")
@@ -358,6 +448,80 @@ func _run() -> void:
 		var eye: Node3D=portrait.get_node("ExpressionEyeLeft")
 		var sclera: MeshInstance3D=eye.get_node("SmallRecessedEye")
 		var sclera_size: Vector3=sclera.scale
+		# At gameplay distance the feature must remain proportionate to
+		# the skull. Genetic shape survives; minuscule bead-eyes do not.
+		var portrait_skull: MeshInstance3D=figure.find_child(
+			"IndividualIntegratedFaceMesh",true,false) as MeshInstance3D
+		if portrait_skull==null or portrait_skull.mesh==null:
+			_fail("Eye-to-face proportion has no sculpted head"); return
+		# Mesh.get_aabb() is LOCAL geometry: the orb's visible radius
+		# lives on its node scale, so include that scale in the ratio.
+		var eye_ratio: float=(sclera.get_aabb().size.x*sclera.scale.x)/(
+			portrait_skull.get_aabb().size.x)
+		if eye_ratio<.16 or eye_ratio>.38:
+			_fail("Eye-to-head proportion is unreadable or cartoonishly oversized")
+			return
+		var natural_mouth: Node3D=portrait.get_node("ExpressionMouth")
+		var upper_lip: MeshInstance3D=natural_mouth.find_child(
+			"SmallNaturalLipLine",true,false) as MeshInstance3D
+		var lower_lip: MeshInstance3D=natural_mouth.find_child(
+			"ModeledLowerLipLeft",true,false) as MeshInstance3D
+		var mouth_crease: MeshInstance3D=natural_mouth.get_node_or_null(
+			"ExpressionMouthOpening") as MeshInstance3D
+		# A natural mouth is read as upper + lower vermilion + a thin
+		# aperture, not by forcing the top lip alone to be a fat plank.
+		if upper_lip==null or lower_lip==null or mouth_crease==null:
+			_fail("The inherited mouth lacks its lip or oral crease mesh")
+			return
+		if upper_lip.get_aabb().size.y<.005 or (
+				lower_lip.get_aabb().size.y<.004) or (
+				upper_lip.get_aabb().size.x<.032) or (
+				not mouth_crease.visible) or (
+				mouth_crease.get_aabb().size.x<.045):
+			_fail("The inherited mouth is not readable at camera distance")
+			return
+		# The colored lip is embedded in the inherited face surface. An
+		# old constant-depth mouth created four visibly floating petals.
+		for p in upper_lip.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+			var face_z: float=FACE._depth(p.x,
+				natural_mouth.position.y+p.y,record)
+			var protrusion: float=face_z-(natural_mouth.position.z+p.z)
+			if protrusion<.004 or protrusion>.015:
+				_fail("Lip surface has detached from its genetic face")
+				return
+		if upper_lip.mesh is CylinderMesh or not bool(upper_lip.get_meta(
+				"faceted_anatomical_surface",false)):
+			_fail("Mouth is still composed of attached cylindrical bars")
+			return
+		var face_at_socket: float=FACE._depth(
+			eye.position.x,eye.position.y,record)
+		var ocular_standoff: float=face_at_socket-(
+			eye.position.z+sclera.position.z-sclera.scale.z*.5)
+		# An earlier eye rig made the face look mechanical: three bright
+		# disconnected strips floated forward of the sculpted socket.
+		if ocular_standoff<.003 or ocular_standoff>.018 or (
+				sclera.scale.x<.069 or sclera.scale.x>.108):
+			_fail("Inherited eye became a protruding mechanical eyeball")
+			return
+		# An inherited eye must be an almond inside its socket, not a
+		# luminous circular bead below the eyebrow. These aspect bounds
+		# leave the normal genetic ranges fully available.
+		var visible_eye_aspect: float=sclera.scale.y/sclera.scale.x
+		if visible_eye_aspect<.25 or visible_eye_aspect>.72:
+			_fail("Genetic eye is a protruding round doll eye"); return
+		# Ears belong to the lateral skull; the former large, round
+		# discs floated at either temple in every real Godot portrait.
+		var auricles: Array[Node]=figure.find_children(
+			"SubtleModeledEar*","MeshInstance3D",true,false)
+		if auricles.size()!=2:
+			_fail("Inherited skull lost its paired ears"); return
+		for auricle in auricles:
+			var ear_mesh: MeshInstance3D=auricle as MeshInstance3D
+			if ear_mesh.scale.z/ear_mesh.scale.x>.91 or (
+					absf(ear_mesh.position.x)<.185 or (
+					absf(ear_mesh.position.x)>.215)):
+				_fail("Ear detached from skull as a rounded side disc")
+				return
 		var upper: Node3D=eye.get_node_or_null("ExpressionUpperBlinkCover")
 		var lower_lid: Node3D=eye.get_node_or_null("ExpressionLowerBlinkCover")
 		if upper==null or lower_lid==null:
@@ -367,8 +531,43 @@ func _run() -> void:
 		for tick in range(20): FACE.expression(figure,0.0,1.0,false,0.0)
 		if upper.position.y>upper_rest-.015 or lower_lid.position.y<lower_rest+.014:
 			_fail("Eyelid covers did not articulate during a blink"); return
+		# A moving number is not a blink. Check that both real skin meshes
+		# stand IN FRONT of the pupil and meet over its centre in XY.
+		# Previously this test passed even while the pupils stayed visible.
+		var blink_pupil: MeshInstance3D=eye.get_node_or_null(
+			"AnatomicalPupil") as MeshInstance3D
+		var upper_mesh: MeshInstance3D=upper as MeshInstance3D
+		var lower_mesh: MeshInstance3D=lower_lid as MeshInstance3D
+		if blink_pupil==null or upper_mesh==null or lower_mesh==null:
+			_fail("Blink is not a rendered pupil-covering surface"); return
+		for cover in [upper_mesh,lower_mesh]:
+			if not bool(cover.get_meta("visible_pupil_occluding_blink",false)):
+				_fail("Blink has reverted to narrow decorative ribbons"); return
+			if cover.get_aabb().position.z+cover.position.z>=(
+					blink_pupil.position.z-blink_pupil.scale.z*.5):
+				_fail("Blink skin sits behind the visible pupil"); return
+		if upper_mesh.position.y+upper_mesh.get_aabb().position.y>.0 or (
+				lower_mesh.position.y+lower_mesh.get_aabb().end.y<.0):
+			_fail("Lids move but leave the centre of the pupil uncovered")
+			return
 		if not is_equal_approx(eye.scale.y,1.0) or sclera.scale!=sclera_size:
 			_fail("Blink deformed the entire eye and iris instead of the lids"); return
+		for tick in range(20): FACE.expression(figure,0.0,0.0,false,0.0)
+		var iris: MeshInstance3D=eye.get_node_or_null("InheritedIris")
+		var pupil: MeshInstance3D=eye.get_node_or_null("AnatomicalPupil")
+		if iris==null or pupil==null:
+			_fail("Eyes lost their separately movable inherited iris/pupil"); return
+		if iris.scale.x>=sclera.scale.x*.72 or (
+				pupil.scale.x>=iris.scale.x*.60):
+			_fail("Oversized iris and pupil obscure the inherited almond eye")
+			return
+		var sclera_rest: Vector3=sclera.position
+		for tick in range(20):
+			FACE.expression(figure,0.0,0.0,true,.7,Vector2(.006,-.003))
+		if iris.position.x<.004 or pupil.position.x<.004 or (
+			iris.position.distance_to(pupil.position)>.018) or (
+			sclera.position!=sclera_rest):
+			_fail("NPC eye gaze displaced the sclera or separated iris/pupil"); return
 		for tick in range(20): FACE.expression(figure,0.0,0.0,false,0.0)
 		if absf(upper.position.y-upper_rest)>.003:
 			_fail("Anatomical blink did not reopen"); return
@@ -381,6 +580,11 @@ func _run() -> void:
 		# The tip should actually emerge from the sculpted nasal bridge;
 		# an old offset placed it behind the surface at most angles.
 		var tip: MeshInstance3D=portrait.get_node("ModeledNoseTip")
+		if tip.mesh is SphereMesh or not bool(tip.get_meta(
+				"integrated_bridge_and_tip",false)) or (
+				tip.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<250):
+			_fail("Sculpted nose reverted to a detached round button")
+			return
 		var nose_y: float=lerpf(1.704,1.732,GENES.value(record,"nose_bridge"))
 		if tip.position.z>=FACE._depth(0.0,nose_y,record)-.005:
 			_fail("The modeled nose tip is buried in its head"); return
@@ -411,7 +615,13 @@ func _run() -> void:
 		"ExpressionLowerLip/ModeledLowerLipLeft")
 	var raised_lower: MeshInstance3D=raised_mouth.get_node(
 		"ExpressionLowerLip/ModeledLowerLipLeft")
-	if flat_upper.transform==raised_upper.transform or flat_lower.transform==raised_lower.transform:
+	# Lips are now actual faceted meshes, not CylinderMesh props whose
+	# transform encoded the angle of the bone. Compare vertex geometry.
+	var flat_upper_pts: PackedVector3Array=flat_upper.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var raised_upper_pts: PackedVector3Array=raised_upper.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var flat_lower_pts: PackedVector3Array=flat_lower.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var raised_lower_pts: PackedVector3Array=raised_lower.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	if flat_upper_pts==raised_upper_pts or flat_lower_pts==raised_lower_pts:
 		_fail("Inherited lip curve does not change the visible upper AND lower lip contours")
 		return
 	if float(flat_mouth.get_meta("rest_corner_rise"))>=float(

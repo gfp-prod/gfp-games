@@ -86,6 +86,66 @@ func _run() -> void:
 		"GroomedHairStudio",true,false) as Node3D
 	if smith_style==null or smith_style.get_child_count()<3:
 		_fail("Blacksmith has no inherited male hairstyle geometry"); return
+	# The blacksmith's curls must be ONE coherent surface. Previous
+	# attempts passed density checks by scattering spheres above his skull.
+	var curl_crown: MeshInstance3D=smith_style.get_node_or_null(
+		"SculptedCurlyCrown") as MeshInstance3D
+	if curl_crown==null or curl_crown.mesh==null or (
+			not bool(curl_crown.get_meta("one_connected_curl_silhouette",false))):
+		_fail("Curly hair reverted to a floating collection of spheres")
+		return
+	var curl_vertices: PackedVector3Array=curl_crown.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	if curl_vertices.size()<1000:
+		_fail("Curly crown lost its connected low-poly sculpt"); return
+	# A curl shell can be connected and STILL hover like a flat hat.
+	# Check actual foremost roots reach the forehead below the crown.
+	var seated_curls: bool=false
+	for point in curl_vertices:
+		# The old hairline stopped at 1.913, exposing an obvious
+		# black triangular crack between the hair and forehead.
+		if absf(point.x)<.035 and point.z<-.140 and point.y<1.902:
+			seated_curls=true
+			break
+	if not seated_curls:
+		_fail("Curly crown has lifted back off the natural forehead"); return
+	if smith_style.find_child("TightFacetedCurl*",true,false)!=null or (
+			smith_style.find_child("TightCurlLock*",true,false)!=null):
+		_fail("Unconnected curl beads or stiff dangling locks returned")
+		return
+	# Visual quality must be inspected in generated mesh vertices, not
+	# just the presence of a hairstyle tag. Check real hairline geometry.
+	for person_actor in [ida,orin,mara,sela]:
+		var cap: MeshInstance3D=person_actor.find_child(
+			"NaturalHairline",true,false) as MeshInstance3D
+		if cap==null or cap.mesh==null or not bool(
+				cap.get_meta("hairline_follows_skull",false)):
+			_fail("Genetically shaped hairline was replaced by a helmet sphere")
+			return
+		var hairline_vertices: PackedVector3Array=cap.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+		if hairline_vertices.size()<500:
+			_fail("Hairline lacks the sculpted silhouette topology")
+			return
+		var forehead_contact: bool=false
+		var temple_rise: bool=false
+		for point in hairline_vertices:
+			if absf(point.x)<.033 and point.z<-.151 and point.y<1.925:
+				forehead_contact=true
+			if absf(point.x)>.155 and absf(point.z)<.052 and point.y>1.924:
+				temple_rise=true
+		if not forehead_contact or not temple_rise:
+			_fail("Scalp shell returned to floating halo/straight cap hairline")
+			return
+	for actor in [mara,sela]:
+		var groom: Node3D=actor.find_child("GroomedHairStudio",true,false)
+		var panels: Array[Node]=groom.find_children(
+			"FacetedBackHairPanel*","MeshInstance3D",false,false)
+		if panels.size()<3:
+			_fail("Long hair lost its overlapping sculpted silhouette")
+			return
+		for panel in panels:
+			if not bool(panel.get_meta("sculpted_continuous_tress",false)):
+				_fail("Long hairstyle reverted to hanging rigid hair tubes")
+				return
 	var figure=ida.find_child("VisibleInhabitant",true,false)
 	var face=ida.find_child("ModeledInhabitantHead",true,false) as MeshInstance3D
 	var robe=ida.find_child("TaperedVillagerTunic",true,false) as MeshInstance3D
@@ -94,6 +154,12 @@ func _run() -> void:
 	var pocket=ida.find_child("BakerWorkPocket",true,false)
 	if figure==null or face==null or robe==null or apron==null or bonnet==null or pocket==null:
 		_fail("The baker has lost her fitted clothing, modeled face or work gear")
+		return
+	# The bonnet must hug the inherited skull. Wide flat rims are what
+	# made the baker look as though she wore a pale mushroom on her head.
+	var bonnet_bounds: AABB=bonnet.get_aabb()
+	if bonnet_bounds.size.x>.397 or bonnet_bounds.size.y<.125:
+		_fail("Baker kerchief is a wide brim rather than a fitted cap")
 		return
 	# Check the visible mesh, not a metadata-only claim. Earlier adult
 	# inhabitants were 4-head-tall caricatures because their skulls were
@@ -155,8 +221,8 @@ func _run() -> void:
 		_fail("The shaped baker apron surface is missing")
 		return
 	var triangles: PackedVector3Array=apron.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	if triangles.size()<180:
-		_fail("Baker apron has too few fitted patches to follow chest anatomy")
+	if triangles.size()<3000:
+		_fail("Baker apron lost its dense anatomical loft and may float away from the chest")
 		return
 	# Prove the actual pale apron stays outside the inherited front
 	# surface, not hidden behind the worker's shirt as it was on camera.
@@ -166,8 +232,9 @@ func _run() -> void:
 		var section_width: float=genetic_body._section(v.y,ida_genome,String(world.village_sim.people["ida"]["sex"])).x
 		var angle: float=-PI*.5+asin(clampf(v.x/section_width,-.89,.89))
 		var outer_front: float=genetic_body._point(v.y,angle,ida_genome,String(world.village_sim.people["ida"]["sex"])).z
-		if v.z>outer_front-.046:
-			_fail("Baker apron is buried behind genetically modeled clothing")
+		var clearance: float=outer_front-v.z
+		if clearance<.020 or clearance>.071:
+			_fail("Baker apron is clipping or visibly floating off the torso")
 			return
 	# Vertex-only clearance missed the huge chest-colored hole: the shirt
 	# intersected the broad triangle interiors between sampled edge points.
@@ -178,8 +245,9 @@ func _run() -> void:
 		var radius: float=genetic_body._section(center.y,ida_genome,String(world.village_sim.people["ida"]["sex"])).x
 		var angle: float=-PI*.5+asin(clampf(center.x/radius,-.89,.89))
 		var front: float=genetic_body._point(center.y,angle,ida_genome,String(world.village_sim.people["ida"]["sex"])).z
-		if center.z>front-.055:
-			_fail("Baker apron triangle interior clips through the chest or waist")
+		var triangle_clearance: float=front-center.z
+		if triangle_clearance<.018 or triangle_clearance>.073:
+			_fail("Baker apron triangle interior clips or lifts off its body")
 			return
 	if not bool(apron.get_meta("drapes_over_inherited_torso",false)):
 		_fail("Baker apron lost its fitted living-body surface")
@@ -187,6 +255,18 @@ func _run() -> void:
 	var bounds: AABB=apron.get_aabb()
 	if bounds.size.y<.8 or bounds.size.x<.4 or bounds.size.x>.7:
 		_fail("The apron has lost plausible body proportions")
+		return
+	# The baker's bib must actually taper at the waist, not just carry
+	# a metadata claim over the old full-length rectangular white slab.
+	var apron_waist: float=0.0
+	var apron_hem: float=0.0
+	for vertex in triangles:
+		if absf(vertex.y-1.055)<.012:
+			apron_waist=maxf(apron_waist,absf(vertex.x))
+		if vertex.y<.59:
+			apron_hem=maxf(apron_hem,absf(vertex.x))
+	if apron_waist<=0.0 or apron_hem<apron_waist*1.27:
+		_fail("Baker work apron reverted to a waist-obscuring rectangle")
 		return
 	# Improved appearance must stay on the original articulated rig;
 	# costume geometry may not replace the moving limbs or their jobs.
@@ -233,6 +313,18 @@ func _run() -> void:
 				"leg_silhouette_uncovered",false)):
 			_fail("Over-tunic reverted to the old long cylinder")
 			return
+	# Compare actual living shoulder pivots against the same inherited
+	# torso width. Smaller-average female shoulders must not have an
+	# identical square outer-arm attachment as the blacksmith.
+	var ida_shoulder_width: float=genetic_body._section(1.365,
+		world.village_sim.people["ida"]["genome"],"female").x
+	var orin_shoulder_width: float=genetic_body._section(1.365,
+		world.village_sim.people["orin"]["genome"],"male").x
+	var ida_socket_ratio: float=(absf(ida.left_arm.position.x)-.024)/ida_shoulder_width
+	var orin_socket_ratio: float=(absf(orin.left_arm.position.x)-.024)/orin_shoulder_width
+	if ida_socket_ratio>=orin_socket_ratio-.025:
+		_fail("Female-average arms still attach at broad male shoulder offsets")
+		return
 	# The old movable arms were plain cylinders whose hard shoulder
 	# intersections made the bodies look assembled from spare parts.
 	# Ensure the new fitted meshes belong to the exact original limb rigs.
@@ -254,11 +346,25 @@ func _run() -> void:
 			var limb_bounds: AABB=sleeve.get_aabb()
 			# The top surface must be sealed: an earlier fitted sleeve
 			# exposed an open dark hole when the camera stood above a person.
-			if not bool(sleeve.get_meta("sealed_upper_shoulder",false)):
+			if not bool(sleeve.get_meta("sealed_upper_shoulder",false)) or (
+					not bool(sleeve.get_meta("lowered_deltoid_cap",false))):
 				_fail("Shoulder sleeve lost its skin-safe upper cloth closure"); return
-			if vertices.size()<540 or limb_bounds.size.y<.40 or (
-					limb_bounds.size.x<.125 or limb_bounds.size.x>.32):
+			if vertices.size()<540 or limb_bounds.size.y<.275 or (
+					limb_bounds.size.x<.105 or limb_bounds.size.x>.27) or (
+					limb_bounds.end.y>.052):
 				_fail("An arm reverted to a rigid one-piece cylinder"); return
+			# Check the ACTUAL shoulder-cap vertices in local sleeve space:
+			# the previous overwide top ellipse produced a sharp triangular
+			# floating shoulder above the garment in orthographic screenshots.
+			var upper_min_x: float=INF
+			var upper_max_x: float=-INF
+			for point in vertices:
+				if point.y>=.013:
+					upper_min_x=minf(upper_min_x,point.x)
+					upper_max_x=maxf(upper_max_x,point.x)
+			if upper_min_x==INF or upper_max_x-upper_min_x>.101:
+				_fail("Shoulder cap regressed to a swollen triangular deltoid")
+				return
 			if not sleeve.find_children("*","CollisionShape3D",true,false).is_empty():
 				_fail("Decorative sleeve added redundant physical collision"); return
 			var module_name: String=side.to_lower()+"_arm"
@@ -282,6 +388,12 @@ func _run() -> void:
 				"InheritedArticulatedHand") as MeshInstance3D
 			if mesh==null or hand==null or mesh.mesh==null:
 				_fail("Arm still ends in a stub instead of a forearm and hand"); return
+			# Reject visually oversized paddle palms while keeping all
+			# individually modeled digits and original severable limb identity.
+			var palm_width: float=hand.get_aabb().size.x
+			if palm_width<.069 or palm_width>.114:
+				_fail("Individual hand reverted to an oversized mitten or tiny block")
+				return
 			if not (hand.mesh is ArrayMesh) or (
 					not bool(hand.get_meta("anatomic_palm",false))) or (
 					int(hand.get_meta("modeled_fingers",0))!=4):
@@ -320,13 +432,14 @@ func _run() -> void:
 					genome))>.002:
 				_fail("Arm length ignores actual inherited limb ratio"); return
 			var hand_drop: float=arm.to_local(hand.global_position).y
-			if hand_drop>-.54 or hand_drop<-.73:
+			if hand_drop>-.49 or hand_drop<-.67:
 				_fail("Fingertips are back at knee level or arms too short"); return
 			var area: Area3D=citizen.limb_hitboxes[side.to_lower()+"_arm"]
 			var capsule: CollisionShape3D=area.get_child(0) as CollisionShape3D
+			var expected_reach: float=load("res://scripts/npc_genetics.gd").upper_arm_length(genome)+load("res://scripts/npc_genetics.gd").forearm_length(genome)+.185
 			if capsule==null or not (capsule.shape is CapsuleShape3D) or (
-					(capsule.shape as CapsuleShape3D).height<.88):
-				_fail("Long forearm lost its continuous physical hitbox"); return
+					absf((capsule.shape as CapsuleShape3D).height-expected_reach)>.012):
+				_fail("Genetic arm hitbox no longer matches its real reach"); return
 		var torso: MeshInstance3D=citizen.find_child(
 			"InheritedChestWaistHipCloth",true,false) as MeshInstance3D
 		if torso==null or String(torso.get_meta(
@@ -343,7 +456,8 @@ func _run() -> void:
 		var person: Dictionary=world.village_sim.people[String(citizen.npc_id)]
 		var gg: Dictionary=person["genome"]
 		var sex: String=String(person["sex"])
-		var shoulder_socket: float=.030+.88*genetic_body._section(
+		var shoulder_socket: float=.024+(
+			.80 if sex=="female" else .87)*genetic_body._section(
 			1.365,gg,sex).x
 		var femur_socket: float=.455*genetic_body._section(.78,gg,sex).x
 		if absf(citizen.left_arm.position.x+shoulder_socket)>.007 or (
@@ -421,7 +535,7 @@ func _run() -> void:
 		_fail("The smith lost the sculpted apron mesh"); return
 	var smith_points: PackedVector3Array=smith_apron.mesh.surface_get_arrays(0)[
 		Mesh.ARRAY_VERTEX]
-	if smith_points.size()<500 or smith_apron.get_aabb().size.y<.75:
+	if smith_points.size()<2500 or smith_apron.get_aabb().size.y<.75:
 		_fail("Smith apron lacks torso-following geometry"); return
 	var smith_genome: Dictionary=world.village_sim.people["orin"]["genome"]
 	for index in range(0,smith_points.size(),3):
@@ -429,8 +543,24 @@ func _run() -> void:
 			smith_points[index+2])/3.0
 		var section: float=genetic_body._section(p.y,smith_genome,String(world.village_sim.people["orin"]["sex"])).x
 		var angle: float=-PI*.5+asin(clampf(p.x/section,-.91,.91))
-		if p.z>genetic_body._point(p.y,angle,smith_genome,String(world.village_sim.people["orin"]["sex"])).z-.05:
-			_fail("Blacksmith apron intersects its inherited torso"); return
+		var smith_front: float=genetic_body._point(p.y,angle,smith_genome,
+			String(world.village_sim.people["orin"]["sex"])).z
+		var smith_clearance: float=smith_front-p.z
+		if smith_clearance<.017 or smith_clearance>.073:
+			_fail("Blacksmith apron is clipping or floating away from inherited torso"); return
+	# Verify the *mesh* rather than a waist-taper metadata promise:
+	# a smith's chest bib should cinch at the belt instead of a slab that
+	# masks the inherited waist for every citizen.
+	var smith_waist: float=0.0
+	var smith_lower: float=0.0
+	for point in smith_points:
+		if absf(point.y-1.02)<.012:
+			smith_waist=maxf(smith_waist,absf(point.x))
+		if point.y<.60:
+			smith_lower=maxf(smith_lower,absf(point.x))
+	if smith_waist<=.01 or smith_lower<smith_waist*1.28:
+		_fail("Smith's apron still reads as an oversized leather rectangle")
+		return
 	# Keep the baker's original apron identity but ban the bright stiff
 	# waist rods that dominated its real first-person view.
 	var stitch: Node3D=ida.find_child("BakerCloseFittedWaistSeam",true,false)
@@ -524,13 +654,224 @@ func _run() -> void:
 		if sculpt==null or sculpt.mesh==null or sculpt.mesh.get_surface_count()!=1:
 			_fail("An anatomical face has regressed to disconnected prop spheres")
 			return
+		# The visible skull must now be ONE continuous front/rear
+		# inherited mesh. The old SphereMesh remains solely to preserve
+		# savegame, dimension and growth references; rendering it would
+		# Z-fight against the jaw, leaving a dark mask in screenshots.
+		if not bool(sculpt.get_meta("continuous_inherited_skull_volume",false)):
+			_fail("Head regressed to a floating face patch over an orb"); return
+		var unified_skull_extent: AABB=sculpt.get_aabb()
+		if unified_skull_extent.size.z<.31 or (
+				unified_skull_extent.size.y<.38):
+			_fail("Inherited head lacks real back-of-skull / crown volume"); return
+		# A separate face patch, inherited nose and legacy skull occupied
+		# overlapping volume. Their dynamic self-shadowing previously
+		# turned light and dark skin alike into an opaque shadow mask.
+		var skull: MeshInstance3D=citizen.find_child(
+			"ModeledInhabitantHead",true,false) as MeshInstance3D
+		var nasal_tip: MeshInstance3D=portrait.get_node_or_null(
+			"ModeledNoseTip") as MeshInstance3D
+		for layer in [sculpt,skull,nasal_tip]:
+			if layer==null or layer.cast_shadow!=(
+					GeometryInstance3D.SHADOW_CASTING_SETTING_OFF):
+				_fail("Overlapping sculpted head layer casts black self-shadow")
+				return
+		if skull.visible or not bool(skull.get_meta(
+				"hidden_legacy_skull_compatibility",false)):
+			_fail("Invisible compatibility skull is still Z-fighting"); return
 		var verts: PackedVector3Array=sculpt.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-		if verts.size()<1200:
-			_fail("The face no longer has sufficient sculpted profile topology")
+		if verts.size()<3800:
+			_fail("The face lost its continuous high-detail cheek/eye/nose topology")
 			return
+		# The real face gallery at source e7326e46 had nearly black
+		# forehead/cheeks and eye sockets, despite passing mesh checks.
+		# Protect lighting normals as well as mesh density: the smooth
+		# front-facing face must not go grazing over its visible centre.
+		var face_normals: PackedVector3Array=sculpt.mesh.surface_get_arrays(0)[
+			Mesh.ARRAY_NORMAL]
+		if face_normals.size()!=verts.size():
+			_fail("Face surface has no matching explicit lighting normals")
+			return
+		for index in range(verts.size()):
+			var point: Vector3=verts[index]
+			var normal: Vector3=face_normals[index]
+			# Rear volume correctly has +Z and lateral facing normals.
+			# The preexisting visual-lighting gate applies ONLY to
+			# frontal skin, not the newly connected rear hemisphere.
+			if point.z>-.16 or absf(point.x)>.13 or (
+					point.y<1.63 or point.y>1.89):
+				continue
+			if normal.z>-.94:
+				_fail("Face gradients create black mask-like shading")
+				return
+		# SurfaceTool triangle winding determines the actual light-facing
+		# normal. Previously lip, brow, nose and upper eyelid strips faced
+		# INTO the head, producing dark patches and white faceted bars in
+		# real Godot close-ups despite passing all topology tests.
+		for feature_name in ["SmallNaturalLipLine","ModeledLowerLipLeft",
+				"NaturalLipCorner","ExpressionUpperBlinkCover",
+				"ExpressionLowerBlinkCover","InheritedBrow","ModeledNoseTip"]:
+			var feature: MeshInstance3D=portrait.find_child(
+				feature_name,true,false) as MeshInstance3D
+			if feature==null or feature.mesh==null:
+				_fail("Face lost anatomical surface: "+feature_name); return
+			var normals: PackedVector3Array=feature.mesh.surface_get_arrays(0)[
+				Mesh.ARRAY_NORMAL]
+			if normals.size()<24:
+				_fail("Face feature has no real shaded triangle normals: "+feature_name)
+				return
+			var visible_normals: int=0
+			for normal in normals:
+				if normal.z<-.15:
+					visible_normals+=1
+			if visible_normals<float(normals.size())*.64:
+				_fail("Face strip backfaces away from camera: "+feature_name)
+				return
+		# Both inherited cheekbones MUST face the camera. One mirrored
+		# three-vertex facet used to have the opposite winding, and lacked
+		# lighting normals entirely; it appeared as a one-sided black
+		# bruise on the real blacksmith close-up even after beard repairs.
+		var cheek_facets: Array[Node]=portrait.find_children(
+			"InheritedCheekboneFacet*","MeshInstance3D",true,false)
+		if cheek_facets.size()!=2:
+			_fail("Inherited face lost paired cheekbone contours"); return
+		for node in cheek_facets:
+			var cheek_mesh: MeshInstance3D=node as MeshInstance3D
+			if cheek_mesh.visible or not bool(cheek_mesh.get_meta(
+					"integrated_cheekbone_no_overlay",false)):
+				_fail("Duplicate cheek overlay is creating a dark Z-fighting bruise")
+				return
+			var arrays: Array=cheek_mesh.mesh.surface_get_arrays(0)
+			var p: PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
+			var normals: PackedVector3Array=arrays[Mesh.ARRAY_NORMAL]
+			if p.size()!=3 or normals.size()!=3:
+				_fail("Cheek facet missing actual shaded triangle"); return
+			if (p[1]-p[0]).cross(p[2]-p[0]).z>-.0001:
+				_fail("Mirrored cheek facet points into skull"); return
+			for normal in normals:
+				if normal.z>-.75:
+					_fail("Cheekbone normal shades as black under-eye scar")
+					return
+		# The last published close-ups showed a hard rectangular jaw shelf.
+		# Evaluate true face mesh: chin edges must tuck inward below cheek.
+		var widest_cheek: float=0.0
+		var bottom_chin: float=0.0
+		for vertex in verts:
+			if absf(vertex.y-1.75)<.014:
+				widest_cheek=maxf(widest_cheek,absf(vertex.x))
+			if vertex.y<1.595:
+				bottom_chin=maxf(bottom_chin,absf(vertex.x))
+		if widest_cheek<.12 or bottom_chin>=widest_cheek*.89:
+			_fail("Face returned to its flat rectangular jaw shelf"); return
+		# At eyebrow height the mesh remains broad, but its forehead
+		# corners must roll inward under the crown. A full-width straight
+		# top edge is the rectangular mask visible in real close-ups.
+		var middle_outline: float=0.0
+		var crown_outline: float=0.0
+		var face_y_min: float=INF
+		var face_y_max: float=-INF
+		# The combined head now includes a *rear shell and cranial caps*.
+		# Evaluate only front-facing SKIN rows. Including the crown pole
+		# at Y=2.02 made the prior forehead gate measure a zero-width
+		# apex rather than the actual inherited brow/forehead silhouette.
+		for p in verts:
+			if p.z>-.05: continue
+			face_y_min=minf(face_y_min,p.y)
+			face_y_max=maxf(face_y_max,p.y)
+		var midlevel: float=lerpf(face_y_min,face_y_max,.74)
+		var crownlevel: float=lerpf(face_y_min,face_y_max,.93)
+		for p in verts:
+			if p.z>-.05: continue
+			if absf(p.y-midlevel)<.014:
+				middle_outline=maxf(middle_outline,absf(p.x))
+			if p.y>crownlevel:
+				crown_outline=maxf(crown_outline,absf(p.x))
+		if middle_outline<.12 or crown_outline<.08 or (
+				crown_outline>=middle_outline*.94):
+			_fail("Inherited forehead did not curve into the skull"); return
+		var lip_node: Node3D=portrait.get_node_or_null("ExpressionMouth")
+		var top_lip: MeshInstance3D=lip_node.get_node_or_null(
+			"ExpressionLipLeft/SmallNaturalLipLine") as MeshInstance3D if lip_node!=null else null
+		var lower_lip: MeshInstance3D=lip_node.get_node_or_null(
+			"ExpressionLowerLip/ModeledLowerLipLeft") as MeshInstance3D if lip_node!=null else null
+		var crease: MeshInstance3D=lip_node.get_node_or_null(
+			"ExpressionMouthOpening") as MeshInstance3D if lip_node!=null else null
+		if top_lip==null or lower_lip==null or crease==null or not crease.visible:
+			_fail("Neutral face lost its thin continuous oral crease"); return
+		# Lip bands must actually survive gameplay-size renders; tiny
+		# microribbons passed the old maximum-only test. Wide, flat
+		# rose-colored panels are also disallowed.
+		if top_lip.get_aabb().size.y<.018 or (
+				lower_lip.get_aabb().size.y<.013) or (
+				top_lip.get_aabb().size.y>.058) or (
+				lower_lip.get_aabb().size.y>.052):
+			_fail("Lips are either unreadable or oversized flat petals"); return
+		for part_name in ["SmallRecessedEye","IndividualUpperEyelid",
+				"AnatomicalLowerEyelid","InheritedBrow","InheritedCheekboneFacet",
+				"ModeledNoseWing","SmallNaturalLipLine"]:
+			var facial_part: MeshInstance3D=portrait.find_child(
+				part_name,true,false) as MeshInstance3D
+			if facial_part==null or facial_part.cast_shadow!=(
+					GeometryInstance3D.SHADOW_CASTING_SETTING_OFF):
+				_fail("Decorative face mesh casts artificial under-eye shadows: "+
+					part_name)
+				return
+		# Verify skin-attached folds on the real inherited face, not only
+		# metadata or a decorative separate brow cylinder. Both eyes and both
+		# expression rigs must remain independently animated.
+		var face_math=load("res://scripts/folk_portrait_finish.gd")
+		var person_genome: Dictionary=world.village_sim.people[
+			String(citizen.npc_id)]["genome"]
+		var person_sex: String=String(world.village_sim.people[
+			String(citizen.npc_id)]["sex"])
+		for eye_name in ["ExpressionEyeLeft","ExpressionEyeRight"]:
+			var socket: Node3D=portrait.get_node_or_null(eye_name)
+			if socket==null:
+				_fail("Inherited face lost one of its articulated eye sockets"); return
+			var sclera: MeshInstance3D=socket.get_node_or_null(
+				"SmallRecessedEye") as MeshInstance3D
+			if sclera==null or sclera.scale.x<.051:
+				_fail("NPC eyes shrank back to the old unreadable bead size"); return
+			for lid_name in ["IndividualUpperEyelid","AnatomicalLowerEyelid"]:
+				var fold: MeshInstance3D=socket.get_node_or_null(
+					lid_name) as MeshInstance3D
+				if fold==null or fold.mesh==null or not bool(
+						fold.get_meta("attached_to_inherited_face",false)):
+					_fail("Skin-attached eye fold replaced by floating strip"); return
+				var fold_points: PackedVector3Array=fold.mesh.surface_get_arrays(0)[
+					Mesh.ARRAY_VERTEX]
+				if fold_points.size()<100:
+					_fail("Eye socket lost its tapered sculpted geometry"); return
+				for p in fold_points:
+					var skin_z: float=face_math._depth(
+						socket.position.x+p.x,socket.position.y+p.y,
+						person_genome,person_sex)
+					var relief: float=skin_z-(socket.position.z+p.z)
+					if relief<-.003 or relief>.022:
+						_fail("Eyelid fold floats off inherited facial contour"); return
+		for brow_name in ["ExpressionBrowLeft","ExpressionBrowRight"]:
+			var brow_rig: Node3D=portrait.get_node_or_null(brow_name)
+			var brow_mesh: MeshInstance3D=brow_rig.get_node_or_null(
+					"InheritedBrow") as MeshInstance3D if brow_rig!=null else null
+			if brow_mesh==null or brow_mesh.mesh==null or not bool(
+						brow_mesh.get_meta("attached_to_inherited_brow_bone",false)):
+				_fail("Expressive inherited brow returned to floating straight line"); return
 		if portrait.find_children("*","StaticBody3D",true,false).size()>0:
 			_fail("An artistic face introduced unnecessary collision")
 			return
+	# Verify gait changes the actual articulated shoulders without moving
+	# physics or replacing the original independently severable arm nodes.
+	var shoulder_at_rest: float=ida.left_arm.rotation.z
+	ida.gait_weight=.9
+	ida.distance_gait_phase=PI*.30
+	ida.motion_clock=1.33
+	ida._pose_upper_body(.18,true,false,false)
+	if absf(ida.left_arm.rotation.z-shoulder_at_rest)<.002 or (
+		absf(ida.visual_figure.rotation.y)<.008):
+		_fail("NPC remains mannequin-rigid despite walking gait"); return
+	ida._pose_upper_body(.18,false,false,true)
+	if ida.modular_limbs.get("left_arm")!=ida.left_arm:
+		_fail("Procedural animation replaced the original detachable arm"); return
 	# Movement is driven by measured displacement, not a fixed walk cycle.
 	# The tested physics actor and its normal joints are retained.
 	if ida.get("visual_figure")==null or ida.get("distance_gait_phase")==null:
@@ -553,17 +894,106 @@ func _run() -> void:
 		var inherited: Dictionary=GENES.founder(person_name)
 		var finish: Node3D=GROOM.finish(groom_root,person_name,inherited,
 			"female",ART_LIB.mat(GENES.hair_color(inherited),.98))
-		var strand_name: String="FacetedLeftHairFrame" if person_name=="sela" else (
+		# The face-level hair silhouette must now contain a joined,
+		# inherited parting across the forehead. A smooth helmet
+		# plus loose side strips is not an acceptable hairstyle.
+		var style: String=String(finish.get_meta("hairstyle",""))
+		if style in ["loose","wave","braids","bun","ponytail",
+				"swept","shaggy"]:
+			var fringe: MeshInstance3D=finish.get_node_or_null(
+				"GroomedFringeVolume") as MeshInstance3D
+			if fringe==null or fringe.mesh==null:
+				_fail("Groomed hair is a helmet without a real fringe"); return
+			var fringe_bounds: AABB=fringe.get_aabb()
+			if fringe_bounds.size.x<.29 or fringe_bounds.size.y<.095 or (
+					fringe_bounds.size.z<.073):
+				_fail("Hairstyle lacks readable roots and forehead layering")
+				return
+			if fringe.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<600:
+				_fail("Fringe is still one floating decorative hair card"); return
+		# Long loose hair now flows into the BACK panel, while short
+		# temple framing stops at the jaw rather than dangling as planks.
+		# Braids deliberately remain forward of the garment.
+		var strand_name: String="FacetedBackHairPanel2" if person_name=="sela" else (
 			"WovenLeftHairCore" if person_name=="mara" else "LongPonytailTail1")
 		var strand: MeshInstance3D=finish.get_node_or_null(
 			strand_name) as MeshInstance3D
-		if not _long_lock_clears_tunic(strand,person_name!="juno"):
+		if not _long_lock_clears_tunic(strand,person_name=="mara"):
 			_fail("Long hairstyle disappears into clothing: "+person_name)
 			return
+		if person_name=="sela":
+			# The five decorative strands previously vanished in profile.
+			# Confirm a connected 3D hair mantle exists behind the scalp,
+			# while the inherited back hair and clothing remain separate.
+			var hair_mass: MeshInstance3D=finish.get_node_or_null(
+				"ContinuousBackHairMass") as MeshInstance3D
+			if hair_mass==null or hair_mass.mesh==null:
+				_fail("Loose hair lost its grown three-dimensional back mass"); return
+			var mass_bounds: AABB=hair_mass.get_aabb()
+			if mass_bounds.size.x<.32 or mass_bounds.size.z<.15 or (
+					mass_bounds.size.y<.35):
+				_fail("Back-of-head hair is a narrow floating profile cord"); return
+			if hair_mass.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size()<1900:
+				_fail("Continuous back hair is a low-detail billboard"); return
+			var temple_panel: MeshInstance3D=finish.get_node_or_null(
+				"FacetedLeftHairFrame") as MeshInstance3D
+			if temple_panel==null or temple_panel.mesh==null:
+				_fail("Loose hairstyle lost scalp-attached temple framing"); return
+			var lowest_temple: float=100.0
+			for v in temple_panel.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+				lowest_temple=minf(lowest_temple,v.y)
+			if lowest_temple<1.66:
+				_fail("Loose side fringe became a hanging cardboard plank"); return
+			# A front-facing hair sheet disappears edge-on. Verify actual
+			# three-dimensional thickness at the MIDDLE of the strand, not
+			# a marker that claims to have solid geometry.
+			for hair_panel in [temple_panel,strand]:
+				var vertices: PackedVector3Array=hair_panel.mesh.surface_get_arrays(0)[
+					Mesh.ARRAY_VERTEX]
+				var top_y: float=-1000.0
+				var low_y: float=1000.0
+				for v in vertices:
+					top_y=maxf(top_y,v.y)
+					low_y=minf(low_y,v.y)
+				var middle_y: float=lerpf(top_y,low_y,.52)
+				var backmost: float=-1000.0
+				var foremost: float=1000.0
+				for v in vertices:
+					if absf(v.y-middle_y)<.055:
+						backmost=maxf(backmost,v.z)
+						foremost=minf(foremost,v.z)
+				if backmost-foremost<.022:
+					_fail("Hair is still a paper-thin floating polygon"); return
 		if finish.find_children("*","CollisionShape3D",true,false).size()>0:
 			_fail("Grooming added a new body collision or blocked limb severance")
 			return
 		if person_name=="sela":
+			var left_frame: MeshInstance3D=finish.get_node_or_null(
+				"FacetedLeftHairFrame") as MeshInstance3D
+			var frame_points: PackedVector3Array=left_frame.mesh.surface_get_arrays(0)[
+				Mesh.ARRAY_VERTEX]
+			# Hair length is inherited: compare the real mesh at its own
+			# middle and end instead of assuming an absolute world Y.
+			var bottom_y: float=1000.0
+			var top_y: float=-1000.0
+			for p in frame_points:
+				bottom_y=minf(bottom_y,p.y)
+				top_y=maxf(top_y,p.y)
+			var midpoint_y: float=lerpf(top_y,bottom_y,.55)
+			var mid_min: float=1000.0
+			var mid_max: float=-1000.0
+			var hem_min: float=1000.0
+			var hem_max: float=-1000.0
+			for p in frame_points:
+				if absf(p.y-midpoint_y)<.052:
+					mid_min=minf(mid_min,p.x)
+					mid_max=maxf(mid_max,p.x)
+				if p.y<bottom_y+.012:
+					hem_min=minf(hem_min,p.x)
+					hem_max=maxf(hem_max,p.x)
+			if mid_max<=mid_min or hem_max<=hem_min or (
+					hem_max-hem_min)>.74*(mid_max-mid_min):
+				_fail("Long side hair has blunt rectangular ends again"); return
 			var back: MeshInstance3D=finish.get_node_or_null(
 				"FacetedBackHairPanel2") as MeshInstance3D
 			if not _long_lock_clears_tunic(back,false):

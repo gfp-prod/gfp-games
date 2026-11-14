@@ -59,18 +59,20 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 	# average half-widths are deliberately lean; broadness must come from
 	# inherited muscle/frame loci, not a huge default mannequin torso.
 	# Distinct, continuous rings at hip crest / waist / ribs / shoulder.
-	var pelvis:=Vector2(.255*hips*hip_factor,
-		.249*depth*(.92+.11*hips)*pelvis_depth)
-	var midriff:=Vector2((.235*waist+.010*(1.0-muscle_gene))*waist_factor,
-		.222*depth*(.975 if female else 1.0))
-	var ribcage:=Vector2((.269*chest+upper_muscle*.65)*rib_factor,
-		.256*depth*(.970 if female else 1.030 if male else 1.0))
-	var shoulder:=Vector2((.283*shoulders+.008*chest)*shoulder_factor,
-		.246*depth*(.975 if female else 1.035 if male else 1.0))
+	var pelvis:=Vector2(.241*hips*hip_factor,
+		.228*depth*(.92+.11*hips)*pelvis_depth)
+	var midriff:=Vector2((.219*waist+.008*(1.0-muscle_gene))*waist_factor,
+		.210*depth*(.975 if female else 1.0))
+	var ribcage:=Vector2((.249*chest+upper_muscle*.55)*rib_factor,
+		.235*depth*(.970 if female else 1.030 if male else 1.0))
+	var shoulder:=Vector2((.257*shoulders+.007*chest)*shoulder_factor,
+		.226*depth*(.975 if female else 1.035 if male else 1.0))
 	# A slender collar opening closes toward the new cranial/throat
 	# landmark. An oversized neckline left a hollow dark collar around
 	# the smaller, more realistic head.
-	var neckline:=Vector2(.148,.134)
+	var neckline:=Vector2(
+		.116*(.93 if female else 1.045 if male else 1.0),
+		.112*(.94 if female else 1.04 if male else 1.0))
 	if y<=.78:
 		# Do not extrude the widest hip section unchanged down to the
 		# tunic hem: that produced a rectangular, barrel-shaped skirt.
@@ -87,7 +89,10 @@ static func _section(y: float,g: Dictionary,sex: String="unspecified") -> Vector
 	# A high tube of linen formerly filled the space under the chin and
 	# looked like a disconnected turtleneck. End the cloth below the jaw;
 	# shape the shoulder over several rings instead of a flat horizontal cap.
-	return shoulder.lerp(neckline,smoothstep(1.375,1.505,y))
+	# Eased clavicle rounds the former angular cape-like shoulder
+	# without changing inherited shoulder socket sizes or limb pivots.
+	var clavicle_t: float=smoothstep(1.375,1.505,y)
+	return shoulder.lerp(neckline,pow(clavicle_t,.78))
 
 static func _point(y: float,angle: float,g: Dictionary,
 		sex: String="unspecified") -> Vector3:
@@ -104,8 +109,12 @@ static func _point(y: float,angle: float,g: Dictionary,
 	var facing: float=pow(maxf(0.0,-sin(angle)),2.0)
 	# Breast volume is soft tissue on an uninterrupted ribcage, not
 	# separate attached orbs. Men still have a modest pectoral contour.
-	var breast_profile: float=(.018+.150*pow(bust,1.45)) if sex=="female" else (
-		.003+.025*pow(bust,1.6) if sex=="male" else .006+.09*pow(bust,1.7))
+	# Preserve genuine inherited variety without turning the average
+	# everyday tunic into a rigid prow extending far beyond the ribcage.
+	# Strong alleles still create visible fullness; ordinary profiles stay
+	# integrated with the sternum and taper to the natural waist.
+	var breast_profile: float=(.012+.102*pow(bust,1.55)) if sex=="female" else (
+		.003+.025*pow(bust,1.6) if sex=="male" else .006+.077*pow(bust,1.7))
 	z-=breast_profile*vertical*lobe*facing
 	# Gluteal and greater-trochanter curves broaden the lower torso at
 	# specific heights. Clothing panels sample these very same points.

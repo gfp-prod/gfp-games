@@ -16,8 +16,17 @@ func _find(world: Node3D,wanted: String) -> Node3D:
 	return null
 
 func _capture(world: Node3D,cam: Camera3D,actor: Node3D,
-		name: String,base: String,focus: float,distance: float) -> bool:
-	cam.global_position=actor.to_global(Vector3(.38,focus+.05,-distance))
+		name: String,base: String,focus: float,distance: float,
+		offset_x: float=.38) -> bool:
+	# Controlled close-up lighting reveals actual low-poly facial planes
+	# across light/dark skin without changing normal in-game scene lights.
+	var fill: OmniLight3D=cam.get_node_or_null("DiagnosticFaceFill") as OmniLight3D
+	if fill!=null:
+		fill.visible=name.ends_with("_face_detail") or (
+			name.ends_with("_eyes_open") or
+			name.ends_with("_eyes_closed") or
+			name.ends_with("_speaking"))
+	cam.global_position=actor.to_global(Vector3(offset_x,focus+.05,-distance))
 	cam.look_at(actor.to_global(Vector3(0,focus,0)),Vector3.UP)
 	for frame in range(2): await process_frame
 	RenderingServer.force_draw()
@@ -59,6 +68,14 @@ func _run() -> void:
 	cam.near=.04
 	cam.fov=50.0
 	cam.name="InGameGeneticsComparisonCamera"
+	var fill:=OmniLight3D.new()
+	fill.name="DiagnosticFaceFill"
+	fill.light_energy=.72
+	fill.omni_range=2.15
+	fill.shadow_enabled=false
+	fill.position=Vector3(.12,.11,-.36)
+	fill.visible=false
+	cam.add_child(fill)
 	world.add_child(cam)
 	cam.current=true
 	# For comparative anatomy pictures, move the existing physical actors
@@ -108,6 +125,52 @@ func _run() -> void:
 		if not await _capture(world,cam,citizen,names[i],base,focus,dist):
 			_fail("Could not photograph genuine world citizen: "+ids[i])
 			return
+		# A head-size-aware portrait rather than a fixed-height camera.
+		# Smaller genetic statures previously ended up at the BOTTOM of the
+		# photograph; their faces were buried below sky, nametag and tools.
+		if i in [0,1,2,3,8]:
+			var head: MeshInstance3D=citizen.find_child(
+				"ModeledInhabitantHead",true,false) as MeshInstance3D
+			if head==null:
+				_fail("The genuine NPC has no inherited head to photograph")
+				return
+			var old_processing: bool=citizen.is_processing()
+			var prior_visual_rotation: Vector3=visual_root.rotation
+			var prior_visual_position: Vector3=visual_root.position
+			var title_node: Node3D=citizen.name_label
+			var prior_title_visible: bool=title_node.visible if title_node!=null else false
+			citizen.set_process(false)
+			visual_root.rotation=Vector3.ZERO
+			visual_root.position.y=0.0
+			if title_node!=null: title_node.visible=false
+			var head_focus: float=citizen.to_local(head.global_position).y
+			var portrait_ok: bool=await _capture(world,cam,citizen,
+					names[i]+"_face_detail",base,head_focus,.84,.12)
+			# An immobile skin-colored strip can pass a numeric blink
+			# check. These frames instead show the same real rig OPEN,
+			# FULLY CLOSED and ARTICULATING, in identical real-world light.
+			if portrait_ok and i in [0,1,3,8]:
+				for tick in range(24):
+					PORTRAIT.expression(visual_root,0.0,0.0,false,0.0)
+				portrait_ok=await _capture(world,cam,citizen,
+					names[i]+"_eyes_open",base,head_focus,.84,.12)
+				if portrait_ok:
+					for tick in range(24):
+						PORTRAIT.expression(visual_root,0.0,1.0,false,0.0)
+					portrait_ok=await _capture(world,cam,citizen,
+						names[i]+"_eyes_closed",base,head_focus,.84,.12)
+				if portrait_ok:
+					for tick in range(24):
+						PORTRAIT.expression(visual_root,0.0,0.0,true,.21)
+					portrait_ok=await _capture(world,cam,citizen,
+						names[i]+"_speaking",base,head_focus,.84,.12)
+			visual_root.rotation=prior_visual_rotation
+			visual_root.position=prior_visual_position
+			if title_node!=null: title_node.visible=prior_title_visible
+			citizen.set_process(old_processing)
+			if not portrait_ok:
+				_fail("Could not inspect true eye, nose, lip and hair silhouette")
+				return
 		# Additional full figure to prove body's inherited measurements.
 		if i in [0,1,2,3,4,7,8]:
 			# Centre higher and pull back so the largest inherited
@@ -123,17 +186,23 @@ func _run() -> void:
 		# Orthographic projection removes perspective distortion so we can
 		# compare head-to-stature, shoulders, hip projection and limb reach.
 		if i in [0,1,8]:
-			# Lift the same physical actor into clear sky only while taking
-			# the orthographic diagnostic. Hills previously hid the knees,
-			# making the anatomy reference screenshots unusable.
+			# Lift the REAL NPC for the temporary orthographic inspection.
+			# Ten metres was not enough: nearby tree beams still crossed the
+			# foreground of side views and hid the apron/body silhouette.
+			# The actor is returned to its unchanged simulation position.
 			var ground_pose: Vector3=citizen.global_position
-			citizen.global_position=ground_pose+Vector3(0,10.0,0)
+			citizen.global_position=ground_pose+Vector3(0,120.0,0)
 			cam.projection=Camera3D.PROJECTION_ORTHOGONAL
 			cam.size=2.48
-			for direction in ["front","profile"]:
+			for direction in ["front","three_quarter","profile"]:
 				if direction=="front":
 					cam.global_position=citizen.to_global(
 						Vector3(0,1.12,-4.0))
+				elif direction=="three_quarter":
+					# Equal lighting and distance: contour transitions and
+					# dress projection invisible in head-on shots must be reviewed.
+					cam.global_position=citizen.to_global(
+						Vector3(2.85,1.12,-2.85))
 				else:
 					cam.global_position=citizen.to_global(
 						Vector3(4.0,1.12,0))
@@ -157,6 +226,72 @@ func _run() -> void:
 					names[i]+"_hand_detail",base,.62,1.25):
 				_fail("Could not photograph modeled wrists and fingers")
 				return
+		# Diagnostic pose capture uses the actual citizen's articulated
+		# and severable modules. These are staged movement KEY POSES,
+		# not a claim that the actor walked here under simulation.
+		# Preserve every live transform after photographing so the family
+		# proof below still depicts the undisturbed scene.
+		if i in [0,1]:
+			# Disable the actor's presentation _process only for these
+			# rig diagnostics. Otherwise three camera frames would blend the
+			# deliberately selected joint pose straight back to idle.
+			var prior_processing: bool=citizen.is_processing()
+			citizen.set_process(false)
+			var prior_root: Vector3=citizen.global_position
+			var prior_left_arm: Vector3=citizen.left_arm.rotation
+			var prior_right_arm: Vector3=citizen.right_arm.rotation
+			var prior_left_leg: Vector3=citizen.left_leg.rotation
+			var prior_right_leg: Vector3=citizen.right_leg.rotation
+			var prior_left_forearm: Vector3=citizen.left_forearm.rotation
+			var prior_right_forearm: Vector3=citizen.right_forearm.rotation
+			var old_turn: float=visual_root.rotation.y
+			var old_gait: float=citizen.gait_weight
+			var old_phase: float=citizen.distance_gait_phase
+			var old_clock: float=citizen.motion_clock
+			citizen.global_position=prior_root+Vector3(0,120.0,0)
+			citizen.motion_clock=2.10
+			if i==0:
+				citizen.gait_weight=1.0
+				citizen.distance_gait_phase=PI*.44
+				citizen._pose_upper_body(.35,true,false,false)
+				citizen.left_arm.rotation.x=.25
+				citizen.right_arm.rotation.x=-.24
+				citizen.left_leg.rotation.x=-.20
+				citizen.right_leg.rotation.x=.23
+			else:
+				citizen.gait_weight=0.0
+				citizen._pose_upper_body(.35,false,true,false)
+				citizen.left_arm.rotation.x=-.34
+				citizen.right_arm.rotation.x=-.85
+				citizen.left_forearm.rotation.x=.51
+				citizen.right_forearm.rotation.x=.70
+			cam.projection=Camera3D.PROJECTION_ORTHOGONAL
+			cam.size=2.48
+			cam.global_position=citizen.to_global(Vector3(2.85,1.12,-2.85))
+			cam.look_at(citizen.to_global(Vector3(0,1.03,0)),Vector3.UP)
+			for frame in range(3): await process_frame
+			RenderingServer.force_draw()
+			var pose_name: String=names[i]+(
+				"_walk_rig_pose" if i==0 else "_work_rig_pose")
+			var posed_image: Image=root.get_texture().get_image()
+			if posed_image==null or posed_image.save_png(
+					base+"/"+pose_name+".png")!=OK:
+				_fail("Could not capture animated module pose: "+pose_name)
+				return
+			print("GENETIC_POSE_FRAME: "+pose_name)
+			cam.projection=Camera3D.PROJECTION_PERSPECTIVE
+			citizen.global_position=prior_root
+			citizen.left_arm.rotation=prior_left_arm
+			citizen.right_arm.rotation=prior_right_arm
+			citizen.left_leg.rotation=prior_left_leg
+			citizen.right_leg.rotation=prior_right_leg
+			citizen.left_forearm.rotation=prior_left_forearm
+			citizen.right_forearm.rotation=prior_right_forearm
+			visual_root.rotation.y=old_turn
+			citizen.gait_weight=old_gait
+			citizen.distance_gait_phase=old_phase
+			citizen.motion_clock=old_clock
+			citizen.set_process(prior_processing)
 		# Two additional authentic game-world views examine a BENT knee
 		# from an oblique angle. A static front portrait cannot prove that
 		# the foot and calf actually follow the second articulated joint.
@@ -207,5 +342,5 @@ func _run() -> void:
 		_fail("Actual on-map four-person bloodline photo failed")
 		return
 	print("GENETIC_FACE_FRAME: 08_ida_orin_and_children")
-	print("PASS: seventeen actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety")
+	print("PASS: fifty actual Godot face/body/family/expression screenshots with anatomical sex and inherited body-size variety")
 	quit(0)

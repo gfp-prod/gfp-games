@@ -136,22 +136,28 @@ static func body_scale(g: Dictionary,sex: String="unspecified") -> Vector3:
 	var depth: float=value(g,"body_depth")
 	var female: bool=sex=="female"
 	var height: float=(.875+.325*height_gene) if female else (.94+.32*height_gene)
-	var breadth: float=lerpf(.855,1.095,shoulders)
+	var breadth: float=lerpf(.835,1.065,shoulders)
 	if female:
 		# Broad-shouldered women retain their width; fine-boned women
 		# average narrower, without overriding their transmitted genes.
-		breadth*=lerpf(.945,1.012,shoulders)
-	var thickness: float=lerpf(.855,1.085,depth)
+		breadth*=lerpf(.930,1.006,shoulders)
+	var thickness: float=lerpf(.835,1.065,depth)
 	if female:
-		thickness*=lerpf(.955,1.01,depth)
+		thickness*=lerpf(.945,1.008,depth)
 	return Vector3(breadth,height,thickness)
 
+static func upper_arm_length(g: Dictionary) -> float:
+	# One genetic arm-ratio authority for the real elbow pivot, sleeve and
+	# limb hitbox. The old fixed 0.283 pivot exaggerated reach on petite
+	# villagers and disconnected inheritance from the upper-arm segment.
+	return lerpf(.245,.280,value(g,"limb_ratio"))
+
 static func forearm_length(g: Dictionary) -> float:
-	# The original 0.475–0.635 lower-arm span, added to the 0.41
-	# upper arm and full hands, put fingertips at knee height. Restore a
-	# human elbow-to-wrist ratio while still expressing inherited reach.
-	# Stature is handled by body_scale's Y; limb_ratio remains heritable.
-	return lerpf(.285,.385,value(g,"limb_ratio"))
+	# Leaner shoulder-to-fingertip silhouette, especially with the full
+	# modeled palm and digits. Retain substantial inherited variation, but
+	# avoid the old sleeves-and-hands-at-knee-height proportions.
+	# Overall stature remains controlled by body_scale's Y component.
+	return lerpf(.270,.350,value(g,"limb_ratio"))
 
 ## Potential for facial hair is inherited by all, but normally expressed
 ## by adult male phenotypes. Individual genetic variation is broad.

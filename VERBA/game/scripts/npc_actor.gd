@@ -55,6 +55,8 @@ var blood_emitter: CPUParticles3D
 var support_visual: Node3D
 var anatomy_visual_elapsed: float=0.0
 var inherited_body_dimensions: Vector3=Vector3.ONE
+var appearance_genome: Dictionary={}
+var appearance_sex: String="unspecified"
 var last_body_age_day: int=-999999
 
 func setup(owner_world: Node3D, data: Dictionary) -> void:
@@ -113,6 +115,8 @@ func _ready() -> void:
 		age_years=maxf(0.0,float(world.village_sim.current_day-birth)/365.0)
 	if not GENES.validate(genome):
 		genome=GENES.founder(npc_id)
+	appearance_genome=genome
+	appearance_sex=sex
 	set_meta("genome_traits",true)
 	set_meta("body_sex",sex)
 	set_meta("bloodline_generation",
@@ -142,6 +146,16 @@ func _ready() -> void:
 	var head:=ART.orb(figure,Vector3(0,1.77,0),
 		Vector3(.42,.49,.39),skin,13)
 	head.name="ModeledInhabitantHead"
+	# The genetic front and rear skull now form one continuous visible
+	# mesh. The old SphereMesh remains for compatibility/calibration
+	# but must not Z-fight against the new face or its sculpted seams.
+	head.visible=false
+	head.set_meta("hidden_legacy_skull_compatibility",true)
+	# Preserve the legacy skull for back-of-head silhouette, original
+	# figure calibration and save compatibility, but never allow this
+	# overlapping orb to project a fake face-mask shadow onto the
+	# sculpted, inherited front facial surface.
+	head.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# Individual anatomy replaces the floating eyes and identical hair
 	# caps, retaining the original tested head and collision silhouette.
 	var hair:=ART.mat(GENES.hair_color(genome),.96)
@@ -153,10 +167,14 @@ func _ready() -> void:
 		# Shoulder sockets are measured from this person's inherited upper
 		# thorax. A fixed x=.345 made both sexes look broad-shouldered.
 		var socket_width: float=BODY._section(1.365,genome,sex).x
-		arm.position=Vector3(side*(.030+.88*socket_width),1.405,0)
+		# Anatomical joint placement follows the shoulder-to-pelvis profile.
+		# A smaller female-average lateral offset keeps a petite build from
+		# gaining the same square shoulder span as a broad male frame.
+		var socket_inset: float=.80 if sex=="female" else .87
+		arm.position=Vector3(side*(.024+socket_inset*socket_width),1.405,0)
 		# A slightly relaxed, inherited resting stance instead of two
 		# vertical mannequin rods; gait and reaching still drive rotation.x.
-		arm.rotation.z=side*lerpf(.095,.145,
+		arm.rotation.z=side*lerpf(.072,.110,
 			GENES.value(genome,"shoulder_width"))
 		figure.add_child(arm)
 		# Shoulder cap and upper sleeve have a sculpted circumference and
@@ -166,7 +184,7 @@ func _ready() -> void:
 		# remain children of this original severable arm, not new body modules.
 		var forearm:=Node3D.new()
 		forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-		forearm.position=Vector3(side*.044,-.283,-.040)
+		forearm.position=Vector3(side*.040,-GENES.upper_arm_length(genome),-.035)
 		forearm.rotation.x=.16
 		forearm.rotation.z=-side*.10
 		arm.add_child(forearm)
@@ -210,13 +228,11 @@ func _ready() -> void:
 	# Do not replace every citizen with the same cone-robe silhouette.
 	match npc_id:
 		"ida":
-			var flour:=ART.mat(Color("d2c4a1"),.98)
+			var flour:=FABRIC.worn_linen(Color("c9b99b"))
 			# A shaped cloth bib, a tied waist and a pocket replace the
 			# vertical white rectangle that used to obscure the whole body.
 			_make_baker_apron(figure,flour,trim,genome,sex)
-			var bonnet:=ART.orb(figure,Vector3(0,1.989,.025),
-				Vector3(.46,.24,.40),flour,12)
-			bonnet.name="VisibleBakerBonnet"
+			var bonnet:=_make_baker_headscarf(figure,flour,genome)
 			# Avoid two unsupported ivory rods sticking out beside the face.
 			# The bonnet silhouette is readable without fake face-hanging bones.
 		"orin":
@@ -313,14 +329,15 @@ func _ready() -> void:
 			_install_limb_hitbox(modern_leg,side_name+"_leg")
 			var modern_arm:=Node3D.new()
 			modern_arm.name="ModularModern"+side_name.capitalize()+"Arm"
-			modern_arm.position=Vector3(side*(.034+
-				.91*BODY._section(1.365,genome,sex).x),1.405,0)
+			var modern_socket_width: float=BODY._section(1.365,genome,sex).x
+			modern_arm.position=Vector3(side*(.024+
+				(.80 if sex=="female" else .87)*modern_socket_width),1.405,0)
 			attendant.add_child(modern_arm)
-			modern_arm.rotation.z=side*lerpf(.095,.145,GENES.value(genome,"shoulder_width"))
+			modern_arm.rotation.z=side*lerpf(.072,.110,GENES.value(genome,"shoulder_width"))
 			COSTUME.fitted_sleeve(modern_arm,side,genome,shirt,sex)
 			var modern_forearm:=Node3D.new()
 			modern_forearm.name="AnimatedLeftForearm" if side<0.0 else "AnimatedRightForearm"
-			modern_forearm.position=Vector3(side*.044,-.283,-.040)
+			modern_forearm.position=Vector3(side*.040,-GENES.upper_arm_length(genome),-.035)
 			modern_forearm.rotation.x=.16
 			modern_forearm.rotation.z=-side*.10
 			modern_arm.add_child(modern_forearm)
@@ -340,6 +357,9 @@ func _ready() -> void:
 		var modern_head:=ART.orb(attendant,Vector3(0,1.76,0),
 			Vector3(.42,.49,.39),skin,12)
 		modern_head.name="ModernGeneticHead"
+		modern_head.visible=false
+		modern_head.set_meta("hidden_legacy_skull_compatibility",true)
+		modern_head.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		# The former two huge head-level boxes became a floating roof in
 		# close-up. A close crown and shallow visor preserve the station
 		# worker's hat without hiding the genetic face beneath it.
@@ -446,6 +466,52 @@ func _apply_genetic_growth() -> void:
 	_fit_growth_colliders(shape)
 	last_body_age_day=world.village_sim.current_day
 
+## Cloth fitted to the skull, not a pale mushroom-shaped SphereMesh.
+## The inherited width/volume changes its crown while the work headscarf
+## remains a distinct garment; no hair or injury rig is replaced.
+func _make_baker_headscarf(parent: Node3D,flour: Material,
+		genome: Dictionary) -> MeshInstance3D:
+	var tool:=SurfaceTool.new()
+	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tool.set_material(flour)
+	# This is a tied kerchief, not a brimmed mushroom. Let the cloth
+	# rest within the real skull width, preserving inherited volume.
+	var width: float=lerpf(.171,.191,GENES.value(genome,"hair_volume"))
+	var depth: float=lerpf(.153,.169,GENES.value(genome,"hair_volume"))
+	const SEGMENTS: int=20
+	const RINGS: int=9
+	for row in range(RINGS-1):
+		for seg in range(SEGMENTS):
+			var quad: Array[Vector3]=[]
+			for pair in [[row,seg],[row+1,seg],[row+1,seg+1],[row,seg+1]]:
+				var t: float=float(pair[0])/float(RINGS-1)
+				var a: float=TAU*float(pair[1])/float(SEGMENTS)
+				var radius: float=pow(maxf(.0,1.0-t*t),.92)
+				# Lower and tuck the leading fold against the forehead; the
+				# old high horizontal lip looked like a floating white saucer.
+				var rim_y: float=(1.912+.026*absf(cos(a))+
+					.003*maxf(.0,-sin(a)))
+				var y: float=(lerpf(rim_y,2.054,t)+
+					.003*(1.0-t)*sin(4.0*a))
+				quad.append(Vector3(cos(a)*width*radius,
+					y-1.989,sin(a)*depth*radius-
+					.006*maxf(0.0,-sin(a))*(1.0-t)))
+			for k in [0,1,2,0,2,3]:
+				var v: Vector3=quad[k]
+				tool.set_uv(Vector2(v.x+.3,v.y+.25))
+				tool.add_vertex(v)
+	tool.generate_normals()
+	var cloth:=MeshInstance3D.new()
+	cloth.name="VisibleBakerBonnet"
+	cloth.mesh=tool.commit()
+	cloth.position=Vector3(0,1.989,.025)
+	cloth.material_override=flour
+	cloth.set_meta("head_fitted_work_headscarf",true)
+	cloth.set_meta("no_new_collision",true)
+	parent.add_child(cloth)
+	return cloth
+
+
 func _make_baker_apron(parent: Node3D, fabric: Material,
 		tie: Material, genome: Dictionary, sex: String) -> void:
 	# The chest has its own anatomical curve. Sampling only at the
@@ -453,12 +519,19 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	# the flat apron, creating a giant brown hole in the actual render.
 	# A genuine conformal surface follows inherited chest/waist/hips
 	# across many sampled heights and lateral points, without new colliders.
-	const COLUMNS: int=11
-	const HEIGHTS: Array[float]=[1.40,1.365,1.33,1.29,1.255,1.22,1.17,1.11,1.055,.99,.93,.84,.77,.70,.64,.55]
+	const COLUMNS: int=21
+	# Additional rings let the cloth follow the inherited rib and bust
+	# contours without a comically deep stand-off from the body.
+	const HEIGHTS: Array[float]=[1.40,1.385,1.365,1.345,1.33,1.31,1.29,
+		1.273,1.255,1.237,1.22,1.195,1.17,1.14,1.11,1.08,1.055,
+		1.02,.99,.96,.93,.885,.84,.805,.77,.735,.70,.67,.64,.595,.55]
 	var vertices: Array[Vector3]=[]
 	for y in HEIGHTS:
-		var t: float=clampf((1.40-y)/.85,0.0,1.0)
-		var half_width: float=lerpf(.150,.205,t)
+		var hem_flare: float=1.0-smoothstep(.55,.92,y)
+		var waist_nip: float=exp(-pow((y-1.04)/.22,2.0))
+		# Narrow at the real waist, flare over the skirt, and keep the bib
+		# smaller than the shoulders instead of a full-height rectangle.
+		var half_width: float=.154+.052*hem_flare-.014*waist_nip
 		var torso_section: Vector2=BODY._section(y,genome,sex)
 		for col in range(COLUMNS):
 			var fraction: float=float(col)/float(COLUMNS-1)*2.0-1.0
@@ -468,9 +541,10 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 			# Dense sampling follows the convex bust and lower ribs. The
 			# old five-column panel cut across the curved chest: the opaque
 			# shirt pierced the apron, leaving a jagged brown hole.
-			# A center-weighted air gap clears the outer cloth while the
-			# panel still follows inherited body geometry.
-			var drape_gap: float=.105+.024*(1.0-absf(fraction))
+			# A small fabric allowance clears the overshirt. The previous
+			# 8–12 cm offset looked like a rigid shield floating over the chest.
+			var drape_gap: float=(.032+.011*(1.0-absf(fraction))+
+				.008*hem_flare)
 			vertices.append(Vector3(x,y,point.z-drape_gap))
 	var surface:=SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -493,18 +567,25 @@ func _make_baker_apron(parent: Node3D, fabric: Material,
 	apron.material_override=fabric
 	apron.set_meta("drapes_over_inherited_torso",true)
 	parent.add_child(apron)
-	var waist_front: float=BODY._point(1.04,-PI*.5,genome,sex).z-.155
-	# A stitched waist seam, not a broad yellow bar projecting across
-	# the entire abdomen.
-	var stitch:=ART.bone(parent,Vector3(-.16,1.04,waist_front),
-		Vector3(.16,1.04,waist_front),.013,.013,tie,8)
-	stitch.name="BakerCloseFittedWaistSeam"
-	var pocket_z: float=BODY._point(.75,-PI*.5,genome,sex).z-.152
-	var pocket:=ART.box(parent,Vector3(-.08,.75,pocket_z),
-		Vector3(.17,.14,.022),fabric)
+	# Attach the stitched belt to actual apron vertices, not a floating
+	# straight rod measured from the underlying body at an obsolete offset.
+	var seam_row: int=HEIGHTS.find(1.055)
+	for col in range(3,COLUMNS-4):
+		var seam_a: Vector3=vertices[seam_row*COLUMNS+col]+Vector3(0,0,-.006)
+		var seam_b: Vector3=vertices[seam_row*COLUMNS+col+1]+Vector3(0,0,-.006)
+		var thread:=ART.bone(parent,seam_a,seam_b,.007,.006,tie,7)
+		thread.name="BakerCloseFittedWaistSeam"
+	# Pocket placement is sampled from the SAME conformal panel mesh;
+	# hands, forearms and tunic remain part of the original modular rig.
+	var pocket_row: int=HEIGHTS.find(.77)
+	var pocket_anchor: Vector3=vertices[pocket_row*COLUMNS+6]
+	var pocket:=ART.box(parent,pocket_anchor+Vector3(0,0,-.018),
+		Vector3(.146,.125,.024),fabric)
 	pocket.name="BakerWorkPocket"
-	ART.bone(parent,Vector3(-.17,.83,pocket_z-.011),
-		Vector3(.01,.83,pocket_z-.011),.009,.009,tie,7)
+	var pocket_stitch:=ART.bone(parent,
+		pocket_anchor+Vector3(-.064,.059,-.034),
+		pocket_anchor+Vector3(.064,.059,-.034),.006,.006,tie,7)
+	pocket_stitch.name="BakerPocketUpperStitch"
 
 func _process(delta: float) -> void:
 	# World labels are discovery aids, not floating billboards visible across
@@ -535,12 +616,21 @@ func _process(delta: float) -> void:
 			feeling=clampf(feeling+.18,-1,1)
 		var time_in_blink: float=fposmod(motion_clock+float(posmod(npc_id.hash(),11))*.33,4.25)
 		var blink: float=clampf(1.0-absf(time_in_blink-3.72)/.13,0,1)
+		var visual_gaze:=Vector2(
+			sin(motion_clock*.39+float(posmod(npc_id.hash(),13))*.56)*.003,
+			cos(motion_clock*.23+float(posmod(npc_id.hash(),7))*.41)*.0017)
+		if world.player!=null and world.player.conversation_actor==self:
+			var toward_player: Vector3=to_local(world.player.global_position)
+			visual_gaze=Vector2(clampf(toward_player.x*.006,-.006,.006),
+				clampf((toward_player.y-1.48)*.003,-.004,.004))
 		if visual_attendant!=null:
 			PORTRAIT.expression(visual_attendant,feeling,blink,
-				world.player!=null and world.player.conversation_actor==self,motion_clock)
+				world.player!=null and world.player.conversation_actor==self,
+				motion_clock,visual_gaze)
 		else:
 			PORTRAIT.expression(visual_figure,feeling,blink,
-				world.player!=null and world.player.conversation_actor==self,motion_clock)
+				world.player!=null and world.player.conversation_actor==self,
+				motion_clock,visual_gaze)
 	anatomy_visual_elapsed+=delta
 	if anatomy_visual_elapsed>=.30:
 		anatomy_visual_elapsed=0.0
@@ -626,6 +716,7 @@ func _process(delta: float) -> void:
 		offhand=-.78
 	left_arm.rotation.x=lerpf(left_arm.rotation.x,offhand,minf(1.0,delta*8.0))
 	right_arm.rotation.x=lerpf(right_arm.rotation.x,reach,minf(1.0,delta*8.0))
+	_pose_upper_body(delta,walking,working,talking)
 	# The elbows bend in response to reaching, working and gait. They
 	# never animate an invisible or separately detachable forearm.
 	if left_forearm!=null and not limb_missing("left_arm"):
@@ -636,6 +727,30 @@ func _process(delta: float) -> void:
 		right_forearm.rotation.x=lerpf(right_forearm.rotation.x,right_bend,minf(1.0,delta*8.0))
 	if harvest_sack!=null:
 		harvest_sack.visible=phase=="delivery" and not limb_missing("right_arm")
+
+## Natural breathing, work stance and counter-rotation use only the
+## original modular arm nodes and decorative body root, never navigation.
+func _pose_upper_body(delta: float,walking: bool,
+		working: bool,talking: bool) -> void:
+	if left_arm==null or right_arm==null: return
+	var rest: float=lerpf(.072,.110,
+		GENES.value(appearance_genome,"shoulder_width"))
+	var inhale: float=sin(motion_clock*1.48+
+		float(posmod(npc_id.hash(),9))*.23)
+	var step_sway: float=sin(distance_gait_phase+.45)*.026*gait_weight
+	var idle_sway: float=inhale*.007*(1.0-gait_weight)
+	var work_opening: float=.017 if working else (.007 if talking else 0.0)
+	var blend: float=minf(1.0,delta*6.0)
+	left_arm.rotation.z=lerpf(left_arm.rotation.z,
+		-rest-work_opening+step_sway+idle_sway,blend)
+	right_arm.rotation.z=lerpf(right_arm.rotation.z,
+		rest+work_opening-step_sway-idle_sway,blend)
+	# The actor physics capsule and world-facing transform do not twist.
+	var twist: float=sin(distance_gait_phase)*.031*gait_weight if walking else 0.0
+	if visual_figure!=null:
+		visual_figure.rotation.y=lerpf(visual_figure.rotation.y,twist,blend)
+	if visual_attendant!=null:
+		visual_attendant.rotation.y=lerpf(visual_attendant.rotation.y,twist,blend)
 
 func anatomy_state() -> Dictionary:
 	if world==null or world.village_sim==null or not world.village_sim.people.has(npc_id):
@@ -657,10 +772,11 @@ func _install_limb_hitbox(limb: Node3D, part: String) -> void:
 	var capsule:=CapsuleShape3D.new()
 	# One capsule per arm retains the original limb identity while
 	# covering the full inherited shoulder-to-wrist reach.
-	capsule.height=.905 if part.ends_with("_arm") else .88
-	capsule.radius=.088 if part.ends_with("_arm") else .124
+	var arm_reach: float=GENES.upper_arm_length(appearance_genome)+GENES.forearm_length(appearance_genome)+.185
+	capsule.height=arm_reach if part.ends_with("_arm") else .88
+	capsule.radius=.068 if part.ends_with("_arm") else .124
 	shape.shape=capsule
-	shape.position=Vector3(0,-.385 if part.ends_with("_arm") else -.425,0)
+	shape.position=Vector3(0,-arm_reach*.5+.030 if part.ends_with("_arm") else -.425,0)
 	area.add_child(shape)
 	limb_hitboxes[part]=area
 
@@ -776,10 +892,10 @@ func _build_support_visual(anatomy: Dictionary) -> void:
 		if not anatomy["missing"].has(part): continue
 		var side: float=-1.0 if part.begins_with("left") else 1.0
 		var joint_y: float=1.43 if part.ends_with("arm") else .975
-		var joint_x: float=side*(.35 if part.ends_with("arm") else .17)
+		var joint_x: float=side*((.028+.87*BODY._section(1.365,appearance_genome,appearance_sex).x) if part.ends_with("arm") else .17)
 		var stump: MeshInstance3D=ART.orb(support_visual,
 			Vector3(joint_x,joint_y,0),
-			Vector3(.19,.13,.19),linen if anatomy["bandaged"] else wound,10)
+			Vector3(.125,.13,.125),linen if anatomy["bandaged"] else wound,10)
 		stump.name="DetachableJoint_"+part
 	if not ANATOMY.needs_support(anatomy): return
 	var lost_left: bool=anatomy["missing"].has("left_leg")
