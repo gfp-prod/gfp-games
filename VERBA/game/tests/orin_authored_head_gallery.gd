@@ -80,13 +80,19 @@ func _run() -> void:
 		# should fail review rather than be mislabeled as a front portrait.
 		{"name":"07_reverse_hemisphere_diagnostic",
 			"camera":Vector3(0,.025,-1.20),
-			"blink":0.0,"mouth":0.0}
+			"blink":0.0,"mouth":0.0},
+		# A close-up can hide unreadable features at gameplay distance.
+		# Keep the genuine Godot mesh and lighting; widen ONLY the lens.
+		{"name":"08_gameplay_scale",
+			"camera":Vector3(0,.025,1.20),
+			"ortho_size":2.15,"blink":0.0,"mouth":0.0}
 	]
 	for shot in shots:
 		if not ADAPTER.apply_expression(subject,float(shot.get("blink",0.0)),
 				float(shot.get("mouth",0.0)),float(shot.get("smile",0.0))):
 			_fail("Expression morph failed: "+String(shot["name"]))
 			return
+		cam.size=float(shot.get("ortho_size",.88))
 		cam.global_position=shot["camera"]
 		cam.look_at(Vector3.ZERO,Vector3.UP)
 		for frame in range(3): await process_frame
@@ -100,5 +106,5 @@ func _run() -> void:
 			_fail("Image could not be saved: "+output)
 			return
 		print("ORIN_AUTHORED_GAME_FRAME: "+String(shot["name"]))
-	print("PASS: imported Orin CC0 anatomical GLB, ten authored morph channels, seven actual Godot art frames")
+	print("PASS: imported Orin CC0 anatomical GLB, ten authored morph channels, eight actual Godot art frames")
 	quit(0)
