@@ -1,0 +1,107 @@
+name: VERBA Orin anatomical authored-head prototype
+on:
+  pull_request:
+    paths:
+      - "VERBA/game/tools/orin_head/**"
+      - "VERBA/game/scripts/orin_authored_head_adapter.gd"
+      - "VERBA/game/tests/orin_authored_head_gallery.gd"
+      - ".github/workflows/verba-orin-authored-head.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: verba-orin-head-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sculpt-and-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: VERBA/game
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install free Blender and display libraries
+        run: |
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends blender xvfb python3-numpy
+          python3 -m pip install --quiet Pillow
+          blender --version | head -n 2
+      - name: Validate editable character authoring source
+        run: |
+          python3 -m py_compile tools/orin_head/build_orin_head.py
+          python3 -m py_compile tools/orin_head/check_orin_head.py
+      - name: Create editable CC0 facial mesh, 10 shape keys and volumetric crop
+        run: |
+          mkdir -p ../orin_head_build assets/models/authored/orin_head
+          timeout 1200s xvfb-run -a -s "-screen 0 1280x900x24" blender -b -t 2 \
+            --python tools/orin_head/build_orin_head.py -- \
+            --out ../orin_head_build \
+            2>&1 | tee /tmp/verba-orin-blender.log
+          grep -q "PASS: ORIN authored head Blender source, morphs and GLB exported" /tmp/verba-orin-blender.log
+          # Keep the editable .blend OUTSIDE the Godot project root: its
+          # headless scene importer requires an EditorSettings Blender path.
+          cp ../orin_head_build/orin_authored_head.glb assets/models/authored/orin_head/
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.5.2"
+          use-dotnet: false
+      - name: Import real GLB and compile Godot
+        run: |
+          godot --headless --path . --editor --import --quit 2>&1 | tee /tmp/orin-import.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:' /tmp/orin-import.log; then exit 1; fi
+      - name: Render real neutral, closed-eyes, speaking and profile proofs
+        run: |
+          set -o pipefail
+          timeout 720s xvfb-run -a -s "-screen 0 1280x720x24" \
+            godot --rendering-driver opengl3 --rendering-method gl_compatibility \
+            --path . --script res://tests/orin_authored_head_gallery.gd \
+            2>&1 | tee /tmp/orin-engine-gallery.log
+          grep -q "PASS: imported Orin CC0 anatomical GLB, ten authored morph channels, eight actual Godot art frames" /tmp/orin-engine-gallery.log
+          if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:|ORIN_AUTHORED_HEAD_FAIL:' /tmp/orin-engine-gallery.log; then exit 1; fi
+      - name: Verify real morph motion and Blender/Godot artifacts
+        run: |
+          python3 tools/orin_head/check_orin_head.py \
+            ../orin_head_build tests/orin_head_frames
+      - name: Attach editable scene, GLB and all source-matched renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verba-orin-authored-blender-head-proof
+          path: |
+            VERBA/orin_head_build/*.blend
+            VERBA/orin_head_build/*.glb
+            VERBA/orin_head_build/*.json
+            VERBA/orin_head_build/*.png
+            VERBA/game/tests/orin_head_frames/*.png
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Publish proven model on isolated review branch
+        if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'verba/orin-authored-head-prototype-20261114'
+        env:
+          REVIEW_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p docs/orin_authored_head_review
+          cp tests/orin_head_frames/*.png docs/orin_authored_head_review/
+          cp ../orin_head_build/{front_neutral,three_quarter,left_profile,blink_closed,mouth_open}.png docs/orin_authored_head_review/
+          printf "source_sha=%s\nreview=UNAPPROVED\n" "$REVIEW_SHA" > docs/orin_authored_head_review/RENDERED_SOURCE.txt
+          git fetch --quiet origin "+refs/heads/$GITHUB_HEAD_REF:refs/remotes/origin/$GITHUB_HEAD_REF"
+          if [ "$(git rev-parse "origin/$GITHUB_HEAD_REF")" != "$REVIEW_SHA" ]; then
+            echo "Review branch advanced: do not publish stale proof"
+            exit 0
+          fi
+          git checkout -B "$GITHUB_HEAD_REF" "origin/$GITHUB_HEAD_REF"
+          git add ../orin_head_build/*.blend assets/models/authored/orin_head/*.glb \
+            ../orin_head_build/manifest.json docs/orin_authored_head_review/*.png \
+            docs/orin_authored_head_review/RENDERED_SOURCE.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "VERBA Orin: publish editable authored head and verified facial pose renders"
+            git push origin "HEAD:refs/heads/$GITHUB_HEAD_REF"
+          fi
