@@ -92,39 +92,114 @@ def crop_and_normalize(obj):
     span = high - low
     if span < .5:
         raise RuntimeError("Source orientation/height is implausible")
-    # Retain the head, ears, jaw and upper neck; never leave the full torso.
-    cut = high - .196 * span
+    # Only upper 15% of body height: retain real skull and jaw, NOT
+    # shoulder/chest helper drapes. Earlier .196 included shoulders.
+    cut = high - .150 * span
     bmesh.ops.bisect_plane(
         bm, geom=list(bm.verts) + list(bm.edges) + list(bm.faces),
-        dist=.00001, plane_co=Vector((0, 0, cut)),
-        plane_no=Vector((0, 0, 1)), clear_inner=True, clear_outer=False
+        dist=.00001, plane_co=Vector((0,0,cut)),
+        plane_no=Vector((0,0,1)), clear_inner=True, clear_outer=False
     )
-    loose = [v for v in bm.verts if v.co.z < cut - 1e-4]
+    loose = [v for v in bm.verts if v.co.z < cut-1e-4]
     if loose:
-        bmesh.ops.delete(bm, geom=loose, context="VERTS")
+        bmesh.ops.delete(bm,geom=loose,context="VERTS")
+
+    # The MakeHuman base.obj also contains many disconnected helper
+    # meshes. Earlier we unknowingly rendered them as sheets hanging
+    # over the eyes, nose and shoulders. Retain ONE continuous skin
+    # shell; extract the two genuine eyeball components separately.
+    components = []
+    unvisited = set(bm.verts)
+    while unvisited:
+        seed = unvisited.pop()
+        component = {seed}
+        stack = [seed]
+        while stack:
+            v = stack.pop()
+            for e in v.link_edges:
+                other = e.other_vert(v)
+                if other in unvisited:
+                    unvisited.remove(other)
+                    component.add(other)
+                    stack.append(other)
+        components.append(component)
+    components.sort(key=len,reverse=True)
+    if len(components[0])<2200:
+        raise RuntimeError("Failed to find full continuous MakeHuman skin")
+    eyes_raw = []
+    for comp in components[1:]:
+        n = len(comp)
+        center = sum((v.co for v in comp),Vector((0,0,0))) / n
+        if 69<=n<=78 and abs(center.x)>.03 and (
+                center.z > cut+.43*(high-cut)):
+            eyes_raw.append(list(comp))
+    # The 72-vertex CC0 eyeball pieces occur in a left/right pair.
+    # If source topology ever changes, FAIL rather than synthesize
+    # eyes from unrelated clothing helpers.
+    if len(eyes_raw)!=2:
+        raise RuntimeError("Expected two anatomical eye components, found "
+                           + str([len(p) for p in eyes_raw]))
+    main = components[0]
+    to_remove = [v for comp in components[1:] for v in comp]
+    bmesh.ops.delete(bm,geom=to_remove,context="VERTS")
     bm.to_mesh(obj.data)
     bm.free()
     obj.data.update()
-    if len(obj.data.vertices) < 700:
-        raise RuntimeError("Head crop lost its anatomical topology")
+    if len(obj.data.vertices)<2000:
+        raise RuntimeError("Head extraction lost facial edge loops")
+
     xmin = min(v.co.x for v in obj.data.vertices)
     xmax = max(v.co.x for v in obj.data.vertices)
     ymin = min(v.co.y for v in obj.data.vertices)
     ymax = max(v.co.y for v in obj.data.vertices)
     zmin = min(v.co.z for v in obj.data.vertices)
     zmax = max(v.co.z for v in obj.data.vertices)
-    scale = .52 / (zmax - zmin)
-    # Orin head pivot at the cranium's centre; local Z is up.
-    for vert in obj.data.vertices:
-        vert.co.x = (vert.co.x - (xmin + xmax) * .5) * scale
-        vert.co.y = (vert.co.y - (ymin + ymax) * .5) * scale
-        vert.co.z = (vert.co.z - (zmin + zmax) * .5) * scale
+    scale = .52/(zmax-zmin)
+    def normalize(v):
+        return Vector((
+            (v.x-(xmin+xmax)*.5)*scale,
+            (v.y-(ymin+ymax)*.5)*scale,
+            (v.z-(zmin+zmax)*.5)*scale))
+    for v in obj.data.vertices:
+        v.co = normalize(v.co)
     obj.data.update()
-    return {"mesh_vertices": len(obj.data.vertices),
-            "mesh_polygons": len(obj.data.polygons),
-            "body_crop_fraction": .196, "head_height_m": .52,
-            "head_width_m": (xmax - xmin) * scale,
-            "head_depth_m": (ymax - ymin) * scale}
+
+    # Build eye objects from their ORIGINAL anatomically seated topology,
+    # not 2D cartoon decals. Assign a controlled separate iris/pupil.
+    eyes = []
+    for comp in eyes_raw:
+        index = {v:i for i,v in enumerate(comp)}
+        points = [normalize(v.co) for v in comp]
+        faces = []
+        for v in comp:
+            for f in v.link_faces:
+                if f.verts[0]!=v: continue
+                if all(x in index for x in f.verts):
+                    faces.append(tuple(index[x] for x in f.verts))
+        if len(faces)<50:
+            raise RuntimeError("MakeHuman eye component lost its eye mesh")
+        m = bpy.data.meshes.new("Orin_Eyeball_Anatomical")
+        m.from_pydata(points, [], faces)
+        m.update()
+        o = bpy.data.objects.new(
+            "Orin_Eyeball_Left" if sum(p.x for p in points)<0
+            else "Orin_Eyeball_Right",m)
+        bpy.context.collection.objects.link(o)
+        eyes.append(o)
+    if (len(eyes)!=2 or eyes[0].name==eyes[1].name):
+        raise RuntimeError("Paired anatomically seated eyes not preserved")
+    dimensions = {
+        "mesh_vertices":len(obj.data.vertices),
+        "mesh_polygons":len(obj.data.polygons),
+        "body_crop_fraction":.150,
+        "discarded_helper_components":len(components)-3,
+        "head_height_m":.52,
+        "head_width_m":(xmax-xmin)*scale,
+        "head_depth_m":(ymax-ymin)*scale}
+    if dimensions["head_width_m"]>.48:
+        raise RuntimeError("Shoulder/helper geometry still attached to face")
+    return dimensions, eyes
+
 
 
 def make_material(name, rgba, roughness=.86):
@@ -162,9 +237,9 @@ def facial_shapes(head):
     # Blend the deformation over the visible front hemisphere only.
     front_center = front + .33 * (back - front)
     eye_x = .205 * width
-    eye_z = .054
-    mouth_z = -.090
-    brow_z = .108
+    eye_z = .009
+    mouth_z = -.137
+    brow_z = .061
 
     def weight_face(v):
         return 1. - smoothstep(front_center, back, v.y)
@@ -277,9 +352,11 @@ def light_and_camera():
         bpy.context.collection.objects.link(obj)
         obj.location = loc
         obj.rotation_euler = (Vector((0,0,0)) - obj.location).to_track_quat("-Z","Y").to_euler()
-    light("Key_PaleWarm", (-.62,-.68,.76), 330, 1.3)
-    light("Fill_WideCool", (.68,-.34,.28), 180, 1.5)
-    light("Rim_Dim", (.24,.55,.6), 250, 1.0)
+    # The first Blender previews were nearly solid white because
+    # 330/180/250W area lights overexposed a half-metre-wide head.
+    light("Key_PaleWarm", (-.62,-.68,.76), 38, 1.3)
+    light("Fill_WideCool", (.68,-.34,.28), 18, 1.5)
+    light("Rim_Dim", (.24,.55,.6), 24, 1.0)
     cam_data = bpy.data.cameras.new("OrinReviewCamera")
     cam = bpy.data.objects.new("OrinReviewCamera", cam_data)
     bpy.context.collection.objects.link(cam)
@@ -334,10 +411,30 @@ def main():
     base = ensure_base(args.base_obj)
     source_digest = hashlib.sha256(base.read_bytes()).hexdigest()
     head, source_vertices, source_faces = read_human_base(base)
-    dimensions = crop_and_normalize(head)
+    dimensions, eyes = crop_and_normalize(head)
     skin = make_material("Orin_WarmUmberSkin", (.34,.185,.125))
     hair_mat = make_material("Orin_DarkCurls", (.052,.046,.041))
     head.data.materials.append(skin)
+    ivory = make_material("Orin_ScleraSoftIvory",(.58,.54,.47))
+    iris = make_material("Orin_IrisUmber",(.115,.082,.056))
+    pupil = make_material("Orin_Pupil",(.012,.011,.012))
+    for eye in eyes:
+        eye.data.materials.append(ivory)
+        pts=[v.co for v in eye.data.vertices]
+        cx=sum(p.x for p in pts)/len(pts)
+        cz=sum(p.z for p in pts)/len(pts)
+        front=min(p.y for p in pts)
+        # The CC0 globe is physically seated in its facial socket.
+        # Iris/pupil are the only intentionally separate eye structures.
+        for suffix, mat, size, advance in [
+            ("Iris",iris,(.013,.0026,.013),.002),
+            ("Pupil",pupil,(.006,.0017,.007),.005)]:
+            bpy.ops.mesh.primitive_uv_sphere_add(segments=20,ring_count=12,
+                location=(cx,front-advance,cz))
+            disc=bpy.context.object
+            disc.name=eye.name+"_"+suffix
+            disc.scale=size
+            disc.data.materials.append(mat)
     for f in head.data.polygons:
         f.material_index = 0
         f.use_smooth = True
@@ -347,7 +444,9 @@ def main():
     render_studio(head, cam, out)
     bpy.ops.wm.save_as_mainfile(filepath=str(out / "orin_head_editable.blend"))
     bpy.ops.object.select_all(action="DESELECT")
-    for o in (head, hair):
+    for o in [head,hair]+eyes+[
+            ob for ob in bpy.context.scene.objects if (
+                ob.type=="MESH" and ("_Iris" in ob.name or "_Pupil" in ob.name))]:
         o.select_set(True)
     bpy.context.view_layer.objects.active = head
     bpy.ops.export_scene.gltf(
