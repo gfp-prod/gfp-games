@@ -16,6 +16,15 @@ static func _head(scene: Node) -> MeshInstance3D:
 static func get_head(scene: Node) -> MeshInstance3D:
 	return _head(scene)
 
+static func _mouth_lining(scene: Node) -> MeshInstance3D:
+	if scene is MeshInstance3D and (
+			String(scene.name).contains("Orin_MouthInterior")):
+		return scene as MeshInstance3D
+	for child in scene.get_children():
+		var found: MeshInstance3D=_mouth_lining(child)
+		if found!=null: return found
+	return null
+
 static func _set_shape(mesh: MeshInstance3D,key: String,weight: float) -> bool:
 	if mesh==null or mesh.mesh==null: return false
 	var id: int=mesh.find_blend_shape_by_name(StringName(key))
@@ -58,6 +67,11 @@ static func apply_expression(scene: Node,blink: float=0.0,
 			"Frown": weight=frown
 			"BrowRaise": weight=brows
 		if not _set_shape(mesh,expr,weight): return false
+	# A real mouth lining is a separate deforming inner anatomical
+	# surface. Both shapes receive exactly the same speech weight;
+	# a static black oval over skin is not an acceptable mouth.
+	if not _set_shape(_mouth_lining(scene),"MouthOpen",mouth_open):
+		return false
 	return true
 
 static func verify_authoring(scene: Node) -> bool:
@@ -69,4 +83,9 @@ static func verify_authoring(scene: Node) -> bool:
 			push_error("Authored Orin head missing deformable shape: "+key)
 			return false
 	if mesh.mesh.get_aabb().size.y<.20: return false
+	var oral: MeshInstance3D=_mouth_lining(scene)
+	if oral==null or oral.mesh==null: return false
+	if oral.find_blend_shape_by_name(StringName("MouthOpen"))<0:
+		push_error("Authored Orin mouth lacks articulated oral lining")
+		return false
 	return true
