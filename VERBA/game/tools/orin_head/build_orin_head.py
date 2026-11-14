@@ -313,7 +313,11 @@ def facial_shapes(head):
                     if src_id not in source_to_output:
                         continue
                     dst=source_to_output[src_id]
-                    accumulated[dst]=accumulated.get(dst,Vector((0,0,0)))+vec*scale
+                    # The source MouthOpen unit is an extreme theatrical jaw pose.
+                    # Scale the *authored* offsets, rather than pulling
+                    # arbitrary nearby vertices into a cardboard flap.
+                    intensity=.46 if name=="MouthOpen" else 1.0
+                    accumulated[dst]=accumulated.get(dst,Vector((0,0,0)))+vec*scale*intensity
             for i,base in enumerate(baseline):
                 v=base.copy()
                 if i in accumulated:
@@ -395,9 +399,10 @@ def sculpt_curly_crop(head, hair_mat):
             break
         normal = root.normalized()
         phase = i * 2.399963229728653
-        radius = .009 + .0035*math.sin(phase*1.8)**2
-        center = root + normal*(.012+.002*math.sin(phase))
-        tip = normal*(radius*.79)
+        radius = .0085 + .002*math.sin(phase*1.8)**2
+        center = root + normal*(.009+.001*math.sin(phase))
+        # Round faceted tufts, not dozens of little pyramidal spikes.
+        tip = normal*(radius*.37)
         first = len(pts)
         # Two poles and a hexagonal faceted ring; closed 12-triangle
         # nodules with a readable dark curly silhouette.
@@ -542,9 +547,27 @@ def main():
             disc.name=eye.name+"_"+suffix
             disc.scale=size
             disc.data.materials.append(mat)
+    # Make the original topology's INTERNAL mouth wall dark.
+    # Without this, the open-mouth target displays a fleshy disk
+    # across the whole cavity instead of a readable opening.
+    inner_mouth = make_material("Orin_OralCavity",(.070,.026,.021))
+    head.data.materials.append(inner_mouth)
+    oral_faces = 0
     for f in head.data.polygons:
         f.material_index = 0
         f.use_smooth = True
+        middle = sum((head.data.vertices[j].co for j in f.vertices),
+                     Vector((0,0,0))) / len(f.vertices)
+        # In Blender -Y faces forward. Behind the external lip plane,
+        # only central mouth topology should receive cavity pigment.
+        if (abs(middle.x)<.058 and -.171<middle.z<-.106
+                and -.144<middle.y<-.027):
+            f.material_index = 1
+            oral_faces += 1
+    if oral_faces < 20 or oral_faces > 1200:
+        raise RuntimeError("Oral cavity material mask missed inner topology: "
+                           + str(oral_faces))
+    print("ORIN_ORAL_CAVITY_FACES",oral_faces)
     facial_shapes(head)
     hair = sculpt_curly_crop(head, hair_mat)
     cam = light_and_camera()
