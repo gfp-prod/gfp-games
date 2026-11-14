@@ -341,7 +341,8 @@ def facial_shapes(head):
                 key.data[i].co=v
         if moved<25:
             raise RuntimeError(f"{name} barely deforms the anatomy: {moved}")
-        key["moved_head_vertices"]=moved
+        # ShapeKey is not an IDProperty owner in Blender 5.
+        print("ORIN_CC0_SHAPE",name,"authored facial vertices",moved)
         key.value=0.
         key.slider_min=0.
         key.slider_max=1.
