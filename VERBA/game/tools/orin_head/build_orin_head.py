@@ -451,6 +451,42 @@ def sculpt_curly_crop(head, hair_mat):
     return hair
 
 
+def sculpt_mouth_interior():
+    """A separately modeled anatomical oral lining, with its OWN morph.
+
+    The CC0 lip target opens the face, but the trimmed MakeHuman base
+    lacks a colored mouth interior. A visible skin-color oval is not a
+    plausible oral cavity. The neutral oral lining has near-zero area;
+    its MouthOpen shape unfurls *behind the lip contour* as the jaw opens.
+    """
+    vertices=[(0,-.177,-.147)]
+    count=24
+    for i in range(count):
+        theta=math.tau*i/count
+        vertices.append((.0003*math.cos(theta),-.177,
+                         -.147+.0002*math.sin(theta)))
+    faces=[(0,i+1,(i+1)%count+1) for i in range(count)]
+    mesh=bpy.data.meshes.new("Orin_OralLining")
+    mesh.from_pydata(vertices,[],faces)
+    mesh.update()
+    cavity=bpy.data.objects.new("Orin_MouthInterior",mesh)
+    bpy.context.collection.objects.link(cavity)
+    dark=make_material("Orin_InteriorDeepUmber",(.045,.012,.012))
+    mesh.materials.append(dark)
+    cavity.shape_key_add(name="Basis",from_mix=False)
+    opened=cavity.shape_key_add(name="MouthOpen",from_mix=False)
+    opened.data[0].co=(0,-.186,-.148)
+    for i in range(count):
+        theta=math.tau*i/count
+        opened.data[i+1].co=(.040*math.cos(theta),-.186,
+                            -.148+.014*math.sin(theta))
+    opened.value=0.
+    opened.slider_min=0.
+    opened.slider_max=1.
+    cavity["real_animated_oral_lining"]=True
+    return cavity
+
+
 def light_and_camera():
     world = bpy.context.scene.world or bpy.data.worlds.new("StudioWorld")
     bpy.context.scene.world = world
@@ -494,7 +530,7 @@ def look(cam, xyz):
     cam.rotation_euler = (Vector((0,0,0)) - cam.location).to_track_quat("-Z","Y").to_euler()
 
 
-def render_studio(head, cam, folder):
+def render_studio(head, mouth_cavity, cam, folder):
     poses = [
         ("front_neutral", (0,-1.25,.02), {}),
         ("three_quarter", (.68,-1.0,.09), {}),
@@ -507,12 +543,15 @@ def render_studio(head, cam, folder):
         for key in head.data.shape_keys.key_blocks:
             if key.name != "Basis":
                 key.value = shape_values.get(key.name, 0.)
+        mouth_cavity.data.shape_keys.key_blocks["MouthOpen"].value = (
+            shape_values.get("MouthOpen",0.))
         look(cam, camera)
         bpy.context.scene.render.filepath = str(folder / (name+".png"))
         bpy.ops.render.render(write_still=True)
     for key in head.data.shape_keys.key_blocks:
         if key.name != "Basis":
             key.value = 0.
+    mouth_cavity.data.shape_keys.key_blocks["MouthOpen"].value=0.
 
 
 def main():
@@ -570,11 +609,12 @@ def main():
     print("ORIN_ORAL_CAVITY_FACES",oral_faces)
     facial_shapes(head)
     hair = sculpt_curly_crop(head, hair_mat)
+    mouth_cavity = sculpt_mouth_interior()
     cam = light_and_camera()
-    render_studio(head, cam, out)
+    render_studio(head, mouth_cavity, cam, out)
     bpy.ops.wm.save_as_mainfile(filepath=str(out / "orin_head_editable.blend"))
     bpy.ops.object.select_all(action="DESELECT")
-    for o in [head,hair]+eyes+[
+    for o in [head,hair,mouth_cavity]+eyes+[
             ob for ob in bpy.context.scene.objects if (
                 ob.type=="MESH" and ("_Iris" in ob.name or "_Pupil" in ob.name))]:
         o.select_set(True)
