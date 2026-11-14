@@ -62,7 +62,7 @@ jobs:
             godot --rendering-driver opengl3 --rendering-method gl_compatibility \
             --path . --script res://tests/orin_authored_head_gallery.gd \
             2>&1 | tee /tmp/orin-engine-gallery.log
-          grep -q "PASS: imported Orin CC0 anatomical GLB, ten authored morph channels, seven actual Godot art frames" /tmp/orin-engine-gallery.log
+          grep -q "PASS: imported Orin CC0 anatomical GLB, ten authored morph channels, eight actual Godot art frames" /tmp/orin-engine-gallery.log
           if grep -E 'SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|Compile Error:|ORIN_AUTHORED_HEAD_FAIL:' /tmp/orin-engine-gallery.log; then exit 1; fi
       - name: Verify real morph motion and Blender/Godot artifacts
         run: |
