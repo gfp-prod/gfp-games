@@ -87,6 +87,14 @@ def read_human_base(path):
 def crop_and_normalize(obj):
     bm = bmesh.new()
     bm.from_mesh(obj.data)
+    # Persistent source vertex IDs are essential: MakeHuman's hand-authored
+    # CC0 expression targets address ORIGINAL OBJ vertex indices.
+    # Save those indices BEFORE cropping/discarding helper components.
+    bm.verts.ensure_lookup_table()
+    bm.verts.index_update()
+    source_id_layer = bm.verts.layers.int.new("mh_base_index")
+    for source_v in bm.verts:
+        source_v[source_id_layer] = source_v.index
     low = min(v.co.z for v in bm.verts)
     high = max(v.co.z for v in bm.verts)
     span = high - low
@@ -157,6 +165,8 @@ def crop_and_normalize(obj):
     bm.to_mesh(obj.data)
     bm.free()
     obj.data.update()
+    if obj.data.attributes.get("mh_base_index") is None:
+        raise RuntimeError("Anatomical source-index layer lost during BMesh crop")
     if len(obj.data.vertices)<2000:
         raise RuntimeError("Head extraction lost facial edge loops")
 
@@ -175,6 +185,7 @@ def crop_and_normalize(obj):
     for v in obj.data.vertices:
         v.co = normalize(v.co)
     obj.data.update()
+    obj["makehuman_base_to_meters"] = scale
 
     # Build eye objects from their ORIGINAL anatomically seated topology,
     # not 2D cartoon decals. Assign a controlled separate iris/pupil.
@@ -227,85 +238,115 @@ def bell(x, center, radius):
     return math.exp(-((x - center) / radius) ** 2)
 
 
+def _cc0_expression_target(filename):
+    """Use the original authored, topology-specific MakeHuman expression."""
+    cache = Path("/tmp") / ("verba_mh_cc0_"+filename)
+    url = (f"https://raw.githubusercontent.com/makehumancommunity/makehuman/"
+           f"{SOURCE_COMMIT}/makehuman/data/targets/expression/units/"
+           f"african/{filename}")
+    if not cache.is_file():
+        urllib.request.urlretrieve(url, cache)
+    data = cache.read_text("utf-8")
+    if "explicitly released as CC0" not in data:
+        raise RuntimeError("Unverified authoring license on "+filename)
+    offsets = {}
+    for line in data.splitlines():
+        if not line.strip() or line.startswith("#"):
+            continue
+        parts = line.split()
+        if len(parts)<4: continue
+        idx = int(parts[0])
+        dx,dy,dz = map(float,parts[1:4])
+        # Original MakeHuman: X side, Y up, Z forward.
+        # Blender head:       X side, Z up, Y=-source Z.
+        offsets[idx] = Vector((dx,-dz,dy))
+    if len(offsets)<45:
+        raise RuntimeError("Authored expression shape lacks source data: "+filename)
+    return offsets
+
+
 def facial_shapes(head):
-    # A single continuous *anatomical* skin mesh retains the original
-    # MakeHuman eye, lip, jaw and nasolabial edge loops. Shape keys
-    # deform that same mesh rather than moving detached decorative props.
+    """Retarget verified CC0 eye/mouth loops, NOT Gaussian eyebrow bands.
+
+    The old procedural approximation tore across eyeballs on full blinks
+    and pulled the entire chin down into a cardboard flap on speech.
+    These morphs are authored on the exact same MakeHuman base topology.
+    """
     head.shape_key_add(name="Basis", from_mix=False)
     baseline = [v.co.copy() for v in head.data.vertices]
-    xs = [v.x for v in baseline]
+    mesh_ids = head.data.attributes["mh_base_index"].data
+    source_to_output = {}
+    for dst_index, attr in enumerate(mesh_ids):
+        source_to_output[int(attr.value)] = dst_index
+    if len(source_to_output)<2000:
+        raise RuntimeError("Lost original anatomical topology index map")
+    scale = float(head["makehuman_base_to_meters"])
+    target_map = {
+        "Blink_L":["eye-left-closure.target"],
+        "Blink_R":["eye-right-closure.target"],
+        "MouthOpen":["mouth-open.target"],
+        "Smile":["mouth-corner-puller.target"],
+        "Frown":["mouth-depression.target"],
+        "BrowRaise":["eyebrows-left-up.target","eyebrows-right-up.target"]
+    }
+    source_targets = {shape:[_cc0_expression_target(name) for name in files]
+                      for shape,files in target_map.items()}
+    # Old Gaussian morphs are retained ONLY for inherited morphological
+    # differences, not for facial expression or eyelid animation.
     ys = [v.y for v in baseline]
-    zs = [v.z for v in baseline]
-    width = max(xs) - min(xs)
     front = min(ys)
     back = max(ys)
-    # Blend the deformation over the visible front hemisphere only.
-    front_center = front + .33 * (back - front)
-    eye_x = .175 * width
-    eye_z = .0125
-    mouth_z = -.137
-    brow_z = .061
+    front_center = front+.33*(back-front)
 
-    def weight_face(v):
-        return 1. - smoothstep(front_center, back, v.y)
+    def frontal_weight(v):
+        t = smoothstep(front_center,back,v.y)
+        return 1.-t
 
     for name in SHAPES:
-        key = head.shape_key_add(name=name, from_mix=False)
-        for i, base in enumerate(baseline):
-            v = base.copy()
-            frontal = weight_face(v)
-            if name.startswith("Blink_"):
-                side = -1 if name.endswith("L") else 1
-                # The old upper/lower sign-branch folded the continuous
-                # eye-loop through itself, making torn polygon ribbons.
-                # Preserve vertex ordering by closing the aperture
-                # continuously around its anatomical centre, per eye.
-                eye_region = (bell(v.x, side * eye_x, .040)
-                              * bell(v.z, eye_z, .026))
-                exposed_skin = 1. - smoothstep(-.137, -.105, v.y)
-                influence = eye_region * exposed_skin
-                v.z = eye_z + (v.z - eye_z) * (1. - .88 * influence)
-                # Move actual eyelid skin ahead of the globe rather than
-                # inserting detached, sliding "eyelid" props.
-                v.y -= .010 * influence
-            elif name == "MouthOpen":
-                # Move the *mandible* coherently. The first pose
-                # only stretched a tiny region below the lip seam,
-                # creating a skin-coloured square hanging from the face.
-                front_mouth = bell(v.x, 0, .100) * frontal
-                lip_lower = bell(v.z, mouth_z-.023, .046)
-                jaw_lower = bell(v.z, mouth_z-.072, .090)
-                # Inverse threshold: lower lip and chin move together.
-                lower_factor = 1. - smoothstep(mouth_z-.016,
-                                               mouth_z+.008,v.z)
-                w = front_mouth * lower_factor
-                v.z -= (.012*lip_lower + .010*jaw_lower) * w
-                v.y -= .004 * w
-            elif name in ("Smile", "Frown"):
-                w = bell(abs(v.x), .050, .033) * bell(v.z, mouth_z, .038) * frontal
-                v.z += (.022 if name == "Smile" else -.018) * w
-                if name == "Smile":
-                    v.x *= 1. + .045 * w
-            elif name == "BrowRaise":
-                w = bell(abs(v.x), eye_x, .075) * bell(v.z, brow_z, .030) * frontal
-                v.z += .023 * w
-            elif name == "JawWidth":
-                w = (1. - smoothstep(-.155, .015, v.z))
-                v.x += math.copysign(.014 * w, v.x)
-            elif name == "CheekWidth":
-                w = bell(abs(v.x), .095, .065) * bell(v.z, -.014, .055)
-                v.x += math.copysign(.014 * w, v.x)
-            elif name == "NoseWidth":
-                w = bell(v.x, 0, .045) * bell(v.z, -.017, .08) * frontal
-                v.x *= 1. + .26 * w
-            elif name == "LipVolume":
-                w = bell(v.x, 0, .052) * bell(v.z, mouth_z, .028) * frontal
-                v.y -= .012 * w
-                v.z += (.008 if v.z > mouth_z else -.007) * w
-            key.data[i].co = v
-        key.value = 0.
-        key.slider_min = 0.
-        key.slider_max = 1.
+        key=head.shape_key_add(name=name,from_mix=False)
+        moved=0
+        if name in source_targets:
+            sources = source_targets[name]
+            accumulated = {}
+            for original in sources:
+                for src_id,vec in original.items():
+                    if src_id not in source_to_output:
+                        continue
+                    dst=source_to_output[src_id]
+                    accumulated[dst]=accumulated.get(dst,Vector((0,0,0)))+vec*scale
+            for i,base in enumerate(baseline):
+                v=base.copy()
+                if i in accumulated:
+                    v+=accumulated[i]
+                    if accumulated[i].length>1e-6: moved+=1
+                key.data[i].co=v
+        else:
+            for i,base in enumerate(baseline):
+                v=base.copy()
+                front=frontal_weight(v)
+                if name=="JawWidth":
+                    w=(1.-smoothstep(-.155,.015,v.z))
+                    v.x+=math.copysign(.014*w,v.x)
+                elif name=="CheekWidth":
+                    w=bell(abs(v.x),.095,.065)*bell(v.z,-.014,.055)
+                    v.x+=math.copysign(.014*w,v.x)
+                elif name=="NoseWidth":
+                    w=bell(v.x,0,.045)*bell(v.z,-.017,.08)*front
+                    v.x*=1.+.26*w
+                elif name=="LipVolume":
+                    w=bell(v.x,0,.052)*bell(v.z,-.137,.028)*front
+                    v.y-=.012*w
+                    v.z+=(.008 if v.z>-.137 else -.007)*w
+                if (v-base).length>1e-6: moved+=1
+                key.data[i].co=v
+        if moved<25:
+            raise RuntimeError(f"{name} barely deforms the anatomy: {moved}")
+        key["moved_head_vertices"]=moved
+        key.value=0.
+        key.slider_min=0.
+        key.slider_max=1.
+    head["expression_source"]="MakeHuman CC0 authored expression units (pinned)"
+    head["source_original_vertex_indices"]=True
 
 
 def sculpt_curly_crop(head, hair_mat):
