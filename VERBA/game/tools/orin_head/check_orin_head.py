@@ -38,6 +38,7 @@ def main():
         "01_front_neutral", "02_three_quarter", "03_profile",
         "04_eyes_closed", "05_speaking", "06_smiling",
         "07_reverse_hemisphere_diagnostic",
+        "08_gameplay_scale",
     ):
         im = frames / (shot + ".png")
         assert im.is_file(), shot
