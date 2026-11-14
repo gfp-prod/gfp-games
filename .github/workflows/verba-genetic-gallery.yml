@@ -37,7 +37,7 @@ jobs:
       - name: Photograph inherited physical faces and bodies inside Godot
         run: |
           timeout --signal=TERM --kill-after=20s 900s xvfb-run -a -s "-screen 0 1280x720x24" godot --rendering-driver opengl3 --rendering-method gl_compatibility --path . --script res://tests/genetic_faces_gallery.gd 2>&1 | tee /tmp/genetic-gallery.log
-          grep -q "PASS: thirty-eight actual Godot face/body/family screenshots with anatomical sex and inherited body-size variety" /tmp/genetic-gallery.log
+          grep -q "PASS: fifty actual Godot face/body/family/expression screenshots with anatomical sex and inherited body-size variety" /tmp/genetic-gallery.log
       - name: Publish in-game body and orthographic anatomy JPEGs on review branch
         if: success() && github.event.pull_request.head.repo.full_name == github.repository && (github.head_ref == 'verba/blender-asset-foundry' || github.head_ref == 'verba/anatomical-torso-sculpt-20261113' || github.head_ref == 'verba/lean-npc-silhouette-reach-gates-20261113')
         env:
@@ -67,7 +67,21 @@ jobs:
               "02_orin_blacksmith_face_detail",
               "03_mara_scribe_face_detail",
               "04_sela_merchant_face_detail",
-              "10_lena_painter_face_detail"
+              "10_lena_painter_face_detail",
+              # Explicit gameplay animation acceptance evidence: identical
+              # real actor/camera, open eyes, full blink, speaking mouth.
+              "01_ida_baker_eyes_open",
+              "01_ida_baker_eyes_closed",
+              "01_ida_baker_speaking",
+              "02_orin_blacksmith_eyes_open",
+              "02_orin_blacksmith_eyes_closed",
+              "02_orin_blacksmith_speaking",
+              "04_sela_merchant_eyes_open",
+              "04_sela_merchant_eyes_closed",
+              "04_sela_merchant_speaking",
+              "10_lena_painter_eyes_open",
+              "10_lena_painter_eyes_closed",
+              "10_lena_painter_speaking"
           ]
           output = Path("/tmp/verba-direct-npc-screens")
           output.mkdir(exist_ok=True)
@@ -92,7 +106,7 @@ jobs:
           printf 'source_sha=%s\nrenderer=Godot 4.5.2\n' "${PR_HEAD_SHA}" > docs/npc_review/RENDERED_SOURCE.txt
           git add docs/npc_review/*.jpg docs/npc_review/RENDERED_SOURCE.txt
           git diff --cached --quiet && exit 0
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "VERBA visual proof: publish twelve in-game NPC and orthographic frames"
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "VERBA visual proof: publish source-matched facial expressions and NPC anatomy"
           git push origin "HEAD:refs/heads/${GITHUB_HEAD_REF}"
       - name: Upload individual actual game screenshots
         if: always()
