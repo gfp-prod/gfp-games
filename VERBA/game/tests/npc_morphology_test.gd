@@ -458,7 +458,7 @@ func _run() -> void:
 		# lives on its node scale, so include that scale in the ratio.
 		var eye_ratio: float=(sclera.get_aabb().size.x*sclera.scale.x)/(
 			portrait_skull.get_aabb().size.x)
-		if eye_ratio<.105 or eye_ratio>.28:
+		if eye_ratio<.16 or eye_ratio>.38:
 			_fail("Eye-to-head proportion is unreadable or cartoonishly oversized")
 			return
 		var natural_mouth: Node3D=portrait.get_node("ExpressionMouth")
@@ -500,14 +500,14 @@ func _run() -> void:
 		# An earlier eye rig made the face look mechanical: three bright
 		# disconnected strips floated forward of the sculpted socket.
 		if ocular_standoff<.003 or ocular_standoff>.018 or (
-				sclera.scale.x<.044 or sclera.scale.x>.083):
+				sclera.scale.x<.069 or sclera.scale.x>.108):
 			_fail("Inherited eye became a protruding mechanical eyeball")
 			return
 		# An inherited eye must be an almond inside its socket, not a
 		# luminous circular bead below the eyebrow. These aspect bounds
 		# leave the normal genetic ranges fully available.
 		var visible_eye_aspect: float=sclera.scale.y/sclera.scale.x
-		if visible_eye_aspect<.19 or visible_eye_aspect>.56:
+		if visible_eye_aspect<.25 or visible_eye_aspect>.72:
 			_fail("Genetic eye is a protruding round doll eye"); return
 		# Ears belong to the lateral skull; the former large, round
 		# discs floated at either temple in every real Godot portrait.
@@ -531,6 +531,25 @@ func _run() -> void:
 		for tick in range(20): FACE.expression(figure,0.0,1.0,false,0.0)
 		if upper.position.y>upper_rest-.015 or lower_lid.position.y<lower_rest+.014:
 			_fail("Eyelid covers did not articulate during a blink"); return
+		# A moving number is not a blink. Check that both real skin meshes
+		# stand IN FRONT of the pupil and meet over its centre in XY.
+		# Previously this test passed even while the pupils stayed visible.
+		var blink_pupil: MeshInstance3D=eye.get_node_or_null(
+			"AnatomicalPupil") as MeshInstance3D
+		var upper_mesh: MeshInstance3D=upper as MeshInstance3D
+		var lower_mesh: MeshInstance3D=lower_lid as MeshInstance3D
+		if blink_pupil==null or upper_mesh==null or lower_mesh==null:
+			_fail("Blink is not a rendered pupil-covering surface"); return
+		for cover in [upper_mesh,lower_mesh]:
+			if not bool(cover.get_meta("visible_pupil_occluding_blink",false)):
+				_fail("Blink has reverted to narrow decorative ribbons"); return
+			if cover.get_aabb().position.z+cover.position.z>=(
+					blink_pupil.position.z-blink_pupil.scale.z*.5):
+				_fail("Blink skin sits behind the visible pupil"); return
+		if upper_mesh.position.y+upper_mesh.get_aabb().position.y>.0 or (
+				lower_mesh.position.y+lower_mesh.get_aabb().end.y<.0):
+			_fail("Lids move but leave the centre of the pupil uncovered")
+			return
 		if not is_equal_approx(eye.scale.y,1.0) or sclera.scale!=sclera_size:
 			_fail("Blink deformed the entire eye and iris instead of the lids"); return
 		for tick in range(20): FACE.expression(figure,0.0,0.0,false,0.0)
@@ -538,7 +557,7 @@ func _run() -> void:
 		var pupil: MeshInstance3D=eye.get_node_or_null("AnatomicalPupil")
 		if iris==null or pupil==null:
 			_fail("Eyes lost their separately movable inherited iris/pupil"); return
-		if iris.scale.x>=sclera.scale.x*.48 or (
+		if iris.scale.x>=sclera.scale.x*.72 or (
 				pupil.scale.x>=iris.scale.x*.60):
 			_fail("Oversized iris and pupil obscure the inherited almond eye")
 			return
